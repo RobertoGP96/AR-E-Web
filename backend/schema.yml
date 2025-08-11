@@ -1,0 +1,3224 @@
+openapi: 3.0.3
+info:
+  title: Shein Shop API
+  version: 1.0.0
+  description: API documentation for the Shein Shop management system
+paths:
+  /shein_shop/user/:
+    get:
+      operationId: user_list
+      description: Vista de usuario
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - user
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+    post:
+      operationId: user_create
+      description: Vista de usuario
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /shein_shop/user/{id}/:
+    patch:
+      operationId: user_partial_update
+      description: Vista de usuario
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this custom user.
+        required: true
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    get:
+      operationId: user_retrieve
+      description: Vista de usuario
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this custom user.
+        required: true
+      tags:
+      - user
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    delete:
+      operationId: user_destroy
+      description: Vista de usuario
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this custom user.
+        required: true
+      tags:
+      - user
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    put:
+      operationId: user_update
+      description: Vista de usuario
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this custom user.
+        required: true
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /shein_shop/order/:
+    get:
+      operationId: order_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - order
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrderList'
+          description: ''
+    post:
+      operationId: order_create
+      tags:
+      - order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /shein_shop/order/{id}/:
+    patch:
+      operationId: order_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this order.
+        required: true
+      tags:
+      - order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    get:
+      operationId: order_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this order.
+        required: true
+      tags:
+      - order
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    delete:
+      operationId: order_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this order.
+        required: true
+      tags:
+      - order
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    put:
+      operationId: order_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this order.
+        required: true
+      tags:
+      - order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /shein_shop/shop/:
+    get:
+      operationId: shop_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedShopList'
+          description: ''
+    post:
+      operationId: shop_create
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShopRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShopRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShopRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shop'
+          description: ''
+  /shein_shop/shop/{name}/:
+    patch:
+      operationId: shop_partial_update
+      parameters:
+      - in: path
+        name: name
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedShopRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedShopRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedShopRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shop'
+          description: ''
+    get:
+      operationId: shop_retrieve
+      parameters:
+      - in: path
+        name: name
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shop'
+          description: ''
+    delete:
+      operationId: shop_destroy
+      parameters:
+      - in: path
+        name: name
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    put:
+      operationId: shop_update
+      parameters:
+      - in: path
+        name: name
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShopRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShopRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShopRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shop'
+          description: ''
+  /shein_shop/buying_account/:
+    get:
+      operationId: buying_account_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - buying_account
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBuyingAccountsList'
+          description: ''
+    post:
+      operationId: buying_account_create
+      tags:
+      - buying_account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuyingAccountsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BuyingAccountsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BuyingAccountsRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuyingAccounts'
+          description: ''
+  /shein_shop/buying_account/{id}/:
+    patch:
+      operationId: buying_account_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this buying accounts.
+        required: true
+      tags:
+      - buying_account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuyingAccounts'
+          description: ''
+    get:
+      operationId: buying_account_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this buying accounts.
+        required: true
+      tags:
+      - buying_account
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuyingAccounts'
+          description: ''
+    delete:
+      operationId: buying_account_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this buying accounts.
+        required: true
+      tags:
+      - buying_account
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    put:
+      operationId: buying_account_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this buying accounts.
+        required: true
+      tags:
+      - buying_account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuyingAccountsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BuyingAccountsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BuyingAccountsRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuyingAccounts'
+          description: ''
+  /shein_shop/common_information/:
+    get:
+      operationId: common_information_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - common_information
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCommonInformationList'
+          description: ''
+    post:
+      operationId: common_information_create
+      tags:
+      - common_information
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommonInformationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CommonInformationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommonInformationRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonInformation'
+          description: ''
+  /shein_shop/common_information/{id}/:
+    patch:
+      operationId: common_information_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this common information.
+        required: true
+      tags:
+      - common_information
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCommonInformationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCommonInformationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCommonInformationRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonInformation'
+          description: ''
+    get:
+      operationId: common_information_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this common information.
+        required: true
+      tags:
+      - common_information
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonInformation'
+          description: ''
+    delete:
+      operationId: common_information_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this common information.
+        required: true
+      tags:
+      - common_information
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    put:
+      operationId: common_information_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this common information.
+        required: true
+      tags:
+      - common_information
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommonInformationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CommonInformationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommonInformationRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonInformation'
+          description: ''
+  /shein_shop/product/:
+    get:
+      operationId: product_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - product
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductList'
+          description: ''
+    post:
+      operationId: product_create
+      tags:
+      - product
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+  /shein_shop/product/{id}/:
+    patch:
+      operationId: product_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this product.
+        required: true
+      tags:
+      - product
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    get:
+      operationId: product_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this product.
+        required: true
+      tags:
+      - product
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    delete:
+      operationId: product_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this product.
+        required: true
+      tags:
+      - product
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    put:
+      operationId: product_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this product.
+        required: true
+      tags:
+      - product
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+  /shein_shop/shopping_reciep/:
+    get:
+      operationId: shopping_reciep_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - shopping_reciep
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedShoppingReceipList'
+          description: ''
+    post:
+      operationId: shopping_reciep_create
+      tags:
+      - shopping_reciep
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingReceipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShoppingReceipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShoppingReceipRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingReceip'
+          description: ''
+  /shein_shop/shopping_reciep/{id}/:
+    patch:
+      operationId: shopping_reciep_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this shopping receip.
+        required: true
+      tags:
+      - shopping_reciep
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingReceip'
+          description: ''
+    get:
+      operationId: shopping_reciep_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this shopping receip.
+        required: true
+      tags:
+      - shopping_reciep
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingReceip'
+          description: ''
+    delete:
+      operationId: shopping_reciep_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this shopping receip.
+        required: true
+      tags:
+      - shopping_reciep
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    put:
+      operationId: shopping_reciep_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this shopping receip.
+        required: true
+      tags:
+      - shopping_reciep
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingReceipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShoppingReceipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShoppingReceipRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingReceip'
+          description: ''
+  /shein_shop/buyed_product/:
+    get:
+      operationId: buyed_product_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - buyed_product
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductBuyedList'
+          description: ''
+    post:
+      operationId: buyed_product_create
+      tags:
+      - buyed_product
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductBuyedRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductBuyedRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductBuyedRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductBuyed'
+          description: ''
+  /shein_shop/buyed_product/{id}/:
+    patch:
+      operationId: buyed_product_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product buyed.
+        required: true
+      tags:
+      - buyed_product
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductBuyedRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductBuyedRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductBuyedRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductBuyed'
+          description: ''
+    get:
+      operationId: buyed_product_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product buyed.
+        required: true
+      tags:
+      - buyed_product
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductBuyed'
+          description: ''
+    delete:
+      operationId: buyed_product_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product buyed.
+        required: true
+      tags:
+      - buyed_product
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    put:
+      operationId: buyed_product_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product buyed.
+        required: true
+      tags:
+      - buyed_product
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductBuyedRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductBuyedRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductBuyedRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductBuyed'
+          description: ''
+  /shein_shop/deliver_reciep/:
+    get:
+      operationId: deliver_reciep_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - deliver_reciep
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDeliverReceipList'
+          description: ''
+    post:
+      operationId: deliver_reciep_create
+      tags:
+      - deliver_reciep
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliverReceipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeliverReceipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeliverReceipRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliverReceip'
+          description: ''
+  /shein_shop/deliver_reciep/{id}/:
+    patch:
+      operationId: deliver_reciep_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this deliver receip.
+        required: true
+      tags:
+      - deliver_reciep
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliverReceip'
+          description: ''
+    get:
+      operationId: deliver_reciep_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this deliver receip.
+        required: true
+      tags:
+      - deliver_reciep
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliverReceip'
+          description: ''
+    delete:
+      operationId: deliver_reciep_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this deliver receip.
+        required: true
+      tags:
+      - deliver_reciep
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    put:
+      operationId: deliver_reciep_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this deliver receip.
+        required: true
+      tags:
+      - deliver_reciep
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliverReceipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeliverReceipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeliverReceipRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliverReceip'
+          description: ''
+  /shein_shop/product_received/:
+    get:
+      operationId: product_received_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - product_received
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductReceivedList'
+          description: ''
+    post:
+      operationId: product_received_create
+      tags:
+      - product_received
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductReceivedRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductReceivedRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductReceivedRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductReceived'
+          description: ''
+  /shein_shop/product_received/deliver_products/:
+    patch:
+      operationId: product_received_deliver_products_partial_update
+      tags:
+      - product_received
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductReceivedRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductReceivedRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductReceivedRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductReceived'
+          description: ''
+  /shein_shop/product_received/{id}/:
+    patch:
+      operationId: product_received_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product received.
+        required: true
+      tags:
+      - product_received
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductReceivedRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductReceivedRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductReceivedRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductReceived'
+          description: ''
+    get:
+      operationId: product_received_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product received.
+        required: true
+      tags:
+      - product_received
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductReceived'
+          description: ''
+    delete:
+      operationId: product_received_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product received.
+        required: true
+      tags:
+      - product_received
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    put:
+      operationId: product_received_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product received.
+        required: true
+      tags:
+      - product_received
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductReceivedRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductReceivedRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductReceivedRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductReceived'
+          description: ''
+  /shein_shop/package/:
+    get:
+      operationId: package_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - package
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPackageList'
+          description: ''
+    post:
+      operationId: package_create
+      tags:
+      - package
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PackageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PackageRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+          description: ''
+  /shein_shop/package/{id}/:
+    patch:
+      operationId: package_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this package.
+        required: true
+      tags:
+      - package
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPackageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPackageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPackageRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+          description: ''
+    get:
+      operationId: package_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this package.
+        required: true
+      tags:
+      - package
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+          description: ''
+    delete:
+      operationId: package_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this package.
+        required: true
+      tags:
+      - package
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    put:
+      operationId: package_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this package.
+        required: true
+      tags:
+      - package
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PackageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PackageRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+          description: ''
+  /shein_shop/verify_user/{verification_secret}:
+    get:
+      operationId: verify_user_retrieve
+      description: Verificate user email
+      parameters:
+      - in: path
+        name: verification_secret
+        schema:
+          type: string
+        required: true
+      tags:
+      - verify_user
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /shein_shop/token/:
+    post:
+      operationId: token_create
+      description: Vista del serializer
+      tags:
+      - token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /shein_shop/token/refresh/:
+    post:
+      operationId: token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /shein_shop/password/{password_secret}/:
+    post:
+      operationId: password_create
+      description: Sender email password
+      parameters:
+      - in: path
+        name: password_secret
+        schema:
+          type: string
+          pattern: ^\S+$
+        required: true
+      tags:
+      - password
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: password_update
+      description: Update password
+      parameters:
+      - in: path
+        name: password_secret
+        schema:
+          type: string
+          pattern: ^\S+$
+        required: true
+      tags:
+      - password
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /shein_shop/image_upload/:
+    post:
+      operationId: image_upload_create
+      tags:
+      - image_upload
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: image_upload_destroy
+      tags:
+      - image_upload
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /shein_shop/security/:
+    get:
+      operationId: security_retrieve
+      description: Respuesta de seguridad
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+components:
+  schemas:
+    BuyingAccounts:
+      type: object
+      description: Serializer of buying accounts
+      properties:
+        account_name:
+          type: string
+          maxLength: 100
+      required:
+      - account_name
+    BuyingAccountsRequest:
+      type: object
+      description: Serializer of buying accounts
+      properties:
+        account_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - account_name
+    CommonInformation:
+      type: object
+      description: Common information introduced for the admin
+      properties:
+        change_rate:
+          type: number
+          format: double
+        cost_per_pound:
+          type: number
+          format: double
+    CommonInformationRequest:
+      type: object
+      description: Common information introduced for the admin
+      properties:
+        change_rate:
+          type: number
+          format: double
+        cost_per_pound:
+          type: number
+          format: double
+    DeliverReceip:
+      type: object
+      description: Deliver Receip Serializer
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order:
+          type: integer
+        deliver_date:
+          type: string
+          format: date-time
+        deliver_picture:
+          type: array
+          items:
+            type: string
+            format: uri
+        delivered_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductReceived'
+          readOnly: true
+        weight:
+          type: number
+          format: double
+        status:
+          type: string
+          maxLength: 100
+        total_cost_of_deliver:
+          type: string
+          readOnly: true
+      required:
+      - deliver_picture
+      - delivered_products
+      - id
+      - order
+      - total_cost_of_deliver
+      - weight
+    DeliverReceipRequest:
+      type: object
+      description: Deliver Receip Serializer
+      properties:
+        order:
+          type: integer
+        deliver_date:
+          type: string
+          format: date-time
+        deliver_picture:
+          type: array
+          items:
+            type: string
+            format: uri
+            minLength: 1
+        weight:
+          type: number
+          format: double
+        status:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - deliver_picture
+      - order
+      - weight
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        client:
+          type: string
+          format: email
+          title: Email address
+        sales_manager:
+          type: string
+          format: email
+          title: Email address
+          readOnly: true
+        status:
+          type: string
+          maxLength: 100
+        pay_status:
+          type: string
+          maxLength: 100
+        total_cost:
+          type: string
+          readOnly: true
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+          readOnly: true
+        received_value_of_client:
+          type: string
+          readOnly: true
+        extra_payments:
+          type: string
+          readOnly: true
+      required:
+      - client
+      - extra_payments
+      - id
+      - products
+      - received_value_of_client
+      - sales_manager
+      - total_cost
+    OrderRequest:
+      type: object
+      properties:
+        client:
+          type: string
+          format: email
+          minLength: 1
+          title: Email address
+        status:
+          type: string
+          minLength: 1
+          maxLength: 100
+        pay_status:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - client
+    Package:
+      type: object
+      description: Package Serializer
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number_of_tracking:
+          type: string
+          maxLength: 100
+        agency_name:
+          type: string
+          maxLength: 100
+        status_of_processing:
+          type: string
+          maxLength: 100
+        package_picture:
+          type: array
+          items:
+            type: string
+            format: uri
+        contained_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductReceived'
+          readOnly: true
+      required:
+      - agency_name
+      - contained_products
+      - id
+      - number_of_tracking
+      - package_picture
+    PackageRequest:
+      type: object
+      description: Package Serializer
+      properties:
+        number_of_tracking:
+          type: string
+          minLength: 1
+          maxLength: 100
+        agency_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        status_of_processing:
+          type: string
+          minLength: 1
+          maxLength: 100
+        package_picture:
+          type: array
+          items:
+            type: string
+            format: uri
+            minLength: 1
+      required:
+      - agency_name
+      - number_of_tracking
+      - package_picture
+    PaginatedBuyingAccountsList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BuyingAccounts'
+    PaginatedCommonInformationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommonInformation'
+    PaginatedDeliverReceipList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeliverReceip'
+    PaginatedOrderList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+    PaginatedPackageList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Package'
+    PaginatedProductBuyedList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductBuyed'
+    PaginatedProductList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+    PaginatedProductReceivedList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductReceived'
+    PaginatedShopList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Shop'
+    PaginatedShoppingReceipList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShoppingReceip'
+    PaginatedUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    PatchedBuyingAccountsRequest:
+      type: object
+      description: Serializer of buying accounts
+      properties:
+        account_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+    PatchedCommonInformationRequest:
+      type: object
+      description: Common information introduced for the admin
+      properties:
+        change_rate:
+          type: number
+          format: double
+        cost_per_pound:
+          type: number
+          format: double
+    PatchedDeliverReceipRequest:
+      type: object
+      description: Deliver Receip Serializer
+      properties:
+        order:
+          type: integer
+        deliver_date:
+          type: string
+          format: date-time
+        deliver_picture:
+          type: array
+          items:
+            type: string
+            format: uri
+            minLength: 1
+        weight:
+          type: number
+          format: double
+        status:
+          type: string
+          minLength: 1
+          maxLength: 100
+    PatchedOrderRequest:
+      type: object
+      properties:
+        client:
+          type: string
+          format: email
+          minLength: 1
+          title: Email address
+        status:
+          type: string
+          minLength: 1
+          maxLength: 100
+        pay_status:
+          type: string
+          minLength: 1
+          maxLength: 100
+    PatchedPackageRequest:
+      type: object
+      description: Package Serializer
+      properties:
+        number_of_tracking:
+          type: string
+          minLength: 1
+          maxLength: 100
+        agency_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        status_of_processing:
+          type: string
+          minLength: 1
+          maxLength: 100
+        package_picture:
+          type: array
+          items:
+            type: string
+            format: uri
+            minLength: 1
+    PatchedProductBuyedRequest:
+      type: object
+      description: Product buyed by the agent
+      properties:
+        original_product:
+          type: string
+          format: uuid
+          writeOnly: true
+        order:
+          type: integer
+        shoping_receip:
+          type: integer
+        actual_cost_of_product:
+          type: number
+          format: double
+        amount_buyed:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        shop_discount:
+          type: number
+          format: double
+        offer_discount:
+          type: number
+          format: double
+        buy_date:
+          type: string
+          format: date-time
+        observation:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        real_cost_of_product:
+          type: number
+          format: double
+    PatchedProductReceivedRequest:
+      type: object
+      description: Product delivered and received by the logistical
+      properties:
+        original_product:
+          type: string
+          format: uuid
+          writeOnly: true
+        order:
+          type: integer
+        reception_date_in_eeuu:
+          type: string
+          format: date
+        reception_date_in_cuba:
+          type: string
+          format: date
+          nullable: true
+        package_where_was_send:
+          type: integer
+        deliver_receip:
+          type: integer
+        amount_received:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        amount_delivered:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        observation:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+    PatchedProductRequest:
+      type: object
+      description: Product information provided by the agent
+      properties:
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        link:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        shop:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        observation:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        category:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        amount_requested:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        order:
+          type: integer
+        product_pictures:
+          type: array
+          items:
+            type: string
+            format: uri
+            minLength: 1
+        shop_cost:
+          type: number
+          format: double
+        shop_delivery_cost:
+          type: number
+          format: double
+        shop_taxes:
+          type: number
+          format: double
+        own_taxes:
+          type: number
+          format: double
+        added_taxes:
+          type: number
+          format: double
+        total_cost:
+          type: number
+          format: double
+    PatchedShopRequest:
+      type: object
+      description: Serializer of diferents shops
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        link:
+          type: string
+          format: uri
+          minLength: 1
+          maxLength: 200
+    PatchedShoppingReceipRequest:
+      type: object
+      description: Shopping Receip Serializer
+      properties:
+        shopping_account:
+          type: string
+          minLength: 1
+        shop_of_buy:
+          type: string
+          minLength: 1
+        buy_date:
+          type: string
+          format: date-time
+    PatchedUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          writeOnly: true
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        home_address:
+          type: string
+          minLength: 1
+          maxLength: 200
+        phone_number:
+          type: string
+          minLength: 1
+          maxLength: 20
+        is_agent:
+          type: boolean
+        is_accountant:
+          type: boolean
+        is_buyer:
+          type: boolean
+        is_logistical:
+          type: boolean
+        is_comunity_manager:
+          type: boolean
+        agent_profit:
+          type: number
+          format: double
+        is_staff:
+          type: boolean
+    Product:
+      type: object
+      description: Product information provided by the agent
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        sku:
+          type: string
+          maxLength: 100
+        name:
+          type: string
+          maxLength: 100
+        link:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        shop:
+          type: string
+        description:
+          type: string
+          nullable: true
+          maxLength: 200
+        observation:
+          type: string
+          nullable: true
+          maxLength: 200
+        category:
+          type: string
+          nullable: true
+          maxLength: 200
+        amount_requested:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        amount_buyed:
+          type: string
+          readOnly: true
+        amount_delivered:
+          type: string
+          readOnly: true
+        amount_received:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+        status:
+          type: string
+          readOnly: true
+        product_pictures:
+          type: array
+          items:
+            type: string
+            format: uri
+        shop_cost:
+          type: number
+          format: double
+        shop_delivery_cost:
+          type: number
+          format: double
+        shop_taxes:
+          type: number
+          format: double
+        own_taxes:
+          type: number
+          format: double
+        added_taxes:
+          type: number
+          format: double
+        total_cost:
+          type: number
+          format: double
+        cost_per_product:
+          type: string
+          readOnly: true
+      required:
+      - amount_buyed
+      - amount_delivered
+      - amount_received
+      - amount_requested
+      - cost_per_product
+      - id
+      - name
+      - order
+      - product_pictures
+      - shop
+      - shop_cost
+      - sku
+      - status
+      - total_cost
+    ProductBuyed:
+      type: object
+      description: Product buyed by the agent
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order:
+          type: integer
+        shoping_receip:
+          type: integer
+        actual_cost_of_product:
+          type: number
+          format: double
+        amount_buyed:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        shop_discount:
+          type: number
+          format: double
+        offer_discount:
+          type: number
+          format: double
+        buy_date:
+          type: string
+          format: date-time
+        observation:
+          type: string
+          nullable: true
+          maxLength: 200
+        real_cost_of_product:
+          type: number
+          format: double
+        original_product_details:
+          type: string
+          readOnly: true
+      required:
+      - amount_buyed
+      - id
+      - order
+      - original_product_details
+      - real_cost_of_product
+      - shoping_receip
+    ProductBuyedRequest:
+      type: object
+      description: Product buyed by the agent
+      properties:
+        original_product:
+          type: string
+          format: uuid
+          writeOnly: true
+        order:
+          type: integer
+        shoping_receip:
+          type: integer
+        actual_cost_of_product:
+          type: number
+          format: double
+        amount_buyed:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        shop_discount:
+          type: number
+          format: double
+        offer_discount:
+          type: number
+          format: double
+        buy_date:
+          type: string
+          format: date-time
+        observation:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        real_cost_of_product:
+          type: number
+          format: double
+      required:
+      - amount_buyed
+      - order
+      - original_product
+      - real_cost_of_product
+      - shoping_receip
+    ProductReceived:
+      type: object
+      description: Product delivered and received by the logistical
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        original_product_detail:
+          allOf:
+          - $ref: '#/components/schemas/Product'
+          readOnly: true
+        order:
+          type: integer
+        reception_date_in_eeuu:
+          type: string
+          format: date
+        reception_date_in_cuba:
+          type: string
+          format: date
+          nullable: true
+        package_where_was_send:
+          type: integer
+        deliver_receip:
+          type: integer
+        amount_received:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        amount_delivered:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        observation:
+          type: string
+          nullable: true
+          maxLength: 200
+      required:
+      - amount_received
+      - id
+      - order
+      - original_product_detail
+      - package_where_was_send
+    ProductReceivedRequest:
+      type: object
+      description: Product delivered and received by the logistical
+      properties:
+        original_product:
+          type: string
+          format: uuid
+          writeOnly: true
+        order:
+          type: integer
+        reception_date_in_eeuu:
+          type: string
+          format: date
+        reception_date_in_cuba:
+          type: string
+          format: date
+          nullable: true
+        package_where_was_send:
+          type: integer
+        deliver_receip:
+          type: integer
+        amount_received:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        amount_delivered:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        observation:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+      required:
+      - amount_received
+      - order
+      - original_product
+      - package_where_was_send
+    ProductRequest:
+      type: object
+      description: Product information provided by the agent
+      properties:
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        link:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        shop:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        observation:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        category:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        amount_requested:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        order:
+          type: integer
+        product_pictures:
+          type: array
+          items:
+            type: string
+            format: uri
+            minLength: 1
+        shop_cost:
+          type: number
+          format: double
+        shop_delivery_cost:
+          type: number
+          format: double
+        shop_taxes:
+          type: number
+          format: double
+        own_taxes:
+          type: number
+          format: double
+        added_taxes:
+          type: number
+          format: double
+        total_cost:
+          type: number
+          format: double
+      required:
+      - amount_requested
+      - name
+      - order
+      - product_pictures
+      - shop
+      - shop_cost
+      - sku
+      - total_cost
+    Shop:
+      type: object
+      description: Serializer of diferents shops
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        link:
+          type: string
+          format: uri
+          maxLength: 200
+      required:
+      - link
+      - name
+    ShopRequest:
+      type: object
+      description: Serializer of diferents shops
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        link:
+          type: string
+          format: uri
+          minLength: 1
+          maxLength: 200
+      required:
+      - link
+      - name
+    ShoppingReceip:
+      type: object
+      description: Shopping Receip Serializer
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        shopping_account:
+          type: string
+        shop_of_buy:
+          type: string
+        total_cost_of_shopping:
+          type: string
+          readOnly: true
+        buy_date:
+          type: string
+          format: date-time
+        buyed_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductBuyed'
+          readOnly: true
+      required:
+      - buyed_products
+      - id
+      - shop_of_buy
+      - shopping_account
+      - total_cost_of_shopping
+    ShoppingReceipRequest:
+      type: object
+      description: Shopping Receip Serializer
+      properties:
+        shopping_account:
+          type: string
+          minLength: 1
+        shop_of_buy:
+          type: string
+          minLength: 1
+        buy_date:
+          type: string
+          format: date-time
+      required:
+      - shop_of_buy
+      - shopping_account
+    TokenObtainPair:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - refresh
+    TokenObtainPairRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - email
+      - password
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+        home_address:
+          type: string
+          maxLength: 200
+        phone_number:
+          type: string
+          maxLength: 20
+        is_agent:
+          type: boolean
+        is_accountant:
+          type: boolean
+        is_buyer:
+          type: boolean
+        is_logistical:
+          type: boolean
+        is_comunity_manager:
+          type: boolean
+        agent_profit:
+          type: number
+          format: double
+        is_staff:
+          type: boolean
+      required:
+      - home_address
+      - last_name
+      - name
+      - phone_number
+      - user_id
+    UserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          writeOnly: true
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        home_address:
+          type: string
+          minLength: 1
+          maxLength: 200
+        phone_number:
+          type: string
+          minLength: 1
+          maxLength: 20
+        is_agent:
+          type: boolean
+        is_accountant:
+          type: boolean
+        is_buyer:
+          type: boolean
+        is_logistical:
+          type: boolean
+        is_comunity_manager:
+          type: boolean
+        agent_profit:
+          type: number
+          format: double
+        is_staff:
+          type: boolean
+      required:
+      - email
+      - home_address
+      - last_name
+      - name
+      - password
+      - phone_number
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
