@@ -13,10 +13,14 @@ export { ProtectedRoute } from '../components/ProtectedRoute';
 
 // Re-exportar hooks adicionales del archivo useAuth
 export {
-  usePermissions,
+  useAuthUser,
+  useAuthStatus,
   useAuthLoading,
   useAuthError,
-  useCurrentUser
+  usePermissions,
+  useRoles,
+  useIsAdmin,
+  useAuthActions
 } from '../hooks/useAuth';
 
 // Tipos principales

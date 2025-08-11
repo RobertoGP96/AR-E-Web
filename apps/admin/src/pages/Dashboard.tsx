@@ -1,8 +1,5 @@
-import { BarChart3, Users, Package, ShoppingCart, TrendingUp, AlertCircle } from 'lucide-react';
+import { BarChart3, Users, Package, ShoppingCart, TrendingUp, AlertCircle, LayoutDashboard } from 'lucide-react';
 import { useDashboardStats } from '../hooks/useApi';
-import fLogo from '../assets/logo/f-logo.svg';
-import ColorDemo from '../components/ColorDemo';
-import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
   const { data: apiResponse, isLoading, error } = useDashboardStats();
@@ -83,31 +80,17 @@ const Dashboard = () => {
       )}
 
       {/* Header Section with Logo and Title */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-6">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <img 
-              src={fLogo} 
-              alt="F Logo" 
-              className="h-12 w-auto sm:h-16"
-            />
-          </div>
-          
-          {/* Title and Description */}
-          <div className="text-center sm:text-left">
-            <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-              Dashboard
-            </h1>
-            <span className='text-primary'>Test</span>
-            <Button className="mt-4 bg-primary text-white">
-              Acción
-            </Button>
-            <p className="mt-2 text-lg text-gray-600">
-              Resumen general de tu panel de administración
-            </p>
-          </div>
+        <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <LayoutDashboard className="h-8 w-8 text-orange-500" />
+            Dashboard
+          </h1>
+          <p className="text-gray-600 mt-2">
+           Resumen general del panel de administración
+          </p>
         </div>
+        
       </div>
 
       {/* Stats Cards */}
@@ -186,29 +169,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Color Demo Section */}
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Demostración de Colores
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Prueba de la configuración de colores Tailwind CSS v4 + shadcn/ui
-              </p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                ✅ Configurado
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="bg-gray-50">
-          <ColorDemo />
-        </div>
-      </div>
+      
     </div>
   );
 };

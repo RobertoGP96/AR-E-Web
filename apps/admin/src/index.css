@@ -18,7 +18,7 @@
   --muted-foreground: oklch(0.45 0 0); /* Gris medio neutro */
   --accent: oklch(86.903% 0.03444 40.561); /* Naranja brillante para acentos */
   --accent-foreground: oklch(1 0 0); /* Blanco para texto en acentos */
-  --destructive: oklch(0.62 0.18 20); /* Rojo naranja para destructivos */
+  --destructive: oklch(78.131% 0.07626 67.616); /* Rojo naranja para destructivos */
   --destructive-foreground: oklch(1 0 0); /* Blanco para texto destructivo */
   --border: oklch(0.85 0 0); /* Borde gris neutro sin tinte */
   --input: oklch(0.96 0 0); /* Input gris neutro */
@@ -33,7 +33,7 @@
   --sidebar-foreground: oklch(1 0 0); /* Blanco para texto del sidebar */
   --sidebar-primary: oklch(0.15 0 0); /* Negro para elementos activos */
   --sidebar-primary-foreground: oklch(1 0 0); /* Blanco para texto activo */
-  --sidebar-accent: oklch(0.75 0.12 40); /* Naranja claro para hover */
+  --sidebar-accent: oklch(83.661% 0.08201 79.699); /* Naranja claro para hover */
   --sidebar-accent-foreground: oklch(1 0 0); /* Blanco para texto hover */
   --sidebar-border: oklch(0.75 0 0); /* Borde gris neutro para sidebar */
   --sidebar-ring: oklch(0.75 0.12 40); /* Ring naranja claro */
@@ -53,10 +53,10 @@
   --secondary-foreground: oklch(0.88 0.06 55);
   --muted: oklch(0.22 0 0); /* Gris neutro oscuro */
   --muted-foreground: oklch(0.65 0 0); /* Gris neutro medio */
-  --accent: oklch(0.68 0.15 52); /* Naranja miel para acentos */
+  --accent: oklch(72.691% 0.09519 55.946); /* Naranja miel para acentos */
   --accent-foreground: oklch(0.12 0.02 35);
   --destructive: oklch(0.65 0.18 25); /* Rojo anaranjado más claro */
-  --destructive-foreground: oklch(1 0 0); /* Blanco para texto destructivo */
+  --destructive-foreground: oklch(36.484% 0.00136 15.538); /* Blanco para texto destructivo */
   --border: oklch(0.30 0 0); /* Borde gris neutro oscuro */
   --input: oklch(0.25 0 0); /* Input gris neutro oscuro */
   --ring: oklch(0.68 0.15 48);
