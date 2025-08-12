@@ -16,18 +16,19 @@ export type UserRole =
 
 // Modelo principal
 export interface CustomUser {
+  // Account data
   id: ID;
   email: string;
   name: string;
   last_name: string;
   home_address: string;
   phone_number: string;
-  
-  // Sistema de roles unificado
+
+  // Roles
   role: UserRole;
   agent_profit: number;
-  
-  // Gestión de cuenta
+
+  // Account management
   is_staff: boolean;
   is_active: boolean;
   is_verified: boolean;
@@ -35,9 +36,17 @@ export interface CustomUser {
   sent_verification_email: boolean;
   verification_secret?: string;
   password_secret?: string;
-  
+
+  // Django related fields (for compatibility)
+  groups?: number[]; // IDs de grupos
+  user_permissions?: number[]; // IDs de permisos
+
   // Propiedades computadas
   full_name: string;
+
+  // Extras para UI (no existen en el modelo pero útiles para la tabla)
+  ordersCount?: number;
+  lastAccess?: DateTime;
 }
 
 // Tipos para crear/editar usuario

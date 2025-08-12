@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Eye, EyeOff, LogIn, Loader2, Info, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuthHook';
+import { useAuth } from '@/hooks/auth/useAuthHook';
 import type { LoginCredentials } from '@/types/api';
 import logoSvg from '@/assets/logo/logo.svg';
 

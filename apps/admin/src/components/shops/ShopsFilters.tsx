@@ -1,20 +1,21 @@
-import { Search, Plus } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import ShopFormPopover from './form/ShopFormPopover';
+import type { Shop } from '@/types/models/shop';
 
 interface ShopsFiltersProps {
   searchValue?: string;
   onSearchChange?: (value: string) => void;
-  onAddShop?: () => void;
   searchPlaceholder?: string;
+  onShopCreated?: (shop: Shop) => void;
 }
 
 export default function ShopsFilters({
   searchValue = "",
   onSearchChange,
-  onAddShop,
-  searchPlaceholder = "Buscar tiendas..."
+  searchPlaceholder = "Buscar tiendas...",
+  onShopCreated
 }: ShopsFiltersProps) {
   return (
     <Card className="bg-transparent border-0 shadow-none">
@@ -32,13 +33,12 @@ export default function ShopsFilters({
               />
             </div>
           </div>
-          <Button 
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl hover:shadow-lg transition-all duration-200"
-            onClick={onAddShop}
-          >
-            <Plus className="h-5 w-5" />
-            Nueva Tienda
-          </Button>
+          <div>
+            <ShopFormPopover
+              mode="create"
+              onSuccess={onShopCreated}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -1,9 +1,6 @@
-import { BarChart3, Users, Package, ShoppingCart, TrendingUp, AlertCircle, LayoutDashboard } from 'lucide-react';
-import { useDashboardStats } from '../hooks/useApi';
+import { BarChart3, Users, Package, ShoppingCart, TrendingUp, LayoutDashboard } from 'lucide-react';
 
 const Dashboard = () => {
-  const { data: apiResponse, isLoading, error } = useDashboardStats();
-
   // Datos por defecto para mostrar cuando no hay datos de la API
   const defaultMetrics = {
     orders: { total: 0, pending: 0, completed: 0, today: 0, this_week: 0, this_month: 0 },
@@ -13,8 +10,8 @@ const Dashboard = () => {
   };
 
   // Extraer los datos de la respuesta de la API si están disponibles
-  const metrics = apiResponse?.data || defaultMetrics;
-  
+  const metrics = defaultMetrics;
+
   const statCards = [
     {
       name: 'Total de Usuarios',
@@ -52,33 +49,7 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
-      {/* Estado de conexión API */}
-      {(isLoading || error) && (
-        <div className={`rounded-lg p-3 ${
-          error 
-            ? 'bg-yellow-50 border border-yellow-200' 
-            : 'bg-blue-50 border border-blue-200'
-        }`}>
-          <div className="flex items-center space-x-2">
-            {error ? (
-              <>
-                <AlertCircle className="h-4 w-4 text-yellow-600" />
-                <span className="text-sm text-yellow-800">
-                  Mostrando datos de ejemplo - Error de conexión con la API
-                </span>
-              </>
-            ) : (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span className="text-sm text-blue-800">
-                  Cargando datos actualizados...
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
+      
       {/* Header Section with Logo and Title */}
         <div className="flex items-center justify-between">
         <div>
