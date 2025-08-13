@@ -118,11 +118,11 @@ export default function ShopsTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+    <div className="w-1/2 overflow-x-auto rounded-lg border border-muted bg-background shadow">
       <Table >
         <TableHeader className='bg-gray-100' >
           <TableRow className="">
-            <TableHead className="">#</TableHead>
+            <TableHead className="text-center">#</TableHead>
             <TableHead className="">Logo</TableHead>
             <TableHead className="">ID</TableHead>
             <TableHead className="">Nombre</TableHead>
@@ -133,7 +133,7 @@ export default function ShopsTable({
           {shops.map((shop, index) => (
             <TableRow
               key={shop.id}
-              className="border-b border-gray-50 hover:bg-gray-100 transition-all duration-200 group max-w-15"
+              className=""
             >
               <TableCell className="py-4 px-3 text-center w-16">
                 <span className="inline-flex items-center justify-center w-8 h-8 text-gray-700 text-sm font-medium">

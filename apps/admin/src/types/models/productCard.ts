@@ -1,4 +1,4 @@
-import type { Product } from '@/types/database';
+import type { Product } from "./product";
 
 /**
  * Interfaz extendida para mostrar datos adicionales en el grid de products

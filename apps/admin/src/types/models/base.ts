@@ -14,7 +14,7 @@ export type PayStatus = "No pagado" | "Pagado" | "Parcial";
 export type ProductStatus = "Encargado" | "Comprado" | "Recibido" | "Entregado";
 export type ShoppingStatus = "No pagado" | "Pagado" | "Procesando";
 export type DeliveryStatus = "Enviado" | "En tránsito" | "Entregado";
-export type PackageStatus = "Enviado" | "En tránsito" | "Recibido";
+export type PackageStatus = "Enviado" | "Procesado" | "Recibido";
 
 // Constantes para los valores
 export const ORDER_STATUSES = {
@@ -51,7 +51,6 @@ export const DELIVERY_STATUSES = {
 
 export const PACKAGE_STATUSES = {
   ENVIADO: "Enviado",
-  EN_TRANSITO: "En tránsito",
   RECIBIDO: "Recibido"
 } as const;
 

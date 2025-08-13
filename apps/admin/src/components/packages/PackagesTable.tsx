@@ -1,281 +1,87 @@
-import { Clock, MoreHorizontal, Eye, Edit, Truck, CreditCard, RotateCcw, AlertTriangle, CheckCircle } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+
+import PackageStatusBadge from './PackageStatusBadge';
+// Extiende el badge para aceptar 'Procesado'
+import type { PackageStatus } from '@/types/models/base';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import type { PackageTableData } from '@/types/models/packageTable';
-import { packageStatusConfig, packageActionConfig } from '@/types/models/packageTable';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import type { Package } from '@/types';
+import { Camera, Edit2,Trash2 } from 'lucide-react';
 
-interface PackagesTableProps {
-  packages?: PackageTableData[];
-  onTrackPackage?: (pkg: PackageTableData) => void;
-  onEditPackage?: (pkg: PackageTableData) => void;
-  onDeliverPackage?: (pkg: PackageTableData) => void;
-  onViewPackage?: (pkg: PackageTableData) => void;
-  onInvoicePackage?: (pkg: PackageTableData) => void;
-  onPackageClick?: (pkg: PackageTableData) => void;
-}
 
-// Iconos para las acciones
-const actionIcons = {
-  view: Eye,
-  edit: Edit,
-  track: Truck,
-  deliver: CheckCircle,
-  invoice: CreditCard,
-  resend: RotateCcw,
-  claim: AlertTriangle,
-  resolve: AlertTriangle
-};
 
-// Función para formatear la fecha
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-  
-  if (diffInHours < 1) {
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    return `Hace ${diffInMinutes} min`;
-  } else if (diffInHours < 24) {
-    return `Hace ${diffInHours} horas`;
-  } else {
-    return date.toLocaleDateString('es-ES', { 
-      day: '2-digit', 
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-};
 
 // Datos de ejemplo
-const mockPackages: PackageTableData[] = [
+const mockPackages: Package[] = [
   {
-    id: "1",
-    trackingCode: "#PKG-001234",
-    recipient: "Juan Pérez",
-    recipientEmail: "juan.perez@email.com",
-    recipientPhone: "+57 300 1234567",
-    address: "Calle 123 #45-67, Bogotá",
-    city: "bogota",
-    status: "transito",
-    lastUpdate: "2024-01-20T13:30:00Z",
-    weight: 2.5,
-    dimensions: "30x20x15 cm",
-    declaredValue: 150000,
-    orderCode: "#ORD-5678",
-    carrier: "Servientrega",
-    notes: "Entregar en horario de oficina"
+    id: 1,
+    agency_name: "2",
+    number_of_tracking: "#PKG-001234",
+    status_of_processing: "Enviado",
+    package_picture: []
   },
   {
-    id: "2",
-    trackingCode: "#PKG-001235",
-    recipient: "María García",
-    recipientEmail: "maria.garcia@email.com",
-    recipientPhone: "+57 301 9876543",
-    address: "Carrera 15 #78-90, Medellín",
-    city: "medellin",
-    status: "entrega",
-    lastUpdate: "2024-01-20T14:00:00Z",
-    weight: 1.2,
-    dimensions: "25x15x10 cm",
-    declaredValue: 80000,
-    orderCode: "#ORD-5679",
-    carrier: "Coordinadora",
-    notes: "Verificar documento de identidad"
+    id: 2,
+    agency_name: "3",
+    number_of_tracking: "#PKG-001235",
+    status_of_processing: "Enviado",
+    package_picture: []
   },
   {
-    id: "3",
-    trackingCode: "#PKG-001236",
-    recipient: "Carlos Rodríguez",
-    recipientEmail: "carlos.rodriguez@email.com",
-    recipientPhone: "+57 302 5555555",
-    address: "Avenida 68 #25-34, Bogotá",
-    city: "bogota",
-    status: "entregado",
-    lastUpdate: "2024-01-19T15:45:00Z",
-    weight: 0.8,
-    dimensions: "20x10x5 cm",
-    declaredValue: 45000,
-    orderCode: "#ORD-5680",
-    carrier: "Servientrega",
-    notes: "Entregado al portero"
+    id: 3,
+    agency_name: "24",
+    number_of_tracking: "#PKG-001236",
+    status_of_processing: "Recibido",
+    package_picture: []
   },
   {
-    id: "4",
-    trackingCode: "#PKG-001237",
-    recipient: "Ana López",
-    recipientEmail: "ana.lopez@email.com",
-    recipientPhone: "+57 303 7777777",
-    address: "Zona Industrial 789, Cali",
-    city: "cali",
-    status: "preparacion",
-    lastUpdate: "2024-01-20T09:15:00Z",
-    weight: 5.0,
-    dimensions: "40x30x25 cm",
-    declaredValue: 300000,
-    orderCode: "#ORD-5681",
-    carrier: "Inter Rapidísimo",
-    notes: "Paquete frágil - manejar con cuidado"
+    id: 4,
+    agency_name: "34",
+    number_of_tracking: "#PKG-001237",
+    status_of_processing: "Procesado",
+    package_picture: []
   }
 ];
 
-export default function PackagesTable({
-  packages = mockPackages,
-  onTrackPackage,
-  onEditPackage,
-  onDeliverPackage,
-  onViewPackage,
-  onInvoicePackage,
-  onPackageClick
-}: PackagesTableProps) {
-  const handleAction = (action: string, pkg: PackageTableData) => {
-    switch (action) {
-      case 'track':
-        onTrackPackage?.(pkg);
-        break;
-      case 'edit':
-        onEditPackage?.(pkg);
-        break;
-      case 'deliver':
-        onDeliverPackage?.(pkg);
-        break;
-      case 'view':
-        onViewPackage?.(pkg);
-        break;
-      case 'invoice':
-        onInvoicePackage?.(pkg);
-        break;
-      default:
-        console.log(`Acción ${action} no implementada para:`, pkg);
-    }
-  };
-
-  const getActionLabel = (action: string): string => {
-    const actionLabels = {
-      view: 'Ver Detalles',
-      edit: 'Editar',
-      track: 'Rastrear',
-      deliver: 'Entregar',
-      invoice: 'Facturar',
-      resend: 'Reenviar',
-      claim: 'Reclamar',
-      resolve: 'Resolver',
-      cancel: 'Cancelar'
-    };
-    return actionLabels[action as keyof typeof actionLabels] || action;
-  };
-
+const PackageTable: React.FC = () => {
   return (
-    <Card className="shadow-lg border-0 bg-white rounded-2xl overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Código
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Destinatario
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Dirección
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Estado
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Última Actualización
-              </th>
-              <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {packages.map((pkg) => {
-              const statusConfig = packageStatusConfig[pkg.status];
-              const availableActions = packageActionConfig[pkg.status] || [];
-
-              return (
-                <tr 
-                  key={pkg.id}
-                  className="hover:bg-gray-50/80 transition-colors duration-200 cursor-pointer group"
-                  onClick={() => onPackageClick?.(pkg)}
-                >
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                      {pkg.trackingCode}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {pkg.orderCode}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">
-                      {pkg.recipient}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {pkg.recipientPhone}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-600 max-w-xs truncate">
-                      {pkg.address}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {pkg.carrier}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge className={`${statusConfig.className} rounded-full px-3 py-1 w-fit`}>
-                      {statusConfig.label}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <Clock className="h-4 w-4" />
-                      {formatDate(pkg.lastUpdate)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
-                        {availableActions.map((action) => {
-                          const ActionIcon = actionIcons[action as keyof typeof actionIcons];
-                          return (
-                            <DropdownMenuItem 
-                              key={action}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAction(action, pkg);
-                              }}
-                              className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
-                            >
-                              {ActionIcon && <ActionIcon className="h-4 w-4" />}
-                              {getActionLabel(action)}
-                            </DropdownMenuItem>
-                          );
-                        })}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+    <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+      <Table>
+        <TableHeader className="bg-gray-100 ">
+          <TableRow>
+            <TableHead>#</TableHead>
+            <TableHead>ID</TableHead>
+            <TableHead>No. Rastreo</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead>Captura</TableHead>
+            <TableHead>Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {mockPackages.map((apackage, index) => (
+            <TableRow key={apackage.id}>
+              <TableCell>{index + 1}</TableCell>
+              <TableCell>{apackage.agency_name}</TableCell>
+              <TableCell>{apackage.number_of_tracking}</TableCell>
+              <TableCell>
+                <PackageStatusBadge status={apackage.status_of_processing as PackageStatus} />
+              </TableCell>
+              <TableCell>
+                <Camera className='h-5 w-5' />
+              </TableCell>
+              <TableCell>
+                <Button variant="secondary" className="mr-2">
+                  <Edit2 className="h-5 w-5" />
+                </Button>
+                <Button variant="secondary">
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
+
+export default PackageTable;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShopsHeader, ShopsFilters, ShopsStats, ShopsTable } from '@/components/shops';
+import { ShopsHeader, ShopsFilters, ShopsTable } from '@/components/shops';
 import type { Shop } from '@/types/models/shop';
 
 export default function Shops() {
@@ -38,8 +38,6 @@ export default function Shops() {
         onSearchChange={handleSearchChange}
         onShopCreated={handleShopCreated}
       />
-
-      <ShopsStats />
 
       <ShopsTable
         shops={shops.length > 0 ? shops : undefined}

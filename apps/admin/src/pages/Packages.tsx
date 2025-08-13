@@ -7,9 +7,6 @@ export default function Packages() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
 
-  const handleAddPackage = () => {
-    console.log('Agregar nuevo paquete');
-  };
 
   const handleTrackPackage = (pkg: PackageTableData) => {
     console.log('Rastrear paquete:', pkg);
@@ -36,8 +33,8 @@ export default function Packages() {
   };
 
   return (
-    <div className="space-y-6">
-      <PackagesHeader onAddPackage={handleAddPackage} />
+    <div className="space-y-5">
+      <PackagesHeader />
       <PackagesStats />
       <PackagesFilters 
         searchTerm={searchTerm}

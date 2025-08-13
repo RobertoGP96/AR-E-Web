@@ -1,11 +1,7 @@
-import { Plus, Package } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Package } from "lucide-react";
 
-interface PackagesHeaderProps {
-  onAddPackage?: () => void;
-}
 
-export default function PackagesHeader({ onAddPackage }: PackagesHeaderProps) {
+export default function PackagesHeader() {
   return (
     <div className="flex items-center justify-between">
       <div>
@@ -17,13 +13,7 @@ export default function PackagesHeader({ onAddPackage }: PackagesHeaderProps) {
           Gestiona todos los paquetes en tránsito y entregados
         </p>
       </div>
-      <Button 
-        onClick={onAddPackage}
-        className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border-0"
-      >
-        <Plus className="h-5 w-5" />
-        Nuevo Paquete
-      </Button>
+      
     </div>
   );
 }

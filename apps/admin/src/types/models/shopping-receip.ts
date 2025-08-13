@@ -4,6 +4,7 @@
 
 import type { ID, DateTime, ShoppingStatus } from './base';
 import type { BuyingAccount } from './buying-account';
+import type { ProductBuyed } from './product-buyed';
 import type { Shop } from './shop';
 
 // Modelo principal
@@ -16,6 +17,7 @@ export interface ShoppingReceip {
   
   // Propiedades computadas
   total_cost_of_shopping: number;
+  buyed_products?: ProductBuyed[];
 }
 
 // Tipos para crear/editar recibo de compra
