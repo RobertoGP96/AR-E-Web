@@ -1,12 +1,7 @@
-import { Plus, Truck, Route } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Truck } from 'lucide-react';
 
-interface DeliveryHeaderProps {
-  onAddRoute?: () => void;
-  onOptimizeRoutes?: () => void;
-}
 
-export default function DeliveryHeader({ onAddRoute, onOptimizeRoutes }: DeliveryHeaderProps) {
+export default function DeliveryHeader() {
   return (
     <div className="flex items-center justify-between">
       <div>
@@ -19,21 +14,6 @@ export default function DeliveryHeader({ onAddRoute, onOptimizeRoutes }: Deliver
         </p>
       </div>
       <div className="flex gap-3">
-        <Button 
-          variant="outline"
-          onClick={onOptimizeRoutes}
-          className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
-        >
-          <Route className="h-5 w-5" />
-          Optimizar Rutas
-        </Button>
-        <Button 
-          onClick={onAddRoute}
-          className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border-0"
-        >
-          <Plus className="h-5 w-5" />
-          Nueva Ruta
-        </Button>
       </div>
     </div>
   );

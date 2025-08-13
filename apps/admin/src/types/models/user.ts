@@ -12,7 +12,8 @@ export type UserRole =
   | 'buyer'
   | 'logistical'
   | 'community_manager'
-  | 'admin';
+  | 'admin'
+  | 'client';
 
 // Modelo principal
 export interface CustomUser {
@@ -129,4 +130,5 @@ export const roleLabels: Record<UserRole, string> = {
   logistical: 'Logístico',
   community_manager: 'Community Manager',
   admin: 'Administrador',
+  client: 'Cliente',
 };

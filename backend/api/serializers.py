@@ -489,5 +489,7 @@ class PackageSerializer(serializers.ModelSerializer):
             "status_of_processing",
             "package_picture",
             "contained_products",
+            "created_at",
+            "updated_at",
         ]
-        read_only_fields = ["id"]
+        read_only_fields = ["id", "created_at", "updated_at"]

@@ -55,4 +55,4 @@ export const PACKAGE_STATUSES = {
 } as const;
 
 // Tipos de roles de usuario
-export type UserRole = 'agent' | 'accountant' | 'buyer' | 'logistical' | 'community_manager';
+export type UserRole = 'agent' | 'accountant' | 'buyer' | 'logistical' | 'community_manager' | 'client';

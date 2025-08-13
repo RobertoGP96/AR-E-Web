@@ -29,6 +29,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         ('logistical', 'Logístico'),
         ('community_manager', 'Community Manager'),
         ('admin', 'Administrador'),
+        ('client', 'Cliente'),
     ]
     
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
@@ -317,6 +318,8 @@ class Package(models.Model):
     number_of_tracking = models.CharField(max_length=100)
     status_of_processing = models.CharField(max_length=100, default="Enviado")
     package_picture = models.ManyToManyField(EvidenceImages)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     objects = models.Manager()
 

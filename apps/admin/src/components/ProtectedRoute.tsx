@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import type { UserRole } from '../types/database';
+import { useAuth } from '../hooks/auth/useAuth';
 import LoadingSpinner from './LoadingSpinner';
+import type { UserRole } from '@/types';
 
 interface ProtectedRouteProps {
   children: ReactNode;

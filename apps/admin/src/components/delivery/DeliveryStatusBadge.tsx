@@ -1,29 +1,30 @@
 import React from "react";
-import { Send, CheckCircle2, FileText } from "lucide-react";
+import { Send, CheckCircle2, Truck } from "lucide-react";
+import type { DeliveryStatus } from "@/types";
 
 interface Props {
-  status: "Enviado" | "Recibido" | "Procesado";
+  status: DeliveryStatus;
 }
 
-const statusConfig = {
+const statusConfig: Record<DeliveryStatus, { color: string; label: string; icon: React.ElementType }> = {
   "Enviado": {
     color: "bg-gray-100 text-gray-800 border-gray-300",
     label: "Enviado",
     icon: Send
   },
-  "Recibido": {
+  "Entregado": {
     color: "bg-green-100 text-green-800 border-green-300",
-    label: "Recibido",
+    label: "Entregado",
     icon: CheckCircle2
   },
-  "Procesado": {
+  "En tránsito": {
     color: "bg-blue-100 text-blue-800 border-blue-300",
-    label: "Procesado",
-    icon: FileText
+    label: "En tránsito",
+    icon: Truck
   }
 };
 
-const PackageStatusBadge: React.FC<Props> = ({ status }) => {
+const DeliveryStatusBadge: React.FC<Props> = ({ status }) => {
   const config = statusConfig[status] || statusConfig["Enviado"];
   const Icon = config.icon;
   return (
@@ -37,4 +38,4 @@ const PackageStatusBadge: React.FC<Props> = ({ status }) => {
   );
 };
 
-export default PackageStatusBadge;
+export default DeliveryStatusBadge;

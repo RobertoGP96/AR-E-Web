@@ -24,6 +24,7 @@ const roleIcons: Record<UserRole, React.ElementType> = {
   logistical: Truck,
   community_manager: Megaphone,
   admin: Shield,
+  client: User,
 };
 
 
@@ -92,6 +93,23 @@ const mockUsers: CustomUser[] = [
     home_address: "Zona Industrial 789",
     phone_number: "+57 303 7777777",
     role: 'logistical',
+    agent_profit: 0,
+    is_staff: false,
+    is_active: false,
+    is_verified: true,
+    date_joined: "2024-01-05T16:45:00Z",
+    sent_verification_email: true,
+    full_name: "Ana López",
+    lastAccess: "2024-01-18T09:10:00Z"
+  },
+  {
+    id: 4,
+    email: "ana.logistics@example.com",
+    name: "Ana",
+    last_name: "López",
+    home_address: "Zona Industrial 789",
+    phone_number: "+57 303 7777777",
+    role: 'client',
     agent_profit: 0,
     is_staff: false,
     is_active: false,

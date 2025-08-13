@@ -12,6 +12,8 @@ export interface Package {
   number_of_tracking: string;
   status_of_processing: PackageStatus;
   package_picture: EvidenceImage[];
+  created_at: string;
+  updated_at: string;
 }
 
 // Tipos para crear/editar paquete
