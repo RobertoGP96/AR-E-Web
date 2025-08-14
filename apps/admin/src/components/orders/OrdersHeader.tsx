@@ -1,4 +1,4 @@
-import { Package } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 
 interface OrdersHeaderProps {
   title?: string;
@@ -10,15 +10,17 @@ export default function OrdersHeader({
   description = "Gestión de todas las órdenes del sistema" 
 }: OrdersHeaderProps) {
   return (
-    <div className="sm:flex sm:items-center">
-      <div className="sm:flex-auto">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-          <Package className="h-6 w-6 text-blue-500" />
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <ShoppingCart className="h-8 w-8 text-orange-500" />
           {title}
         </h1>
-        <p className="mt-2 text-sm text-gray-700">
+        <p className="text-gray-600 mt-2">
           {description}
         </p>
+      </div>
+      <div className="flex gap-3">
       </div>
     </div>
   );

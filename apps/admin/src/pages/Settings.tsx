@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Save, User, Shield, Bell, Database, Settings as SettingsIcon } from 'lucide-react';
+import { Save, User, Shield, Bell, Database, Settings as SettingsIcon, StoreIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { ShopsHeader, ShopsTable } from '@/components/shops';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
@@ -11,6 +12,7 @@ const Settings = () => {
   const tabs = [
     { id: 'general', name: 'General', icon: User },
     { id: 'notifications', name: 'Notificaciones', icon: Bell },
+    { id: 'stores', name: 'Tiendas', icon: StoreIcon },
     { id: 'security', name: 'Seguridad', icon: Shield },
     { id: 'system', name: 'Sistema', icon: Database },
   ];
@@ -345,6 +347,18 @@ const Settings = () => {
               </CardContent>
             </Card>
           )}
+
+          {activeTab === 'stores' && (
+            <Card className="shadow-lg border-0 bg-white rounded-2xl">
+              <CardHeader className="pb-4">
+                <ShopsHeader/>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <ShopsTable/>
+              </CardContent>
+            </Card>
+          )}
+          
 
           {activeTab !== 'general' && (
             <div className="flex justify-end">

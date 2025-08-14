@@ -3,24 +3,31 @@ import React from "react";
 import type { CustomUser } from "@/types";
 import { User } from "lucide-react";
 import { Avatar, AvatarFallback } from "../ui/avatar";
+import { formatPhone } from "@/lib/format-phone";
 
 interface Props {
     user: CustomUser;
 }
 
+
 const AvatarUser: React.FC<Props> = ({ user }) => {
+    // Detecta si el usuario NO es cliente (ajusta la propiedad según tu modelo)
+    const isNotClient = user && user.role && user.role !== "client";
+
+    // Estilos condicionales para el avatar
+    const avatarClass = `h-10 w-10 ${isNotClient ? "border-2 border-gray-500 bg-gradient-to-br from-gray-400 to-gray-200" : "bg-gradient-to-br from-orange-400 to-yellow-200"}`;
+
     return (
         <div className="flex items-center space-x-4">
-            <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-gradient-to-br from-orange-400 to-yellow-200 font-semibold">
+            <Avatar className={avatarClass}>
+                <AvatarFallback className={`font-semibold ${isNotClient ? "bg-white border-gray-500 border-2" : "bg-gradient-to-br from-orange-400 to-yellow-200"}`}>
                     {user ? (
                         <>
-                            <span className="text-">{user.last_name.charAt(0) + user.name.charAt(0)}</span>
+                            <span>{user.name.charAt(0)+user.last_name.charAt(0)}</span>
                         </>
                     ) : (
                         <User />
                     )}
-
                 </AvatarFallback>
             </Avatar>
             {user && <div>
@@ -28,7 +35,7 @@ const AvatarUser: React.FC<Props> = ({ user }) => {
                     {user.full_name}
                 </div>
                 <div className="text-sm text-gray-500">
-                    {user.phone_number}
+                    {formatPhone(user.phone_number)}
                 </div>
             </div>
             }

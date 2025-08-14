@@ -1,4 +1,4 @@
-import { Edit, Trash2, MoreHorizontal, Shield, User, ShoppingCart, Truck, Calculator, Megaphone, Clock, Phone } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Shield, User, ShoppingCart, Truck, Calculator, Megaphone, Clock, Phone, Hand, HandGrab, HandHelping, HandHeart, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -18,7 +18,7 @@ interface UsersTableProps {
 // Iconos para los roles
 const roleIcons: Record<UserRole, React.ElementType> = {
   user: User,
-  agent: Shield,
+  agent: Handshake,
   accountant: Calculator,
   buyer: ShoppingCart,
   logistical: Truck,
@@ -182,7 +182,7 @@ export default function UsersTable({
                 </TableCell>
                 <TableCell>
                   <Badge variant={"secondary"} className="rounded-full px-3 py-1 flex items-center gap-1 w-fit">
-                    <RoleIcon className="h-3 w-3" />
+                    <RoleIcon className="h-5 w-5" />
                     {roleLabels[user.role]}
                   </Badge>
                 </TableCell>

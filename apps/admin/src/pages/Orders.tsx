@@ -11,20 +11,6 @@ const Orders = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
 
-  if (isLoading) {
-    return <LoadingSpinner size="lg" text="Cargando órdenes..." />;
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-md p-4">
-        <div className="text-sm text-red-700">
-          Error al cargar las órdenes
-        </div>
-      </div>
-    );
-  }
-
   // Calcular estadísticas
   const ordersArray = orders || [];
   const totalRevenue = ordersArray.reduce((sum: number, order: Order) => sum + (order.total_cost || 0), 0);
@@ -43,7 +29,7 @@ const Orders = () => {
   };
 
   return (
-    <div>
+    <div className='space-y-6'>
       <OrdersHeader />
       
       <OrdersStats stats={stats} />

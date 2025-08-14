@@ -118,15 +118,13 @@ export default function ShopsTable({
   }
 
   return (
-    <div className="w-1/2 overflow-x-auto rounded-lg border border-muted bg-background shadow">
+    <div className="w-1/3 overflow-x-auto rounded-lg border border-muted bg-background shadow">
       <Table >
         <TableHeader className='bg-gray-100' >
           <TableRow className="">
             <TableHead className="text-center">#</TableHead>
-            <TableHead className="">Logo</TableHead>
-            <TableHead className="">ID</TableHead>
-            <TableHead className="">Nombre</TableHead>
-            <TableHead className="">Acciones</TableHead>
+            <TableHead className="">Tiendas Disponibles</TableHead>
+            <TableHead className=""></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -141,44 +139,41 @@ export default function ShopsTable({
                 </span>
               </TableCell>
               <TableCell className="py-4 px-6">
-                <div className="flex items-center justify-center w-15 h-15 rounded-xl bg-gradient-to-br from-white to-gray-50 shadow-sm border border-gray-100 overflow-hidden group-hover:shadow-md transition-shadow duration-200">
-                  <img
-                    src={getShopLogo(shop.name)}
-                    alt={`${shop.name} logo`}
-                    className="w-18 h-18 object-contain filter drop-shadow-sm"
-                    onError={(e) => {
-                      // Fallback a un ícono si la imagen falla
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
-                  <Store className="w-6 h-6 text-gray-400 hidden" />
-                </div>
-              </TableCell>
-              <TableCell className="py-4 px-6">
-                <span className="inline-flex text-gray-600 items-center justify-center w-8 h-8 font-semibold">
-                  {"#" + shop.id}
-                </span>
-              </TableCell>
-              <TableCell className="py-4 px-6">
-                <div className="flex flex-row gap-2">
-                  <span className="font-semibold text-gray-900 text-base">{shop.name}</span>
-                  <div>
-                    <Badge variant="outline">
+                <div className='flex flex-row gap-4'>
+                  <div className="flex items-center justify-center w-15 h-15 rounded-xl bg-gradient-to-br from-white to-gray-50 shadow-sm border border-gray-100 overflow-hidden group-hover:shadow-md transition-shadow duration-200">
+                    <img
+                      src={getShopLogo(shop.name)}
+                      alt={`${shop.name} logo`}
+                      className="w-18 h-18 object-contain filter drop-shadow-sm"
+                      onError={(e) => {
+                        // Fallback a un ícono si la imagen falla
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
 
-                      <a
-                        href={shop.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-sm  rounded-lg bg-gradient-to-r "
-                      >
-                        <ExternalLink className="h-4 w-4" />
+                    />
+                    <Store className="w-6 h-6 text-gray-400 hidden" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <span className="font-semibold text-gray-700 text-base">{shop.name}</span>
+                    <div>
+                      <Badge variant="outline">
+                        <a
+                          href={shop.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-sm  rounded-lg bg-gradient-to-r "
+                        >
+                          <ExternalLink className="h-4 w-4" />
 
-                      </a>
-                    </Badge>
+                        </a>
+                      </Badge>
+                    </div>
                   </div>
                 </div>
+
               </TableCell>
+
 
 
               <TableCell className="p-4 ">

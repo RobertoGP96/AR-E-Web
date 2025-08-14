@@ -1,265 +1,150 @@
-import { Eye } from 'lucide-react';
-import type { OrderTableData } from '@/types/models/orderTable';
-import { orderStatusConfig, payStatusConfig } from '@/types/models/orderTable';
-import type { CustomUser } from '@/types/models/user';
 
-interface OrdersTableProps {
-  orders?: OrderTableData[];
-  onViewDetails?: (order: OrderTableData) => void;
-}
+import OrderStatusBadge from './OrderStatusBadge';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { formatCurrency, type CustomUser, type DeliverReceip, type Order, type OrderStatus, type PayStatus } from '@/types';
+import { Edit2, ShoppingCart, Trash2 } from 'lucide-react';
+import AvatarUser from '../utils/AvatarUser';
+import PayStatusBadge from '../utils/PayStatusBadge';
 
-// Datos de ejemplo que coinciden con la estructura actual
-const mockOrders: OrderTableData[] = [
+const mockManager: CustomUser = {
+  id: 2,
+  email: "albert@gmail.com",
+  name: "Alberto",
+  last_name: "Do Rego",
+  full_name: "Alberto Do Rego",
+  home_address: "Calle Progreso #105",
+  phone_number: "+53-5545-5678",
+  role: "admin",
+  agent_profit: 0,
+  is_staff: true,
+  is_active: true,
+  is_verified: true,
+  date_joined: "2023-01-02T11:00:00Z",
+  sent_verification_email: true
+};
+
+const mockClient: CustomUser = {
+  id: 3,
+  email: "client@demo.com",
+  name: "Carlos",
+  last_name: "Pérez",
+  full_name: "Carlos Pérez",
+  home_address: "Av. Principal 456",
+  phone_number: "+51-555-5678",
+  role: "client",
+  agent_profit: 0,
+  is_staff: true,
+  is_active: true,
+  is_verified: true,
+  date_joined: "2023-01-02T11:00:00Z",
+  sent_verification_email: true
+};
+
+
+// Datos de ejemplo
+const mockOrder: Order[] = [
   {
     id: 1,
-    client: { 
-      id: 1, 
-      name: "Juan", 
-      last_name: "Pérez",
-      email: "juan@example.com",
-      home_address: "",
-      phone_number: "",
-      role: "user",
-      agent_profit: 0,
-      is_staff: false,
-      is_active: true,
-      is_verified: true,
-      date_joined: "",
-      sent_verification_email: false,
-      full_name: "Juan Pérez"
-    } as CustomUser,
-    sales_manager: { 
-      id: 1, 
-      name: "Ana", 
-      last_name: "García",
-      email: "ana@example.com",
-      home_address: "",
-      phone_number: "",
-      role: "agent",
-      agent_profit: 0,
-      is_staff: false,
-      is_active: true,
-      is_verified: true,
-      date_joined: "",
-      sent_verification_email: false,
-      full_name: "Ana García"
-    } as CustomUser,
-    status: "Completado",
-    pay_status: "Pagado",
-    total_cost: 150000,
-    received_products: [],
-    received_value_of_client: 150000,
+    sales_manager: mockManager,
+    client: mockClient,
+    status: 'Encargado',
+    pay_status: 'Pagado',
     extra_payments: 0,
-    customerName: "Juan Pérez",
-    customerEmail: "juan@example.com",
-    orderDate: "2024-01-15",
-    itemsCount: 3
+    received_products: [] as DeliverReceip[],
+    received_value_of_client: 0,
+    total_cost: 150.75,
   },
   {
     id: 2,
-    client: { 
-      id: 2, 
-      name: "María", 
-      last_name: "López",
-      email: "maria@example.com",
-      home_address: "",
-      phone_number: "",
-      role: "user",
-      agent_profit: 0,
-      is_staff: false,
-      is_active: true,
-      is_verified: true,
-      date_joined: "",
-      sent_verification_email: false,
-      full_name: "María López"
-    } as CustomUser,
-    sales_manager: { 
-      id: 1, 
-      name: "Ana", 
-      last_name: "García",
-      email: "ana@example.com",
-      home_address: "",
-      phone_number: "",
-      role: "agent",
-      agent_profit: 0,
-      is_staff: false,
-      is_active: true,
-      is_verified: true,
-      date_joined: "",
-      sent_verification_email: false,
-      full_name: "Ana García"
-    } as CustomUser,
-    status: "Procesando",
-    pay_status: "Parcial",
-    total_cost: 89500,
-    received_products: [],
-    received_value_of_client: 45000,
+    sales_manager: mockManager,
+    client: mockClient,
+    status: 'Procesando',
+    pay_status: 'No pagado',
     extra_payments: 0,
-    customerName: "María López",
-    customerEmail: "maria@example.com",
-    orderDate: "2024-01-14",
-    itemsCount: 2
+    received_products: [] as DeliverReceip[],
+    received_value_of_client: 0,
+    total_cost: 200.00,
   },
   {
     id: 3,
-    client: { 
-      id: 3, 
-      name: "Carlos", 
-      last_name: "Ruiz",
-      email: "carlos@example.com",
-      home_address: "",
-      phone_number: "",
-      role: "user",
-      agent_profit: 0,
-      is_staff: false,
-      is_active: true,
-      is_verified: true,
-      date_joined: "",
-      sent_verification_email: false,
-      full_name: "Carlos Ruiz"
-    } as CustomUser,
-    sales_manager: { 
-      id: 2, 
-      name: "Pedro", 
-      last_name: "Morales",
-      email: "pedro@example.com",
-      home_address: "",
-      phone_number: "",
-      role: "agent",
-      agent_profit: 0,
-      is_staff: false,
-      is_active: true,
-      is_verified: true,
-      date_joined: "",
-      sent_verification_email: false,
-      full_name: "Pedro Morales"
-    } as CustomUser,
-    status: "Encargado",
-    pay_status: "No pagado",
-    total_cost: 275000,
-    received_products: [],
-    received_value_of_client: 0,
+    sales_manager: mockManager,
+    client: mockClient,
+    status: 'Cancelado',
+    pay_status: 'Pagado',
     extra_payments: 0,
-    customerName: "Carlos Ruiz",
-    customerEmail: "carlos@example.com",
-    orderDate: "2024-01-13",
-    itemsCount: 5
+    received_products: [] as DeliverReceip[],
+    received_value_of_client: 0,
+    total_cost: 100.00,
   }
-];
+]
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(amount);
-};
-
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('es-ES');
-};
-
-export default function OrdersTable({
-  orders = mockOrders,
-  onViewDetails
-}: OrdersTableProps) {
+const OrderTable: React.FC = () => {
   return (
-    <div className="mt-8 flex flex-col">
-      <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-        <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-          <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-            <table className="min-w-full divide-y divide-gray-300">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Orden #
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cliente
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Items
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado Pago
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha
-                  </th>
-                  <th className="relative px-6 py-3">
-                    <span className="sr-only">Acciones</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {orders.map((order) => {
-                  const statusInfo = orderStatusConfig[order.status];
-                  const payStatusInfo = payStatusConfig[order.pay_status];
-                  
-                  return (
-                    <tr key={order.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          #{order.id}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {order.customerName || order.client.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {order.customerEmail || order.client.email}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {formatCurrency(order.total_cost)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {order.itemsCount || order.received_products?.length || 0} items
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusInfo.className}`}>
-                          {statusInfo.label}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${payStatusInfo.className}`}>
-                          {payStatusInfo.label}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {order.orderDate ? formatDate(order.orderDate) : 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button 
-                          className="text-blue-600 hover:text-blue-900"
-                          onClick={() => onViewDetails?.(order)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+    <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+      <Table>
+        <TableHeader className="bg-gray-100 ">
+          <TableRow>
+            <TableHead>#</TableHead>
+            <TableHead>ID</TableHead>
+            <TableHead>Manager</TableHead>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Productos</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead>Costo</TableHead>
+            <TableHead>Pago</TableHead>
+            <TableHead>Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {mockOrder.map((order, index) => (
+            <TableRow key={order.id}>
+              <TableCell>{index + 1}</TableCell>
+              <TableCell>
+                <div className='flex flex-row items-center'>
+                  <span className='rounded-full bg-gray-200 px-2  py-1 text-xs font-medium'>
+                    {"#" + order.id}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <AvatarUser user={order.sales_manager} />
+              </TableCell>
+              <TableCell>
+                <AvatarUser user={order.client} />
+              </TableCell>
+              <TableCell>
+                <div className='flex flex-row items-center gap-0.5 text-gray-600'>
+                  <ShoppingCart className='h-4 w-4'/>
+                  <span>
+                    {order.received_products.length}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <OrderStatusBadge status={order.status as OrderStatus} />
+              </TableCell>
+              <TableCell>
+                {formatCurrency(order.total_cost)}
+              </TableCell>
+              <TableCell>
+                <PayStatusBadge status={order.pay_status as PayStatus} />
+              </TableCell>
+
+              <TableCell>
+                <Button variant="secondary" className="mr-2">
+                  <Edit2 className="h-5 w-5" />
+                </Button>
+                <Button variant="secondary">
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
+
+export default OrderTable;

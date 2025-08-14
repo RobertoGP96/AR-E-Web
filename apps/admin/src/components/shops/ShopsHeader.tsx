@@ -7,8 +7,8 @@ interface ShopsHeaderProps {
 }
 
 export default function ShopsHeader({ 
-  title = "Tiendas", 
-  description = "Gestiona las tiendas del sistema",
+  title = "Tiendas & Cuentas", 
+  description = "Gestiona las tiendas y sus cuentas",
 }: ShopsHeaderProps) {
   return (
     <div className="flex items-center justify-between">
