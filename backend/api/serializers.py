@@ -209,21 +209,32 @@ class OrderSerializer(serializers.ModelSerializer):
 class ShopSerializer(serializers.ModelSerializer):
     """Serializer of diferents shops"""
 
+    buying_accounts = serializers.StringRelatedField(many=True, read_only=True)
+
     class Meta:
         """Class of model"""
 
         model = Shop
-        fields = ["name", "link"]
+        fields = ["name", "link", "buying_accounts"]
 
 
 class BuyingAccountsSerializer(serializers.ModelSerializer):
     """Serializer of buying accounts"""
 
+    shop = serializers.SlugRelatedField(
+        queryset=Shop.objects.all(),
+        slug_field="name",
+        error_messages={
+            "does_not_exist": "La tienda {value} no existe.",
+            "invalid": "El valor proporcionado para la tienda no es válido.",
+        },
+    )
+
     class Meta:
         """Class of model"""
 
         model = BuyingAccounts
-        fields = ["account_name"]
+        fields = ["account_name", "shop"]
 
 
 class CommonInformationSerializer(serializers.ModelSerializer):

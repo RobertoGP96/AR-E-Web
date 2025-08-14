@@ -12,13 +12,12 @@ from api.managers import CustomUserManager
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     """Custom user model"""
-
     # Account data
-    email = models.EmailField(_("email address"), unique=True)
+    email = models.EmailField(_("email"), unique=True)
     name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     home_address = models.CharField(max_length=200)
-    phone_number = models.CharField(max_length=20)
+    phone_number = models.CharField(max_length=20, unique=True)
     
     # Roles choices
     ROLE_CHOICES = [
@@ -44,7 +43,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     verification_secret = models.CharField(max_length=200, blank=True, null=True)
     password_secret = models.CharField(max_length=200, blank=True, null=True)
 
-    USERNAME_FIELD = "email"
+    USERNAME_FIELD = "phone_number"
     REQUIRED_FIELDS = ["name"]
 
     objects = CustomUserManager()
@@ -112,7 +111,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 class Order(models.Model):
     """Orders in shops"""
 
-    # Siempre declarar null en los foreign keys
     client = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name="orders"
     )
@@ -169,11 +167,11 @@ class BuyingAccounts(models.Model):
     """Accounts for buying in Shops"""
 
     account_name = models.CharField(max_length=100, unique=True)
-
     objects = models.Manager()
 
     def __str__(self):
         return self.account_name
+        shop = models.ForeignKey('Shop', on_delete=models.CASCADE, related_name='buying_accounts')
 
 
 class CommonInformation(models.Model):
@@ -227,16 +225,6 @@ class Product(models.Model):
     own_taxes = models.FloatField(default=0)
     added_taxes = models.FloatField(default=0)
     total_cost = models.FloatField(default=0)
-
-    # def total_cost(self):
-    #     """Total cost of product"""
-    #     return (
-    #         self.shop_cost
-    #         * self.shop_delivery_cost
-    #         * self.shop_taxes
-    #         * self.own_taxes
-    #         * self.added_taxes
-    #     )
 
     objects = models.Manager()
 
@@ -300,15 +288,10 @@ class DeliverReceip(models.Model):
     status = models.CharField(max_length=100, default="Enviado")
     deliver_date = models.DateTimeField(default=timezone.now)
     deliver_picture = models.ManyToManyField(EvidenceImages)
+    weight_cost = models.FloatField(default=0)
+    manager_profit = models.FloatField(default=0)
 
     objects = models.Manager()
-
-    def total_cost_of_deliver(self):
-        """Total cost of delivered objects"""
-        cost = self.weight * CommonInformation.objects.get(pk=2).cost_per_pound
-        for i in self.delivered_products.all():
-            cost += i.original_product.cost_per_product() * i.amount_received
-        return cost
 
 
 class Package(models.Model):
@@ -345,14 +328,6 @@ class ProductBuyed(models.Model):
     real_cost_of_product = models.FloatField()
 
     objects = models.Manager()
-
-    # def real_cost_of_product(self):
-    #     return (
-    #         self.original_product.total_cost()
-    #         * self.shop_discount
-    #         * self.offer_discount
-    #     )
-
 
 class ProductReceived(models.Model):
     """Buyed Products"""
