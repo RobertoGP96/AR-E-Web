@@ -6,6 +6,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, Group, Permission
 from django.utils.translation import gettext_lazy as _
 from api.managers import CustomUserManager
+from api.enums import OrderStatusEnum, PaymentStatusEnum
 
 # Create your models here.
 
@@ -117,8 +118,16 @@ class Order(models.Model):
     sales_manager = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name="managed_orders"
     )
-    status = models.CharField(max_length=100, default="Encargado")
-    pay_status = models.CharField(max_length=100, default="No pagado")
+    status = models.CharField(
+        max_length=100,
+        choices=[(tag.value, tag.value) for tag in OrderStatusEnum],
+        default=OrderStatusEnum.ENCARGADO.value
+    )
+    pay_status = models.CharField(
+        max_length=100,
+        choices=[(tag.value, tag.value) for tag in PaymentStatusEnum],
+        default=PaymentStatusEnum.NO_PAGADO.value
+    )
 
     def __str__(self):
         return "Pedido #" + str(self.pk) + " creado por " + str(self.client.name)
@@ -152,7 +161,6 @@ class Order(models.Model):
         return self.received_value_of_client() - self.total_cost()
 
     objects = models.Manager()
-
 
 class Shop(models.Model):
     """Shops in catalog"""
@@ -215,7 +223,11 @@ class Product(models.Model):
     category = models.CharField(max_length=200, null=True)
     amount_requested = models.IntegerField()
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="products")
-    status = models.CharField(max_length=100, default="Encargado")
+    status = models.CharField(
+        max_length=100,
+        choices=[(tag.value, tag.value) for tag in OrderStatusEnum],
+        default=OrderStatusEnum.ENCARGADO.value
+    )
     product_pictures = models.ManyToManyField(EvidenceImages)
 
     # Product prices
@@ -228,35 +240,6 @@ class Product(models.Model):
 
     objects = models.Manager()
 
-    def cost_per_product(self):
-        """Cost after payment for product"""
-        cost = 0
-        ocurrences = 0
-        for i in self.buys.all():
-            cost += i.actual_cost_of_product
-            ocurrences += i.amount_buyed
-        return float(cost / ocurrences) if ocurrences > 0 else 0
-
-    def amount_buyed(self):
-        """Amount of product buyed"""
-        amount = 0
-        for i in self.buys.all():
-            amount += i.amount_buyed
-        return amount
-
-    def amount_received(self):
-        """Amount of product received"""
-        amount = 0
-        for i in self.delivers.all():
-            amount += i.amount_received
-        return amount
-
-    def amount_delivered(self):
-        """Amount of product delivered"""
-        amount = 0
-        for i in self.delivers.all():
-            amount += i.amount_delivered
-        return amount
 
 
 class ShoppingReceip(models.Model):
@@ -266,16 +249,14 @@ class ShoppingReceip(models.Model):
         BuyingAccounts, on_delete=models.CASCADE, related_name="buys"
     )
     shop_of_buy = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="buys")
-    status_of_shopping = models.CharField(max_length=100, default="No pagado")
+    status_of_shopping = models.CharField(
+        max_length=100,
+        choices=[(tag.value, tag.value) for tag in PaymentStatusEnum],
+        default=PaymentStatusEnum.NO_PAGADO.value
+    )
     buy_date = models.DateTimeField(default=timezone.now)
     objects = models.Manager()
 
-    def total_cost_of_shopping(self):
-        """Total cost of shopping"""
-        cost = 0
-        for i in self.buyed_products.all():
-            cost += i.real_cost_of_product
-        return cost
 
 
 class DeliverReceip(models.Model):
@@ -285,7 +266,11 @@ class DeliverReceip(models.Model):
         Order, on_delete=models.CASCADE, related_name="delivery_receipts"
     )
     weight = models.FloatField()
-    status = models.CharField(max_length=100, default="Enviado")
+    status = models.CharField(
+        max_length=100,
+        choices=[(tag.value, tag.value) for tag in OrderStatusEnum],
+        default=OrderStatusEnum.ENCARGADO.value
+    )
     deliver_date = models.DateTimeField(default=timezone.now)
     deliver_picture = models.ManyToManyField(EvidenceImages)
     weight_cost = models.FloatField(default=0)
@@ -299,7 +284,11 @@ class Package(models.Model):
 
     agency_name = models.CharField(max_length=100)
     number_of_tracking = models.CharField(max_length=100)
-    status_of_processing = models.CharField(max_length=100, default="Enviado")
+    status_of_processing = models.CharField(
+        max_length=100,
+        choices=[(tag.value, tag.value) for tag in OrderStatusEnum],
+        default=OrderStatusEnum.ENCARGADO.value
+    )
     package_picture = models.ManyToManyField(EvidenceImages)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

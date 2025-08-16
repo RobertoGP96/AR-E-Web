@@ -4,10 +4,10 @@ info:
   version: 1.0.0
   description: API documentation for the Shein Shop management system
 paths:
-  /shein_shop/user/:
+  /arye_system/api_data/user/:
     get:
-      operationId: user_list
-      description: Vista de usuario
+      operationId: arye_system_api_data_user_list
+      description: 'Gestión de usuarios: registro, consulta, actualización y eliminación.'
       parameters:
       - name: ordering
         required: false
@@ -28,7 +28,7 @@ paths:
         schema:
           type: string
       tags:
-      - user
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -39,10 +39,10 @@ paths:
                 $ref: '#/components/schemas/PaginatedUserList'
           description: ''
     post:
-      operationId: user_create
-      description: Vista de usuario
+      operationId: arye_system_api_data_user_create
+      description: 'Gestión de usuarios: registro, consulta, actualización y eliminación.'
       tags:
-      - user
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -64,10 +64,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: ''
-  /shein_shop/user/{id}/:
-    patch:
-      operationId: user_partial_update
-      description: Vista de usuario
+  /arye_system/api_data/user/{id}/:
+    get:
+      operationId: arye_system_api_data_user_retrieve
+      description: 'Gestión de usuarios: registro, consulta, actualización y eliminación.'
       parameters:
       - in: path
         name: id
@@ -76,18 +76,7 @@ paths:
         description: A unique integer value identifying this custom user.
         required: true
       tags:
-      - user
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedUserRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedUserRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedUserRequest'
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -97,9 +86,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: ''
-    get:
-      operationId: user_retrieve
-      description: Vista de usuario
+    put:
+      operationId: arye_system_api_data_user_update
+      description: 'Gestión de usuarios: registro, consulta, actualización y eliminación.'
       parameters:
       - in: path
         name: id
@@ -108,7 +97,19 @@ paths:
         description: A unique integer value identifying this custom user.
         required: true
       tags:
-      - user
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -119,8 +120,8 @@ paths:
                 $ref: '#/components/schemas/User'
           description: ''
     delete:
-      operationId: user_destroy
-      description: Vista de usuario
+      operationId: arye_system_api_data_user_destroy
+      description: 'Gestión de usuarios: registro, consulta, actualización y eliminación.'
       parameters:
       - in: path
         name: id
@@ -129,15 +130,15 @@ paths:
         description: A unique integer value identifying this custom user.
         required: true
       tags:
-      - user
+      - arye_system
       security:
       - jwtAuth: []
       responses:
         '204':
           description: No response body
-    put:
-      operationId: user_update
-      description: Vista de usuario
+    patch:
+      operationId: arye_system_api_data_user_partial_update
+      description: 'Gestión de usuarios: registro, consulta, actualización y eliminación.'
       parameters:
       - in: path
         name: id
@@ -146,19 +147,18 @@ paths:
         description: A unique integer value identifying this custom user.
         required: true
       tags:
-      - user
+      - arye_system
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserRequest'
+              $ref: '#/components/schemas/PatchedUserRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/UserRequest'
+              $ref: '#/components/schemas/PatchedUserRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/UserRequest'
-        required: true
+              $ref: '#/components/schemas/PatchedUserRequest'
       security:
       - jwtAuth: []
       responses:
@@ -168,9 +168,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: ''
-  /shein_shop/order/:
+  /arye_system/api_data/order/:
     get:
-      operationId: order_list
+      operationId: arye_system_api_data_order_list
+      description: 'Gestión de órdenes: creación, consulta, actualización y eliminación
+        de órdenes.'
       parameters:
       - name: ordering
         required: false
@@ -191,7 +193,7 @@ paths:
         schema:
           type: string
       tags:
-      - order
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -202,9 +204,11 @@ paths:
                 $ref: '#/components/schemas/PaginatedOrderList'
           description: ''
     post:
-      operationId: order_create
+      operationId: arye_system_api_data_order_create
+      description: 'Gestión de órdenes: creación, consulta, actualización y eliminación
+        de órdenes.'
       tags:
-      - order
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -226,9 +230,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Order'
           description: ''
-  /shein_shop/order/{id}/:
-    patch:
-      operationId: order_partial_update
+  /arye_system/api_data/order/{id}/:
+    get:
+      operationId: arye_system_api_data_order_retrieve
+      description: 'Gestión de órdenes: creación, consulta, actualización y eliminación
+        de órdenes.'
       parameters:
       - in: path
         name: id
@@ -237,18 +243,7 @@ paths:
         description: A unique integer value identifying this order.
         required: true
       tags:
-      - order
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedOrderRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedOrderRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedOrderRequest'
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -258,8 +253,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Order'
           description: ''
-    get:
-      operationId: order_retrieve
+    put:
+      operationId: arye_system_api_data_order_update
+      description: 'Gestión de órdenes: creación, consulta, actualización y eliminación
+        de órdenes.'
       parameters:
       - in: path
         name: id
@@ -268,7 +265,19 @@ paths:
         description: A unique integer value identifying this order.
         required: true
       tags:
-      - order
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -279,7 +288,9 @@ paths:
                 $ref: '#/components/schemas/Order'
           description: ''
     delete:
-      operationId: order_destroy
+      operationId: arye_system_api_data_order_destroy
+      description: 'Gestión de órdenes: creación, consulta, actualización y eliminación
+        de órdenes.'
       parameters:
       - in: path
         name: id
@@ -288,14 +299,16 @@ paths:
         description: A unique integer value identifying this order.
         required: true
       tags:
-      - order
+      - arye_system
       security:
       - jwtAuth: []
       responses:
         '204':
           description: No response body
-    put:
-      operationId: order_update
+    patch:
+      operationId: arye_system_api_data_order_partial_update
+      description: 'Gestión de órdenes: creación, consulta, actualización y eliminación
+        de órdenes.'
       parameters:
       - in: path
         name: id
@@ -304,19 +317,18 @@ paths:
         description: A unique integer value identifying this order.
         required: true
       tags:
-      - order
+      - arye_system
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderRequest'
+              $ref: '#/components/schemas/PatchedOrderRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/OrderRequest'
+              $ref: '#/components/schemas/PatchedOrderRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/OrderRequest'
-        required: true
+              $ref: '#/components/schemas/PatchedOrderRequest'
       security:
       - jwtAuth: []
       responses:
@@ -326,9 +338,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Order'
           description: ''
-  /shein_shop/shop/:
+  /arye_system/api_data/shop/:
     get:
-      operationId: shop_list
+      operationId: arye_system_api_data_shop_list
+      description: 'Gestión de tiendas: consulta, actualización y eliminación por
+        nombre.'
       parameters:
       - name: ordering
         required: false
@@ -349,7 +363,7 @@ paths:
         schema:
           type: string
       tags:
-      - shop
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -360,9 +374,11 @@ paths:
                 $ref: '#/components/schemas/PaginatedShopList'
           description: ''
     post:
-      operationId: shop_create
+      operationId: arye_system_api_data_shop_create
+      description: 'Gestión de tiendas: consulta, actualización y eliminación por
+        nombre.'
       tags:
-      - shop
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -384,9 +400,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Shop'
           description: ''
-  /shein_shop/shop/{name}/:
-    patch:
-      operationId: shop_partial_update
+  /arye_system/api_data/shop/{name}/:
+    get:
+      operationId: arye_system_api_data_shop_retrieve
+      description: 'Gestión de tiendas: consulta, actualización y eliminación por
+        nombre.'
       parameters:
       - in: path
         name: name
@@ -394,18 +412,7 @@ paths:
           type: string
         required: true
       tags:
-      - shop
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedShopRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedShopRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedShopRequest'
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -415,8 +422,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Shop'
           description: ''
-    get:
-      operationId: shop_retrieve
+    put:
+      operationId: arye_system_api_data_shop_update
+      description: 'Gestión de tiendas: consulta, actualización y eliminación por
+        nombre.'
       parameters:
       - in: path
         name: name
@@ -424,7 +433,19 @@ paths:
           type: string
         required: true
       tags:
-      - shop
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShopRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShopRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShopRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -435,7 +456,9 @@ paths:
                 $ref: '#/components/schemas/Shop'
           description: ''
     delete:
-      operationId: shop_destroy
+      operationId: arye_system_api_data_shop_destroy
+      description: 'Gestión de tiendas: consulta, actualización y eliminación por
+        nombre.'
       parameters:
       - in: path
         name: name
@@ -443,14 +466,16 @@ paths:
           type: string
         required: true
       tags:
-      - shop
+      - arye_system
       security:
       - jwtAuth: []
       responses:
         '204':
           description: No response body
-    put:
-      operationId: shop_update
+    patch:
+      operationId: arye_system_api_data_shop_partial_update
+      description: 'Gestión de tiendas: consulta, actualización y eliminación por
+        nombre.'
       parameters:
       - in: path
         name: name
@@ -458,19 +483,18 @@ paths:
           type: string
         required: true
       tags:
-      - shop
+      - arye_system
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ShopRequest'
+              $ref: '#/components/schemas/PatchedShopRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ShopRequest'
+              $ref: '#/components/schemas/PatchedShopRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ShopRequest'
-        required: true
+              $ref: '#/components/schemas/PatchedShopRequest'
       security:
       - jwtAuth: []
       responses:
@@ -480,9 +504,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Shop'
           description: ''
-  /shein_shop/buying_account/:
+  /arye_system/api_data/buying_account/:
     get:
-      operationId: buying_account_list
+      operationId: arye_system_api_data_buying_account_list
+      description: Gestión de cuentas de compra.
       parameters:
       - name: ordering
         required: false
@@ -503,7 +528,7 @@ paths:
         schema:
           type: string
       tags:
-      - buying_account
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -514,9 +539,10 @@ paths:
                 $ref: '#/components/schemas/PaginatedBuyingAccountsList'
           description: ''
     post:
-      operationId: buying_account_create
+      operationId: arye_system_api_data_buying_account_create
+      description: Gestión de cuentas de compra.
       tags:
-      - buying_account
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -538,9 +564,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/BuyingAccounts'
           description: ''
-  /shein_shop/buying_account/{id}/:
-    patch:
-      operationId: buying_account_partial_update
+  /arye_system/api_data/buying_account/{id}/:
+    get:
+      operationId: arye_system_api_data_buying_account_retrieve
+      description: Gestión de cuentas de compra.
       parameters:
       - in: path
         name: id
@@ -549,18 +576,7 @@ paths:
         description: A unique integer value identifying this buying accounts.
         required: true
       tags:
-      - buying_account
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -570,8 +586,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/BuyingAccounts'
           description: ''
-    get:
-      operationId: buying_account_retrieve
+    put:
+      operationId: arye_system_api_data_buying_account_update
+      description: Gestión de cuentas de compra.
       parameters:
       - in: path
         name: id
@@ -580,7 +597,19 @@ paths:
         description: A unique integer value identifying this buying accounts.
         required: true
       tags:
-      - buying_account
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuyingAccountsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BuyingAccountsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BuyingAccountsRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -591,7 +620,8 @@ paths:
                 $ref: '#/components/schemas/BuyingAccounts'
           description: ''
     delete:
-      operationId: buying_account_destroy
+      operationId: arye_system_api_data_buying_account_destroy
+      description: Gestión de cuentas de compra.
       parameters:
       - in: path
         name: id
@@ -600,14 +630,15 @@ paths:
         description: A unique integer value identifying this buying accounts.
         required: true
       tags:
-      - buying_account
+      - arye_system
       security:
       - jwtAuth: []
       responses:
         '204':
           description: No response body
-    put:
-      operationId: buying_account_update
+    patch:
+      operationId: arye_system_api_data_buying_account_partial_update
+      description: Gestión de cuentas de compra.
       parameters:
       - in: path
         name: id
@@ -616,19 +647,18 @@ paths:
         description: A unique integer value identifying this buying accounts.
         required: true
       tags:
-      - buying_account
+      - arye_system
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BuyingAccountsRequest'
+              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/BuyingAccountsRequest'
+              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BuyingAccountsRequest'
-        required: true
+              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
       security:
       - jwtAuth: []
       responses:
@@ -638,9 +668,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/BuyingAccounts'
           description: ''
-  /shein_shop/common_information/:
+  /arye_system/api_data/common_information/:
     get:
-      operationId: common_information_list
+      operationId: arye_system_api_data_common_information_list
+      description: Información común del sistema.
       parameters:
       - name: ordering
         required: false
@@ -661,7 +692,7 @@ paths:
         schema:
           type: string
       tags:
-      - common_information
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -672,9 +703,10 @@ paths:
                 $ref: '#/components/schemas/PaginatedCommonInformationList'
           description: ''
     post:
-      operationId: common_information_create
+      operationId: arye_system_api_data_common_information_create
+      description: Información común del sistema.
       tags:
-      - common_information
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -695,9 +727,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/CommonInformation'
           description: ''
-  /shein_shop/common_information/{id}/:
-    patch:
-      operationId: common_information_partial_update
+  /arye_system/api_data/common_information/{id}/:
+    get:
+      operationId: arye_system_api_data_common_information_retrieve
+      description: Información común del sistema.
       parameters:
       - in: path
         name: id
@@ -706,18 +739,7 @@ paths:
         description: A unique integer value identifying this common information.
         required: true
       tags:
-      - common_information
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedCommonInformationRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedCommonInformationRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedCommonInformationRequest'
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -727,8 +749,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/CommonInformation'
           description: ''
-    get:
-      operationId: common_information_retrieve
+    put:
+      operationId: arye_system_api_data_common_information_update
+      description: Información común del sistema.
       parameters:
       - in: path
         name: id
@@ -737,7 +760,18 @@ paths:
         description: A unique integer value identifying this common information.
         required: true
       tags:
-      - common_information
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommonInformationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CommonInformationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommonInformationRequest'
       security:
       - jwtAuth: []
       responses:
@@ -748,7 +782,8 @@ paths:
                 $ref: '#/components/schemas/CommonInformation'
           description: ''
     delete:
-      operationId: common_information_destroy
+      operationId: arye_system_api_data_common_information_destroy
+      description: Información común del sistema.
       parameters:
       - in: path
         name: id
@@ -757,14 +792,15 @@ paths:
         description: A unique integer value identifying this common information.
         required: true
       tags:
-      - common_information
+      - arye_system
       security:
       - jwtAuth: []
       responses:
         '204':
           description: No response body
-    put:
-      operationId: common_information_update
+    patch:
+      operationId: arye_system_api_data_common_information_partial_update
+      description: Información común del sistema.
       parameters:
       - in: path
         name: id
@@ -773,18 +809,18 @@ paths:
         description: A unique integer value identifying this common information.
         required: true
       tags:
-      - common_information
+      - arye_system
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CommonInformationRequest'
+              $ref: '#/components/schemas/PatchedCommonInformationRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/CommonInformationRequest'
+              $ref: '#/components/schemas/PatchedCommonInformationRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CommonInformationRequest'
+              $ref: '#/components/schemas/PatchedCommonInformationRequest'
       security:
       - jwtAuth: []
       responses:
@@ -794,9 +830,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/CommonInformation'
           description: ''
-  /shein_shop/product/:
+  /arye_system/api_data/product/:
     get:
-      operationId: product_list
+      operationId: arye_system_api_data_product_list
+      description: Gestión de productos.
       parameters:
       - name: ordering
         required: false
@@ -817,7 +854,7 @@ paths:
         schema:
           type: string
       tags:
-      - product
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -828,9 +865,10 @@ paths:
                 $ref: '#/components/schemas/PaginatedProductList'
           description: ''
     post:
-      operationId: product_create
+      operationId: arye_system_api_data_product_create
+      description: Gestión de productos.
       tags:
-      - product
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -852,9 +890,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Product'
           description: ''
-  /shein_shop/product/{id}/:
-    patch:
-      operationId: product_partial_update
+  /arye_system/api_data/product/{id}/:
+    get:
+      operationId: arye_system_api_data_product_retrieve
+      description: Gestión de productos.
       parameters:
       - in: path
         name: id
@@ -864,18 +903,7 @@ paths:
         description: A UUID string identifying this product.
         required: true
       tags:
-      - product
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedProductRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedProductRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedProductRequest'
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -885,8 +913,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Product'
           description: ''
-    get:
-      operationId: product_retrieve
+    put:
+      operationId: arye_system_api_data_product_update
+      description: Gestión de productos.
       parameters:
       - in: path
         name: id
@@ -896,7 +925,19 @@ paths:
         description: A UUID string identifying this product.
         required: true
       tags:
-      - product
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -907,7 +948,8 @@ paths:
                 $ref: '#/components/schemas/Product'
           description: ''
     delete:
-      operationId: product_destroy
+      operationId: arye_system_api_data_product_destroy
+      description: Gestión de productos.
       parameters:
       - in: path
         name: id
@@ -917,14 +959,15 @@ paths:
         description: A UUID string identifying this product.
         required: true
       tags:
-      - product
+      - arye_system
       security:
       - jwtAuth: []
       responses:
         '204':
           description: No response body
-    put:
-      operationId: product_update
+    patch:
+      operationId: arye_system_api_data_product_partial_update
+      description: Gestión de productos.
       parameters:
       - in: path
         name: id
@@ -934,19 +977,18 @@ paths:
         description: A UUID string identifying this product.
         required: true
       tags:
-      - product
+      - arye_system
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductRequest'
+              $ref: '#/components/schemas/PatchedProductRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ProductRequest'
+              $ref: '#/components/schemas/PatchedProductRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ProductRequest'
-        required: true
+              $ref: '#/components/schemas/PatchedProductRequest'
       security:
       - jwtAuth: []
       responses:
@@ -956,9 +998,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Product'
           description: ''
-  /shein_shop/shopping_reciep/:
+  /arye_system/api_data/shopping_reciep/:
     get:
-      operationId: shopping_reciep_list
+      operationId: arye_system_api_data_shopping_reciep_list
+      description: Gestión de recibos de compra y productos comprados.
       parameters:
       - name: ordering
         required: false
@@ -979,7 +1022,7 @@ paths:
         schema:
           type: string
       tags:
-      - shopping_reciep
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -990,9 +1033,11 @@ paths:
                 $ref: '#/components/schemas/PaginatedShoppingReceipList'
           description: ''
     post:
-      operationId: shopping_reciep_create
+      operationId: arye_system_api_data_shopping_reciep_create
+      description: Crea un recibo de compra y los productos asociados.
+      summary: Crear recibo de compra
       tags:
-      - shopping_reciep
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -1014,9 +1059,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/ShoppingReceip'
           description: ''
-  /shein_shop/shopping_reciep/{id}/:
-    patch:
-      operationId: shopping_reciep_partial_update
+  /arye_system/api_data/shopping_reciep/{id}/:
+    get:
+      operationId: arye_system_api_data_shopping_reciep_retrieve
+      description: Gestión de recibos de compra y productos comprados.
       parameters:
       - in: path
         name: id
@@ -1025,18 +1071,7 @@ paths:
         description: A unique integer value identifying this shopping receip.
         required: true
       tags:
-      - shopping_reciep
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -1046,8 +1081,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ShoppingReceip'
           description: ''
-    get:
-      operationId: shopping_reciep_retrieve
+    put:
+      operationId: arye_system_api_data_shopping_reciep_update
+      description: Gestión de recibos de compra y productos comprados.
       parameters:
       - in: path
         name: id
@@ -1056,7 +1092,19 @@ paths:
         description: A unique integer value identifying this shopping receip.
         required: true
       tags:
-      - shopping_reciep
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingReceipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShoppingReceipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShoppingReceipRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -1067,7 +1115,8 @@ paths:
                 $ref: '#/components/schemas/ShoppingReceip'
           description: ''
     delete:
-      operationId: shopping_reciep_destroy
+      operationId: arye_system_api_data_shopping_reciep_destroy
+      description: Gestión de recibos de compra y productos comprados.
       parameters:
       - in: path
         name: id
@@ -1076,14 +1125,15 @@ paths:
         description: A unique integer value identifying this shopping receip.
         required: true
       tags:
-      - shopping_reciep
+      - arye_system
       security:
       - jwtAuth: []
       responses:
         '204':
           description: No response body
-    put:
-      operationId: shopping_reciep_update
+    patch:
+      operationId: arye_system_api_data_shopping_reciep_partial_update
+      description: Gestión de recibos de compra y productos comprados.
       parameters:
       - in: path
         name: id
@@ -1092,19 +1142,18 @@ paths:
         description: A unique integer value identifying this shopping receip.
         required: true
       tags:
-      - shopping_reciep
+      - arye_system
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ShoppingReceipRequest'
+              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ShoppingReceipRequest'
+              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ShoppingReceipRequest'
-        required: true
+              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
       security:
       - jwtAuth: []
       responses:
@@ -1114,9 +1163,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/ShoppingReceip'
           description: ''
-  /shein_shop/buyed_product/:
+  /arye_system/api_data/buyed_product/:
     get:
-      operationId: buyed_product_list
+      operationId: arye_system_api_data_buyed_product_list
+      description: Gestión de productos comprados.
       parameters:
       - name: ordering
         required: false
@@ -1137,7 +1187,7 @@ paths:
         schema:
           type: string
       tags:
-      - buyed_product
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -1148,9 +1198,10 @@ paths:
                 $ref: '#/components/schemas/PaginatedProductBuyedList'
           description: ''
     post:
-      operationId: buyed_product_create
+      operationId: arye_system_api_data_buyed_product_create
+      description: Gestión de productos comprados.
       tags:
-      - buyed_product
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -1172,9 +1223,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProductBuyed'
           description: ''
-  /shein_shop/buyed_product/{id}/:
-    patch:
-      operationId: buyed_product_partial_update
+  /arye_system/api_data/buyed_product/{id}/:
+    get:
+      operationId: arye_system_api_data_buyed_product_retrieve
+      description: Gestión de productos comprados.
       parameters:
       - in: path
         name: id
@@ -1183,18 +1235,7 @@ paths:
         description: A unique integer value identifying this product buyed.
         required: true
       tags:
-      - buyed_product
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedProductBuyedRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedProductBuyedRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedProductBuyedRequest'
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -1204,8 +1245,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProductBuyed'
           description: ''
-    get:
-      operationId: buyed_product_retrieve
+    put:
+      operationId: arye_system_api_data_buyed_product_update
+      description: Gestión de productos comprados.
       parameters:
       - in: path
         name: id
@@ -1214,7 +1256,19 @@ paths:
         description: A unique integer value identifying this product buyed.
         required: true
       tags:
-      - buyed_product
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductBuyedRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductBuyedRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductBuyedRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -1225,7 +1279,8 @@ paths:
                 $ref: '#/components/schemas/ProductBuyed'
           description: ''
     delete:
-      operationId: buyed_product_destroy
+      operationId: arye_system_api_data_buyed_product_destroy
+      description: Gestión de productos comprados.
       parameters:
       - in: path
         name: id
@@ -1234,14 +1289,15 @@ paths:
         description: A unique integer value identifying this product buyed.
         required: true
       tags:
-      - buyed_product
+      - arye_system
       security:
       - jwtAuth: []
       responses:
         '204':
           description: No response body
-    put:
-      operationId: buyed_product_update
+    patch:
+      operationId: arye_system_api_data_buyed_product_partial_update
+      description: Gestión de productos comprados.
       parameters:
       - in: path
         name: id
@@ -1250,19 +1306,18 @@ paths:
         description: A unique integer value identifying this product buyed.
         required: true
       tags:
-      - buyed_product
+      - arye_system
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductBuyedRequest'
+              $ref: '#/components/schemas/PatchedProductBuyedRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ProductBuyedRequest'
+              $ref: '#/components/schemas/PatchedProductBuyedRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ProductBuyedRequest'
-        required: true
+              $ref: '#/components/schemas/PatchedProductBuyedRequest'
       security:
       - jwtAuth: []
       responses:
@@ -1272,9 +1327,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProductBuyed'
           description: ''
-  /shein_shop/deliver_reciep/:
+  /arye_system/api_data/deliver_reciep/:
     get:
-      operationId: deliver_reciep_list
+      operationId: arye_system_api_data_deliver_reciep_list
+      description: Gestión de recibos de entrega.
       parameters:
       - name: ordering
         required: false
@@ -1295,7 +1351,7 @@ paths:
         schema:
           type: string
       tags:
-      - deliver_reciep
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -1306,9 +1362,10 @@ paths:
                 $ref: '#/components/schemas/PaginatedDeliverReceipList'
           description: ''
     post:
-      operationId: deliver_reciep_create
+      operationId: arye_system_api_data_deliver_reciep_create
+      description: Gestión de recibos de entrega.
       tags:
-      - deliver_reciep
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -1330,9 +1387,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/DeliverReceip'
           description: ''
-  /shein_shop/deliver_reciep/{id}/:
-    patch:
-      operationId: deliver_reciep_partial_update
+  /arye_system/api_data/deliver_reciep/{id}/:
+    get:
+      operationId: arye_system_api_data_deliver_reciep_retrieve
+      description: Gestión de recibos de entrega.
       parameters:
       - in: path
         name: id
@@ -1341,18 +1399,7 @@ paths:
         description: A unique integer value identifying this deliver receip.
         required: true
       tags:
-      - deliver_reciep
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -1362,8 +1409,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DeliverReceip'
           description: ''
-    get:
-      operationId: deliver_reciep_retrieve
+    put:
+      operationId: arye_system_api_data_deliver_reciep_update
+      description: Gestión de recibos de entrega.
       parameters:
       - in: path
         name: id
@@ -1372,7 +1420,19 @@ paths:
         description: A unique integer value identifying this deliver receip.
         required: true
       tags:
-      - deliver_reciep
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliverReceipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeliverReceipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeliverReceipRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -1383,7 +1443,8 @@ paths:
                 $ref: '#/components/schemas/DeliverReceip'
           description: ''
     delete:
-      operationId: deliver_reciep_destroy
+      operationId: arye_system_api_data_deliver_reciep_destroy
+      description: Gestión de recibos de entrega.
       parameters:
       - in: path
         name: id
@@ -1392,14 +1453,15 @@ paths:
         description: A unique integer value identifying this deliver receip.
         required: true
       tags:
-      - deliver_reciep
+      - arye_system
       security:
       - jwtAuth: []
       responses:
         '204':
           description: No response body
-    put:
-      operationId: deliver_reciep_update
+    patch:
+      operationId: arye_system_api_data_deliver_reciep_partial_update
+      description: Gestión de recibos de entrega.
       parameters:
       - in: path
         name: id
@@ -1408,19 +1470,18 @@ paths:
         description: A unique integer value identifying this deliver receip.
         required: true
       tags:
-      - deliver_reciep
+      - arye_system
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeliverReceipRequest'
+              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/DeliverReceipRequest'
+              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/DeliverReceipRequest'
-        required: true
+              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
       security:
       - jwtAuth: []
       responses:
@@ -1430,9 +1491,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/DeliverReceip'
           description: ''
-  /shein_shop/product_received/:
+  /arye_system/api_data/product_received/:
     get:
-      operationId: product_received_list
+      operationId: arye_system_api_data_product_received_list
+      description: Gestión de productos recibidos y entrega de productos.
       parameters:
       - name: ordering
         required: false
@@ -1453,7 +1515,7 @@ paths:
         schema:
           type: string
       tags:
-      - product_received
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -1464,9 +1526,11 @@ paths:
                 $ref: '#/components/schemas/PaginatedProductReceivedList'
           description: ''
     post:
-      operationId: product_received_create
+      operationId: arye_system_api_data_product_received_create
+      description: Crea registros de productos recibidos y los asocia a un paquete.
+      summary: Registrar productos recibidos
       tags:
-      - product_received
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -1488,11 +1552,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProductReceived'
           description: ''
-  /shein_shop/product_received/deliver_products/:
+  /arye_system/api_data/product_received/deliver_products/:
     patch:
-      operationId: product_received_deliver_products_partial_update
+      operationId: arye_system_api_data_product_received_deliver_products_partial_update
+      description: Actualiza el estado de productos como entregados.
+      summary: Entregar productos
       tags:
-      - product_received
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -1507,46 +1573,16 @@ paths:
       security:
       - jwtAuth: []
       responses:
-        '200':
+        '201':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductReceived'
           description: ''
-  /shein_shop/product_received/{id}/:
-    patch:
-      operationId: product_received_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this product received.
-        required: true
-      tags:
-      - product_received
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedProductReceivedRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedProductReceivedRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedProductReceivedRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductReceived'
-          description: ''
+  /arye_system/api_data/product_received/{id}/:
     get:
-      operationId: product_received_retrieve
+      operationId: arye_system_api_data_product_received_retrieve
+      description: Gestión de productos recibidos y entrega de productos.
       parameters:
       - in: path
         name: id
@@ -1555,7 +1591,40 @@ paths:
         description: A unique integer value identifying this product received.
         required: true
       tags:
-      - product_received
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductReceived'
+          description: ''
+    put:
+      operationId: arye_system_api_data_product_received_update
+      description: Gestión de productos recibidos y entrega de productos.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product received.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductReceivedRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductReceivedRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductReceivedRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -1566,7 +1635,8 @@ paths:
                 $ref: '#/components/schemas/ProductReceived'
           description: ''
     delete:
-      operationId: product_received_destroy
+      operationId: arye_system_api_data_product_received_destroy
+      description: Gestión de productos recibidos y entrega de productos.
       parameters:
       - in: path
         name: id
@@ -1575,14 +1645,15 @@ paths:
         description: A unique integer value identifying this product received.
         required: true
       tags:
-      - product_received
+      - arye_system
       security:
       - jwtAuth: []
       responses:
         '204':
           description: No response body
-    put:
-      operationId: product_received_update
+    patch:
+      operationId: arye_system_api_data_product_received_partial_update
+      description: Gestión de productos recibidos y entrega de productos.
       parameters:
       - in: path
         name: id
@@ -1591,19 +1662,18 @@ paths:
         description: A unique integer value identifying this product received.
         required: true
       tags:
-      - product_received
+      - arye_system
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductReceivedRequest'
+              $ref: '#/components/schemas/PatchedProductReceivedRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ProductReceivedRequest'
+              $ref: '#/components/schemas/PatchedProductReceivedRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ProductReceivedRequest'
-        required: true
+              $ref: '#/components/schemas/PatchedProductReceivedRequest'
       security:
       - jwtAuth: []
       responses:
@@ -1613,9 +1683,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProductReceived'
           description: ''
-  /shein_shop/package/:
+  /arye_system/api_data/package/:
     get:
-      operationId: package_list
+      operationId: arye_system_api_data_package_list
+      description: Gestión de paquetes.
       parameters:
       - name: ordering
         required: false
@@ -1636,7 +1707,7 @@ paths:
         schema:
           type: string
       tags:
-      - package
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -1647,9 +1718,10 @@ paths:
                 $ref: '#/components/schemas/PaginatedPackageList'
           description: ''
     post:
-      operationId: package_create
+      operationId: arye_system_api_data_package_create
+      description: Gestión de paquetes.
       tags:
-      - package
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -1671,9 +1743,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Package'
           description: ''
-  /shein_shop/package/{id}/:
-    patch:
-      operationId: package_partial_update
+  /arye_system/api_data/package/{id}/:
+    get:
+      operationId: arye_system_api_data_package_retrieve
+      description: Gestión de paquetes.
       parameters:
       - in: path
         name: id
@@ -1682,18 +1755,7 @@ paths:
         description: A unique integer value identifying this package.
         required: true
       tags:
-      - package
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedPackageRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedPackageRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedPackageRequest'
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -1703,8 +1765,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Package'
           description: ''
-    get:
-      operationId: package_retrieve
+    put:
+      operationId: arye_system_api_data_package_update
+      description: Gestión de paquetes.
       parameters:
       - in: path
         name: id
@@ -1713,7 +1776,19 @@ paths:
         description: A unique integer value identifying this package.
         required: true
       tags:
-      - package
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PackageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PackageRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -1724,7 +1799,8 @@ paths:
                 $ref: '#/components/schemas/Package'
           description: ''
     delete:
-      operationId: package_destroy
+      operationId: arye_system_api_data_package_destroy
+      description: Gestión de paquetes.
       parameters:
       - in: path
         name: id
@@ -1733,14 +1809,15 @@ paths:
         description: A unique integer value identifying this package.
         required: true
       tags:
-      - package
+      - arye_system
       security:
       - jwtAuth: []
       responses:
         '204':
           description: No response body
-    put:
-      operationId: package_update
+    patch:
+      operationId: arye_system_api_data_package_partial_update
+      description: Gestión de paquetes.
       parameters:
       - in: path
         name: id
@@ -1749,19 +1826,18 @@ paths:
         description: A unique integer value identifying this package.
         required: true
       tags:
-      - package
+      - arye_system
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PackageRequest'
+              $ref: '#/components/schemas/PatchedPackageRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PackageRequest'
+              $ref: '#/components/schemas/PatchedPackageRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PackageRequest'
-        required: true
+              $ref: '#/components/schemas/PatchedPackageRequest'
       security:
       - jwtAuth: []
       responses:
@@ -1771,10 +1847,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Package'
           description: ''
-  /shein_shop/verify_user/{verification_secret}:
+  /arye_system/verify_user/{verification_secret}:
     get:
-      operationId: verify_user_retrieve
-      description: Verificate user email
+      operationId: arye_system_verify_user_retrieve
+      description: Verifica el correo electrónico del usuario usando el secreto de
+        verificación.
+      summary: Verificar correo de usuario
       parameters:
       - in: path
         name: verification_secret
@@ -1782,18 +1860,18 @@ paths:
           type: string
         required: true
       tags:
-      - verify_user
+      - arye_system
       security:
       - jwtAuth: []
       responses:
         '200':
           description: No response body
-  /shein_shop/token/:
+  /arye_system/token/:
     post:
-      operationId: token_create
-      description: Vista del serializer
+      operationId: arye_system_token_create
+      description: Obtención de token JWT para autenticación de usuarios.
       tags:
-      - token
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -1813,14 +1891,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenObtainPair'
           description: ''
-  /shein_shop/token/refresh/:
+  /arye_system/token/refresh/:
     post:
-      operationId: token_refresh_create
+      operationId: arye_system_token_refresh_create
       description: |-
         Takes a refresh type JSON web token and returns an access type JSON web
         token if the refresh token is valid.
       tags:
-      - token
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -1840,10 +1918,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenRefresh'
           description: ''
-  /shein_shop/password/{password_secret}/:
+  /arye_system/password/{password_secret}/:
     post:
-      operationId: password_create
-      description: Sender email password
+      operationId: arye_system_password_create
+      description: Envía un correo con el enlace para recuperar la contraseña.
+      summary: Solicitar recuperación de contraseña
       parameters:
       - in: path
         name: password_secret
@@ -1852,15 +1931,28 @@ paths:
           pattern: ^\S+$
         required: true
       tags:
-      - password
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoverRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoverRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoverRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
         '200':
           description: No response body
     put:
-      operationId: password_update
-      description: Update password
+      operationId: arye_system_password_update
+      description: Actualiza la contraseña usando el secreto enviado por correo.
+      summary: Actualizar contraseña
       parameters:
       - in: path
         name: password_secret
@@ -1869,37 +1961,65 @@ paths:
           pattern: ^\S+$
         required: true
       tags:
-      - password
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoverRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoverRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoverRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
         '200':
           description: No response body
-  /shein_shop/image_upload/:
+  /arye_system/image_upload/:
     post:
-      operationId: image_upload_create
+      operationId: arye_system_image_upload_create
+      description: Sube una imagen de evidencia al servidor.
+      summary: Subir imagen
       tags:
-      - image_upload
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImageUploadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ImageUploadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImageUploadRequest'
       security:
       - jwtAuth: []
       responses:
-        '200':
+        '201':
           description: No response body
     delete:
-      operationId: image_upload_destroy
+      operationId: arye_system_image_upload_destroy
+      description: Elimina una imagen de evidencia del servidor.
+      summary: Eliminar imagen
       tags:
-      - image_upload
+      - arye_system
       security:
       - jwtAuth: []
       responses:
-        '204':
+        '200':
           description: No response body
-  /shein_shop/security/:
+  /arye_system/security/:
     get:
-      operationId: security_retrieve
-      description: Respuesta de seguridad
+      operationId: arye_system_security_retrieve
+      description: Devuelve 200 si el token JWT es válido.
+      summary: Verifica autenticación
       tags:
-      - security
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -1914,8 +2034,11 @@ components:
         account_name:
           type: string
           maxLength: 100
+        shop:
+          type: string
       required:
       - account_name
+      - shop
     BuyingAccountsRequest:
       type: object
       description: Serializer of buying accounts
@@ -1924,8 +2047,12 @@ components:
           type: string
           minLength: 1
           maxLength: 100
+        shop:
+          type: string
+          minLength: 1
       required:
       - account_name
+      - shop
     CommonInformation:
       type: object
       description: Common information introduced for the admin
@@ -1972,10 +2099,10 @@ components:
           type: number
           format: double
         status:
-          type: string
-          maxLength: 100
+          $ref: '#/components/schemas/StatusEnum'
         total_cost_of_deliver:
-          type: string
+          type: number
+          format: double
           readOnly: true
       required:
       - deliver_picture
@@ -2003,13 +2130,20 @@ components:
           type: number
           format: double
         status:
-          type: string
-          minLength: 1
-          maxLength: 100
+          $ref: '#/components/schemas/StatusEnum'
       required:
       - deliver_picture
       - order
       - weight
+    ImageUploadRequest:
+      type: object
+      properties:
+        image:
+          type: string
+          format: binary
+        public_id:
+          type: string
+          minLength: 1
     Order:
       type: object
       properties:
@@ -2019,20 +2153,17 @@ components:
         client:
           type: string
           format: email
-          title: Email address
         sales_manager:
           type: string
           format: email
-          title: Email address
           readOnly: true
         status:
-          type: string
-          maxLength: 100
+          $ref: '#/components/schemas/StatusEnum'
         pay_status:
-          type: string
-          maxLength: 100
+          $ref: '#/components/schemas/PayStatusEnum'
         total_cost:
-          type: string
+          type: number
+          format: double
           readOnly: true
         products:
           type: array
@@ -2040,10 +2171,12 @@ components:
             $ref: '#/components/schemas/Product'
           readOnly: true
         received_value_of_client:
-          type: string
+          type: number
+          format: double
           readOnly: true
         extra_payments:
-          type: string
+          type: number
+          format: double
           readOnly: true
       required:
       - client
@@ -2060,15 +2193,10 @@ components:
           type: string
           format: email
           minLength: 1
-          title: Email address
         status:
-          type: string
-          minLength: 1
-          maxLength: 100
+          $ref: '#/components/schemas/StatusEnum'
         pay_status:
-          type: string
-          minLength: 1
-          maxLength: 100
+          $ref: '#/components/schemas/PayStatusEnum'
       required:
       - client
     Package:
@@ -2085,8 +2213,7 @@ components:
           type: string
           maxLength: 100
         status_of_processing:
-          type: string
-          maxLength: 100
+          $ref: '#/components/schemas/StatusOfProcessingEnum'
         package_picture:
           type: array
           items:
@@ -2097,12 +2224,22 @@ components:
           items:
             $ref: '#/components/schemas/ProductReceived'
           readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
       required:
       - agency_name
       - contained_products
+      - created_at
       - id
       - number_of_tracking
       - package_picture
+      - updated_at
     PackageRequest:
       type: object
       description: Package Serializer
@@ -2116,9 +2253,7 @@ components:
           minLength: 1
           maxLength: 100
         status_of_processing:
-          type: string
-          minLength: 1
-          maxLength: 100
+          $ref: '#/components/schemas/StatusOfProcessingEnum'
         package_picture:
           type: array
           items:
@@ -2382,6 +2517,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+    PasswordRecoverRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+        password_secret:
+          type: string
+          minLength: 1
+      required:
+      - email
     PatchedBuyingAccountsRequest:
       type: object
       description: Serializer of buying accounts
@@ -2390,6 +2540,9 @@ components:
           type: string
           minLength: 1
           maxLength: 100
+        shop:
+          type: string
+          minLength: 1
     PatchedCommonInformationRequest:
       type: object
       description: Common information introduced for the admin
@@ -2419,9 +2572,7 @@ components:
           type: number
           format: double
         status:
-          type: string
-          minLength: 1
-          maxLength: 100
+          $ref: '#/components/schemas/StatusEnum'
     PatchedOrderRequest:
       type: object
       properties:
@@ -2429,15 +2580,10 @@ components:
           type: string
           format: email
           minLength: 1
-          title: Email address
         status:
-          type: string
-          minLength: 1
-          maxLength: 100
+          $ref: '#/components/schemas/StatusEnum'
         pay_status:
-          type: string
-          minLength: 1
-          maxLength: 100
+          $ref: '#/components/schemas/PayStatusEnum'
     PatchedPackageRequest:
       type: object
       description: Package Serializer
@@ -2451,9 +2597,7 @@ components:
           minLength: 1
           maxLength: 100
         status_of_processing:
-          type: string
-          minLength: 1
-          maxLength: 100
+          $ref: '#/components/schemas/StatusOfProcessingEnum'
         package_picture:
           type: array
           items:
@@ -2477,9 +2621,8 @@ components:
           format: double
         amount_buyed:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
         shop_discount:
           type: number
           format: double
@@ -2520,14 +2663,12 @@ components:
           type: integer
         amount_received:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
         amount_delivered:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
         observation:
           type: string
           nullable: true
@@ -2570,9 +2711,8 @@ components:
           maxLength: 200
         amount_requested:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
         order:
           type: integer
         product_pictures:
@@ -2653,21 +2793,23 @@ components:
           type: string
           minLength: 1
           maxLength: 20
-        is_agent:
-          type: boolean
-        is_accountant:
-          type: boolean
-        is_buyer:
-          type: boolean
-        is_logistical:
-          type: boolean
-        is_comunity_manager:
-          type: boolean
+        role:
+          $ref: '#/components/schemas/RoleEnum'
         agent_profit:
           type: number
           format: double
         is_staff:
           type: boolean
+    PayStatusEnum:
+      enum:
+      - No pagado
+      - Pagado
+      - Parcial
+      type: string
+      description: |-
+        * `No pagado` - No pagado
+        * `Pagado` - Pagado
+        * `Parcial` - Parcial
     Product:
       type: object
       description: Product information provided by the agent
@@ -2703,17 +2845,16 @@ components:
           maxLength: 200
         amount_requested:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
         amount_buyed:
-          type: string
+          type: integer
           readOnly: true
         amount_delivered:
-          type: string
+          type: integer
           readOnly: true
         amount_received:
-          type: string
+          type: integer
           readOnly: true
         order:
           type: integer
@@ -2744,7 +2885,8 @@ components:
           type: number
           format: double
         cost_per_product:
-          type: string
+          type: number
+          format: double
           readOnly: true
       required:
       - amount_buyed
@@ -2777,9 +2919,8 @@ components:
           format: double
         amount_buyed:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
         shop_discount:
           type: number
           format: double
@@ -2797,7 +2938,8 @@ components:
           type: number
           format: double
         original_product_details:
-          type: string
+          type: object
+          additionalProperties: {}
           readOnly: true
       required:
       - amount_buyed
@@ -2823,9 +2965,8 @@ components:
           format: double
         amount_buyed:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
         shop_discount:
           type: number
           format: double
@@ -2875,14 +3016,12 @@ components:
           type: integer
         amount_received:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
         amount_delivered:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
         observation:
           type: string
           nullable: true
@@ -2916,14 +3055,12 @@ components:
           type: integer
         amount_received:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
         amount_delivered:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
         observation:
           type: string
           nullable: true
@@ -2971,9 +3108,8 @@ components:
           maxLength: 200
         amount_requested:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
         order:
           type: integer
         product_pictures:
@@ -3009,6 +3145,26 @@ components:
       - shop_cost
       - sku
       - total_cost
+    RoleEnum:
+      enum:
+      - user
+      - agent
+      - accountant
+      - buyer
+      - logistical
+      - community_manager
+      - admin
+      - client
+      type: string
+      description: |-
+        * `user` - Usuario
+        * `agent` - Agente
+        * `accountant` - Contador
+        * `buyer` - Comprador
+        * `logistical` - Logístico
+        * `community_manager` - Community Manager
+        * `admin` - Administrador
+        * `client` - Cliente
     Shop:
       type: object
       description: Serializer of diferents shops
@@ -3020,7 +3176,13 @@ components:
           type: string
           format: uri
           maxLength: 200
+        buying_accounts:
+          type: array
+          items:
+            type: string
+          readOnly: true
       required:
+      - buying_accounts
       - link
       - name
     ShopRequest:
@@ -3051,7 +3213,8 @@ components:
         shop_of_buy:
           type: string
         total_cost_of_shopping:
-          type: string
+          type: number
+          format: double
           readOnly: true
         buy_date:
           type: string
@@ -3083,6 +3246,30 @@ components:
       required:
       - shop_of_buy
       - shopping_account
+    StatusEnum:
+      enum:
+      - Encargado
+      - Procesando
+      - Completado
+      - Cancelado
+      type: string
+      description: |-
+        * `Encargado` - Encargado
+        * `Procesando` - Procesando
+        * `Completado` - Completado
+        * `Cancelado` - Cancelado
+    StatusOfProcessingEnum:
+      enum:
+      - Encargado
+      - Procesando
+      - Completado
+      - Cancelado
+      type: string
+      description: |-
+        * `Encargado` - Encargado
+        * `Procesando` - Procesando
+        * `Completado` - Completado
+        * `Cancelado` - Cancelado
     TokenObtainPair:
       type: object
       properties:
@@ -3098,7 +3285,7 @@ components:
     TokenObtainPairRequest:
       type: object
       properties:
-        email:
+        phone_number:
           type: string
           writeOnly: true
           minLength: 1
@@ -3107,8 +3294,8 @@ components:
           writeOnly: true
           minLength: 1
       required:
-      - email
       - password
+      - phone_number
     TokenRefresh:
       type: object
       properties:
@@ -3146,16 +3333,8 @@ components:
         phone_number:
           type: string
           maxLength: 20
-        is_agent:
-          type: boolean
-        is_accountant:
-          type: boolean
-        is_buyer:
-          type: boolean
-        is_logistical:
-          type: boolean
-        is_comunity_manager:
-          type: boolean
+        role:
+          $ref: '#/components/schemas/RoleEnum'
         agent_profit:
           type: number
           format: double
@@ -3195,16 +3374,8 @@ components:
           type: string
           minLength: 1
           maxLength: 20
-        is_agent:
-          type: boolean
-        is_accountant:
-          type: boolean
-        is_buyer:
-          type: boolean
-        is_logistical:
-          type: boolean
-        is_comunity_manager:
-          type: boolean
+        role:
+          $ref: '#/components/schemas/RoleEnum'
         agent_profit:
           type: number
           format: double

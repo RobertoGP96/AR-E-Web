@@ -14,6 +14,7 @@ from api.models import (
     Order,
     EvidenceImages,
 )
+from drf_spectacular.utils import extend_schema_field
 import re
 
 
@@ -90,6 +91,10 @@ class ProductSerializer(serializers.ModelSerializer):
     )
     status = serializers.SerializerMethodField(read_only=True)
     total_cost = serializers.FloatField(required=True)
+    amount_buyed = serializers.SerializerMethodField(read_only=True)
+    amount_delivered = serializers.SerializerMethodField(read_only=True)
+    amount_received = serializers.SerializerMethodField(read_only=True)
+    cost_per_product = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         """MetaClassName"""
@@ -121,10 +126,10 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
+    @extend_schema_field(str)
     def get_status(self, obj):
         count = 0
         try:
-            # for product in obj.buys.all():
             for product in self.instance.filter(id=obj.id).first().buys.all():
                 count += product.amount_buyed
         except AttributeError:
@@ -137,6 +142,22 @@ class ProductSerializer(serializers.ModelSerializer):
         if count != 0:
             return "Parcialmente comprado"
         return "Encargado"
+
+    @extend_schema_field(int)
+    def get_amount_buyed(self, obj):
+        return getattr(obj, 'amount_buyed', 0)
+
+    @extend_schema_field(int)
+    def get_amount_delivered(self, obj):
+        return getattr(obj, 'amount_delivered', 0)
+
+    @extend_schema_field(int)
+    def get_amount_received(self, obj):
+        return getattr(obj, 'amount_received', 0)
+
+    @extend_schema_field(float)
+    def get_cost_per_product(self, obj):
+        return getattr(obj, 'cost_per_product', 0.0)
 
     def validate_shop_cost(self, value):
         """Ensure shop_cost is not negative."""
@@ -180,6 +201,22 @@ class OrderSerializer(serializers.ModelSerializer):
         },
     )
     products = ProductSerializer(many=True, read_only=True)
+
+    total_cost = serializers.SerializerMethodField(read_only=True)
+    received_value_of_client = serializers.SerializerMethodField(read_only=True)
+    extra_payments = serializers.SerializerMethodField(read_only=True)
+
+    @extend_schema_field(float)
+    def get_total_cost(self, obj):
+        return getattr(obj, 'total_cost', 0.0)
+
+    @extend_schema_field(float)
+    def get_received_value_of_client(self, obj):
+        return getattr(obj, 'received_value_of_client', 0.0)
+
+    @extend_schema_field(float)
+    def get_extra_payments(self, obj):
+        return getattr(obj, 'extra_payments', 0.0)
 
     class Meta:
         """Class of model"""
@@ -297,6 +334,7 @@ class ProductBuyedSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
+    @extend_schema_field(dict)
     def get_original_product_details(self, obj):
         return ProductSerializer(obj.original_product).data
 
@@ -335,6 +373,12 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
         },
     )
     buyed_products = ProductBuyedSerializer(many=True, read_only=True)
+
+    total_cost_of_shopping = serializers.SerializerMethodField(read_only=True)
+
+    @extend_schema_field(float)
+    def get_total_cost_of_shopping(self, obj):
+        return obj.total_cost_of_shopping() if hasattr(obj, 'total_cost_of_shopping') else 0.0
 
     class Meta:
         """Class of model"""
@@ -462,6 +506,8 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
     )
     delivered_products = ProductReceivedSerializer(many=True, read_only=True)
 
+    total_cost_of_deliver = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = DeliverReceip
         fields = [
@@ -475,6 +521,15 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
             "total_cost_of_deliver",
         ]
         read_only_fields = ["id"]
+
+    @extend_schema_field(float)
+    def get_total_cost_of_deliver(self, obj):
+        # Calcula el costo total de la entrega usando los campos del modelo
+        # Puedes ajustar la lógica según tu necesidad
+        # Ejemplo: suma de peso * costo por libra + ganancia del manager
+        if hasattr(obj, 'weight_cost') and hasattr(obj, 'manager_profit'):
+            return (obj.weight or 0) * (obj.weight_cost or 0) + (obj.manager_profit or 0)
+        return 0.0
 
 
 class PackageSerializer(serializers.ModelSerializer):
