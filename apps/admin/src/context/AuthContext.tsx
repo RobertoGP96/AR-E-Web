@@ -7,8 +7,8 @@
 
 import { createContext, useReducer, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { apiClient } from '../lib/api-client';
-import type { CustomUser } from '../types/database';
+import { apiClient } from '@/lib/api-client';
+import type { CustomUser } from '@/types/models';
 import type { 
   LoginCredentials, 
   RegisterData, 
@@ -282,23 +282,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const hasRole = useCallback((role: string): boolean => {
     if (!state.user) return false;
     
-    // Mapear roles según las propiedades del CustomUser
-    switch (role.toLowerCase()) {
-      case 'agent':
-        return state.user.is_agent;
-      case 'accountant':
-        return state.user.is_accountant;
-      case 'buyer':
-        return state.user.is_buyer;
-      case 'logistical':
-        return state.user.is_logistical;
-      case 'community_manager':
-        return state.user.is_comunity_manager;
-      case 'staff':
-        return state.user.is_staff;
-      default:
-        return false;
-    }
+        return state.user.role===role;
   }, [state.user]);
 
   /**

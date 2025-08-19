@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -7,7 +7,6 @@ import {
   Settings,
   User,
   LogOut,
-  ChevronRight,
   Store,
   ShoppingBag,
   Truck
@@ -77,6 +76,7 @@ const bottomNavigation = [
 
 export function AsideNav() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -172,7 +172,6 @@ export function AsideNav() {
                 <span className="block font-semibold text-base text-white">Administrador</span>
                 <span className="block text-sm text-gray-400">admin@example.com</span>
               </div>
-              <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-orange-400 transition-colors" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -194,7 +193,7 @@ export function AsideNav() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-gray-100" />
-            <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer hover:bg-orange-50 group">
+            <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer hover:bg-orange-50 group" onClick={() => navigate("/profile")}>
               <User className="h-5 w-5 text-gray-500 group-hover:text-orange-600" />
               <span className="group-hover:text-orange-700">Perfil</span>
             </DropdownMenuItem>

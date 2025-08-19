@@ -15,14 +15,119 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+:root {
+  --radius: 0.625rem;
+  /* Paleta Naranja, Blanco y Negro */
+  --background: oklch(1 0 0); /* Blanco puro */
+  --foreground: oklch(0.15 0 0); /* Negro para texto */
+  --card: oklch(0.99 0 0); /* Blanco para tarjetas */
+  --card-foreground: oklch(0.15 0 0); /* Negro para texto en tarjetas */
+  --popover: oklch(1 0 0); /* Blanco para popover */
+  --popover-foreground: oklch(0.15 0 0); /* Negro para texto en popover */
+  --primary: oklch(70.82% 0.174 54.39); /* Naranja vibrante principal */
+  --primary-foreground: oklch(1 0 0); /* Blanco para texto en primario */
+  --secondary: oklch(0.95 0.02 50); /* Naranja muy claro */
+  --secondary-foreground: oklch(0.15 0 0); /* Negro para texto secundario */
+  --muted: oklch(0.92 0 0); /* Gris muy claro neutro */
+  --muted-foreground: oklch(0.45 0 0); /* Gris medio neutro */
+  --accent: oklch(86.903% 0.03444 40.561); /* Naranja brillante para acentos */
+  --accent-foreground: oklch(1 0 0); /* Blanco para texto en acentos */
+  --destructive: oklch(78.131% 0.07626 67.616); /* Rojo naranja para destructivos */
+  --destructive-foreground: oklch(1 0 0); /* Blanco para texto destructivo */
+  --border: oklch(0.85 0 0); /* Borde gris neutro sin tinte */
+  --input: oklch(96.115% 0.00011 271.152 / 0.26); /* Input gris neutro */
+  --ring: oklch(0.68 0.15 50); /* Ring naranja igual al primario */
+  --chart-1: oklch(0.68 0.15 50); /* Naranja principal */
+  --chart-2: oklch(0.75 0.18 45); /* Naranja brillante */
+  --chart-3: oklch(0.58 0.12 55); /* Naranja oscuro */
+  --chart-4: oklch(0.45 0 0); /* Gris neutro para gráficos */
+  --chart-5: oklch(0.85 0.08 48); /* Naranja claro */
+  /* Sidebar con naranja y blanco */
+  --sidebar: oklch(0.68 0.15 50); /* Naranja principal para sidebar */
+  --sidebar-foreground: oklch(1 0 0); /* Blanco para texto del sidebar */
+  --sidebar-primary: oklch(0.15 0 0); /* Negro para elementos activos */
+  --sidebar-primary-foreground: oklch(1 0 0); /* Blanco para texto activo */
+  --sidebar-accent: oklch(83.661% 0.08201 79.699); /* Naranja claro para hover */
+  --sidebar-accent-foreground: oklch(1 0 0); /* Blanco para texto hover */
+  --sidebar-border: oklch(0.75 0 0); /* Borde gris neutro para sidebar */
+  --sidebar-ring: oklch(0.75 0.12 40); /* Ring naranja claro */
 }
-a:hover {
-  color: #535bf2;
+
+.dark {
+  /* Tema oscuro abejas - Tonos nocturnos con acentos naranjas */
+  --background: oklch(0.12 0.02 35); /* Marrón muy oscuro */
+  --foreground: oklch(0.88 0.06 55); /* Naranja claro para texto */
+  --card: oklch(0.18 0.03 38); /* Marrón oscuro para tarjetas */
+  --card-foreground: oklch(0.88 0.06 55);
+  --popover: oklch(0.18 0.03 38);
+  --popover-foreground: oklch(0.88 0.06 55);
+  --primary: oklch(0.72 0.16 48); /* Naranja dorado brillante */
+  --primary-foreground: oklch(0.12 0.02 35);
+  --secondary: oklch(0.25 0.05 40); /* Marrón medio */
+  --secondary-foreground: oklch(0.88 0.06 55);
+  --muted: oklch(0.22 0 0); /* Gris neutro oscuro */
+  --muted-foreground: oklch(0.65 0 0); /* Gris neutro medio */
+  --accent: oklch(72.691% 0.09519 55.946); /* Naranja miel para acentos */
+  --accent-foreground: oklch(0.12 0.02 35);
+  --destructive: oklch(0.65 0.18 25); /* Rojo anaranjado más claro */
+  --destructive-foreground: oklch(36.484% 0.00136 15.538); /* Blanco para texto destructivo */
+  --border: oklch(0.30 0 0); /* Borde gris neutro oscuro */
+  --input: oklch(0.25 0 0); /* Input gris neutro oscuro */
+  --ring: oklch(0.68 0.15 48);
+  --chart-1: oklch(0.72 0.16 48); /* Naranja dorado */
+  --chart-2: oklch(0.58 0.12 55); /* Naranja miel */
+  --chart-3: oklch(0.45 0.08 42); /* Marrón miel oscuro */
+  --chart-4: oklch(0.35 0 0); /* Gris neutro muy oscuro */
+  --chart-5: oklch(0.75 0.14 60); /* Amarillo naranja */
+  /* Sidebar oscuro con acentos naranjas */
+  --sidebar: oklch(0.15 0.03 38); /* Fondo oscuro */
+  --sidebar-foreground: oklch(0.82 0.08 52); /* Texto naranja claro */
+  --sidebar-primary: oklch(0.68 0.15 48); /* Naranja dorado para activos */
+  --sidebar-primary-foreground: oklch(0.12 0.02 35);
+  --sidebar-accent: oklch(0.25 0.05 42); /* Hover marrón claro */
+  --sidebar-accent-foreground: oklch(0.85 0.08 55);
+  --sidebar-border: oklch(0.32 0 0); /* Borde gris neutro oscuro */
+  --sidebar-ring: oklch(0.62 0.12 50);
 }
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
 
 body {
   margin: 0;
@@ -37,34 +142,3 @@ h1 {
   line-height: 1.1;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}

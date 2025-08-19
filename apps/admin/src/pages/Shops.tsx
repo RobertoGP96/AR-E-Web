@@ -1,20 +1,9 @@
 import { useState } from 'react';
-import { ShopsHeader, ShopsFilters, ShopsTable } from '@/components/shops';
+import { ShopsHeader, ShopsTable } from '@/components/shops';
 import type { Shop } from '@/types/models/shop';
 
 export default function Shops() {
-  const [searchValue, setSearchValue] = useState("");
   const [shops, setShops] = useState<Shop[]>([]);
-
-  const handleSearchChange = (value: string) => {
-    setSearchValue(value);
-    // Aquí puedes agregar lógica de filtrado
-  };
-
-  const handleShopCreated = (shop: Shop) => {
-    setShops(prev => [...prev, shop]);
-    console.log("Nueva tienda creada:", shop.name);
-  };
 
   const handleShopUpdated = (updatedShop: Shop) => {
     setShops(prev => prev.map(shop =>
@@ -32,12 +21,6 @@ export default function Shops() {
   return (
     <div className="space-y-6">
       <ShopsHeader />
-
-      <ShopsFilters
-        searchValue={searchValue}
-        onSearchChange={handleSearchChange}
-        onShopCreated={handleShopCreated}
-      />
 
       <ShopsTable
         shops={shops.length > 0 ? shops : undefined}

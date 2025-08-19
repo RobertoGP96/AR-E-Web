@@ -6,9 +6,9 @@
  */
 
 import { useContext, useMemo } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import type { CustomUser } from '../types/database';
-import type { LoginCredentials, RegisterData, AuthResponse, ApiResponse } from '../types/api';
+import { AuthContext } from '@/context/AuthContext';
+import type { CustomUser } from '@/types/models';
+import type { LoginCredentials, RegisterData, AuthResponse, ApiResponse } from '@/types/api';
 
 // Tipo de retorno para el hook principal useAuth
 export interface UseAuthReturn {
