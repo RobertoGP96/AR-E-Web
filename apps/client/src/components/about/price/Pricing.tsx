@@ -1,4 +1,4 @@
-import { CheckIcon, DollarSign } from "lucide-react"
+import { CheckIcon } from "lucide-react"
 
 
 const tiers = [

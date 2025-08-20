@@ -8,13 +8,13 @@
 import { createContext, useReducer, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { apiClient } from '@/lib/api-client';
-import type { CustomUser } from '@/types/models';
 import type { 
   LoginCredentials, 
   RegisterData, 
   AuthResponse,
   ApiResponse 
 } from '../types/api';
+import type { CustomUser } from '@/types/user';
 
 // Tipos para el estado de autenticación
 interface AuthState {

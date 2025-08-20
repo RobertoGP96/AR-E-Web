@@ -2,7 +2,8 @@
  * Tipos para las respuestas de la API y utilidades
  */
 
-import type { CustomUser } from "./models";
+import type { CustomUser } from "./user";
+
 
 // Tipos base para API
 export interface ApiError {
