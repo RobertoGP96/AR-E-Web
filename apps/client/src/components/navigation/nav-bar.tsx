@@ -11,7 +11,7 @@ const NavBar = () => {
     ]
 
     return (
-        <header className="absolute inset-x-0 top-0 z-50">
+        <header className="w-full">
             <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
                 <div className="flex lg:flex-1">
                 </div>
@@ -31,16 +31,18 @@ const NavBar = () => {
                 <div className="flex flex-row justify-center items-center gap-2 lg:flex lg:flex-1 lg:justify-end">
                     <NavLink to={"/login"}>
 
-                        <Button variant={"outline"}>
+                        <Button variant={"outline"} className="cursor-pointer">
                             <LogIn />
                             Inicia Sesión
                         </Button>
                     </NavLink>
                     <span>ó</span>
-                    <Button variant={"outline"}>
-                        <UserPlus />
-                        Registrate
-                    </Button>
+                    <NavLink to={"/register"}>
+                        <Button variant={"outline"} className="cursor-pointer">
+                            <UserPlus />
+                            Registrate
+                        </Button>
+                    </NavLink>
                 </div>
             </nav>
 

@@ -1,4 +1,4 @@
-import { CheckIcon } from "lucide-react"
+import { CheckIcon, DollarSign } from "lucide-react"
 
 
 const tiers = [
@@ -41,7 +41,7 @@ function classNames(...classes: string[]) {
 
 export default function Pricing() {
   return (
-    <div className="relative isolate px-6 py-24 sm:py-32 lg:px-8 bg-black">
+    <div className="relative isolate px-6 lg:px-8 ">
       <div aria-hidden="true" className="absolute inset-x-0 -top-3 -z-10 transform-gpu overflow-hidden px-36 blur-3xl">
         <div
           style={{
@@ -52,7 +52,8 @@ export default function Pricing() {
         />
       </div>
       <div className="mx-auto max-w-4xl text-center">
-        <h1 className="font-semibold text-primary">Precios</h1>
+        <h1 className="font-semibold text-primary">
+          Precios</h1>
         <p className="mt-2 text-5xl font-semibold tracking-tight text-balance text-gray-900 sm:text-6xl dark:text-white">
           Deacuerdo a la categoria de los productos
         </p>
@@ -62,20 +63,26 @@ export default function Pricing() {
       </p>
       <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 items-center gap-y-6 sm:mt-20 sm:gap-y-0 lg:max-w-4xl lg:grid-cols-2">
         {tiers.map((tier, tierIdx) => (
-          <div
-            key={tier.id}
-            className={classNames(
-              tier.featured
-                ? 'relative bg-black/50 shadow-none'
-                : 'sm:mx-8 lg:mx-0 bg-white/2.5',
-              tier.featured
-                ? ''
-                : tierIdx === 0
-                  ? 'rounded-t-3xl sm:rounded-b-none lg:rounded-tr-none lg:rounded-bl-3xl'
-                  : 'sm:rounded-t-none lg:rounded-tr-3xl lg:rounded-bl-none',
-              'rounded-3xl p-8 ring-1 sm:p-10 ring-white/10',
-            )}
-          >
+            <div
+              key={tier.id}
+              className={classNames(
+                tier.featured
+                  ? 'relative bg-black/50 shadow-none'
+                  : 'sm:mx-8 lg:mx-0 bg-white/2.5 hover:bg-white/5',
+                tier.featured
+                  ? ''
+                  : tierIdx === 0
+                    ? 'rounded-t-3xl sm:rounded-b-none lg:rounded-tr-none lg:rounded-bl-3xl'
+                    : 'sm:rounded-t-none lg:rounded-tr-3xl lg:rounded-bl-none',
+                'rounded-3xl p-8 ring-1 sm:p-10 ring-white/10',
+                // Hover effect: escala y z-index
+                'relative transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl',
+                // Border radius uniforme en hover
+                'hover:rounded-3xl',
+                // z-index base para no interferir
+                'z-10',
+              )}
+            >
             <h3
               id={tier.id}
               className={'text-base/7 font-semibold text-primary'}
@@ -97,7 +104,7 @@ export default function Pricing() {
                   'text-base',
                 )}
               >
-                /Lb
+                USD/Lb
               </span>
             </p>
             <p

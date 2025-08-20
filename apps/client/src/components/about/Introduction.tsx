@@ -1,11 +1,11 @@
-import { CheckCircleIcon, Info } from "lucide-react";
+import { CheckCircleIcon } from "lucide-react";
 
 
-export default function Example() {
+export default function Introduction() {
   return (
-    <div className="bg-white px-6 py-32 lg:px-8 dark:bg-gray-900">
+    <div className="px-6 py-32 lg:px-8 ">
       <div className="mx-auto max-w-3xl text-base/7 text-gray-700 dark:text-gray-300">
-        <p className="text-base/7 font-semibold text-indigo-600 dark:text-indigo-400">Introducción</p>
+        <h2 className="text-2xl font-semibold text-primary ">Introducción</h2>
         <h1 className="mt-2 text-4xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-5xl dark:text-white">
           JavaScript for beginners
         </h1>
@@ -25,7 +25,7 @@ export default function Example() {
             <li className="flex gap-x-3">
               <CheckCircleIcon
                 aria-hidden="true"
-                className="mt-1 size-5 flex-none text-indigo-600 dark:text-indigo-400"
+                className="mt-1 size-5 flex-none text-primary"
               />
               <span>
                 <strong className="font-semibold text-gray-900 dark:text-white">Data types.</strong> Lorem ipsum, dolor
@@ -36,7 +36,7 @@ export default function Example() {
             <li className="flex gap-x-3">
               <CheckCircleIcon
                 aria-hidden="true"
-                className="mt-1 size-5 flex-none text-indigo-600 dark:text-indigo-400"
+                className="mt-1 size-5 flex-none text-primary"
               />
               <span>
                 <strong className="font-semibold text-gray-900 dark:text-white">Loops.</strong> Anim aute id magna
@@ -46,7 +46,7 @@ export default function Example() {
             <li className="flex gap-x-3">
               <CheckCircleIcon
                 aria-hidden="true"
-                className="mt-1 size-5 flex-none text-indigo-600 dark:text-indigo-400"
+                className="mt-1 size-5 flex-none text-primary"
               />
               <span>
                 <strong className="font-semibold text-gray-900 dark:text-white">Events.</strong> Ac tincidunt sapien
@@ -59,53 +59,8 @@ export default function Example() {
             fermentum dignissim. Lacus diam tincidunt ac cursus in vel. Mauris varius vulputate et ultrices hac
             adipiscing egestas. Iaculis convallis ac tempor et ut. Ac lorem vel integer orci.
           </p>
-          <h2 className="mt-16 text-3xl font-semibold tracking-tight text-pretty text-gray-900 dark:text-white">
-            From beginner to expert in 3 hours
-          </h2>
-          <p className="mt-6">
-            Id orci tellus laoreet id ac. Dolor, aenean leo, ac etiam consequat in. Convallis arcu ipsum urna nibh.
-            Pharetra, euismod vitae interdum mauris enim, consequat vulputate nibh. Maecenas pellentesque id sed tellus
-            mauris, ultrices mauris. Tincidunt enim cursus ridiculus mi. Pellentesque nam sed nullam sed diam turpis
-            ipsum eu a sed convallis diam.
-          </p>
-          <figure className="mt-10 border-l border-indigo-600 pl-9 dark:border-indigo-400">
-            <blockquote className="font-semibold text-gray-900 dark:text-white">
-              <p>
-                "Vel ultricies morbi odio facilisi ultrices accumsan donec lacus purus. Lectus nibh ullamcorper ac
-                dictum justo in euismod. Risus aenean ut elit massa. In amet aliquet eget cras. Sem volutpat enim
-                tristique."
-              </p>
-            </blockquote>
-            <figcaption className="mt-6 flex gap-x-4">
-              <img
-                alt=""
-                src="https://images.unsplash.com/photo-1502685104226-ee32379fefbe?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                className="size-6 flex-none rounded-full bg-gray-50 dark:bg-gray-800"
-              />
-              <div className="text-sm/6">
-                <strong className="font-semibold text-gray-900 dark:text-white">Maria Hill</strong> – Marketing Manager
-              </div>
-            </figcaption>
-          </figure>
-          <p className="mt-10">
-            Faucibus commodo massa rhoncus, volutpat. Dignissim sed eget risus enim. Mattis mauris semper sed amet vitae
-            sed turpis id. Id dolor praesent donec est. Odio penatibus risus viverra tellus varius sit neque erat velit.
-          </p>
+
         </div>
-        <figure className="mt-16">
-          <img
-            alt=""
-            src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&w=1310&h=873&q=80&facepad=3"
-            className="aspect-video rounded-xl bg-gray-50 object-cover dark:bg-gray-800"
-          />
-          <figcaption className="mt-4 flex gap-x-2 text-sm/6 text-gray-500 dark:text-gray-400">
-            <Info
-              aria-hidden="true"
-              className="mt-0.5 size-5 flex-none text-gray-300 dark:text-gray-600"
-            />
-            Faucibus commodo massa rhoncus, volutpat.
-          </figcaption>
-        </figure>
         <div className="mt-16 max-w-2xl text-gray-600 dark:text-gray-400">
           <h2 className="text-3xl font-semibold tracking-tight text-pretty text-gray-900 dark:text-white">
             Everything you need to get up and running

@@ -34,16 +34,16 @@ export const CarouselStores = () => {
                 AutoScroll({ playOnInit: true }),
             ]}
 
-            className="w-full py-6"
+            className="w-full"
         >
             <CarouselContent className="w-full">
                 {storeList.map((store, index) => (
-                    <CarouselItem key={index} className="basis-1/3 md:basis-1/5 lg:basis-1/10">
-                        <div className="p-2 flex items-center justify-center w-30 h-30 rounded-xl   shadow-sm overflow-hidden group-hover:shadow-md transition-shadow duration-200">
+                    <CarouselItem key={index} className="basis-1/3 md:basis-1/5 lg:basis-1/10 border-0">
+                        <div className="p-2 flex items-center justify-center w-30 h-30 border-0 overflow-hidden">
                             <img
                                 src={getShopLogo(store.name)}
                                 alt={`${store.name} logo`}
-                                className="w-full h-auto object-contain filter drop-shadow-sm"
+                                className="w-full h-auto object-contain"
                             />
                         </div>
                     </CarouselItem>
