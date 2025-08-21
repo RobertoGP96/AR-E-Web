@@ -18,15 +18,3 @@ export interface DeliverReceip {
   // Propiedades computadas
   total_cost_of_deliver: number;
 }
-
-// Tipos para crear/editar recibo de entrega
-export interface CreateDeliverReceipData {
-  order_id: ID;
-  weight: number;
-  status?: DeliveryStatus;
-  deliver_date?: DateTime;
-}
-
-export interface UpdateDeliverReceipData extends Partial<CreateDeliverReceipData> {
-  id: ID;
-}

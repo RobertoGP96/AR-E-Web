@@ -2,7 +2,7 @@
  * Tipos para el modelo Order
  */
 
-import type { ID, DateTime, OrderStatus, PayStatus } from './base';
+import type { ID, OrderStatus, PayStatus } from './base';
 import type { CustomUser } from './user';
 import type { DeliverReceip } from './delivery';
 
@@ -41,13 +41,4 @@ export interface OrderFilters {
   sales_manager_id?: ID;
   date_from?: string;
   date_to?: string;
-}
-
-// Estadísticas de pedidos
-export interface OrderStats {
-  total_cost: number;
-  products_count: number;
-  status: OrderStatus;
-  pay_status: PayStatus;
-  created_date: DateTime;
 }

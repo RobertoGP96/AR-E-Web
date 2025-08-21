@@ -29,12 +29,6 @@ export interface Product {
   own_taxes: number;
   added_taxes: number;
   total_cost: number;
-  
-  // Propiedades computadas
-  cost_per_product: number;
-  amount_buyed: number;
-  amount_received: number;
-  amount_delivered: number;
 }
 
 // Tipos para crear/editar producto
@@ -42,14 +36,14 @@ export interface CreateProductData {
   sku: string;
   name: string;
   link?: string;
-  shop_id: ID;
+  shop_id?: ID;
   description?: string;
   observation?: string;
   category?: string;
-  amount_requested: number;
+  amount_requested?: number;
   order_id: ID;
   status?: ProductStatus;
-  shop_cost: number;
+  shop_cost?: number;
   shop_delivery_cost?: number;
   shop_taxes?: number;
   own_taxes?: number;

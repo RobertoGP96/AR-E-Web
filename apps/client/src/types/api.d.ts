@@ -97,13 +97,13 @@ export interface UserFilters extends BaseFilters {
   date_joined_to?: string;
 }
 
-export interface OrderFilters extends BaseFilters {
-  status?: string;
-  pay_status?: string;
-  client_id?: number;
-  sales_manager_id?: number;
-  created_from?: string;
-  created_to?: string;
+export interface OrderFilters {
+  status?: OrderStatus;
+  pay_status?: PayStatus;
+  client_id?: ID;
+  sales_manager_id?: ID;
+  date_from?: string;
+  date_to?: string;
 }
 
 export interface ProductFilters extends BaseFilters {

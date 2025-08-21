@@ -21,20 +21,3 @@ export interface ProductReceived {
   amount_delivered: number;
   observation?: string;
 }
-
-// Tipos para crear/editar producto recibido
-export interface CreateProductReceivedData {
-  original_product_id: string; // UUID
-  order_id: ID;
-  reception_date_in_eeuu: Date;
-  reception_date_in_cuba?: Date;
-  package_where_was_send_id: ID;
-  deliver_receip_id?: ID;
-  amount_received: number;
-  amount_delivered?: number;
-  observation?: string;
-}
-
-export interface UpdateProductReceivedData extends Partial<CreateProductReceivedData> {
-  id: ID;
-}
