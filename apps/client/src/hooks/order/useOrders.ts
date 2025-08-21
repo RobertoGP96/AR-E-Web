@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getOrders } from '../../services/orders/get-orders';
-import type { OrderFilters } from '../../types/api';
+import type { Order, OrderFilters } from '@/types/order';
+import type { PaginatedApiResponse } from '@/types/api';
 
 /**
  * Hook para obtener la lista de órdenes
@@ -13,7 +14,7 @@ export function useOrders(filters?: OrderFilters) {
     isLoading,
     isFetching,
     refetch,
-  } = useQuery<import('../../types/api').PaginatedApiResponse<import('../../types').Order>, Error>({
+  } = useQuery<PaginatedApiResponse<Order>, Error>({
     queryKey: ['orders', filters],
     queryFn: () => getOrders(filters),
   });
