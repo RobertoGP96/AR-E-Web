@@ -14,7 +14,7 @@ from api.enums import OrderStatusEnum, PaymentStatusEnum
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     """Custom user model"""
     # Account data
-    email = models.EmailField(_("email"), unique=True)
+    email = models.EmailField(_("email"), unique=True, blank=True, null=True)
     name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     home_address = models.CharField(max_length=200)

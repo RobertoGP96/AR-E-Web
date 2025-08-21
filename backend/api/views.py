@@ -69,9 +69,77 @@ User = get_user_model()
 # Auth JWt
 
 
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import serializers
+
+class PhoneTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Serializer personalizado para login con número de teléfono.
+    """
+    phone_number = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        phone_number = attrs.get("phone_number")
+        password = attrs.get("password")
+        user = None
+        if phone_number and password:
+            try:
+                user = User.objects.get(phone_number=phone_number)
+            except User.DoesNotExist:
+                raise serializers.ValidationError({"phone_number": "No existe usuario con ese número."})
+            if not user.check_password(password):
+                raise serializers.ValidationError({"password": "Contraseña incorrecta."})
+            if not user.is_active:
+                raise serializers.ValidationError({"phone_number": "Usuario inactivo."})
+        else:
+            raise serializers.ValidationError("Debe proporcionar número de teléfono y contraseña.")
+        refresh = RefreshToken.for_user(user)
+        user_data = UserSerializer(user).data
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "user": user_data
+        }
+
+from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
+
+@extend_schema(
+    summary="Login con número de teléfono",
+    description="Obtiene el par de tokens JWT usando el número de teléfono y contraseña.",
+    request=PhoneTokenObtainPairSerializer,
+    responses={200: OpenApiTypes.OBJECT},
+    tags=["Autenticación"],
+    examples=[
+        OpenApiExample(
+            "Ejemplo login",
+            value={"phone_number": "+5355555555", "password": "123456"},
+            request_only=True
+        ),
+        OpenApiExample(
+            "Ejemplo respuesta",
+            value={
+                "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJI...",
+                "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJI...",
+                "user": {
+                    "user_id": 1,
+                    "email": "usuario@correo.com",
+                    "name": "Nombre",
+                    "last_name": "Apellido",
+                    "home_address": "Dirección",
+                    "phone_number": "+5355555555",
+                    "role": "user",
+                    "agent_profit": 0,
+                    "is_staff": False
+                }
+            },
+            response_only=True
+        )
+    ]
+)
 class MyTokenObtainPairView(TokenObtainPairView):
-    "Obtención de token JWT para autenticación de usuarios."
-    serializer_class = TokenObtainPairSerializer
+    "Obtención de token JWT para autenticación de usuarios por número de teléfono."
+    serializer_class = PhoneTokenObtainPairSerializer
 
 
 class Protection(APIView):
@@ -83,7 +151,8 @@ class Protection(APIView):
     @extend_schema(
         summary="Verifica autenticación",
         description="Devuelve 200 si el token JWT es válido.",
-        responses={200: None}
+        responses={200: None},
+        tags=["Autenticación"]
     )
     def get(self, request):
         """Respuesta de seguridad"""
@@ -106,7 +175,8 @@ class UserViewSet(viewsets.ModelViewSet):
     @extend_schema(
         summary="Registrar usuario",
         description="Crea un nuevo usuario y envía correo de verificación.",
-        responses={201: UserSerializer}
+        responses={201: UserSerializer},
+        tags=["Usuarios"]
     )
     def perform_create(self, serializer):
         try:
@@ -130,7 +200,8 @@ class PasswordRecoverList(APIView):
     @extend_schema(
         summary="Solicitar recuperación de contraseña",
         description="Envía un correo con el enlace para recuperar la contraseña.",
-        responses={200: None}
+        responses={200: None},
+        tags=["Usuarios"]
     )
     def post(self, request):
         password_secret = get_random_string(length=32)
@@ -150,7 +221,8 @@ class PasswordRecoverList(APIView):
     @extend_schema(
         summary="Actualizar contraseña",
         description="Actualiza la contraseña usando el secreto enviado por correo.",
-        responses={200: None}
+        responses={200: None},
+        tags=["Usuarios"]
     )
     def put(self, request, password_secret=None):
         """Actualiza la contraseña"""
@@ -174,7 +246,8 @@ class PasswordRecoverList(APIView):
             'schema': {'type': 'string'}
         }
     ],
-    responses={200: None}
+    responses={200: None},
+    tags=["Usuarios"]
 )
 @api_view(["GET"])
 def verify_user(request, verification_secret: str):
@@ -201,7 +274,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     @extend_schema(
         summary="Crear orden",
         description="Crea una nueva orden y la asocia al usuario actual.",
-        responses={201: OrderSerializer}
+        responses={201: OrderSerializer},
+        tags=["Órdenes"]
     )
     def perform_create(self, serializer):
         user = User.objects.get(id=self.request.user.id)
@@ -211,6 +285,38 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 
 class ShopViewSet(viewsets.ModelViewSet):
+    @extend_schema(
+        summary="Listado de tiendas",
+        description="Obtén todas las tiendas registradas en el sistema, incluyendo nombre, link y cuentas de compra asociadas.",
+        tags=["Tiendas"],
+        examples=[
+            OpenApiExample(
+                "Ejemplo de respuesta",
+                value=[
+                    {"name": "Amazon", "link": "https://amazon.com", "buying_accounts": ["Cuenta Amazon"]},
+                    {"name": "eBay", "link": "https://ebay.com", "buying_accounts": ["Cuenta eBay"]}
+                ],
+                response_only=True
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Detalle de tienda",
+        description="Obtén la información detallada de una tienda específica por su nombre.",
+        tags=["Tiendas"],
+        examples=[
+            OpenApiExample(
+                "Ejemplo de respuesta",
+                value={"name": "Amazon", "link": "https://amazon.com", "buying_accounts": ["Cuenta Amazon"]},
+                response_only=True
+            )
+        ]
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
     """
     Gestión de tiendas: consulta, actualización y eliminación por nombre.
     """
@@ -222,7 +328,8 @@ class ShopViewSet(viewsets.ModelViewSet):
     @extend_schema(
         summary="Obtener tienda por nombre",
         description="Devuelve la información de la tienda especificada por nombre.",
-        responses={200: ShopSerializer}
+        responses={200: ShopSerializer},
+        tags=["Tiendas"]
     )
     def get_object(self):
         try:
@@ -233,6 +340,23 @@ class ShopViewSet(viewsets.ModelViewSet):
 
 
 class BuyingAccountsViewsSet(viewsets.ModelViewSet):
+    @extend_schema(
+        summary="Listado de cuentas de compra",
+        description="Obtén todas las cuentas de compra asociadas a las tiendas. Útil para gestión y selección de métodos de pago en compras.",
+        tags=["Cuentas de compra"],
+        examples=[
+            OpenApiExample(
+                "Ejemplo de respuesta",
+                value=[
+                    {"account_name": "Cuenta Amazon", "shop": "Amazon"},
+                    {"account_name": "Cuenta eBay", "shop": "eBay"}
+                ],
+                response_only=True
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
     """
     Gestión de cuentas de compra.
     """
@@ -252,13 +376,31 @@ class CommonInformationViewSet(viewsets.ModelViewSet):
     @extend_schema(
         summary="Obtener información común",
         description="Devuelve la información común del sistema.",
-        responses={200: CommonInformationSerializer}
+        responses={200: CommonInformationSerializer},
+        tags=["Información común"]
     )
     def get_object(self):
         return CommonInformation.get_instance()
 
 
 class ProductViewSet(viewsets.ModelViewSet):
+    @extend_schema(
+        summary="Listado de productos",
+        description="Consulta todos los productos disponibles en el sistema, incluyendo detalles como nombre, SKU, tienda, estado y costos asociados.",
+        tags=["Productos"],
+        examples=[
+            OpenApiExample(
+                "Ejemplo de respuesta",
+                value=[
+                    {"id": 1, "sku": "SKU123", "name": "Laptop HP", "shop": "Amazon", "status": "Comprado", "total_cost": 1200.0},
+                    {"id": 2, "sku": "SKU456", "name": "Mouse Logitech", "shop": "eBay", "status": "Encargado", "total_cost": 25.0}
+                ],
+                response_only=True
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
     """
     Gestión de productos.
     """
@@ -278,7 +420,8 @@ class ShoppingReceipViewSet(viewsets.ModelViewSet):
     @extend_schema(
         summary="Crear recibo de compra",
         description="Crea un recibo de compra y los productos asociados.",
-        responses={201: ShoppingReceipSerializer}
+        responses={201: ShoppingReceipSerializer},
+        tags=["Recibos de compra"]
     )
     def create(self, request, *args, **kwargs):
         with transaction.atomic():
@@ -304,6 +447,23 @@ class ShoppingReceipViewSet(viewsets.ModelViewSet):
 
 
 class ProductBuyedViewSet(viewsets.ModelViewSet):
+    @extend_schema(
+        summary="Listado de productos comprados",
+        description="Obtén el historial de productos adquiridos por los agentes, con detalles de compra, descuentos y costos reales.",
+        tags=["Productos comprados"],
+        examples=[
+            OpenApiExample(
+                "Ejemplo de respuesta",
+                value=[
+                    {"id": 1, "original_product": 1, "order": 1, "actual_cost_of_product": 1200.0, "amount_buyed": 1},
+                    {"id": 2, "original_product": 2, "order": 2, "actual_cost_of_product": 25.0, "amount_buyed": 2}
+                ],
+                response_only=True
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
     """
     Gestión de productos comprados.
     """
@@ -323,7 +483,8 @@ class ProductReceivedViewSet(viewsets.ModelViewSet):
     @extend_schema(
         summary="Registrar productos recibidos",
         description="Crea registros de productos recibidos y los asocia a un paquete.",
-        responses={201: ProductReceivedSerializer}
+        responses={201: ProductReceivedSerializer},
+        tags=["Productos recibidos"]
     )
     def create(self, request, *args, **kwargs):
         with transaction.atomic():
@@ -349,7 +510,8 @@ class ProductReceivedViewSet(viewsets.ModelViewSet):
     @extend_schema(
         summary="Entregar productos",
         description="Actualiza el estado de productos como entregados.",
-        responses={201: ProductReceivedSerializer}
+        responses={201: ProductReceivedSerializer},
+        tags=["Productos recibidos"]
     )
     @action(detail=False, methods=["patch"], permission_classes=[IsAuthenticated])
     def deliver_products(self, request):
@@ -380,6 +542,23 @@ class ProductReceivedViewSet(viewsets.ModelViewSet):
 
 
 class PackageViewSet(viewsets.ModelViewSet):
+    @extend_schema(
+        summary="Listado de paquetes",
+        description="Consulta todos los paquetes gestionados en el sistema, incluyendo número de tracking, agencia y productos contenidos.",
+        tags=["Paquetes"],
+        examples=[
+            OpenApiExample(
+                "Ejemplo de respuesta",
+                value=[
+                    {"id": 1, "number_of_tracking": "TRK123", "agency_name": "DHL", "status_of_processing": "En tránsito"},
+                    {"id": 2, "number_of_tracking": "TRK456", "agency_name": "FedEx", "status_of_processing": "Entregado"}
+                ],
+                response_only=True
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
     """
     Gestión de paquetes.
     """
@@ -389,6 +568,23 @@ class PackageViewSet(viewsets.ModelViewSet):
 
 
 class DeliverReceipViewSet(viewsets.ModelViewSet):
+    @extend_schema(
+        summary="Listado de recibos de entrega",
+        description="Obtén todos los recibos de entrega generados, con información de productos entregados, fechas y estado.",
+        tags=["Recibos de entrega"],
+        examples=[
+            OpenApiExample(
+                "Ejemplo de respuesta",
+                value=[
+                    {"id": 1, "order": 1, "deliver_date": "2025-08-21", "status": "Entregado"},
+                    {"id": 2, "order": 2, "deliver_date": "2025-08-20", "status": "Pendiente"}
+                ],
+                response_only=True
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
     """
     Gestión de recibos de entrega.
     """
@@ -405,7 +601,8 @@ class ImageUploadApiView(APIView):
     @extend_schema(
         summary="Subir imagen",
         description="Sube una imagen de evidencia al servidor.",
-        responses={201: None}
+        responses={201: None},
+        tags=["Imágenes"]
     )
     def post(self, request):
         if "image" in request.FILES:
@@ -432,7 +629,8 @@ class ImageUploadApiView(APIView):
     @extend_schema(
         summary="Eliminar imagen",
         description="Elimina una imagen de evidencia del servidor.",
-        responses={200: None}
+        responses={200: None},
+        tags=["Imágenes"]
     )
     def delete(self, request):
         if "public_id" in request.data:

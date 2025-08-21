@@ -19,6 +19,10 @@ import re
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializador para el modelo CustomUser.
+    Incluye validaciones personalizadas para email y teléfono, y gestiona la creación de usuarios con contraseña encriptada.
+    """
     user_id = serializers.IntegerField(source="id", read_only=True)
     email = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True)
@@ -62,6 +66,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    """
+    Serializador para productos. Proporciona información detallada, validaciones y campos calculados para el modelo Product.
+    """
     """Product information provided by the agent"""
 
     shop = serializers.SlugRelatedField(
@@ -184,6 +191,9 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    """
+    Serializador para órdenes. Incluye validaciones de agente y campos calculados relacionados con pagos y productos.
+    """
     client = serializers.SlugRelatedField(
         queryset=CustomUser.objects.all(),
         slug_field="email",
@@ -244,6 +254,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class ShopSerializer(serializers.ModelSerializer):
+    """
+    Serializador para tiendas. Muestra cuentas de compra asociadas.
+    """
     """Serializer of diferents shops"""
 
     buying_accounts = serializers.StringRelatedField(many=True, read_only=True)
@@ -256,6 +269,9 @@ class ShopSerializer(serializers.ModelSerializer):
 
 
 class BuyingAccountsSerializer(serializers.ModelSerializer):
+    """
+    Serializador para cuentas de compra asociadas a tiendas.
+    """
     """Serializer of buying accounts"""
 
     shop = serializers.SlugRelatedField(
@@ -275,6 +291,9 @@ class BuyingAccountsSerializer(serializers.ModelSerializer):
 
 
 class CommonInformationSerializer(serializers.ModelSerializer):
+    """
+    Serializador para información común administrada por el admin.
+    """
     """Common information introduced for the admin"""
 
     class Meta:
@@ -285,6 +304,9 @@ class CommonInformationSerializer(serializers.ModelSerializer):
 
 
 class ProductBuyedSerializer(serializers.ModelSerializer):
+    """
+    Serializador para productos comprados por el agente, con validaciones de cantidad y detalles del producto original.
+    """
     """Product buyed by the agent"""
 
     original_product = serializers.SlugRelatedField(
@@ -354,6 +376,9 @@ class ProductBuyedSerializer(serializers.ModelSerializer):
 
 
 class ShoppingReceipSerializer(serializers.ModelSerializer):
+    """
+    Serializador para recibos de compra, incluye productos comprados y cálculo de costo total.
+    """
     """Shopping Receip Serializer"""
 
     shopping_account = serializers.SlugRelatedField(
@@ -396,6 +421,9 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
 
 
 class ProductReceivedSerializer(serializers.ModelSerializer):
+    """
+    Serializador para productos recibidos y entregados por logística, con validaciones de cantidad y detalles del producto.
+    """
     """Product delivered and received by the logistical"""
 
     original_product = serializers.SlugRelatedField(
@@ -485,6 +513,9 @@ class ProductReceivedSerializer(serializers.ModelSerializer):
 
 
 class DeliverReceipSerializer(serializers.ModelSerializer):
+    """
+    Serializador para recibos de entrega, incluye productos entregados y cálculo de costo total de entrega.
+    """
     """Deliver Receip Serializer"""
 
     order = serializers.SlugRelatedField(
@@ -533,6 +564,9 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
 
 
 class PackageSerializer(serializers.ModelSerializer):
+    """
+    Serializador para paquetes, muestra productos contenidos y fotos asociadas.
+    """
     """Package Serializer"""
 
     package_picture = serializers.SlugRelatedField(

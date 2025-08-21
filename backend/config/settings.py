@@ -78,33 +78,33 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
-#    }
-#}
-
-import os
-from dotenv import load_dotenv
-from urllib.parse import urlparse, parse_qsl
-
-load_dotenv()
-
-# Replace the DATABASES section of your settings.py with this
-tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': tmpPostgres.path.replace('/', ''),
-        'USER': tmpPostgres.username,
-        'PASSWORD': tmpPostgres.password,
-        'HOST': tmpPostgres.hostname,
-        'PORT': 5432,
-        'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+#import os
+#from dotenv import load_dotenv
+#from urllib.parse import urlparse, parse_qsl
+
+#load_dotenv()
+
+# Replace the DATABASES section of your settings.py with this
+#tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql',
+#        'NAME': tmpPostgres.path.replace('/', ''),
+#        'USER': tmpPostgres.username,
+#        'PASSWORD': tmpPostgres.password,
+#        'HOST': tmpPostgres.hostname,
+#        'PORT': 5432,
+#        'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+#    }
+#}
 
 
 # Password validation
@@ -214,8 +214,9 @@ SPECTACULAR_SETTINGS = {
     'SORT_OPERATIONS': False,
     'DISABLE_ERRORS_AND_WARNINGS': False,
     'ENUM_NAME_OVERRIDES': {
-        'OrderStatusEnum': 'api.models.OrderStatus',
-        'PaymentStatusEnum': 'api.models.PaymentStatus',
+        'OrderStatusEnum': 'api.enums.OrderStatusEnum',
+        'PaymentStatusEnum': 'api.enums.PaymentStatusEnum',
+        'StatusOfProcessingEnum': 'api.enums.StatusOfProcessingEnum',
     },
     'AUTHENTICATION_WHITELIST': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
