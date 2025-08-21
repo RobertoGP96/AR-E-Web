@@ -1,3 +1,4 @@
+import AuthProvider from "./context/AuthContext"
 import AppRoutes from "./routes/Routes"
 
 function App() {
@@ -15,7 +16,9 @@ function App() {
           className="relative left-[calc(50%-11rem)] aspect-1155/678 w-144.5 -translate-x-1/2 rotate-30 bg-linear-to-tr from-[#dd6540] to-[#ca9b0d] opacity-30 sm:left-[calc(50%-30rem)] sm:w-288.75"
         />
       </div>
-      <AppRoutes />
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
       <div
         aria-hidden="true"
         className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(25%)]"
