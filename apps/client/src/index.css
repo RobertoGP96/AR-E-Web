@@ -18,19 +18,20 @@
 :root {
   --radius: 0.625rem;
   /* Paleta Naranja, Blanco y Negro */
-  --background: oklch(1 0 0); /* Blanco puro */
-  --foreground: oklch(0.15 0 0); /* Negro para texto */
-  --card: oklch(0.99 0 0); /* Blanco para tarjetas */
-  --card-foreground: oklch(0.15 0 0); /* Negro para texto en tarjetas */
+  --background: oklch(24.354% 0.00003 271.152 / 0.884); /* Blanco puro */
+  --foreground: oklch(25.197% 0.00003 271.152); /* Negro para texto */
+  --card: oklch(24.354% 0.00003 271.152 / 0.384); /* Blanco para tarjetas */
+  --card-foreground: oklch(1 0 0); /* Negro para texto en tarjetas */
+  --card-border: oklch(1 0 0);
   --popover: oklch(1 0 0); /* Blanco para popover */
-  --popover-foreground: oklch(0.15 0 0); /* Negro para texto en popover */
+  --popover-foreground: oklch(44.144% 0.00391 16.601); /* Negro para texto en popover */
   --primary: oklch(70.82% 0.174 54.39); /* Naranja vibrante principal */
   --primary-foreground: oklch(1 0 0); /* Blanco para texto en primario */
   --secondary: oklch(0.95 0.02 50); /* Naranja muy claro */
   --secondary-foreground: oklch(0.15 0 0); /* Negro para texto secundario */
-  --muted: oklch(0.92 0 0); /* Gris muy claro neutro */
+  --muted: oklch(53.912% 0.00122 14.438); /* Gris muy claro neutro */
   --muted-foreground: oklch(0.45 0 0); /* Gris medio neutro */
-  --accent: oklch(86.903% 0.03444 40.561); /* Naranja brillante para acentos */
+  --accent: oklch(31.021% 0.00142 15.864); /* Naranja brillante para acentos */
   --accent-foreground: oklch(1 0 0); /* Blanco para texto en acentos */
   --destructive: oklch(78.131% 0.07626 67.616); /* Rojo naranja para destructivos */
   --destructive-foreground: oklch(1 0 0); /* Blanco para texto destructivo */
@@ -47,7 +48,7 @@
   --sidebar-foreground: oklch(1 0 0); /* Blanco para texto del sidebar */
   --sidebar-primary: oklch(0.15 0 0); /* Negro para elementos activos */
   --sidebar-primary-foreground: oklch(1 0 0); /* Blanco para texto activo */
-  --sidebar-accent: oklch(83.661% 0.08201 79.699); /* Naranja claro para hover */
+  --sidebar-accent: oklch(48.875% 0.09712 72.925); /* Naranja claro para hover */
   --sidebar-accent-foreground: oklch(1 0 0); /* Blanco para texto hover */
   --sidebar-border: oklch(0.75 0 0); /* Borde gris neutro para sidebar */
   --sidebar-ring: oklch(0.75 0.12 40); /* Ring naranja claro */
@@ -64,7 +65,7 @@
   --primary: oklch(0.72 0.16 48); /* Naranja dorado brillante */
   --primary-foreground: oklch(0.12 0.02 35);
   --secondary: oklch(0.25 0.05 40); /* Marrón medio */
-  --secondary-foreground: oklch(0.88 0.06 55);
+  --secondary-foreground: oklch(66.66% 0.16525 48.904);
   --muted: oklch(0.22 0 0); /* Gris neutro oscuro */
   --muted-foreground: oklch(0.65 0 0); /* Gris neutro medio */
   --accent: oklch(72.691% 0.09519 55.946); /* Naranja miel para acentos */
@@ -81,11 +82,11 @@
   --chart-5: oklch(0.75 0.14 60); /* Amarillo naranja */
   /* Sidebar oscuro con acentos naranjas */
   --sidebar: oklch(0.15 0.03 38); /* Fondo oscuro */
-  --sidebar-foreground: oklch(0.82 0.08 52); /* Texto naranja claro */
+  --sidebar-foreground: oklch(78.261% 0.00009 271.152); /* Texto naranja claro */
   --sidebar-primary: oklch(0.68 0.15 48); /* Naranja dorado para activos */
   --sidebar-primary-foreground: oklch(0.12 0.02 35);
   --sidebar-accent: oklch(0.25 0.05 42); /* Hover marrón claro */
-  --sidebar-accent-foreground: oklch(0.85 0.08 55);
+  --sidebar-accent-foreground: oklch(84.522% 0.0001 271.152);
   --sidebar-border: oklch(0.32 0 0); /* Borde gris neutro oscuro */
   --sidebar-ring: oklch(0.62 0.12 50);
 }
@@ -98,6 +99,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
+  --colo-card-border: var(--card-border)
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
