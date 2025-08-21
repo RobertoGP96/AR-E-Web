@@ -5,6 +5,7 @@ import Contact from '@/pages/contact';
 import { Routes, Route } from 'react-router';
 import Register from '@/components/auth/register';
 import About from '@/pages/about';
+import Profile from '@/pages/porfile';
 
 
 const AppRoutes = () => {
@@ -15,10 +16,12 @@ const AppRoutes = () => {
 
             {/* Rutas protegidas */}
             <Route path="/" element={<MainLayout />}>
-                <Route path="/register" element={<Register />} />
-                <Route index element={<Home />} />
+                <Route path="register" element={<Register />} />
+                <Route path='home' element={<Home />} />
                 <Route path="pricing" element={<About />} />
                 <Route path="contact" element={<Contact />} />
+                <Route path="porfile" element={<Profile/>} />
+                <Route path="user_orders" element={<Profile/>} />
             </Route>
         </Routes>
     );
