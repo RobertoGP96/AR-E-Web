@@ -6,6 +6,7 @@ import { Routes, Route } from 'react-router';
 import Register from '@/components/auth/register';
 import About from '@/pages/about';
 import Profile from '@/pages/porfile';
+import Pricing from '@/pages/pricing';
 
 
 const AppRoutes = () => {
@@ -18,9 +19,10 @@ const AppRoutes = () => {
             <Route path="/" element={<MainLayout />}>
                 <Route path="register" element={<Register />} />
                 <Route path='home' element={<Home />} />
-                <Route path="pricing" element={<About />} />
+                <Route path="about" element={<About />} />
+                <Route path="pricing" element={<Pricing />} />
                 <Route path="contact" element={<Contact />} />
-                <Route path="porfile" element={<Profile/>} />
+                <Route path="profile" element={<Profile/>} />
                 <Route path="user_orders" element={<Profile/>} />
             </Route>
         </Routes>

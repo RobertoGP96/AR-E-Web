@@ -63,3 +63,11 @@ export interface ProductFilters {
   category?: string;
   name?: string;
 }
+
+
+export type CreateProduc = {
+  name: string;
+  link: string;
+  shop: string;
+  description: string;
+}
