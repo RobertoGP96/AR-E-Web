@@ -2,8 +2,10 @@
  * Servicio para actualizar órdenes
  */
 
+import type { Order } from '@/types/order';
 import { apiClient } from '../../lib/api-client';
-import type { Order, ApiResponse } from '../../types';
+import type { ApiResponse } from '@/types/api';
+
 
 export interface UpdateOrderData {
   observations?: string;

@@ -2,8 +2,9 @@
  * Servicio para crear órdenes
  */
 
+import type { ApiResponse } from '@/types/api';
 import { apiClient } from '../../lib/api-client';
-import type { Order, ApiResponse } from '../../types';
+import type { Order } from '@/types/order';
 
 export interface CreateOrderData {
   client_email: string;

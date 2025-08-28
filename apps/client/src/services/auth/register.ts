@@ -2,8 +2,8 @@
  * Servicio de registro de usuarios
  */
 
+import type { ApiResponse, RegisterData } from '@/types/api';
 import { apiClient } from '../../lib/api-client';
-import type { RegisterData, ApiResponse } from '../../types';
 
 /**
  * Registra un nuevo usuario

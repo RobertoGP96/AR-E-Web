@@ -79,8 +79,8 @@ export const ProductForm = () => {
                         <PopoverContent>
                             <div className="flex flex-col gap-2">
                                 <h2>Nueva Etiqueta</h2>
-                                <Input  value={newtag.name} placeholder="Nombre"/>
-                                <Input value={newtag.value} placeholder="Valor"/>
+                                <Input  value={newtag.name} onChange={(e)=> setNewTag({...newtag, name:e.target.value})} placeholder="Nombre"/>
+                                <Input value={newtag.value} onChange={(e)=> setNewTag({...newtag, value:e.target.value})} placeholder="Valor"/>
                                 <Button className="" onClick={()=>{
                                     const addTags=tags
                                     addTags.push(newtag)

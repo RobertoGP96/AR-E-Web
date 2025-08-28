@@ -2,8 +2,8 @@
  * Servicio de logout y gestión de sesión
  */
 
+import type { ApiResponse } from '@/types/api';
 import { apiClient } from '../../lib/api-client';
-import type { ApiResponse } from '../../types';
 
 /**
  * Cierra sesión del usuario actual

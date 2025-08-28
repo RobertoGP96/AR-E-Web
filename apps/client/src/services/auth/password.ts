@@ -2,8 +2,8 @@
  * Servicio de recuperación de contraseña
  */
 
+import type { ApiResponse } from '@/types/api';
 import { apiClient } from '../../lib/api-client';
-import type { ApiResponse } from '../../types';
 
 /**
  * Solicita recuperación de contraseña por email

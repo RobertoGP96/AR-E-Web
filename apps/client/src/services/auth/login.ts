@@ -2,8 +2,8 @@
  * Servicio de login y autenticación
  */
 
+import type { ApiResponse, AuthResponse, LoginCredentials } from '@/types/api';
 import { apiClient } from '../../lib/api-client';
-import type { LoginCredentials, AuthResponse, ApiResponse } from '../../types';
 
 /**
  * Inicia sesión con email y contraseña

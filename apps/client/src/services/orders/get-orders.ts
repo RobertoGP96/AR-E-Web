@@ -2,9 +2,9 @@
  * Servicio para obtener órdenes
  */
 
+import type { Order } from '@/types/order';
 import { apiClient } from '../../lib/api-client';
 import type { OrderFilters, PaginatedApiResponse } from '../../types/api';
-import type { Order } from '../../types';
 
 /**
  * Obtiene lista paginada de órdenes
@@ -12,7 +12,7 @@ import type { Order } from '../../types';
 export const getOrders = async (
   filters?: OrderFilters
 ): Promise<PaginatedApiResponse<Order>> => {
-  return await apiClient.getPaginated<Order>('/orders/', filters);
+  return await apiClient.getPaginated<Order>('/orders/', filters as Record<string, unknown>);
 };
 
 /**

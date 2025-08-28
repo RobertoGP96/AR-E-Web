@@ -2,8 +2,8 @@
  * Servicio para eliminar órdenes
  */
 
+import type { ApiResponse } from '@/types/api';
 import { apiClient } from '../../lib/api-client';
-import type { ApiResponse } from '../../types';
 
 /**
  * Elimina una orden por ID

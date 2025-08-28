@@ -2,8 +2,8 @@
  * Servicio de gestión de tokens
  */
 
+import type { ApiResponse } from '@/types/api';
 import { apiClient } from '../../lib/api-client';
-import type { ApiResponse } from '../../types';
 
 /**
  * Refresca el token de acceso usando el refresh token
