@@ -1,5 +1,6 @@
 import { Mail, MapPin, Phone, User2, UserPlus, X } from "lucide-react";
 import { Button } from "../ui/button";
+import { ProductForm } from "../product/product-form";
 
 
 export default function Register() {
@@ -113,6 +114,8 @@ export default function Register() {
                     </Button>
                 </div>
             </form>
+
+            <ProductForm/>
         </div>
 
     )

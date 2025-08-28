@@ -1,4 +1,4 @@
-import { Compass, Headset, Home, LogIn, UserPlus } from "lucide-react";
+import { Compass, DollarSign, Headset, Home, LogIn, UserPlus } from "lucide-react";
 import { Button } from "../ui/button";
 import { NavLink, useLocation,} from "react-router";
 import useAuth from "@/hooks/auth/useAuth";
@@ -10,7 +10,8 @@ const NavBar = () => {
 
     const navigation = [
         { name: 'Inicio', href: 'home', icon: Home },
-        { name: 'Saber más', href: 'pricing', icon: Compass },
+        { name: 'Saber más', href: 'about', icon: Compass },
+        { name: 'Precios', href: 'pricing', icon: DollarSign },
         { name: 'Contáctanos', href: 'contact', icon: Headset },
     ]
     const location= useLocation()
