@@ -1,63 +1,92 @@
-import { Clock, Info, ShieldCheck, HelpCircle, CheckCircle, HandHeart, LucideCircleDollarSign, Package, AlertTriangle, FileText, Pill, Calculator, HeadsetIcon, MapPin, Send, ShoppingCart, Truck, UserPlus, Warehouse } from "lucide-react";
+import { Clock, Info, ShieldCheck, HelpCircle, CheckCircle, HandHeart, Package, AlertTriangle, Pill, Calculator, MapPin, ShoppingCart, Truck, UserPlus, CigaretteIcon, Volume2Icon, Drone, Wifi, FlameKindling, Telescope, BowArrow, Smartphone, Compass, ShoppingBag, CircleCheckBigIcon, Zap } from "lucide-react";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import React, { useEffect, useState } from "react";
-import PayMethods from "./price/pay-methods";
 
 const steps = [
   {
     step: 1,
-    icon: UserPlus,
-    title: "Registro",
-    description: "Regístrate y recibe tu dirección internacional exclusiva."
+    icon: Smartphone,
+    title: "Instalación",
+    description: "Descarga e instala la aplicación de la tienda en la que deseas comprar usando Play Store o Apple Store"
   },
   {
     step: 2,
-    icon: ShoppingCart,
-    title: "Compra",
-    description: "Realiza tu compra en tiendas online usando la dirección proporcionada."
+    icon: UserPlus,
+    title: "Registro",
+    description: "Regístrate o créate una cuenta usando una dirección de correo electrónico."
   },
   {
     step: 3,
-    icon: Send,
-    title: "Notificación",
-    description: "Envía la notificación con el número de guía y detalles del pedido."
+    icon: Compass,
+    title: "Exploración",
+    description: "Navega en la aplicación de la tienda para encontrar lo que quieres comprar."
   },
   {
     step: 4,
-    icon: Warehouse,
-    title: "Recepción",
-    description: "Recepción y verificación del paquete en nuestra bodega."
+    icon: ShoppingCart,
+    title: "Selección",
+    description: "Añade los artículos al carrito, selecciona talla, color o cualquier especificación que nos ayude a identificar lo q quieres."
   },
   {
     step: 5,
-    icon: Package,
-    title: "Consolidación",
-    description: "Consolidación opcional de varios paquetes para optimizar costos."
+    icon: ShoppingBag,
+    title: "Captura",
+    description: "Compártenos tu carrito para nosotros poder comprarlo por ti."
   },
   {
     step: 6,
     icon: Calculator,
-    title: "Cotización",
-    description: "Generamos cotización y confirmamos pago según peso total."
+    title: "Facturación",
+    description: "Obtiene la factura del pedido y realiza su pago"
   },
   {
     step: 7,
-    icon: Truck,
+    icon: CircleCheckBigIcon,
     title: "Despacho",
-    description: "Realizamos despacho con seguimiento local en tiempo real."
+    description: "Nuestros gestores le informarán en cuanto el pedido este listo para ser recogido."
   },
   {
     step: 8,
     icon: MapPin,
     title: "Entrega",
-    description: "Entregamos a domicilio dentro del plazo estimado."
+    description: "Una vez listo para recoger puede pasar a buscar su pedido y pagar el costo de envio."
+  }
+]
+const warningList = [
+  {
+    icon: CigaretteIcon,
+    text: "Vapes 🚬",
   },
   {
-    step: 9,
-    icon: HeadsetIcon,
-    title: "Soporte",
-    description: "Brindamos soporte post-entrega para cualquier consulta."
+    icon: Telescope,
+    text: "Mirillas (telescopio)",
+  },
+  {
+    icon: Volume2Icon,
+    text: "Megáfonos",
+  },
+  {
+    icon: BowArrow,
+    text: "Valines, municiones",
+  },
+  {
+    icon: Drone,
+    text: "Artículos que vuelen ",
+  },
+  {
+    icon: Wifi,
+    text: "Cualquier artículo relacionado con las conexiones inalámbricas como: router, repartidores de señal..",
+  },
+  {
+    icon: Zap,
+    text: "Taser",
+  },
+  {
+    icon: FlameKindling,
+    text: "Objetos inflamables",
   }
+  ,
+
 ]
 
 export default function Introduction() {
@@ -65,7 +94,6 @@ export default function Introduction() {
 
   const sections = [
     { id: "beneficios", label: "Beneficios" },
-    { id: "metodos-pago", label: "Métodos de pago" },
     { id: "horario", label: "Horario de atención" },
     { id: "como-funciona", label: "Cómo funciona" },
     { id: "recomendaciones", label: "Recomendaciones" },
@@ -122,7 +150,7 @@ export default function Introduction() {
   return (
     <div className="space-y-10 relative flex flex-col md:flex-row max-w-5xl mx-auto scroll-smooth">
       {/* Índice fijo */}
-      <nav className="md:sticky md:top-8 md:self-start md:w-64 rounded-xl shadow-lg p-6 mb-4 md:mb-0 z-10">
+      <nav className="md:sticky md:top-8 md:self-start md:w-64 p-6 mb-4 md:mb-0 z-10">
         <h4 className="text-xl text-primary uppercase font-extrabold mb-4 tracking-wide">
           Índice
         </h4>
@@ -200,16 +228,7 @@ export default function Introduction() {
           </ul>
         </div>
 
-        {/* Métodos de pago */}
-        <div id="metodos-pago" className=" p-6 ">
-          <div className="flex items-center space-x-4 mb-6">
-            <LucideCircleDollarSign className="w-10 h-10 text-primary-600 dark:text-primary-400 stroke-current" />
-            <h3 className="text-3xl font-black text-white tracking-tight">
-              Métodos de Pago
-            </h3>
-          </div>
-          <PayMethods />
-        </div>
+
 
         {/* Horario de atención */}
         <div id="horario" className="w-full rounded-xl border border-gray-800 shadow-lg overflow-hidden">
@@ -248,11 +267,10 @@ export default function Introduction() {
         </div>
         {/* Cómo funciona */}
         <div id="como-funciona" className="how-it-works">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 space-y-6">
             <h2 className="text-4xl font-bold mb-8 text-gray-800 dark:text-white text-center">
               Cómo Funciona Nuestro Servicio
             </h2>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {steps.map((item) => (
                 <div
@@ -278,7 +296,14 @@ export default function Introduction() {
                 </div>
               ))}
             </div>
+            <div className="border border-blue-100 dark:border-primary/50 rounded-lg p-4 flex items-center gap-3">
+              <Truck className="w-6 h-6 text-primary shrink-0" />
+              <p className="text-gray-800 dark:text-gray-200 text-sm">
+                Puede solicitar al gestor nuestro servicio de domicilio  ya sea para realizar los pagos y la entrega de su pedido.
+              </p>
+            </div>
           </div>
+
         </div>
 
 
@@ -307,13 +332,13 @@ export default function Introduction() {
 
               <li className="flex items-start gap-3">
                 <span className="text-primary mt-1">
-                  <FileText className="w-5 h-5" />
+                  <Clock className="w-5 h-5" />
                 </span>
                 <div>
                   <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
-                    Declaración Precisa
+                    Compra Previsoria
                   </h4>
-                  <p>Declara correctamente el contenido y valor del paquete para evitar retrasos o problemas aduaneros.</p>
+                  <p>Realiza tus compras con suficiente tiempo de antelación para evitar complicaciones ajenas a nuestro servicio y sus pedidos puedan llegar en a tiempo</p>
                 </div>
               </li>
 
@@ -345,11 +370,34 @@ export default function Introduction() {
 
           <div className="border border-blue-100 dark:border-primary/50 rounded-lg p-4 flex items-center gap-3">
             <Info className="w-6 h-6 text-primary shrink-0" />
-            <p className="text-gray-800 dark:text-blue-200 text-sm">
+            <p className="text-gray-800 dark:text-gray-200 text-sm">
               Estas recomendaciones ayudan a garantizar un proceso de envío seguro y sin complicaciones. Ante cualquier duda, nuestro equipo está disponible para asesorarte.
             </p>
           </div>
         </div>
+
+
+        {/* Articulos Prohibidos */}
+        <div>
+          <div className="flex items-center gap-3 mb-10">
+            <h3 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
+              Artículos Prohibidos
+            </h3>
+          </div>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {warningList.map((item) => (<li className="flex items-center group justify-start gap-3">
+              <span className="bg-primary/10 p-3 rounded-lg flex-shrink-0">
+                <item.icon className="text-primary group-hover:scale-110 w-8 h-8 transition-transform" />
+              </span>
+              <span className="font-semibold text-gray-200 group-hover:text-white mb-1">
+                {item.text}
+              </span>
+            </li>
+            ))
+            }
+          </ul>
+        </div>
+
 
         {/* Preguntas frecuentes */}
         <div id="faq" className="space-y-6">
@@ -369,11 +417,13 @@ export default function Introduction() {
               value="faq-1"
               className="border-b border-gray-200 dark:border-gray-700 pb-4"
             >
-              <AccordionTrigger className="text-xl font-semibold text-gray-800 dark:text-gray-200 hover:text-primary dark:hover:text-primary transition-colors">
+              <AccordionTrigger className="text-xl font-semibold text-gray-800 dark:text-gray-200 hover:text-primary transition-colors">
                 ¿Cuánto tarda en llegar mi paquete?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-300 text-base leading-relaxed">
-                El tiempo de entrega depende del país de origen y la tienda, pero normalmente tu paquete llega en un plazo de <span className="font-bold text-primary">10 a 20 días hábiles</span> desde que es recibido en nuestra bodega internacional. Te notificamos cada etapa y puedes consultar el estado en cualquier momento.
+                Una vez el paquete este entregado en EEUU,
+                el pedido estará listo para ser recogido por usted en el plazo <span className="font-bold text-primary">de 3 a 5 días.</span>
+                El tiempo total va a depender de la demora de entrega de la tienda a nuestro almacén en EEUU.
               </AccordionContent>
             </AccordionItem>
 
@@ -381,11 +431,11 @@ export default function Introduction() {
               value="faq-2"
               className="border-b border-gray-200 dark:border-gray-700 pb-4"
             >
-              <AccordionTrigger className="text-xl font-semibold text-gray-800 dark:text-gray-200 hover:text-primary dark:hover:text-primary transition-colors">
-                ¿Puedo consolidar paquetes?
+              <AccordionTrigger className="text-xl font-semibold text-gray-800 dark:text-gray-200 hover:text-primary transition-colors">
+                ¿Que hago si mi paquete llega dañado o me faltan articulos?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-300 text-base leading-relaxed">
-                Sí, ofrecemos la opción de <span className="font-semibold">consolidar varios paquetes</span> en un solo envío para reducir costos. Solo debes indicarlo al momento de notificar tus compras y te ayudamos a agruparlos antes de despachar.
+                Debe contactar de inmediato con el gestor de compras para realizar una investigación y darle solución lo antes posible a su problema.
               </AccordionContent>
             </AccordionItem>
 
@@ -393,11 +443,37 @@ export default function Introduction() {
               value="faq-3"
               className="border-b border-gray-200 dark:border-gray-700 pb-4"
             >
+              <AccordionTrigger className="text-xl font-semibold text-gray-800 dark:text-gray-200 hover:text-primary transition-colors">
+                ¿Que seguridad tengo de que mis compras llegaran a mis manos?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-300 text-base leading-relaxed">
+                Llevamos años trabajando en compras online, tenemos una amplia comunidad de clientes fieles q repiten sus compras, puede solocitar referencias e
+                indagar antes de realizar su pedido. Puede estar seguro q nuestro equipo trabaja mano a mano para asegurar ma felicidad de nuestros clientes.
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem
+              value="faq-4"
+              className="border-b border-gray-700 pb-4"
+            >
               <AccordionTrigger className="text-xl font-semibold text-gray-800 dark:text-gray-200 hover:text-primary dark:hover:text-primary transition-colors">
-                ¿Qué hago si mi paquete llega dañado?
+                ¿Como debo realizar el pago de mi compra?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-300 text-base leading-relaxed">
-                Si tu paquete presenta daños al recibirlo, <span className="font-semibold text-primary">repórtalo de inmediato</span> con fotos y detalles. Te ayudaremos a gestionar el reclamo con la tienda o el seguro para buscar una solución rápida.
+                Una vez el gestor genere su factura, debera pagar el <span className="font-bold text-primary">100%</span> de esta para q su compra sea realizada. El costo de envio de su paquete debe pagarlo cuando se le sea entregado.
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem
+              value="faq-5"
+              className="border-b border-gray-200 dark:border-gray-700 pb-4"
+            >
+              <AccordionTrigger className="text-xl font-semibold text-gray-800 dark:text-gray-200 hover:text-primary dark:hover:text-primary transition-colors">
+                ¿Puedo traer con ustedes paquetes que ya tengo comprados o q mi familiar en EEUU quiere mandarme?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-300 text-base leading-relaxed">
+                Por supuesto q si, le facilitamos la dirección a la que deben mandar el paquete, debe enviarnos fotos y todos los articulos que desee traer con nosotros.
+                Una vez lo recibamos lo procesamos y en menos de 5 dias lo tiene listo para recogerlo.
               </AccordionContent>
             </AccordionItem>
 

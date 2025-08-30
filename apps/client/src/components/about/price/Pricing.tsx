@@ -21,17 +21,32 @@ const tiers = [
     name: 'Miscelaneas',
     id: 'tier-misc',
     href: '#',
-    priceMonthly: '$8',
+    priceMonthly: '$7',
     description: 'Esto puede abarcar una infinidad de productos de todo tipo.',
     features: [
       'Artículos de limpieza',
       'Productos de cuidado infantil',
       'Repuestos para vehiculos',
       'Accesorios para el hogar',
-      'Productos de tecnología',
       'Productos de entretenimiento',
     ],
     featured: true,
+  },
+  {
+    name: 'Electrónicos',
+    id: 'tier-elect',
+    href: '#',
+    priceMonthly: '$8',
+    description: 'Esto puede abarcar una infinidad de productos de todo tipo.',
+    features: [
+      'Productos de tecnología',
+      'Productos de cuidado infantil',
+      'Repuestos para vehiculos',
+      'Accesorios para el hogar',
+      'Productos de tecnología',
+      'Productos de entretenimiento',
+    ],
+    featured: false,
   },
 ]
 
@@ -52,7 +67,7 @@ export default function Pricing() {
       <p className="mx-auto mt-6 max-w-2xl text-center text-lg font-medium text-pretty text-gray-600 sm:text-xl/8 dark:text-gray-400">
         Seleciona la categoria de los productos que desea encargar.
       </p>
-      <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 items-center gap-y-6 sm:mt-20 sm:gap-y-0 lg:max-w-4xl lg:grid-cols-2">
+      <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 items-center gap-y-6 sm:mt-20 sm:gap-y-0 lg:max-w-4xl lg:grid-cols-3">
         {tiers.map((tier, tierIdx) => (
           <div
             key={tier.id}
