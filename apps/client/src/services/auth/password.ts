@@ -1,9 +1,9 @@
 /**
- * Servicio de recuperación de contraseña
+ * Servicios de gestión de contraseñas
  */
 
 import type { ApiResponse } from '@/types/api';
-import { apiClient } from '@/lib/api-client.ts';
+import { apiClient } from '@/lib/api-client';
 
 /**
  * Solicita recuperación de contraseña por email
