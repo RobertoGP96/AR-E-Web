@@ -48,8 +48,8 @@ const mockOrder: Order[] = [
     id: 1,
     sales_manager: mockManager,
     client: mockClient,
-    status: 'Encargado',
-    pay_status: 'Pagado',
+    status: 'Ordered',
+    pay_status: 'Paid',
     extra_payments: 0,
     received_products: [] as DeliverReceip[],
     received_value_of_client: 0,
@@ -59,8 +59,8 @@ const mockOrder: Order[] = [
     id: 2,
     sales_manager: mockManager,
     client: mockClient,
-    status: 'Procesando',
-    pay_status: 'No pagado',
+    status: 'Processing',
+    pay_status: 'Unpaid',
     extra_payments: 0,
     received_products: [] as DeliverReceip[],
     received_value_of_client: 0,
@@ -70,8 +70,8 @@ const mockOrder: Order[] = [
     id: 3,
     sales_manager: mockManager,
     client: mockClient,
-    status: 'Cancelado',
-    pay_status: 'Pagado',
+    status: 'Cancelled',
+    pay_status: 'Paid',
     extra_payments: 0,
     received_products: [] as DeliverReceip[],
     received_value_of_client: 0,
@@ -79,7 +79,11 @@ const mockOrder: Order[] = [
   }
 ]
 
-const OrderTable: React.FC = () => {
+interface OrderTableProps {
+  onViewDetails?: (order: Order) => void;
+}
+
+const OrderTable: React.FC<OrderTableProps> = () => {
   return (
     <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
       <Table>
@@ -108,16 +112,24 @@ const OrderTable: React.FC = () => {
                 </div>
               </TableCell>
               <TableCell>
-                <AvatarUser user={order.sales_manager} />
+                {order.sales_manager ? (
+                  <AvatarUser user={order.sales_manager} />
+                ) : (
+                  <span className="text-gray-400">Sin asignar</span>
+                )}
               </TableCell>
               <TableCell>
-                <AvatarUser user={order.client} />
+                {order.client ? (
+                  <AvatarUser user={order.client} />
+                ) : (
+                  <span className="text-gray-400">Sin cliente</span>
+                )}
               </TableCell>
               <TableCell>
                 <div className='flex flex-row items-center gap-0.5 text-gray-600'>
                   <ShoppingCart className='h-4 w-4'/>
                   <span>
-                    {order.received_products.length}
+                    {order.received_products?.length || 0}
                   </span>
                 </div>
               </TableCell>

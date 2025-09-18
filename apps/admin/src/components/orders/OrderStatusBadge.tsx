@@ -7,23 +7,22 @@ interface Props {
 }
 
 const statusConfig: Record<OrderStatus, { color: string; label: string; icon: React.ElementType }> = {
-  "Cancelado": {
+  "Cancelled": {
     color: "bg-red-100 text-red-800 border-red-300",
     label: "Cancelado",
     icon: XCircle
   },
-  "Completado": {
+  "Completed": {
     color: "bg-green-100 text-green-800 border-green-300",
     label: "Completado",
     icon: CheckCircle2
   },
-  "Encargado": {
+  "Ordered": {
     color: "bg-blue-100 text-blue-800 border-blue-300",
     label: "Encargado",
     icon: Truck
   },
-
-  "Procesando": {
+  "Processing": {
     color: "bg-gray-100 text-gray-800 border-gray-300",
     label: "Procesando",
     icon: LoaderIcon
@@ -31,7 +30,7 @@ const statusConfig: Record<OrderStatus, { color: string; label: string; icon: Re
 };
 
 const DeliveryStatusBadge: React.FC<Props> = ({ status }) => {
-  const config = statusConfig[status] || statusConfig["Procesando"];
+  const config = statusConfig[status] || statusConfig["Processing"];
   const Icon = config.icon;
   return (
     <span

@@ -9,16 +9,16 @@ import type { DeliverReceip } from './delivery';
 // Modelo principal
 export interface Order {
   id: ID;
-  client: CustomUser;
-  sales_manager: CustomUser;
+  client?: CustomUser;
+  sales_manager?: CustomUser;
   status: OrderStatus;
   pay_status: PayStatus;
   
   // Propiedades computadas
   total_cost: number;
-  received_products: DeliverReceip[];
-  received_value_of_client: number;
-  extra_payments: number;
+  received_products?: DeliverReceip[];
+  received_value_of_client?: number;
+  extra_payments?: number;
 }
 
 // Tipos para crear/editar pedido

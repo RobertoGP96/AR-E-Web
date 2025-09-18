@@ -1,0 +1,36 @@
+{
+  "name": "ar-e-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"pnpm dev:client\" \"pnpm dev:admin\" \"pnpm dev:backend\"",
+    "dev:client": "pnpm --filter client dev",
+    "dev:admin": "pnpm --filter admin dev",
+    "dev:backend": "cd backend && python manage.py runserver",
+    "build": "pnpm build:client && pnpm build:admin",
+    "build:client": "pnpm --filter client build",
+    "build:admin": "pnpm --filter admin build",
+    "lint": "pnpm --filter \"./apps/*\" lint",
+    "lint:fix": "pnpm --filter \"./apps/*\" lint --fix",
+    "test": "pnpm --filter \"./apps/*\" test",
+    "clean": "pnpm --filter \"./apps/*\" exec rm -rf dist node_modules",
+    "install:all": "pnpm install && cd backend && pip install -r requirements.txt",
+    "type-check": "pnpm --filter \"./apps/*\" exec tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "concurrently": "^8.2.2",
+    "terser": "^5.44.0",
+    "typescript": "~5.8.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0",
+    "python": ">=3.11.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

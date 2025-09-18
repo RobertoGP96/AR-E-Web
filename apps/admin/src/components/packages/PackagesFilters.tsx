@@ -15,10 +15,6 @@ interface PackagesFiltersProps {
 export default function PackagesFilters({
   searchTerm,
   onSearchChange,
-  statusFilter,
-  onStatusFilterChange,
-  cityFilter,
-  onCityFilterChange,
   onAddPackage
 }: PackagesFiltersProps) {
   return (

@@ -8,17 +8,17 @@ interface Props {
 }
 
 const statusConfig: Record<PayStatus, { color: string; label: string; icon: React.ElementType }> = {
-  "No pagado": {
+  "Unpaid": {
     color: "bg-red-100 text-red-800 border-red-300",
     label: "No pagado",
     icon: CircleAlert
   },
-  "Pagado": {
+  "Paid": {
     color: "bg-green-100 text-green-800 border-green-300",
     label: "Pagado",
     icon: CheckCircle2
   },
-  "Parcial": {
+  "Partial": {
     color: "bg-gray-100 text-gray-800 border-gray-300",
     label: "Parcial",
     icon: Loader2
@@ -26,7 +26,7 @@ const statusConfig: Record<PayStatus, { color: string; label: string; icon: Reac
 };
 
 const PayStatusBadge: React.FC<Props> = ({ status }) => {
-  const config = statusConfig[status] || statusConfig["No pagado"];
+  const config = statusConfig[status] || statusConfig["Unpaid"];
   const Icon = config.icon;
   return (
     <span

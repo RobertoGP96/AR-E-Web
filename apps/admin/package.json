@@ -1,13 +1,17 @@
 {
-  "name": "admin",
+  "name": "@ar-e-web/admin",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5174",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "preview": "vite preview --port 4174",
+    "type-check": "tsc --noEmit",
+    "test": "echo \"No tests configured yet\"",
+    "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

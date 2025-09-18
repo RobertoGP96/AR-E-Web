@@ -1,7 +1,5 @@
 
 import PackageStatusBadge from './PackageStatusBadge';
-// Extiende el badge para aceptar 'Procesado'
-import type { PackageStatus } from '@/types/models/base';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import type { Package } from '@/types';
@@ -17,7 +15,7 @@ const mockPackages: Package[] = [
     id: 1,
     agency_name: "2",
     number_of_tracking: "PKG-001234",
-    status_of_processing: "Enviado",
+    status_of_processing: "Sent",
     created_at: "2023-10-01T12:00:00Z",
     updated_at: "2023-10-01T12:00:00Z",
     package_picture: []
@@ -26,7 +24,7 @@ const mockPackages: Package[] = [
     id: 2,
     agency_name: "3",
     number_of_tracking: "PKG-001235",
-    status_of_processing: "Enviado",
+    status_of_processing: "Sent",
     created_at: "2023-10-01T12:00:00Z",
     updated_at: "2023-10-01T12:00:00Z",
     package_picture: []
@@ -35,7 +33,7 @@ const mockPackages: Package[] = [
     id: 3,
     agency_name: "24",
     number_of_tracking: "PKG-001236",
-    status_of_processing: "Recibido",
+    status_of_processing: "Received",
     created_at: "2023-10-01T12:00:00Z",
     updated_at: "2023-10-01T12:00:00Z",
     package_picture: []
@@ -44,12 +42,13 @@ const mockPackages: Package[] = [
     id: 4,
     agency_name: "34",
     number_of_tracking: "PKG-001237",
-    status_of_processing: "Procesado",
+    status_of_processing: "Processed",
     created_at: "2023-10-01T12:00:00Z",
     updated_at: "2023-10-01T12:00:00Z",
     package_picture: []
   }
 ];
+
 
 const PackageTable: React.FC = () => {
   return (
@@ -85,7 +84,7 @@ const PackageTable: React.FC = () => {
                 </div>
               </TableCell>
               <TableCell>
-                <PackageStatusBadge status={apackage.status_of_processing as PackageStatus} />
+                <PackageStatusBadge status={apackage.status_of_processing} />
               </TableCell>
               <TableCell>
                 <div className='flex flex-row gap-2'>

@@ -32,7 +32,7 @@ import type {
   ProductReceived,
   Package,
   DeliverReceip
-} from '../types/database';
+} from '../types';
 
 // =============================================================================
 // AUTENTICACIÓN

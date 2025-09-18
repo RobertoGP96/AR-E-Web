@@ -67,8 +67,8 @@ export default function Pricing() {
       <p className="mx-auto mt-6 max-w-2xl text-center text-lg font-medium text-pretty text-gray-600 sm:text-xl/8 dark:text-gray-400">
         Seleciona la categoria de los productos que desea encargar.
       </p>
-      <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 items-center gap-y-6 sm:mt-20 sm:gap-y-0 lg:max-w-4xl lg:grid-cols-3">
-        {tiers.map((tier, tierIdx) => (
+      <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 items-center gap-x-2 gap-y-6 sm:mt-20 sm:gap-y-0 lg:max-w-4xl lg:grid-cols-3">
+        {tiers.map((tier,) => (
           <div
             key={tier.id}
             className={classNames(
@@ -77,14 +77,12 @@ export default function Pricing() {
                 : 'sm:mx-8 lg:mx-0 bg-white/2.5 hover:bg-white/5',
               tier.featured
                 ? ''
-                : tierIdx === 0
-                  ? 'rounded-t-3xl sm:rounded-b-none lg:rounded-tr-none lg:rounded-bl-3xl'
-                  : 'sm:rounded-t-none lg:rounded-tr-3xl lg:rounded-bl-none',
+                : '',
               'rounded-3xl p-8 ring-1 sm:p-10 ring-white/10',
               // Hover effect: escala y z-index
               'relative transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl',
               // Border radius uniforme en hover
-              'hover:rounded-3xl',
+              'hover:rounded-3xl h-full ',
               // z-index base para no interferir
               'z-10',
             )}

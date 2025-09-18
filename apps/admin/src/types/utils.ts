@@ -2,54 +2,51 @@
  * Utilidades y constantes relacionadas con los tipos de base de datos
  */
 
-import type { 
-  OrderStatus, 
-  PayStatus, 
-  ProductStatus, 
-  UserRole,
-  CustomUser 
-} from './database';
+import type { OrderStatus, PayStatus, ProductStatus } from "./models";
+import type { CustomUser, UserRole } from "./models/user";
+
 
 // Mapas de etiquetas para mostrar en la UI
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  "Encargado": "Encargado",
-  "Procesando": "Procesando",
-  "Completado": "Completado",
-  "Cancelado": "Cancelado"
+  "Ordered": "Encargado",
+  "Processing": "Procesando",
+  "Completed": "Completado",
+  "Cancelled": "Cancelado"
 };
 
 export const PAY_STATUS_LABELS: Record<PayStatus, string> = {
-  "No pagado": "No pagado",
-  "Pagado": "Pagado",
-  "Parcial": "Parcial"
-};
-
-export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
-  "Encargado": "Encargado",
-  "Comprado": "Comprado",
-  "Recibido": "Recibido",
-  "Entregado": "Entregado"
+  "Unpaid": "No pagado",
+  "Paid": "Pagado",
+  "Partial": "Parcial"
 };
 
 // Colores para estados
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  "Encargado": "blue",
-  "Procesando": "orange", 
-  "Completado": "green",
-  "Cancelado": "red"
+  "Ordered": "blue",
+  "Processing": "orange", 
+  "Completed": "green",
+  "Cancelled": "red"
 };
 
 export const PAY_STATUS_COLORS: Record<PayStatus, string> = {
-  "No pagado": "red",
-  "Pagado": "green",
-  "Parcial": "orange"
+  "Unpaid": "red",
+  "Paid": "green",
+  "Partial": "orange"
+};
+
+// Mapas de etiquetas para ProductStatus
+export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
+  "Ordered": "Encargado",
+  "Purchased": "Comprado",
+  "Received": "Recibido",
+  "Delivered": "Entregado"
 };
 
 export const PRODUCT_STATUS_COLORS: Record<ProductStatus, string> = {
-  "Encargado": "blue",
-  "Comprado": "orange",
-  "Recibido": "purple",
-  "Entregado": "green"
+  "Ordered": "blue",
+  "Purchased": "orange",
+  "Received": "purple",
+  "Delivered": "green"
 };
 
 // Funciones de utilidad para usuarios
@@ -58,41 +55,23 @@ export const getUserFullName = (user: CustomUser): string => {
 };
 
 export const getUserRoles = (user: CustomUser): UserRole[] => {
-  const roles: UserRole[] = [];
-  
-  if (user.is_agent) roles.push('agent');
-  if (user.is_accountant) roles.push('accountant');
-  if (user.is_buyer) roles.push('buyer');
-  if (user.is_logistical) roles.push('logistical');
-  if (user.is_comunity_manager) roles.push('community_manager');
-  
-  return roles;
+  return [user.role];
 };
 
 export const hasUserRole = (user: CustomUser, role: UserRole): boolean => {
-  switch (role) {
-    case 'agent':
-      return user.is_agent;
-    case 'accountant':
-      return user.is_accountant;
-    case 'buyer':
-      return user.is_buyer;
-    case 'logistical':
-      return user.is_logistical;
-    case 'community_manager':
-      return user.is_comunity_manager;
-    default:
-      return false;
-  }
+  return user.role === role;
 };
 
 // Etiquetas para roles
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  user: "Usuario",
   agent: "Agente",
   accountant: "Contador",
   buyer: "Comprador",
   logistical: "Logística",
-  community_manager: "Community Manager"
+  community_manager: "Community Manager",
+  admin: "Administrador",
+  client: "Cliente"
 };
 
 // Validadores

@@ -49,8 +49,8 @@ const mockOrder = (id: number): Order => ({
   id,
   client: mockUser,
   sales_manager: mockManager,
-  status: "Encargado",
-  pay_status: "Pagado",
+  status: "Ordered",
+  pay_status: "Paid",
   total_cost: 100.0 + id,
   received_products: [],
   received_value_of_client: 50.0,
@@ -62,7 +62,7 @@ const mockDelivery: DeliverReceip[] = [
     id: 1,
     order: mockOrder(101),
     weight: 2.5,
-    status: "Enviado",
+    status: "Sent",
     deliver_date: "2023-10-05T15:00:00Z",
     deliver_picture: [],
     total_cost_of_deliver: 15.99
@@ -71,7 +71,7 @@ const mockDelivery: DeliverReceip[] = [
     id: 2,
     order: mockOrder(102),
     weight: 1.2,
-    status: "En tránsito",
+    status: "In Transit",
     deliver_date: "2023-10-06T16:00:00Z",
     deliver_picture: [],
     total_cost_of_deliver: 10.50
@@ -80,7 +80,7 @@ const mockDelivery: DeliverReceip[] = [
     id: 3,
     order: mockOrder(103),
     weight: 3.0,
-    status: "Entregado",
+    status: "Delivered",
     deliver_date: "2023-10-07T17:00:00Z",
     deliver_picture: [],
     total_cost_of_deliver: 20.00
@@ -116,7 +116,11 @@ const DeliveryTable: React.FC = () => {
                 </div>
               </TableCell>
               <TableCell>
-                <AvatarUser user={delivery.order.client} />
+                {delivery.order.client ? (
+                  <AvatarUser user={delivery.order.client} />
+                ) : (
+                  <span className="text-gray-400">Sin cliente</span>
+                )}
               </TableCell>
               <TableCell>
                 <div className='flex flex-row items-center text-gray-500'>

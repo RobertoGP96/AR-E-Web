@@ -7,21 +7,9 @@ export default function Delivery() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [zoneFilter, setZoneFilter] = useState('all');
 
-  const handleAddRoute = () => {
-    console.log('Agregar nueva ruta');
-  };
-
-  const handleOptimizeRoutes = () => {
-    console.log('Optimizar rutas');
-  };
-
-
   return (
     <div className="space-y-6">
-      <DeliveryHeader 
-        onAddRoute={handleAddRoute}
-        onOptimizeRoutes={handleOptimizeRoutes}
-      />
+      <DeliveryHeader />
       <DeliveryStats />
       <DeliveryFilters 
         searchTerm={searchTerm}

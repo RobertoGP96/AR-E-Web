@@ -195,7 +195,7 @@ export default function ShopsTable({
                 <TableCell className="p-4 ">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-gray-500" />
-                    <span className="font-semibold text-gray-700">{shop.buying_accounts.length}</span>
+                    <span className="font-semibold text-gray-700">{shop.buying_accounts?.length || 0}</span>
                   </div>
                 </TableCell>
 
@@ -244,7 +244,7 @@ export default function ShopsTable({
           </TableHeader>
           <TableBody>
             {
-              selectedShop?.buying_accounts.length === 0 && (
+              (!selectedShop?.buying_accounts || selectedShop.buying_accounts.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={2} className="text-center py-4">
                     No hay cuentas disponibles
@@ -252,7 +252,7 @@ export default function ShopsTable({
                 </TableRow>
               )
             }
-            {selectedShop?.buying_accounts.map((account) => (
+            {selectedShop?.buying_accounts?.map((account) => (
               <TableRow
                 key={account.id}
                 className=""

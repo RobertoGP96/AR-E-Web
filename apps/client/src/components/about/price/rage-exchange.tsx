@@ -10,12 +10,12 @@ const rates: rateItem[] = [
     {
         exchangeFrom: "USD",
         exchangeTo: "CUP",
-        rate: 405.00
+        rate: 430.00
     },
     {
         exchangeFrom: "USD",
         exchangeTo: "TCUP",
-        rate: 445.00
+        rate: 435.00
     }, {
         exchangeFrom: "USD",
         exchangeTo: "Zelle",

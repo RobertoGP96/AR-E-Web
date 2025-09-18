@@ -9,49 +9,50 @@ export type DateTime = string; // ISO string format
 export type Date = string; // ISO date format
 
 // Union types para estados
-export type OrderStatus = "Encargado" | "Procesando" | "Completado" | "Cancelado";
-export type PayStatus = "No pagado" | "Pagado" | "Parcial";
-export type ProductStatus = "Encargado" | "Comprado" | "Recibido" | "Entregado";
-export type ShoppingStatus = "No pagado" | "Pagado" | "Procesando";
-export type DeliveryStatus = "Enviado" | "En tránsito" | "Entregado";
-export type PackageStatus = "Enviado" | "Procesado" | "Recibido";
+export type OrderStatus = "Ordered" | "Processing" | "Completed" | "Cancelled";
+export type PayStatus = "Unpaid" | "Paid" | "Partial";
+export type ProductStatus = "Ordered" | "Purchased" | "Received" | "Delivered";
+export type ShoppingStatus = "Unpaid" | "Paid" | "Processing";
+export type DeliveryStatus = "Sent" | "In Transit" | "Delivered";
+export type PackageStatus = "Sent" | "Processed" | "Received";
 
 // Constantes para los valores
 export const ORDER_STATUSES = {
-  ENCARGADO: "Encargado",
-  PROCESANDO: "Procesando", 
-  COMPLETADO: "Completado",
-  CANCELADO: "Cancelado"
+  ORDERED: "Ordered",
+  PROCESSING: "Processing", 
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled"
 } as const;
 
 export const PAY_STATUSES = {
-  NO_PAGADO: "No pagado",
-  PAGADO: "Pagado",
-  PARCIAL: "Parcial"
+  UNPAID: "Unpaid",
+  PAID: "Paid",
+  PARTIAL: "Partial"
 } as const;
 
 export const PRODUCT_STATUSES = {
-  ENCARGADO: "Encargado",
-  COMPRADO: "Comprado",
-  RECIBIDO: "Recibido",
-  ENTREGADO: "Entregado"
+  ORDERED: "Ordered",
+  PURCHASED: "Purchased",
+  RECEIVED: "Received",
+  DELIVERED: "Delivered"
 } as const;
 
 export const SHOPPING_STATUSES = {
-  NO_PAGADO: "No pagado",
-  PAGADO: "Pagado",
-  PROCESANDO: "Procesando"
+  UNPAID: "Unpaid",
+  PAID: "Paid",
+  PROCESSING: "Processing"
 } as const;
 
 export const DELIVERY_STATUSES = {
-  ENVIADO: "Enviado",
-  EN_TRANSITO: "En tránsito",
-  ENTREGADO: "Entregado"
+  SENT: "Sent",
+  IN_TRANSIT: "In Transit",
+  DELIVERED: "Delivered"
 } as const;
 
 export const PACKAGE_STATUSES = {
-  ENVIADO: "Enviado",
-  RECIBIDO: "Recibido"
+  SENT: "Sent",
+  PROCESSED: "Processed",
+  RECEIVED: "Received"
 } as const;
 
 // Tipos de roles de usuario

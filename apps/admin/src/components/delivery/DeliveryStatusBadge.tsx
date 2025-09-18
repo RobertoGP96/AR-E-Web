@@ -7,17 +7,17 @@ interface Props {
 }
 
 const statusConfig: Record<DeliveryStatus, { color: string; label: string; icon: React.ElementType }> = {
-  "Enviado": {
+  "Sent": {
     color: "bg-gray-100 text-gray-800 border-gray-300",
     label: "Enviado",
     icon: Send
   },
-  "Entregado": {
+  "Delivered": {
     color: "bg-green-100 text-green-800 border-green-300",
     label: "Entregado",
     icon: CheckCircle2
   },
-  "En tránsito": {
+  "In Transit": {
     color: "bg-blue-100 text-blue-800 border-blue-300",
     label: "En tránsito",
     icon: Truck
@@ -25,7 +25,7 @@ const statusConfig: Record<DeliveryStatus, { color: string; label: string; icon:
 };
 
 const DeliveryStatusBadge: React.FC<Props> = ({ status }) => {
-  const config = statusConfig[status] || statusConfig["Enviado"];
+  const config = statusConfig[status] || statusConfig["Sent"];
   const Icon = config.icon;
   return (
     <span

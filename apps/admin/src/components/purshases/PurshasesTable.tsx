@@ -29,45 +29,9 @@ const mockPurchases: ShoppingReceip[] = [
             id: 0,
             link: ""
         },
-        status_of_shopping: "No pagado",
+        status_of_shopping: "Unpaid",
         total_cost_of_shopping: 905,
-        buyed_products: [{
-            id: 1,
-            original_product: {
-                id: "2",
-                sku: "SKU002",
-                name: "Mouse Logitech",
-                link: "https://example.com/mouse",
-                shop: { id: 2, name: "Peripherals", link: "https://peripherals.com" },
-                description: "Mouse inalámbrico",
-                observation: "Garantía 2 años",
-                category: "Accesorios",
-                amount_requested: 10,
-                order: {
-                    id: 102,
-                    status: "Completado",
-                    pay_status: "Pagado",
-                    total_cost: 28.5,
-                    received_products: [],
-                    received_value_of_client: 0,
-                    extra_payments: 0,
-                },
-                status: "Entregado",
-                product_pictures: [],
-                shop_cost: 20,
-                shop_delivery_cost: 5,
-                shop_taxes: 2,
-                own_taxes: 1,
-                added_taxes: 0.5,
-                total_cost: 28.5,
-                cost_per_product: 2.85,
-                amount_buyed: 10,
-                amount_received: 10,
-                amount_delivered: 10,
-            },
-            quantity: 1,
-            price: 905
-        }]
+        buyed_products: []
     },
     {
         id: 2,
@@ -81,7 +45,7 @@ const mockPurchases: ShoppingReceip[] = [
             id: 0,
             link: ""
         },
-        status_of_shopping: "Pagado",
+        status_of_shopping: "Paid",
         total_cost_of_shopping: 28.5,
     },
     {
@@ -93,7 +57,7 @@ const mockPurchases: ShoppingReceip[] = [
             id: 0,
             link: ""
         },
-        status_of_shopping: "Procesando",
+        status_of_shopping: "Processing",
         total_cost_of_shopping: 183,
     },
 ];

@@ -1,15 +1,17 @@
 {
-  "name": "client",
+  "name": "@ar-e-web/client",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
     "preview": "vite preview",
-    "predeploy": "pnpm build",
-    "deploy": "gh-pages -d dist"
+    "type-check": "tsc --noEmit",
+    "test": "echo \"No tests configured yet\"",
+    "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",
