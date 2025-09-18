@@ -7,7 +7,7 @@
 
 import { createContext, useReducer, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib';
 import type { 
   LoginCredentials, 
   RegisterData, 

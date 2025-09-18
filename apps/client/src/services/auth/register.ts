@@ -3,7 +3,7 @@
  */
 
 import type { ApiResponse, RegisterData } from '@/types/api';
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib';
 
 /**
  * Registra un nuevo usuario
