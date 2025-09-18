@@ -13,6 +13,10 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+    esbuild: {
+      // Configuración específica para esbuild que puede ayudar con TypeScript
+      logOverride: { 'this-is-undefined-in-esm': 'silent' }
+    },
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
@@ -20,6 +24,9 @@ export default defineConfig(({ mode }) => {
       minify: 'terser',
       rollupOptions: {
         output: {
+          entryFileNames: 'assets/[name]-[hash].js',
+          chunkFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]',
           manualChunks: {
             vendor: ['react', 'react-dom'],
             router: ['react-router'],
@@ -39,6 +46,10 @@ export default defineConfig(({ mode }) => {
       cssCodeSplit: true,
       // Asegurar que TypeScript compile correctamente
       emptyOutDir: true,
+      // Configuración para mejor compatibilidad
+      target: 'es2020',
+      // Asegurar que todos los archivos vayan a dist
+      copyPublicDir: true,
     },
     optimizeDeps: {
       include: [
