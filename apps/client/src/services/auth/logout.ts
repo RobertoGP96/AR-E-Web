@@ -3,7 +3,7 @@
  */
 
 import type { ApiResponse } from '@/types/api';
-import { apiClient } from '@/lib';
+import { apiClient } from '@/lib/api-client';
 
 /**
  * Cierra sesión del usuario actual
