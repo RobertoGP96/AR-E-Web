@@ -2,7 +2,7 @@
  * Servicio para eliminar paquetes
  */
 
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '@/lib/api-client';
 import type { ApiResponse } from '../../types';
 
 /**

@@ -2,7 +2,7 @@
  * Servicio para crear paquetes
  */
 
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '@/lib/api-client';
 import type { Package, ApiResponse } from '../../types';
 
 export interface CreatePackageData {
