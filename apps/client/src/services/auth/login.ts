@@ -3,7 +3,7 @@
  */
 
 import type { ApiResponse, AuthResponse, LoginCredentials } from '@/types/api';
-import { apiClient } from '@/lib/api-client.ts';
+import { apiClient } from '@/lib';
 
 /**
  * Inicia sesión con email y contraseña
