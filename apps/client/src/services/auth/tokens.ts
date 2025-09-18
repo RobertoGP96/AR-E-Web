@@ -3,7 +3,7 @@
  */
 
 import type { ApiResponse } from '@/types/api';
-import { apiClient } from '@/lib';
+import { apiClient } from '@/lib/api-client.ts';
 
 /**
  * Refresca el token de acceso usando el refresh token
