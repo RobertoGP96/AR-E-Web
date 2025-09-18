@@ -13,6 +13,8 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+      // Mejora para resolver módulos más robustamente
+      dedupe: ['react', 'react-dom'],
     },
     esbuild: {
       // Configuración específica para esbuild que puede ayudar con TypeScript
