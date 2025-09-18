@@ -37,6 +37,8 @@ export default defineConfig(({ mode }) => {
       // Optimizaciones adicionales
       chunkSizeWarningLimit: 1000,
       cssCodeSplit: true,
+      // Asegurar que TypeScript compile correctamente
+      emptyOutDir: true,
     },
     optimizeDeps: {
       include: [
