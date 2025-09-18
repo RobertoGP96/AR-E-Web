@@ -15,7 +15,9 @@ export default defineConfig(({ mode }) => {
     },
     esbuild: {
       // Configuración específica para esbuild que puede ayudar con TypeScript
-      logOverride: { 'this-is-undefined-in-esm': 'silent' }
+      logOverride: { 'this-is-undefined-in-esm': 'silent' },
+      // Asegurar compatibilidad con TypeScript en builds
+      target: 'es2020'
     },
     build: {
       outDir: 'dist',

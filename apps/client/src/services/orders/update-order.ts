@@ -3,7 +3,7 @@
  */
 
 import type { Order } from '@/types/order';
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib/api-client.ts';
 import type { ApiResponse } from '@/types/api';
 
 
