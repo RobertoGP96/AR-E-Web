@@ -120,12 +120,16 @@ Los componentes de shadcn/ui están configurados en el directorio `src/component
 
 ## Resolución de Problemas
 
-### Error "Cannot find module '@/lib/utils'"
+### Error "Cannot find module '@/lib/utils'" o "@/lib/api-client"
 
 Este error se ha resuelto mediante:
 - Configuración de paths en `tsconfig.build.json`
 - Declaraciones de módulo en `vite-env.d.ts`
 - Uso de `moduleResolution: "node"` para builds de producción
+- **Uso consistente de alias**: Todos los imports deben usar `@/lib/...` en lugar de rutas relativas
+
+**✅ Correcto**: `import { apiClient } from '@/lib/api-client'`  
+**❌ Incorrecto**: `import { apiClient } from '../../lib/api-client'`
 
 ### Build en Cloudflare
 
