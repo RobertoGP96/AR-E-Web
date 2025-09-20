@@ -8,7 +8,6 @@
     "build": "pnpm clean:dist && pnpm type-check && vite build",
     "build:github": "pnpm clean:dist && pnpm type-check && vite build",
     "build:vercel": "pnpm clean:dist && pnpm type-check && cross-env VITE_DEPLOY_TARGET=vercel vite build",
-    "build:cloudflare": "pnpm clean:dist && pnpm type-check && cross-env VITE_DEPLOY_TARGET=cloudflare vite build",
     "build:legacy": "pnpm clean:dist && tsc -b && vite build",
     "build:only": "vite build",
     "lint": "eslint . --max-warnings 0",
