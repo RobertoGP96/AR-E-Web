@@ -6,6 +6,15 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
+  const isCloudflare = process.env.VITE_DEPLOY_TARGET === 'cloudflare';
+  const isProduction = mode === 'production';
+  
+  // Configurar base según la plataforma
+  let base = '/';
+  if (isProduction && !isCloudflare) {
+    base = '/AR-E-Web/';
+  }
+  
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
@@ -75,7 +84,7 @@ export default defineConfig(({ mode }) => {
       port: 4173,
       host: true,
     },
-    base: mode === 'production' ? '/AR-E-Web/' : '/',
+    base: base,
     // Variables de entorno que serán expuestas al cliente
     define: {
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version)

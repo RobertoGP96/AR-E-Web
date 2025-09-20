@@ -3,19 +3,15 @@
 # Script para build en Cloudflare
 echo "Iniciando build para Cloudflare..."
 
-# Usar la configuración específica para build
+# Navegar al directorio correcto
 cd /opt/buildhome/repo/apps/client
 
 # Instalar dependencias
 echo "Instalando dependencias..."
 pnpm install
 
-# Copiar archivos específicos para Cloudflare
-echo "Configurando archivos para Cloudflare..."
-cp index.cloudflare.html index.html
-
-# Hacer build usando la configuración específica
-echo "Ejecutando build..."
-pnpm run build:cloudflare
+# Hacer build con variable de entorno para Cloudflare
+echo "Ejecutando build para Cloudflare..."
+VITE_DEPLOY_TARGET=cloudflare pnpm run build
 
 echo "Build completado exitosamente!"
