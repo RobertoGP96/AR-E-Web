@@ -1,5 +1,11 @@
 /// <reference types="vite/client" />
 
+// Declaración para archivos SVG
+declare module '*.svg' {
+  const content: string;
+  export default content;
+}
+
 // Declaraciones para módulos de la aplicación
 declare module '@/lib/utils' {
   import { type ClassValue } from "clsx";

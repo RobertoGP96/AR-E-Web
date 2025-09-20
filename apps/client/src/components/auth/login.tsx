@@ -15,7 +15,7 @@ export default function LogIn() {
                 <div className="sm:mx-auto sm:w-full sm:max-w-sm">
                     <img
                         alt="AR&E Shipps logo"
-                        src="src/assets/logo/f-logo.svg"
+                        src="/assets/logo/f-logo.svg"
                         className="mx-auto h-1/2 w-auto"
                     />
                     

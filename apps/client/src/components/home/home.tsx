@@ -20,7 +20,7 @@ export default function Example() {
                             <div className="flex lg:flex-1 justify-center items-center pb-2">
                                 <img
                                     alt="are-logo"
-                                    src="src/assets/logo/logo.svg"
+                                    src="/assets/logo/logo.svg"
                                     className="h-40 w-auto"
                                 />
                             </div>
