@@ -17,6 +17,7 @@ const AppRoutes = () => {
 
             {/* Rutas protegidas */}
             <Route path="/" element={<MainLayout />}>
+                <Route index element={<Home />} />
                 <Route path="register" element={<Register />} />
                 <Route path='home' element={<Home />} />
                 <Route path="about" element={<About />} />
