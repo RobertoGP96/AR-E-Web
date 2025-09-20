@@ -268,3 +268,4 @@ coverage.xml
 *.p12
 secrets/
 .secrets/
+.vercel
