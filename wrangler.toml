@@ -6,6 +6,5 @@ pages_build_output_dir = "apps/client/dist"
 [build]
 command = "cd apps/client && pnpm install && pnpm build"
 
-# Variables de entorno para Pages
-[env.production.vars]
+[vars]
 VITE_APP_ENV = "production"

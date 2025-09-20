@@ -38,10 +38,10 @@ if errorlevel 1 (
 
 echo ✅ Build completado exitosamente
 
-REM Despliegue
+# Despliegue
 echo 🚀 Desplegando a Cloudflare Pages...
 cd ..\..
-wrangler pages deploy
+wrangler pages deploy apps/client/dist --project-name=arye-shipps
 
 echo ✅ ¡Despliegue completado!
 echo 🌐 Tu aplicación debería estar disponible en tu dominio de Cloudflare Pages
