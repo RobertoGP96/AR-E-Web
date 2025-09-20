@@ -7,11 +7,12 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const isCloudflare = process.env.VITE_DEPLOY_TARGET === 'cloudflare';
+  const isVercel = process.env.VITE_DEPLOY_TARGET === 'vercel';
   const isProduction = mode === 'production';
   
   // Configurar base según la plataforma
   let base = '/';
-  if (isProduction && !isCloudflare) {
+  if (isProduction && !isCloudflare && !isVercel) {
     base = '/AR-E-Web/';
   }
   
@@ -35,7 +36,7 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       assetsDir: 'assets',
       sourcemap: mode === 'development',
-      minify: 'terser',
+      minify: 'esbuild', // Cambiar a esbuild en lugar de terser para Vercel
       rollupOptions: {
         output: {
           entryFileNames: 'assets/[name]-[hash].js',

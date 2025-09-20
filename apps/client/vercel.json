@@ -1,0 +1,29 @@
+{
+  "framework": "vite",
+  "buildCommand": "pnpm build:vercel",
+  "outputDirectory": "dist",
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "devCommand": "pnpm dev",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
+}
