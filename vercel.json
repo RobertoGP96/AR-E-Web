@@ -2,7 +2,7 @@
   "framework": "vite",
   "buildCommand": "cd apps/client && pnpm build:vercel",
   "outputDirectory": "apps/client/dist",
-  "installCommand": "pnpm install --frozen-lockfile",
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "devCommand": "cd apps/client && pnpm dev",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
