@@ -3,11 +3,9 @@ import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router'
 
-// GitHub Pages necesita el nombre del repositorio como basename en producción
-const basename = import.meta.env.PROD ? '/AR-E-Web/' : '/';
-
+// Para Cloudflare Pages no necesitamos basename
 createRoot(document.getElementById('root')!).render(
-  <BrowserRouter basename={basename}>
+  <BrowserRouter basename="/">
     <App />
   </BrowserRouter>
 )
