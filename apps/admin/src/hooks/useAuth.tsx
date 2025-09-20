@@ -1,8 +1,16 @@
 import { useState, createContext, useContext } from 'react';
 
+// Tipo para el usuario autenticado
+export interface User {
+  id?: string;
+  email: string;
+  name?: string;
+  role?: string;
+}
+
 // Tipos de retorno del hook useAuth
 export interface UseAuthReturn {
-  user: any | null;
+  user: User | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -29,7 +37,7 @@ export const useAuth = (): UseAuthReturn => {
 
 // Provider de autenticación (temporal)
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const login = async (credentials: LoginCredentials) => {

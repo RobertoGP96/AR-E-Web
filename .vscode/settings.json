@@ -1,0 +1,8 @@
+{
+  "eslint.workingDirectories": [
+    "apps/admin",
+    "apps/client"
+  ],
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "typescript.preferences.typescript.includePackageJsonAutoImports": "auto"
+}
