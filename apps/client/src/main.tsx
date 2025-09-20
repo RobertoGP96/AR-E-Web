@@ -3,8 +3,10 @@ import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router'
 
+const basename = import.meta.env.PROD ? '/AR-E-Web' : '';
+
 createRoot(document.getElementById('root')!).render(
-  <BrowserRouter>
+  <BrowserRouter basename={basename}>
     <App />
   </BrowserRouter>
 )

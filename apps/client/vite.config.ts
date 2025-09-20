@@ -75,7 +75,7 @@ export default defineConfig(({ mode }) => {
       port: 4173,
       host: true,
     },
-    base: '/',
+    base: mode === 'production' ? '/AR-E-Web/' : '/',
     // Variables de entorno que serán expuestas al cliente
     define: {
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version)
