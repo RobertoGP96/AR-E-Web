@@ -8,10 +8,14 @@
 ## Base de Datos
 - `DATABASE_URL`: Se genera automáticamente cuando creates el servicio PostgreSQL en Render
 
-## CORS (Cross-Origin Resource Sharing)
+## CORS (Cross-Origin Resource Sharing) - IMPORTANTE PARA NAVEGADOR
 - `CORS_ALLOWED_ORIGINS`: URLs permitidas para hacer requests al API
-  - Incluir tu frontend de Vercel: `https://tu-frontend.vercel.app`
-  - Para desarrollo local: `http://localhost:5173`
+  - **Para ver documentación Swagger**: `https://tu-app.onrender.com`
+  - **Para frontend en Vercel**: `https://tu-frontend.vercel.app`
+  - **Para desarrollo local**: `http://localhost:5173,http://localhost:3000`
+  - **Combinado**: `https://tu-app.onrender.com,https://tu-frontend.vercel.app,http://localhost:5173`
+
+- `CORS_ALLOW_ALL_ORIGINS`: Establecer en `True` SOLO para desarrollo/testing (NO en producción)
 
 ## JWT Tokens (Opcional)
 - `ACCESS_TOKEN_LIFETIME_MINUTES`: Duración del token de acceso (default: 60)

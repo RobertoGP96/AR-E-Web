@@ -211,6 +211,9 @@ CORS_ALLOWED_ORIGINS = config(
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 
+# Allow all origins for development (override with env var in production)
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
+
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_METHODS = [
@@ -220,6 +223,26 @@ CORS_ALLOW_METHODS = [
     "PATCH",
     "DELETE",
     "OPTIONS",
+]
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+# Additional CORS settings for better browser compatibility
+CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
+CORS_EXPOSE_HEADERS = [
+    "content-disposition",
+    "content-length",
+    "content-type",
 ]
 
 # DRF Spectacular (Swagger/OpenAPI) Configuration
