@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: ar-e-web-backend
+    env: python
+    rootDir: backend
+    buildCommand: ./build.sh
+    startCommand: gunicorn config.wsgi:application
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings
+    # Environment variables will be set through Render dashboard
+    # DATABASE_URL - will be automatically set when PostgreSQL service is connected
+    # SECRET_KEY - set in dashboard
+    # ALLOWED_HOSTS - set in dashboard
+    # CORS_ALLOWED_ORIGINS - set in dashboard
+
+  # Optional: PostgreSQL database service
+  # - type: pserv
+  #   name: ar-e-web-db
+  #   plan: free
+  #   env: postgresql

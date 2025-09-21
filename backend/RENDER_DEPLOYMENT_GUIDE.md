@@ -1,8 +1,19 @@
 # Guía Completa: Desplegar Django Backend en Render
 
-## Resumen de lo configurado
+## ⚠️ PROBLEMA COMÚN Y SOLUCIÓN
 
-✅ **build.sh** - Script de construcción para Render
+Si ves este error:
+```
+bash: line 1: cd: backend: No such file or directory
+```
+
+**SOLUCIÓN**: Verificar que el **Root Directory** en Render esté configurado como `backend`, no como la raíz del repositorio.
+
+## Archivos de configuración creados
+
+✅ **render.yaml** - Configuración automática para Render (en raíz del proyecto)
+✅ **build.sh** - Script de construcción mejorado (en raíz del proyecto)  
+✅ **backend/build.sh** - Script alternativo para el directorio backend
 ✅ **settings.py** - Configurado para producción con PostgreSQL y WhiteNoise
 ✅ **Variables de entorno** - Documentadas en RENDER_ENV_VARS.md
 
