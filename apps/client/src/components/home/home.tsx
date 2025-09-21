@@ -14,7 +14,7 @@ export default function Example() {
             <div className=" h-full">
                 <div className="relative isolate px-6 pt-5 lg:px-8">
                     
-                    <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-26">
+                    <div className="mx-auto max-w-2xl py-8 sm:py-48 lg:py-26">
 
                         <div className="text-center flex flex-col items-center gap-2">
                             <div className="flex lg:flex-1 justify-center items-center pb-2">

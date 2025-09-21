@@ -138,6 +138,18 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden; /* Prevenir scroll horizontal */
+}
+
+/* Prevenir overflow en elementos decorativos */
+[aria-hidden="true"] {
+  overflow: hidden;
+}
+
+/* Asegurar que los elementos con clipPath no causen overflow */
+[style*="clipPath"], [style*="clip-path"] {
+  max-width: 100vw;
+  overflow: hidden;
 }
 
 h1 {
