@@ -2,6 +2,7 @@
 # exit on error
 set -o errexit
 
+# This build script runs when Root Directory is set to 'backend'
 # Install dependencies
 pip install -r requirements.txt
 
