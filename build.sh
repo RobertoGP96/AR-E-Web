@@ -29,3 +29,12 @@ python manage.py collectstatic --no-input
 
 # Apply any outstanding database migrations
 python manage.py migrate
+
+# Create superuser if environment variables are set
+if [ ! -z "$DJANGO_SUPERUSER_USERNAME" ] && [ ! -z "$DJANGO_SUPERUSER_PASSWORD" ]; then
+    echo "Creating superuser..."
+    python manage.py create_admin
+else
+    echo "Superuser environment variables not set, skipping superuser creation"
+    echo "To create superuser later, set DJANGO_SUPERUSER_USERNAME, DJANGO_SUPERUSER_EMAIL, and DJANGO_SUPERUSER_PASSWORD"
+fi
