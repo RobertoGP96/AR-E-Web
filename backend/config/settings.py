@@ -291,6 +291,16 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # Logging Configuration
+import os
+
+# Create logs directory if it doesn't exist (for local development)
+LOGS_DIR = BASE_DIR / 'logs'
+if not LOGS_DIR.exists():
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Use console logging in production, file logging in development
+USE_FILE_LOGGING = config('USE_FILE_LOGGING', default=False, cast=bool)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -305,12 +315,6 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
-            'formatter': 'verbose',
-        },
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
@@ -318,19 +322,32 @@ LOGGING = {
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': ['console'],
         'level': 'INFO',
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
         'api': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
         },
     },
 }
+
+# Add file logging only if enabled (for local development)
+if USE_FILE_LOGGING:
+    LOGGING['handlers']['file'] = {
+        'level': 'INFO',
+        'class': 'logging.FileHandler',
+        'filename': LOGS_DIR / 'django.log',
+        'formatter': 'verbose',
+    }
+    # Add file handler to existing handlers
+    LOGGING['root']['handlers'].append('file')
+    LOGGING['loggers']['django']['handlers'].append('file')
+    LOGGING['loggers']['api']['handlers'].append('file')
