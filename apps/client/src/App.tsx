@@ -3,10 +3,11 @@ import AppRoutes from "./routes/Routes"
 
 function App() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden">
+    <div className="relative w-full overflow-x-hidden">
+      {/* Elementos decorativos de fondo */}
       <div
         aria-hidden="true"
-        className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
+        className="fixed inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80 pointer-events-none"
       >
         <div
           style={{
@@ -16,12 +17,18 @@ function App() {
           className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] max-w-none -translate-x-1/2 rotate-30 bg-gradient-to-tr from-[#dd6540] to-[#ca9b0d] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
         />
       </div>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      
+      {/* Contenido principal */}
+      <main className="relative z-0 min-h-screen">
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </main>
+      
+      {/* Elemento decorativo inferior */}
       <div
         aria-hidden="true"
-        className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(25%)]"
+        className="fixed inset-x-0 bottom-0 -z-10 transform-gpu overflow-hidden blur-3xl pointer-events-none"
       >
         <div
           style={{
@@ -32,7 +39,6 @@ function App() {
         />
       </div>
     </div>
-
   )
 }
 

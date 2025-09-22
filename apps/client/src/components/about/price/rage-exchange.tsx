@@ -27,7 +27,7 @@ export default function ExchangeRate() {
     return (
         <div className="relative isolate px-6 lg:px-8 mt-20 " id="exchange-rates">
             <div className="mx-auto max-w-4xl text-center">
-                <p className="mt-2 text-5xl font-semibold tracking-tight text-balance text-gray-900 sm:text-6xl dark:text-white">
+                <p className="mt-2 text-2xl sm:text-3xl md:text-5xl font-semibold tracking-tight text-balance text-gray-900  dark:text-white">
                     Tasas de Cambio
                 </p>
             </div>
@@ -42,12 +42,12 @@ export default function ExchangeRate() {
                     >
                         <p className="flex items-baseline gap-x-2 m-0">
                             <span
-                                className={'text-white text-5xl font-semibold tracking-tight'}
+                                className={'text-white text-2xl sm:text-3xl md:text-5xl font-semibold tracking-tight'}
                             >
                                 $1.00
                             </span>
                             <span
-                                className={'text-black text-base bg-primary px-2 rounded-full'}
+                                className={'text-black text-sm sm:text-md bg-primary px-2 rounded-full'}
                             >
                                 {rateItem.exchangeFrom}
                             </span>
@@ -55,7 +55,7 @@ export default function ExchangeRate() {
                         <ChevronRight/>
                         <p className="flex items-baseline gap-x-2">
                             <span
-                                className={'text-white text-5xl font-semibold tracking-tight'}
+                                className={'text-white text-2xl sm:text-3xl md:text-5xl font-semibold tracking-tight'}
                             >
                                 {"$"+rateItem.rate.toFixed(2)}
                             </span>

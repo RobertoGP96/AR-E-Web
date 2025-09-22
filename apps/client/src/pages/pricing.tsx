@@ -10,9 +10,9 @@ const About = () => {
             <Pricing />
             <ExchangeRate />
             {/* Métodos de pago */}
-            <div id="metodos-pago" className="w-1/2  p-6 my-20 ">
+            <div id="metodos-pago" className="w-4/5  sm:w-1/2 md:w-2/5 p-6 my-20 ">
                 <div className="flex items-center space-x-4 mb-6">
-                    <h3 className="text-center w-full text-5xl font-black text-white tracking-tight">
+                    <h3 className="text-center w-full text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tight">
                         Métodos de Pago
                     </h3>
                 </div>
@@ -20,9 +20,9 @@ const About = () => {
             </div>
 
             {/* Pago*/}
-            <div className="flex justify-center w-2/3 mb-10">
+            <div className="flex justify-center w-4/5  sm:w-1/2 md:w-2/5 mb-10">
                 <div className="flex flex-col items-center gap-6">
-                    <h3 className="text-5xl font-bold text-gray-900 dark:text-white tracking-tight my-5">
+                    <h3 className=" font-bold text-2xl sm:text-3xl md:text-5xl text-center text-gray-900 dark:text-white tracking-tight my-5">
                         ¿Cómo se calcula el pago?
                     </h3>
 

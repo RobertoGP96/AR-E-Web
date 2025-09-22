@@ -252,14 +252,14 @@ export default function Introduction() {
               </span>
             </div>
 
-            <div className="mt-4 flex items-center justify-between bg-gray-600/20 rounded-lg p-3">
+            <div className="mt-4 flex flex-col sm:fles-row items-center gap-3 flex-wrap justify-between  bg-gray-600/20 rounded-lg p-3">
               <div className="flex items-center space-x-3">
                 <Clock className="h-6 w-6 text-primary" />
                 <span className="text-xl font-semibold text-gray-200">
                   Horario
                 </span>
               </div>
-              <span className="bg-primary/20 text-primary px-4 py-2 rounded-full text-lg font-bold">
+              <span className="bg-primary/20 text-primary px-4 py-2 rounded-full text-xl  md:text-3xl font-bold">
                 08:00 a.m. - 06:00 p.m.
               </span>
             </div>

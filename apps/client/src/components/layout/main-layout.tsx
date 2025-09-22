@@ -4,10 +4,16 @@ import Footer from '../footer/footer';
 
 const MainLayout = () => {
     return (
-        <div className="bg-black/40">
-            <NavBar />
-            <Outlet />
-            <Footer/>
+        <div className="flex flex-col min-h-screen bg-black/40">
+            <header className="sticky top-0 z-50 w-full">
+                <NavBar />
+            </header>
+            <main className="flex-1 w-full">
+                <Outlet />
+            </main>
+            <footer className="w-full mt-auto">
+                <Footer />
+            </footer>
         </div>
     );
 };

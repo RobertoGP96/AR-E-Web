@@ -1,15 +1,15 @@
-import { Compass, DollarSign, Headset, Home, LogIn, UserPlus, Menu } from "lucide-react";
+import { Compass, DollarSign, Headset, Home, LogIn, UserPlus, Menu, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { NavLink, useLocation } from "react-router";
 import useAuth from "@/hooks/auth/useAuth";
 import { NavUser } from "./user-nav";
 import LoadingSpinner from "../utils/LoadingSpinner";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
 } from "../ui/sheet";
 import { useState } from "react";
 
@@ -35,12 +35,12 @@ const NavBar = () => {
                 <div className="flex lg:flex-1">
                     {/* Logo space */}
                 </div>
-                    
+
                 {/* Desktop Navigation */}
                 <div className="hidden lg:flex lg:gap-x-12 ">
                     {navigation.map((item) => (
                         <NavLink key={item.href} to={item.href}>
-                            <div className={`flex flex-row justify-center items-center gap-1  hover:text-primary ${location.pathname.includes(item.href)?"text-primary":"text-white"}` }>
+                            <div className={`flex flex-row justify-center items-center gap-1  hover:text-primary ${location.pathname.includes(item.href) ? "text-primary" : "text-white"}`}>
                                 <item.icon className='h-4 w-4' />
                                 <span className="text-sm/6 font-semibold  ">
                                     {item.name}
@@ -87,56 +87,64 @@ const NavBar = () => {
                                 <span className="sr-only">Abrir menú</span>
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="right" className="w-[340px] sm:w-[400px] bg-background/95 backdrop-blur-lg border-l border-border/50 p-0 shadow-2xl">
-                            <SheetHeader className="border-b border-border/50 p-6 bg-gradient-to-r from-primary/5 to-secondary/5">
+                        <SheetContent side="right" className="w-[340px] sm:w-[400px] bg-background/95 backdrop-blur-lg border-l border-border/50 p-0 shadow-2xl [&>button]:hidden">
+                            <SheetHeader className="border-b border-border/50 p-6 bg-gradient-to-r from-primary/5 to-secondary/5 relative">
                                 <SheetTitle className="text-xl font-bold text-foreground flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
-                                        <Menu className="h-5 w-5 text-primary" />
-                                    </div>
-                                    <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="rounded-full hover:bg-primary/10"
+                                        onClick={() => setIsOpen(!isOpen)}
+                                    >
+                                        <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                                            {isOpen ? (
+                                                <X className="h-4 w-4 text-primary" />
+                                            ) : (
+
+                                                <Menu className="h-5 w-5 text-primary" />
+                                            )}
+                                        </div>
+                                    </Button>
+                                    <span className="bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent">
                                         Navegación
                                     </span>
                                 </SheetTitle>
+
                             </SheetHeader>
-                            
+
                             <div className="flex flex-col h-full p-6">
                                 {/* Mobile Navigation Links */}
                                 <div className="flex flex-col gap-1 flex-1">
                                     <div className="flex items-center gap-2 mb-4">
                                         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
-                                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">
+                                        <span className="text-xs font-medium text-gray-300 uppercase tracking-widest px-2">
                                             Páginas
                                         </span>
                                         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
                                     </div>
-                                    
+
                                     {navigation.map((item, index) => (
-                                        <NavLink 
-                                            key={item.href} 
+                                        <NavLink
+                                            key={item.href}
                                             to={item.href}
                                             onClick={handleLinkClick}
                                             className="block"
                                         >
-                                            <div className={`relative flex flex-row items-center gap-4 p-4 rounded-2xl transition-all duration-300 ease-out ${
-                                                location.pathname.includes(item.href) 
-                                                    ? "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent text-primary border border-primary/30 shadow-md" 
-                                                    : "text-foreground bg-gradient-to-r from-accent/20 to-accent/5 border border-accent/10"
-                                            }`} style={{ animationDelay: `${index * 100}ms` }}>
-                                                <div className={`relative p-3 rounded-xl transition-all duration-300 ${
-                                                    location.pathname.includes(item.href)
-                                                        ? "bg-primary/20 border border-primary/30 shadow-inner"
-                                                        : "bg-muted/50 border border-muted/30"
-                                                }`}>
+                                            <div className={`relative flex flex-row items-center gap-4 p-4 rounded-2xl transition-all duration-300 ease-out ${location.pathname.includes(item.href)
+                                                ? "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent text-primary border border-primary/30 shadow-md"
+                                                : "text-foreground bg-gradient-to-r from-accent/20 to-accent/5 border border-accent/10"
+                                                }`} style={{ animationDelay: `${index * 100}ms` }}>
+                                                <div className={`relative p-3 rounded-xl transition-all duration-300 ${location.pathname.includes(item.href)
+                                                    ? "bg-primary/20 border border-primary/30 shadow-inner"
+                                                    : "bg-gray-300/50 border border-muted/30"
+                                                    }`}>
                                                     <item.icon className='h-5 w-5' />
-                                                    {location.pathname.includes(item.href) && (
-                                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg" />
-                                                    )}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <span className="text-base font-semibold block leading-tight">
+                                                    <span className="text-base text-gray-200 font-semibold block leading-tight">
                                                         {item.name}
                                                     </span>
-                                                    <span className="text-xs text-muted-foreground opacity-70">
+                                                    <span className="text-xs text-gray-400 opacity-70">
                                                         {item.href === 'home' && 'Página principal'}
                                                         {item.href === 'about' && 'Información sobre nosotros'}
                                                         {item.href === 'pricing' && 'Planes y precios'}
@@ -153,14 +161,7 @@ const NavBar = () => {
 
                                 {/* Mobile Auth Section */}
                                 <div className="border-t border-border/50 pt-6 mt-6 space-y-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
-                                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">
-                                            {isAuthenticated ? 'Mi Cuenta' : 'Autenticación'}
-                                        </span>
-                                        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
-                                    </div>
-                                    
+
                                     {isLoading ? (
                                         <div className="flex justify-center py-8">
                                             <div className="flex flex-col items-center gap-3">
@@ -175,8 +176,8 @@ const NavBar = () => {
                                     ) : (
                                         <div className="space-y-3">
                                             <NavLink to={"/login"} onClick={handleLinkClick} className="block">
-                                                <Button 
-                                                    variant={"outline"} 
+                                                <Button
+                                                    variant={"outline"}
                                                     className="w-full justify-start h-14 text-base font-semibold bg-primary/10 text-primary border-primary/30 rounded-xl"
                                                 >
                                                     <div className="p-2 rounded-lg bg-primary/20 mr-4">
@@ -189,8 +190,8 @@ const NavBar = () => {
                                                 </Button>
                                             </NavLink>
                                             <NavLink to={"/register"} onClick={handleLinkClick} className="block">
-                                                <Button 
-                                                    variant={"outline"} 
+                                                <Button
+                                                    variant={"outline"}
                                                     className="w-full justify-start h-14 text-base font-semibold bg-secondary/10 text-secondary border-secondary/30 rounded-xl"
                                                 >
                                                     <div className="p-2 rounded-lg bg-secondary/20 mr-4">
@@ -212,4 +213,4 @@ const NavBar = () => {
             </nav>
         </header>
     );
-};export default NavBar;
+}; export default NavBar;
