@@ -25,7 +25,7 @@ export default function Example() {
                                     className="h-40 w-auto"
                                 />
                             </div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-xl text-white">
+                            <h1 className="text-xl font-semibold tracking-tight text-balance sm:text-2xl text-white">
                                 ¡Descubre una nueva forma de hacer tus compras!
                             </h1>
                             <p className="mt-8 text-sm font-medium text-pretty sm:text-xl text-gray-200">
