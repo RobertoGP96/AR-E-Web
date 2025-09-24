@@ -4,8 +4,6 @@ import { NavLink, useLocation } from "react-router";
 import useAuth from "@/hooks/auth/useAuth";
 import { NavUser } from "./user-nav";
 import LoadingSpinner from "../utils/LoadingSpinner";
-import Logo from "/assets/logo/logo.svg" 
-import LogoF from "/assets/logo/f-logo.svg" 
 import {
     Sheet,
     SheetContent,
@@ -37,8 +35,8 @@ const NavBar = () => {
             <nav aria-label="Global" className="flex items-center justify-between p-3 lg:px-8">
                 <div className="flex lg:flex-1 ml-5">
                     {/* Logo space - Responsive logo */}
-                    <img src={Logo} alt="Logo" className="hidden lg:block h-15" />
-                    <img src={LogoF} alt="Logo" className="block lg:hidden h-12" />
+                    <img src="/assets/logo/logo.svg" alt="Logo" className="hidden lg:block h-15" />
+                    <img src="/assets/logo/f-logo.svg" alt="Logo" className="block lg:hidden h-12" />
                 </div>
 
                 {/* Desktop Navigation */}
@@ -92,7 +90,7 @@ const NavBar = () => {
                                 <span className="sr-only">Abrir menú</span>
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="right" className="w-[340px] sm:w-[400px] bg-background/95 backdrop-blur-lg border-l border-border/50 p-0 shadow-2xl [&>button]:hidden">
+                        <SheetContent side="right" className="w-[340px] sm:w-[400px] bg-black/50 backdrop-blur-lg border-l border-border/50 p-0 shadow-2xl [&>button]:hidden">
                             <SheetHeader className="border-b border-border/50 p-6 bg-gradient-to-r from-primary/5 to-secondary/5 relative">
                                 <SheetTitle className="text-xl font-bold text-foreground flex items-center gap-3">
                                     <Button
@@ -120,13 +118,7 @@ const NavBar = () => {
                             <div className="flex flex-col h-full p-6">
                                 {/* Mobile Navigation Links */}
                                 <div className="flex flex-col gap-1 flex-1">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
-                                        <span className="text-xs font-medium text-gray-300 uppercase tracking-widest px-2">
-                                            Páginas
-                                        </span>
-                                        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
-                                    </div>
+                                   
 
                                     {navigation.map((item, index) => (
                                         <NavLink
@@ -137,11 +129,11 @@ const NavBar = () => {
                                         >
                                             <div className={`relative flex flex-row items-center gap-4 p-4 rounded-2xl transition-all duration-300 ease-out ${location.pathname.includes(item.href)
                                                 ? "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent text-primary border border-primary/30 shadow-md"
-                                                : "text-foreground bg-gradient-to-r from-accent/20 to-accent/5 border border-accent/10"
+                                                : "text-gray-200  border border-accent/0"
                                                 }`} style={{ animationDelay: `${index * 100}ms` }}>
                                                 <div className={`relative p-3 rounded-xl transition-all duration-300 ${location.pathname.includes(item.href)
                                                     ? "bg-primary/20 border border-primary/30 shadow-inner"
-                                                    : "bg-gray-300/50 border border-muted/30"
+                                                    : "bg-black/50 border border-muted/30"
                                                     }`}>
                                                     <item.icon className='h-5 w-5' />
                                                 </div>
@@ -197,7 +189,7 @@ const NavBar = () => {
                                             <NavLink to={"/register"} onClick={handleLinkClick} className="block">
                                                 <Button
                                                     variant={"outline"}
-                                                    className="w-full justify-start h-14 text-base font-semibold bg-secondary/10 text-secondary border-secondary/30 rounded-xl"
+                                                    className="w-full justify-start h-14 text-base font-semibold  text-gray-300 border-gray-300 rounded-xl"
                                                 >
                                                     <div className="p-2 rounded-lg bg-secondary/20 mr-4">
                                                         <UserPlus className="h-5 w-5" />

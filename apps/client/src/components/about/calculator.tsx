@@ -94,7 +94,7 @@ function PurchaseCalculator() {
                   <p>→ Amazon/Temu: 3%</p>
                   <p>→ AliExpress/Otras: 5%</p>
                 </div>
-                <p>• Impuestos adicionales (opcional)</p>
+                <p>• Impuestos adicionales</p>
               </div>
             </div>
             <div className="space-y-3">
@@ -210,7 +210,7 @@ function PurchaseCalculator() {
 
             <div className="space-y-3 sm:col-span-2 lg:col-span-1">
               <label htmlFor="additionalTax" className="text-sm font-medium text-slate-200 block">
-                Impuesto Adicional (%)
+                Impuesto Adicional
               </label>
               <Input
                 id="additionalTax"
@@ -237,7 +237,7 @@ function PurchaseCalculator() {
                 {selectedStore && (
                   <p className="text-sm text-slate-300 mt-1">
                     Impuesto base 7% + {selectedStore.extra > 0 ? `${(selectedStore.extra * 100).toFixed(0)}%` : '0%'} de tienda
-                    {additionalTax > 0 && ` + ${additionalTax}% adicional`}
+                    {additionalTax > 0 && ` + ${additionalTax} adicional`}
                   </p>
                 )}
               </div>
