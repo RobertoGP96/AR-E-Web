@@ -1,5 +1,6 @@
 import AuthProvider from "./context/AuthContext"
 import AppRoutes from "./routes/Routes"
+import { Toaster } from "./components/ui/sonner"
 
 function App() {
   return (
@@ -24,6 +25,9 @@ function App() {
           <AppRoutes />
         </AuthProvider>
       </main>
+      
+      {/* Toaster para notificaciones */}
+      <Toaster />
       
       {/* Elemento decorativo inferior */}
       <div

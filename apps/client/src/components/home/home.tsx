@@ -22,10 +22,10 @@ export default function Example() {
                                 <img
                                     alt="are-logo"
                                     src="/assets/logo/logo.svg"
-                                    className="h-40 w-auto"
+                                    className="h-24 sm:h-36 lg:h-44 w-auto"
                                 />
                             </div>
-                            <h1 className="text-xl font-semibold tracking-tight text-balance sm:text-2xl text-white">
+                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-balance text-white">
                                 ¡Descubre una nueva forma de hacer tus compras!
                             </h1>
                             <p className="mt-8 text-sm font-medium text-pretty sm:text-xl text-gray-200">

@@ -7,6 +7,7 @@ import Register from '@/components/auth/register';
 import About from '@/pages/about';
 import Profile from '@/pages/porfile';
 import Pricing from '@/pages/pricing';
+import Stores from '@/pages/stores';
 
 
 const AppRoutes = () => {
@@ -21,6 +22,7 @@ const AppRoutes = () => {
                 <Route path="register" element={<Register />} />
                 <Route path='home' element={<Home />} />
                 <Route path="about" element={<About />} />
+                <Route path="stores" element={<Stores />} />
                 <Route path="pricing" element={<Pricing />} />
                 <Route path="contact" element={<Contact />} />
                 <Route path="profile" element={<Profile/>} />

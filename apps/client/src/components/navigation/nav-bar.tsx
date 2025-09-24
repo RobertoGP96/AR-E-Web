@@ -1,9 +1,11 @@
-import { Compass, DollarSign, Headset, Home, LogIn, UserPlus, Menu, X } from "lucide-react";
+import { Compass, DollarSign, Headset, Home, LogIn, UserPlus, Menu, X, Store } from "lucide-react";
 import { Button } from "../ui/button";
 import { NavLink, useLocation } from "react-router";
 import useAuth from "@/hooks/auth/useAuth";
 import { NavUser } from "./user-nav";
 import LoadingSpinner from "../utils/LoadingSpinner";
+import Logo from "/assets/logo/logo.svg" 
+import LogoF from "/assets/logo/f-logo.svg" 
 import {
     Sheet,
     SheetContent,
@@ -19,6 +21,7 @@ const NavBar = () => {
 
     const navigation = [
         { name: 'Inicio', href: 'home', icon: Home },
+        { name: 'Tiendas', href: 'stores', icon: Store },
         { name: 'Saber más', href: 'about', icon: Compass },
         { name: 'Precios', href: 'pricing', icon: DollarSign },
         { name: 'Contáctanos', href: 'contact', icon: Headset },
@@ -30,10 +33,12 @@ const NavBar = () => {
     }
 
     return (
-        <header className="w-full">
-            <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
-                <div className="flex lg:flex-1">
-                    {/* Logo space */}
+        <header className="w-full bg-background/10 backdrop-blur-md border-b border-border/20 shadow-sm">
+            <nav aria-label="Global" className="flex items-center justify-between p-3 lg:px-8">
+                <div className="flex lg:flex-1 ml-5">
+                    {/* Logo space - Responsive logo */}
+                    <img src={Logo} alt="Logo" className="hidden lg:block h-15" />
+                    <img src={LogoF} alt="Logo" className="block lg:hidden h-12" />
                 </div>
 
                 {/* Desktop Navigation */}
