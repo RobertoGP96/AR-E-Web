@@ -31,7 +31,7 @@ const NavBar = () => {
     }
 
     return (
-        <header className="w-full bg-black/50 backdrop-blur-md border-b border-border/20 shadow-sm">
+        <header className="w-full bg-black/10 backdrop-blur-md border-b border-border/20 shadow-sm">
             <nav aria-label="Global" className="flex items-center justify-between p-3 lg:px-8">
                 <div className="flex lg:flex-1 ml-5">
                     {/* Logo space - Responsive logo */}
