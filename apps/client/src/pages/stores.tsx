@@ -202,11 +202,11 @@ const Stores: React.FC = () => {
     <Card className="h-full hover:shadow-lg transition-all gap-3 duration-300 hover:scale-105 border-border/50 bg-black/10">
       <CardHeader className="pb-4">
         <div className="flex items-center gap-4 mb-3">
-          <div className="w-16 h-16 rounded-lg bg-background/50 flex items-center justify-center border border-border/30 shadow-sm">
+          <div className="w-16 h-16 rounded-xl bg-background/50 flex items-center justify-center border border-border/30 shadow-sm">
             <img 
               src={getLogoUrl(store.website)} 
               alt={`${store.name} logo`}
-              className="w-12 h-12 object-contain rounded-md"
+              className="w-16 h-16 object-contain rounded-xl"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(store.name)}&background=f97316&color=000&size=48&bold=true`;
