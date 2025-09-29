@@ -143,6 +143,7 @@ const NavBar = () => {
                                                     </span>
                                                     <span className="text-xs text-gray-400 opacity-70">
                                                         {item.href === 'home' && 'Página principal'}
+                                                        {item.href === 'stores' && 'Directorio de tiendas'}
                                                         {item.href === 'about' && 'Información sobre nosotros'}
                                                         {item.href === 'pricing' && 'Planes y precios'}
                                                         {item.href === 'contact' && 'Ponte en contacto'}
