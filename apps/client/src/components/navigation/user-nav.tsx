@@ -34,7 +34,7 @@ export function NavUser() {
                         <span className="text-gray-300">Perfil</span>
                     </DropdownMenuItem>
                 </NavLink>
-                <NavLink to={"/porfile"}>
+                <NavLink to={"/user_orders"}>
                     <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => navigate("/settings")} >
                         <ShoppingCart className="h-5 w-5 text-primary" />
                         <span className="text-gray-300">Pedidos</span>

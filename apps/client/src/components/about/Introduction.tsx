@@ -7,25 +7,25 @@ const steps = [
     step: 1,
     icon: Smartphone,
     title: "Instalación",
-    description: "Descarga e instala la aplicación de la tienda en la que deseas comprar usando Play Store o Apple Store"
+    description: "Descargue e instale la aplicación de la tienda en la que deseas comprar usando Play Store o Apple Store"
   },
   {
     step: 2,
     icon: UserPlus,
     title: "Registro",
-    description: "Regístrate o créate una cuenta usando una dirección de correo electrónico."
+    description: "Regístrese o inicie sesión en una cuenta usando una dirección de correo electrónico."
   },
   {
     step: 3,
     icon: Compass,
     title: "Exploración",
-    description: "Navega en la aplicación de la tienda para encontrar lo que quieres comprar."
+    description: "Navegue en la aplicación de la tienda para encontrar lo que quieres comprar."
   },
   {
     step: 4,
     icon: ShoppingCart,
     title: "Selección",
-    description: "Añade los artículos al carrito, selecciona talla, color o cualquier especificación que nos ayude a identificar lo q quieres."
+    description: "Añada los artículos al carrito, selecciona talla, color o cualquier especificación que nos ayude a identificar lo q quieres."
   },
   {
     step: 5,
@@ -199,29 +199,57 @@ export default function Introduction() {
           </div>
           <ul className="space-y-3 list-disc pl-8 text-lg">
             <li className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              Envios rápidos y seguros, recibe tus compras sin complicaciones.
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              Tarifas claras y competitivas, ahorra reduciendo costos de excesivos de envíos.
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              Variedad de métodos de pagos, con el objetivo de facilitar el acceso a tus artículos.
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              Amplia red de tiendas online, compra desde las tiendas más populares.
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              Atención personalizada, te guiamos paso a paso para que tu compra llegue sin complicaciones
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
+              <CheckCircle className="h-5 w-5 min-w-5" />
               <span>
-                Experiencia y confianza, reconocidos por clientes fieles que repiten sus compras por la seguridad y el trato cercano.
+                <strong className="text-primary">
+                  Envios rápidos y seguros
+                </strong>
+                , recibe tus compras sin complicaciones.
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 min-w-5" />
+              <span>
+                <strong className="text-primary">
+                  Tarifas claras y competitivas
+                </strong>
+                , ahorra reduciendo costos de excesivos de envíos.
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 min-w-5" />
+              <span>
+                <strong className="text-primary">
+                  Variedad de métodos de pagos
+                </strong>
+                , con el objetivo de facilitar el acceso a tus artículos.
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 min-w-5" />
+              <span>
+                <strong className="text-primary">
+                  Amplia red de tiendas online
+                </strong>
+                , compra desde las tiendas más populares.
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 min-w-5" />
+              <span>
+                <strong className="text-primary">
+                  Atención personalizada
+                </strong>
+                , te guiamos paso a paso para que tu compra llegue sin complicaciones.
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 min-w-5" />
+              <span>
+                <strong className="text-primary">
+                  Experiencia y confianza
+                </strong>
+                , reconocidos por clientes fieles que repiten sus compras por la seguridad y el trato cercano.
 
               </span>
             </li>
@@ -326,7 +354,7 @@ export default function Introduction() {
                   <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
                     Contenido del Paquete
                   </h4>
-                  <p>Evita enviar artículos prohibidos o restringidos. Asegúrate de cumplir con las regulaciones de importación.</p>
+                  <p>Evite enviar artículos prohibidos o restringidos. Asegúrese de cumplir con las regulaciones de importación.</p>
                 </div>
               </li>
 
@@ -338,7 +366,7 @@ export default function Introduction() {
                   <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
                     Compra Previsoria
                   </h4>
-                  <p>Realiza tus compras con suficiente tiempo de antelación para evitar complicaciones ajenas a nuestro servicio y sus pedidos puedan llegar en a tiempo</p>
+                  <p>Realice tus compras con suficiente tiempo de antelación para evitar complicaciones ajenas a nuestro servicio y sus pedidos puedan llegar en a tiempo</p>
                 </div>
               </li>
 
@@ -350,7 +378,7 @@ export default function Introduction() {
                   <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
                     Productos Especiales
                   </h4>
-                  <p>Para medicamentos y alimentos, asegúrate de cumplir estrictamente con los requisitos sanitarios y de importación.</p>
+                  <p>Para medicamentos y alimentos, asegúrese de cumplir estrictamente con los requisitos sanitarios y de importación.</p>
                 </div>
               </li>
 
@@ -362,7 +390,7 @@ export default function Introduction() {
                   <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
                     Verificación de Paquetes
                   </h4>
-                  <p>Al recibir tu envío, revisa inmediatamente y reporta cualquier empaque dañado o discrepancia para una rápida resolución.</p>
+                  <p>Al recibir tu envío, revise inmediatamente y reporte cualquier empaque dañado o discrepancia para una rápida resolución.</p>
                 </div>
               </li>
             </ul>
@@ -371,7 +399,7 @@ export default function Introduction() {
           <div className="border border-blue-100 dark:border-primary/50 rounded-lg p-4 flex items-center gap-3">
             <Info className="w-6 h-6 text-primary shrink-0" />
             <p className="text-gray-800 dark:text-gray-200 text-sm">
-              Estas recomendaciones ayudan a garantizar un proceso de envío seguro y sin complicaciones. Ante cualquier duda, nuestro equipo está disponible para asesorarte.
+              Estas recomendaciones ayudan a garantizar un proceso de envío seguro y sin complicaciones. Ante cualquier duda, nuestro equipo está disponible para asesorarl@.
             </p>
           </div>
         </div>

@@ -20,7 +20,7 @@ const About = () => {
             </div>
 
             {/* Pago*/}
-            <div className="flex justify-center w-4/5  sm:w-1/2 md:w-2/5 mb-10">
+            <div className="flex justify-center w-full  sm:w-1/2 md:w-2/5 mb-10">
                 <div className="flex flex-col items-center gap-6">
                     <h3 className=" font-bold text-2xl sm:text-3xl md:text-5xl text-center text-gray-900 dark:text-white tracking-tight my-5">
                         ¿Cómo se calcula el pago?

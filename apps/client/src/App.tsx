@@ -1,6 +1,8 @@
 import AuthProvider from "./context/AuthContext"
 import AppRoutes from "./routes/Routes"
 import { Toaster } from "./components/ui/sonner"
+import { QueryClientProvider } from "@tanstack/react-query"
+import { queryClient } from "./lib/query-client"
 
 function App() {
   return (
@@ -18,17 +20,20 @@ function App() {
           className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] max-w-none -translate-x-1/2 rotate-30 bg-gradient-to-tr from-[#dd6540] to-[#ca9b0d] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
         />
       </div>
-      
+
       {/* Contenido principal */}
       <main className="relative z-0 min-h-screen">
+
         <AuthProvider>
-          <AppRoutes />
+          <QueryClientProvider client={queryClient}>
+            <AppRoutes />
+          </QueryClientProvider>
         </AuthProvider>
       </main>
-      
+
       {/* Toaster para notificaciones */}
       <Toaster />
-      
+
       {/* Elemento decorativo inferior */}
       <div
         aria-hidden="true"

@@ -1,6 +1,6 @@
 import { Button } from "../ui/button";
 import { useAuth } from "@/hooks/auth/useAuth";
-import LoadingSpinner from "../utils/LoadingSpinner";
+import LoadingSpinner from "../utils/loading-spinner";
 import { toast } from "sonner";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

@@ -1,24 +1,37 @@
 /**
  * Tipos para el modelo Order
  */
+import { PayStatus, ID, OrderStatus  } from "./base"
 
-import type { ID, OrderStatus, PayStatus } from './base';
 import type { CustomUser } from './user';
 import type { DeliverReceip } from './delivery';
+import { Product } from './product';
 
 // Modelo principal
 export interface Order {
+  //#ID
   id: ID;
-  client: CustomUser;
-  sales_manager: CustomUser;
+  
+  client?: CustomUser;
+  sales_manager?: CustomUser;
+  
+  //Status
   status: OrderStatus;
   pay_status: PayStatus;
   
-  // Propiedades computadas
+  //Productos
+  delivery: DeliverReceip[];
+  products: Product[]
+    
+  //Money
+  received_value_of_client?: number;
+  extra_payments?: number;
   total_cost: number;
-  received_products: DeliverReceip[];
-  received_value_of_client: number;
-  extra_payments: number;
+
+  //Date
+  create_at?:string
+  update_at?:string
+  
 }
 
 // Tipos para crear/editar pedido

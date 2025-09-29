@@ -51,7 +51,7 @@ export default function Profile() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Profile Card */}
                 <div className="lg:col-span-1">
-                    <Card className="h-full shadow-lg border-0 rounded-2xl ring-1 ring-gray-50/30">
+                    <Card className="h-full shadow-lg border-0 rounded-2xl ring-1 bg-black/20 ring-gray-50/20">
                         <CardContent className="text-center">
                             <div className="relative inline-block">
                                 <div className="w-25 h-25 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full mx-auto mb-1 flex items-center justify-center">
@@ -59,7 +59,7 @@ export default function Profile() {
                                 </div>
                             </div>
 
-                            <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                            <h2 className="text-2xl font-bold text-gray-200 mb-1">
                                 {profileData.firstName} {profileData.lastName}
                             </h2>
 
@@ -80,8 +80,8 @@ export default function Profile() {
                 {/* Information Cards */}
                 <div className="lg:col-span-3 space-y-6">
                     {/* Personal Information */}
-                    <Card className="shadow-lg border-0 rounded-2xl ring-1 ring-gray-50/30">
-                        <CardHeader className="pb-4">
+                    <Card className="shadow-lg border-0 bg-black/20 rounded-2xl ring-1 ring-gray-50/20">
+                        <CardHeader className="pb-2">
                             <CardTitle className="text-xl font-semibold text-gray-300">
                                 Información Personal
                             </CardTitle>

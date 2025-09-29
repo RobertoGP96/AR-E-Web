@@ -57,20 +57,20 @@
 
 .dark {
   /* Tema oscuro abejas - Tonos nocturnos con acentos naranjas */
-  --background: oklch(0.12 0.02 35); /* Marrón muy oscuro */
+  --background: oklch(21.779% 0.00002 271.152); /* Marrón muy oscuro */
   --foreground: oklch(0.88 0.06 55); /* Naranja claro para texto */
-  --card: oklch(0.18 0.03 38); /* Marrón oscuro para tarjetas */
+  --card: oklch(24.764% 0.00641 34.091); /* Marrón oscuro para tarjetas */
   --card-foreground: oklch(0.88 0.06 55);
-  --popover: oklch(0.18 0.03 38);
-  --popover-foreground: oklch(0.88 0.06 55);
+  --popover: oklch(26.033% 0.00003 271.152);
+  --popover-foreground: oklch(47.478% 0.00005 271.152);
   --primary: oklch(0.72 0.16 48); /* Naranja dorado brillante */
-  --primary-foreground: oklch(0.12 0.02 35);
-  --secondary: oklch(0.25 0.05 40); /* Marrón medio */
+  --primary-foreground: oklch(37.53% 0.00004 271.152);
+  --secondary: oklch(21.77% 0.00664 34.126); /* Marrón medio */
   --secondary-foreground: oklch(66.66% 0.16525 48.904);
   --muted: oklch(0.22 0 0); /* Gris neutro oscuro */
   --muted-foreground: oklch(0.65 0 0); /* Gris neutro medio */
-  --accent: oklch(72.691% 0.09519 55.946); /* Naranja miel para acentos */
-  --accent-foreground: oklch(0.12 0.02 35);
+  --accent: oklch(38.666% 0.00004 271.152); /* Naranja miel para acentos */
+  --accent-foreground: oklch(75.126% 0.16015 51.599);
   --destructive: oklch(0.65 0.18 25); /* Rojo anaranjado más claro */
   --destructive-foreground: oklch(36.484% 0.00136 15.538); /* Blanco para texto destructivo */
   --border: oklch(0.30 0 0); /* Borde gris neutro oscuro */
@@ -86,7 +86,7 @@
   --sidebar-foreground: oklch(78.261% 0.00009 271.152); /* Texto naranja claro */
   --sidebar-primary: oklch(0.68 0.15 48); /* Naranja dorado para activos */
   --sidebar-primary-foreground: oklch(0.12 0.02 35);
-  --sidebar-accent: oklch(0.25 0.05 42); /* Hover marrón claro */
+  --sidebar-accent: oklch(28.858% 0.00689 48.29); /* Hover marrón claro */
   --sidebar-accent-foreground: oklch(84.522% 0.0001 271.152);
   --sidebar-border: oklch(0.32 0 0); /* Borde gris neutro oscuro */
   --sidebar-ring: oklch(0.62 0.12 50);

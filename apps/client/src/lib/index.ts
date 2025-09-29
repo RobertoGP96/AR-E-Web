@@ -9,6 +9,7 @@ export { cn } from './utils';
 
 // Date formatters
 export { formatDate } from './format-date';
+export { formatDateTime } from './format-date';
 
 // Phone formatters
 export { formatPhone } from './format-phone';

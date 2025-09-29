@@ -21,15 +21,15 @@ const Stores: React.FC = () => {
       name: "Amazon",
       description: "La tienda online más grande del mundo con millones de productos, desde electrónicos hasta artículos para el hogar.",
       category: "Marketplace General",
-      logoUrl: "https://logo.clearbit.com/amazon.com",
+      logoUrl: "/assets/stores/amazon.svg",
       website: "amazon.com",
-      specialties: ["Electrónicos", "Libros", "Hogar", "Ropa", "AWS"]
+      specialties: ["Electrónicos", "Libros", "Hogar", "Ropa"]
     },
     {
       name: "eBay",
       description: "Plataforma de subastas y ventas donde puedes encontrar productos nuevos, usados y vintage de todo el mundo.",
       category: "Subastas y Marketplace",
-      logoUrl: "https://logo.clearbit.com/ebay.com",
+      logoUrl: "/assets/stores/ebay.svg",
       website: "ebay.com",
       specialties: ["Subastas", "Coleccionables", "Vintage", "Electrónicos", "Autos"]
     },
@@ -37,7 +37,7 @@ const Stores: React.FC = () => {
       name: "AliExpress",
       description: "Plataforma china con productos a precios muy competitivos, ideal para compras al por mayor y productos únicos.",
       category: "Marketplace Internacional",
-      logoUrl: "https://logo.clearbit.com/aliexpress.com",
+      logoUrl: "/assets/stores/aliexpress.svg",
       website: "aliexpress.com",
       specialties: ["Electrónicos", "Gadgets", "Ropa", "Hogar", "Accesorios"]
     },
@@ -45,7 +45,7 @@ const Stores: React.FC = () => {
       name: "SHEIN",
       description: "Tienda de moda rápida con las últimas tendencias en ropa, accesorios y artículos para el hogar a precios accesibles.",
       category: "Moda Rápida",
-      logoUrl: "https://logo.clearbit.com/shein.com",
+      logoUrl: "/assets/stores/shein.svg",
       website: "shein.com",
       specialties: ["Moda Mujer", "Accesorios", "Hogar", "Belleza", "Tendencias"]
     },
@@ -53,7 +53,7 @@ const Stores: React.FC = () => {
       name: "Temu",
       description: "Marketplace con una amplia variedad de productos a precios muy competitivos, desde tecnología hasta artículos para el hogar.",
       category: "Marketplace Diverso",
-      logoUrl: "https://logo.clearbit.com/temu.com",
+      logoUrl: "/assets/stores/temu.svg",
       website: "temu.com",
       specialties: ["Electrónicos", "Hogar", "Herramientas", "Deportes", "Mascotas"]
     },
@@ -61,7 +61,7 @@ const Stores: React.FC = () => {
       name: "Newegg",
       description: "Especialista en tecnología y componentes de computadora, ideal para gamers y entusiastas de la tecnología.",
       category: "Tecnología Especializada",
-      logoUrl: "https://logo.clearbit.com/newegg.com",
+      logoUrl: "/assets/stores/newegg.svg",
       website: "newegg.com",
       specialties: ["PC Gaming", "Componentes", "Laptops", "Periféricos", "Software"]
     },
@@ -69,7 +69,7 @@ const Stores: React.FC = () => {
       name: "Best Buy",
       description: "Cadena líder en electrónicos y tecnología con una amplia gama de productos desde smartphones hasta electrodomésticos.",
       category: "Electrónicos y Tecnología",
-      logoUrl: "https://logo.clearbit.com/bestbuy.com",
+      logoUrl: "https://ui-avatars.com/api/?name=Best+Buy&background=0052cc&color=fff&size=64&bold=true",
       website: "bestbuy.com",
       specialties: ["Electrónicos", "Smartphones", "Computadoras", "Gaming", "Electrodomésticos"]
     },
@@ -77,7 +77,7 @@ const Stores: React.FC = () => {
       name: "Costco",
       description: "Club de membresía que ofrece productos de calidad a precios al por mayor en una amplia variedad de categorías.",
       category: "Club de Membresía",
-      logoUrl: "https://logo.clearbit.com/costco.com",
+      logoUrl: "/assets/stores/costco-wholesale.svg",
       website: "costco.com",
       specialties: ["Mayoreo", "Comestibles", "Electrónicos", "Hogar", "Farmacia"]
     },
@@ -85,7 +85,7 @@ const Stores: React.FC = () => {
       name: "Target",
       description: "Tienda departamental moderna que combina estilo, calidad y precios accesibles en moda, hogar y más.",
       category: "Tienda Departamental",
-      logoUrl: "https://logo.clearbit.com/target.com",
+      logoUrl: "https://ui-avatars.com/api/?name=Target&background=cc0000&color=fff&size=64&bold=true",
       website: "target.com",
       specialties: ["Moda", "Hogar", "Belleza", "Niños", "Comestibles"]
     },
@@ -93,7 +93,7 @@ const Stores: React.FC = () => {
       name: "The Home Depot",
       description: "La cadena más grande de mejoras para el hogar, ofreciendo herramientas, materiales y servicios de construcción.",
       category: "Mejoras para el Hogar",
-      logoUrl: "https://logo.clearbit.com/homedepot.com",
+      logoUrl: "https://ui-avatars.com/api/?name=Home+Depot&background=f96302&color=fff&size=64&bold=true",
       website: "homedepot.com",
       specialties: ["Herramientas", "Construcción", "Jardín", "Pintura", "Servicios"]
     },
@@ -101,7 +101,7 @@ const Stores: React.FC = () => {
       name: "Etsy",
       description: "Marketplace global para productos únicos, hechos a mano, vintage y suministros creativos de vendedores independientes.",
       category: "Marketplace Artesanal",
-      logoUrl: "https://logo.clearbit.com/etsy.com",
+      logoUrl: "https://ui-avatars.com/api/?name=Etsy&background=f56400&color=fff&size=64&bold=true",
       website: "etsy.com",
       specialties: ["Hecho a Mano", "Vintage", "Arte", "Joyería", "Personalizado"]
     },
@@ -109,7 +109,7 @@ const Stores: React.FC = () => {
       name: "Walmart",
       description: "La cadena de supermercados más grande del mundo, ofreciendo productos de uso diario a precios bajos.",
       category: "Supermercado Global",
-      logoUrl: "https://logo.clearbit.com/walmart.com",
+      logoUrl: "/assets/stores/walmart.svg",
       website: "walmart.com",
       specialties: ["Comestibles", "Electrónicos", "Ropa", "Hogar", "Farmacia"]
     }
@@ -121,7 +121,7 @@ const Stores: React.FC = () => {
       name: "Adidas",
       description: "Marca alemana líder en ropa deportiva, calzado y accesorios para atletas y entusiastas del deporte.",
       category: "Deportiva Premium",
-      logoUrl: "https://logo.clearbit.com/adidas.com",
+      logoUrl: "/assets/stores/adidas.svg",
       website: "adidas.com",
       specialties: ["Zapatillas", "Ropa Deportiva", "Fútbol", "Running", "Lifestyle"]
     },
@@ -129,7 +129,7 @@ const Stores: React.FC = () => {
       name: "Nike",
       description: "La marca deportiva más reconocida mundialmente, sinónimo de innovación y rendimiento atlético.",
       category: "Deportiva Premium",
-      logoUrl: "https://logo.clearbit.com/nike.com",
+      logoUrl: "/assets/stores/nike.svg",
       website: "nike.com",
       specialties: ["Air Jordan", "Running", "Basketball", "Lifestyle", "Innovación"]
     },
@@ -137,7 +137,7 @@ const Stores: React.FC = () => {
       name: "Puma",
       description: "Marca deportiva alemana conocida por su innovación en calzado deportivo y ropa atlética de alto rendimiento.",
       category: "Deportiva Premium",
-      logoUrl: "https://logo.clearbit.com/puma.com",
+      logoUrl: "/assets/stores/puma.svg",
       website: "puma.com",
       specialties: ["Zapatillas", "Fútbol", "Running", "Motorsport", "Lifestyle"]
     },
@@ -145,7 +145,7 @@ const Stores: React.FC = () => {
       name: "Vans",
       description: "Marca icónica de calzado y ropa asociada con la cultura del skateboarding, surf y estilo de vida alternativo.",
       category: "Streetwear Premium",
-      logoUrl: "https://logo.clearbit.com/vans.com",
+      logoUrl: "/assets/stores/vans.svg",
       website: "vans.com",
       specialties: ["Skateboarding", "Zapatillas", "Streetwear", "Surf", "Cultura Urbana"]
     },
@@ -153,7 +153,7 @@ const Stores: React.FC = () => {
       name: "Louis Vuitton",
       description: "Casa de moda francesa de ultra lujo, reconocida por sus icónicos bolsos, maletas y accesorios de piel.",
       category: "Lujo Francés",
-      logoUrl: "https://logo.clearbit.com/louisvuitton.com",
+      logoUrl: "https://ui-avatars.com/api/?name=Louis+Vuitton&background=8b4513&color=fff&size=64&bold=true",
       website: "louisvuitton.com",
       specialties: ["Bolsos de Lujo", "Maletas", "Relojería", "Joyería", "Alta Costura"]
     },
@@ -161,7 +161,7 @@ const Stores: React.FC = () => {
       name: "H&M",
       description: "Cadena sueca de moda rápida que ofrece ropa trendy y accesible con colaboraciones de diseñadores reconocidos.",
       category: "Moda Accesible",
-      logoUrl: "https://logo.clearbit.com/hm.com",
+      logoUrl: "https://ui-avatars.com/api/?name=H%26M&background=dc143c&color=fff&size=64&bold=true",
       website: "hm.com",
       specialties: ["Moda Rápida", "Tendencias", "Colaboraciones", "Sostenibilidad", "Accesorio"]
     },
@@ -169,7 +169,7 @@ const Stores: React.FC = () => {
       name: "Forever 21",
       description: "Marca de moda rápida estadounidense enfocada en tendencias juveniles y estilos urbanos a precios accesibles.",
       category: "Moda Juvenil",
-      logoUrl: "https://logo.clearbit.com/forever21.com",
+      logoUrl: "https://ui-avatars.com/api/?name=Forever+21&background=000000&color=fff&size=64&bold=true",
       website: "forever21.com",
       specialties: ["Moda Juvenil", "Tendencias", "Streetwear", "Accesorios", "Plus Size"]
     },
@@ -177,7 +177,7 @@ const Stores: React.FC = () => {
       name: "Ralph Lauren",
       description: "Marca estadounidense de lujo que define el estilo americano clásico con elegancia y sofisticación atemporal.",
       category: "Lujo Americano",
-      logoUrl: "https://logo.clearbit.com/ralphlauren.com",
+      logoUrl: "https://ui-avatars.com/api/?name=Ralph+Lauren&background=003366&color=fff&size=64&bold=true",
       website: "ralphlauren.com",
       specialties: ["Polo", "Trajes", "Hogar", "Fragancias", "Estilo Clásico"]
     },
@@ -185,7 +185,7 @@ const Stores: React.FC = () => {
       name: "Chanel",
       description: "Casa de alta costura francesa icónica, sinónimo de elegancia y lujo atemporal en moda, fragancias y accesorios.",
       category: "Alta Costura",
-      logoUrl: "https://logo.clearbit.com/chanel.com",
+      logoUrl: "https://ui-avatars.com/api/?name=Chanel&background=000000&color=fff&size=64&bold=true",
       website: "chanel.com",
       specialties: ["Alta Costura", "Bolsos", "Fragancias", "Joyería", "Relojería"]
     },
@@ -193,7 +193,7 @@ const Stores: React.FC = () => {
       name: "Zara",
       description: "Marca española de moda rápida que ofrece las últimas tendencias con calidad y estilo europeo.",
       category: "Moda Contemporánea",
-      logoUrl: "https://logo.clearbit.com/zara.com",
+      logoUrl: "/assets/stores/zara.svg",
       website: "zara.com",
       specialties: ["Moda Mujer", "Moda Hombre", "Niños", "Hogar", "Tendencias"]
     },
@@ -201,7 +201,7 @@ const Stores: React.FC = () => {
       name: "John Lewis",
       description: "Prestigiosa cadena departamental británica conocida por su excelente servicio al cliente y productos de calidad.",
       category: "Departamental Premium",
-      logoUrl: "https://logo.clearbit.com/johnlewis.com",
+      logoUrl: "https://ui-avatars.com/api/?name=John+Lewis&background=006400&color=fff&size=64&bold=true",
       website: "johnlewis.com",
       specialties: ["Hogar", "Moda", "Tecnología", "Belleza", "Servicio Premium"]
     },
@@ -209,7 +209,7 @@ const Stores: React.FC = () => {
       name: "Gucci",
       description: "Casa de moda italiana de lujo conocida por su diseño innovador y craftmanship excepcional.",
       category: "Lujo Italiano",
-      logoUrl: "https://logo.clearbit.com/gucci.com",
+      logoUrl: "https://ui-avatars.com/api/?name=Gucci&background=006633&color=fff&size=64&bold=true",
       website: "gucci.com",
       specialties: ["Alta Moda", "Bolsos", "Calzado", "Fragancias", "Joyería"]
     }
@@ -223,7 +223,7 @@ const Stores: React.FC = () => {
             <img 
               src={store.logoUrl} 
               alt={`${store.name} logo`}
-              className="w-12 h-12 object-contain rounded-md"
+              className="w-15 h-15 object-contain rounded-md"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = `https://ui-avatars.com/api/?name=${store.name}&background=f97316&color=000&size=48&bold=true`;

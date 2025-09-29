@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 import { NavLink, useLocation } from "react-router";
 import useAuth from "@/hooks/auth/useAuth";
 import { NavUser } from "./user-nav";
-import LoadingSpinner from "../utils/LoadingSpinner";
+import LoadingSpinner from "../utils/loading-spinner";
 import {
     Sheet,
     SheetContent,
@@ -58,7 +58,7 @@ const NavBar = () => {
                     {isLoading &&
                         <LoadingSpinner />
                     }
-                    {!isLoading && isAuthenticated ? (
+                    {!isLoading && !isAuthenticated ? (
                         <div className="flex flex-row justify-center items-end">
                             <NavUser />
                         </div>
@@ -127,7 +127,7 @@ const NavBar = () => {
                                             onClick={handleLinkClick}
                                             className="block"
                                         >
-                                            <div className={`relative flex flex-row items-center gap-4 p-4 rounded-2xl transition-all duration-300 ease-out ${location.pathname.includes(item.href)
+                                            <div className={`relative flex flex-row items-center gap-2 p-2 rounded-2xl transition-all duration-300 ease-out ${location.pathname.includes(item.href)
                                                 ? "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent text-primary border border-primary/30 shadow-md"
                                                 : "text-gray-200  border border-accent/0"
                                                 }`} style={{ animationDelay: `${index * 100}ms` }}>

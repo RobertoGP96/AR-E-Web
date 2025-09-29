@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getOrders } from '../../services/orders/get-orders';
+import { getOrdersByClient } from '../../services/orders/get-orders';
 import type { Order, OrderFilters } from '@/types/order';
 import type { PaginatedApiResponse } from '@/types/api';
 
@@ -16,12 +16,12 @@ export function useOrders(filters?: OrderFilters) {
     refetch,
   } = useQuery<PaginatedApiResponse<Order>, Error>({
     queryKey: ['orders', filters],
-    queryFn: () => getOrders(filters),
+    queryFn: () => getOrdersByClient(filters?.client_id, filters),
   });
 
   // Función para invalidar la cache y forzar refetch
   const invalidateOrders = () => {
-    queryClient.invalidateQueries({ queryKey: ['orders'] });
+    queryClient.invalidateQueries({ queryKey: ['orders-client'] });
   };
 
   return {

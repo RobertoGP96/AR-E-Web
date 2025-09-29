@@ -8,6 +8,7 @@ import About from '@/pages/about';
 import Profile from '@/pages/porfile';
 import Pricing from '@/pages/pricing';
 import Stores from '@/pages/stores';
+import UserOrders from '@/pages/user-orders';
 
 
 const AppRoutes = () => {
@@ -25,8 +26,8 @@ const AppRoutes = () => {
                 <Route path="stores" element={<Stores />} />
                 <Route path="pricing" element={<Pricing />} />
                 <Route path="contact" element={<Contact />} />
-                <Route path="profile" element={<Profile/>} />
-                <Route path="user_orders" element={<Profile/>} />
+                <Route path="porfile" element={<Profile/>} />
+                <Route path="user_orders" element={<UserOrders/>} />
             </Route>
         </Routes>
     );
