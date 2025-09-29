@@ -5,7 +5,7 @@ import Footer from '../footer/footer';
 const MainLayout = () => {
     return (
         <div className="flex flex-col min-h-screen bg-black/40">
-            <header className="sticky top-0 z-50 w-full">
+            <header className="sticky top-0 z-50 w-full backdrop-blur-md">
                 <NavBar />
             </header>
             <main className="flex-1 w-full">
