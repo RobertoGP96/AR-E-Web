@@ -70,4 +70,5 @@ export type CreateProduc = {
   link: string;
   shop: string;
   description: string;
+  tags?: string[];
 }

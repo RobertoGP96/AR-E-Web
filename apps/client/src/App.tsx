@@ -32,7 +32,12 @@ function App() {
       </main>
 
       {/* Toaster para notificaciones */}
-      <Toaster />
+      <Toaster 
+        richColors 
+        position="top-right"
+        expand={true}
+        visibleToasts={5}
+      />
 
       {/* Elemento decorativo inferior */}
       <div

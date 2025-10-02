@@ -34,6 +34,12 @@ export function NavUser() {
                         <span className="text-gray-300">Perfil</span>
                     </DropdownMenuItem>
                 </NavLink>
+                <NavLink to={"/product-list"}>
+                    <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => navigate("/product-list")}>
+                        <ShoppingCart className="h-5 w-5 text-primary" />
+                        <span className="text-gray-300">Mis productos</span>
+                    </DropdownMenuItem>
+                </NavLink>
                 <NavLink to={"/user_orders"}>
                     <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => navigate("/settings")} >
                         <ShoppingCart className="h-5 w-5 text-primary" />

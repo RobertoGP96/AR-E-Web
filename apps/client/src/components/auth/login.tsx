@@ -1,10 +1,11 @@
 import { Button } from "../ui/button";
 import { useAuth } from "@/hooks/auth/useAuth";
-import LoadingSpinner from "../utils/loading-spinner";
 import { toast } from "sonner";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useNavigate } from "react-router";
+import { Loader2Icon, LogIn as LoginIcon, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
 // Schema de validación con Zod
 const loginSchema = z.object({
@@ -22,7 +23,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LogIn() {
     const { login } = useAuth();
-    
+    const navigate = useNavigate();
+
     const {
         register,
         handleSubmit,
@@ -32,6 +34,10 @@ export default function LogIn() {
         mode: "onSubmit", // Cambiar a onSubmit para validar solo al enviar
     });
 
+    const handleLogoClick = () => {
+        navigate('/');
+    };
+
     const onSubmit = async (data: LoginFormData) => {
         try {
             await login({
@@ -39,25 +45,45 @@ export default function LogIn() {
                 password: data.password
             });
             
-            toast.success("¡Inicio de sesión exitoso!");
+            toast.success("¡Inicio de sesión exitoso!", {
+                description: "Redirigiendo a la página principal...",
+                icon: <CheckCircle className="h-4 w-4" />,
+                duration: 3000,
+            });
             // El redirect se manejará automáticamente por el contexto de auth
             
         } catch (err) {
             console.error("Error en login:", err);
-            
+
             // Manejar errores específicos del servidor
             if (err instanceof Error) {
                 const errorMessage = err.message.toLowerCase();
-                
+
                 if (errorMessage.includes("email") || errorMessage.includes("usuario")) {
-                    toast.error("Email no encontrado o incorrecto");
+                    toast.error("Email no encontrado", {
+                        description: "Verifique que el email esté registrado en el sistema",
+                        icon: <XCircle className="h-6 w-6" />,
+                        duration: 5000,
+                    });
                 } else if (errorMessage.includes("password") || errorMessage.includes("contraseña")) {
-                    toast.error("Contraseña incorrecta");
+                    toast.error("Contraseña incorrecta", {
+                        description: "La contraseña ingresada no coincide con nuestros registros",
+                        icon: <XCircle className="h-6 w-6" />,
+                        duration: 5000,
+                    });
                 } else {
-                    toast.error(err.message);
+                    toast.error("Error de conexión", {
+                        description: err.message || "Ha ocurrido un error inesperado. Intente nuevamente",
+                        icon: <AlertCircle className="h-6 w-6" />,
+                        duration: 5000,
+                    });
                 }
             } else {
-                toast.error("Error al iniciar sesión");
+                toast.error("Error al iniciar sesión", {
+                    description: "Ha ocurrido un error inesperado. Por favor, intente nuevamente",
+                    icon: <XCircle className="h-6 w-6" />,
+                    duration: 5000,
+                });
             }
         }
     };
@@ -67,7 +93,11 @@ export default function LogIn() {
         // Mostrar todos los errores como toast individuales
         Object.values(errors).forEach((error) => {
             if (error?.message) {
-                toast.error(error.message);
+                toast.error("Error de validación", {
+                    description: error.message,
+                    icon: <AlertCircle className="h-6 w-6" />,
+                    duration: 4000,
+                });
             }
         });
     };
@@ -78,9 +108,10 @@ export default function LogIn() {
                 <img
                     alt="AR&E Shipps logo"
                     src="/assets/logo/f-logo.svg"
-                    className="mx-auto h-16 w-auto"
+                    className="mx-auto h-16 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={handleLogoClick}
                 />
-                
+
                 <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900 dark:text-white">
                     Inicie sesión con su cuenta
                 </h2>
@@ -130,19 +161,22 @@ export default function LogIn() {
                         </div>
                     </div>
 
-                    <Button 
-                        className="w-full cursor-pointer" 
+                    <Button
+                        className="w-full cursor-pointer"
                         type="submit"
                         disabled={isSubmitting}
                     >
-                        {isSubmitting ? (
-                            <div className="flex items-center justify-center gap-2">
-                                <LoadingSpinner size="sm" />
+                        <div className="flex items-center justify-center gap-2">
+                            {isSubmitting ? (<>
+                                <Loader2Icon className="h-4 w-4 animate-spin" />
                                 <span>Iniciando...</span>
-                            </div>
-                        ) : (
-                            <span>Iniciar Sesión</span>
-                        )}
+                            </>
+                            ) : (<>
+                                <LoginIcon size={18} />
+                                <span>Iniciar Sesión</span>
+                            </>
+                            )}
+                        </div>
                     </Button>
                 </form>
             </div>
