@@ -16,7 +16,7 @@ export function useOrders(filters?: OrderFilters) {
     refetch,
   } = useQuery<PaginatedApiResponse<Order>, Error>({
     queryKey: ['orders', filters],
-    queryFn: () => getOrdersByClient(filters?.client_id, filters),
+    queryFn: () => getOrdersByClient(filters?.client_id as number, filters),
   });
 
   // Función para invalidar la cache y forzar refetch

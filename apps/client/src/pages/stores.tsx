@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
@@ -27,6 +27,12 @@ interface Store {
 }
 
 const Stores: React.FC = () => {
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    setIsVisible(true)
+  }, [])
+
   // Tiendas principales/populares
   const popularStores: Store[] = [
     {
@@ -157,7 +163,7 @@ const Stores: React.FC = () => {
       description: "Cadena sueca de moda rápida que ofrece ropa trendy y accesible con colaboraciones de diseñadores reconocidos.",
       category: "Moda Accesible",
       website: "hm.com",
-      specialties: ["Moda Rápida", "Tendencias", "Colaboraciones", "Sostenibilidad", "Accesorio"]
+      specialties: ["Moda Rápida", "Tendencias", "Colaboraciones", "Accesorio"]
     },
     {
       name: "Forever 21",
@@ -203,8 +209,12 @@ const Stores: React.FC = () => {
     }
   ];
 
-  const StoreCard: React.FC<{ store: Store }> = ({ store }) => (
-    <Card className="h-full hover:shadow-lg transition-all gap-3 duration-300 hover:scale-105 border-border/50 bg-black/10">
+  const StoreCard: React.FC<{ store: Store; index: number }> = ({ store, index }) => (
+    <Card className={`h-full hover:shadow-lg transition-all gap-3 duration-300 hover:scale-105 border-border/50 bg-black/10 ${
+      isVisible 
+        ? 'opacity-100 transform translate-y-0' 
+        : 'opacity-0 transform translate-y-8'
+    }`} style={{ transitionDelay: `${index * 100}ms` }}>
       <CardHeader className="pb-4">
         <div className="flex items-center gap-4 mb-3">
           <div className="w-16 h-16 rounded-xl bg-background/50 flex items-center justify-center border border-border/30 shadow-sm">
@@ -263,15 +273,23 @@ const Stores: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen animate-fade-in">
       {/* Header */}
       <div className="relative">
         <div className="container mx-auto px-4 py-12">
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold  mb-4">
+            <h1 className={`text-4xl md:text-5xl font-bold mb-4 transition-all duration-1000 ${
+              isVisible 
+                ? 'opacity-100 transform translate-y-0' 
+                : 'opacity-0 transform translate-y-8'
+            }`}>
               Directorio de Tiendas
             </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            <p className={`text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed transition-all duration-1000 delay-300 ${
+              isVisible 
+                ? 'opacity-100 transform translate-y-0' 
+                : 'opacity-0 transform translate-y-8'
+            }`}>
               Descubre las mejores tiendas online del mundo, desde marketplaces populares hasta marcas de lujo exclusivas
             </p>
           </div>
@@ -293,7 +311,7 @@ const Stores: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {popularStores.map((store, index) => (
-              <StoreCard key={index} store={store} />
+              <StoreCard key={index} store={store} index={index} />
             ))}
           </div>
         </section>
@@ -321,7 +339,7 @@ const Stores: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {luxuryStores.map((store, index) => (
-              <StoreCard key={index} store={store} />
+              <StoreCard key={index} store={store} index={index + popularStores.length} />
             ))}
           </div>
         </section>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Calendar, Save, Edit3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 
 export default function Profile() {
     const [isEditing, setIsEditing] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
     const [profileData, setProfileData] = useState({
         firstName: 'Juan',
         lastName: 'Pérez',
@@ -16,6 +17,10 @@ export default function Profile() {
         role: 'Cliente', joinDate: '15 de Enero, 2023',
         bio: 'Administrador del sistema con más de 5 años de experiencia en gestión de plataformas digitales.'
     });
+
+    useEffect(() => {
+        setIsVisible(true)
+    }, [])
 
     const handleInputChange = (field: string, value: string) => {
         setProfileData(prev => ({
@@ -48,7 +53,11 @@ export default function Profile() {
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 transition-all duration-1000 delay-300 ${
+                isVisible 
+                    ? 'opacity-100 transform translate-y-0' 
+                    : 'opacity-0 transform translate-y-8'
+            }`}>
                 {/* Profile Card */}
                 <div className="lg:col-span-1">
                     <Card className="h-full shadow-lg border-0 rounded-2xl ring-1 bg-black/20 ring-gray-50/20">
@@ -78,7 +87,11 @@ export default function Profile() {
                 </div>
 
                 {/* Information Cards */}
-                <div className="lg:col-span-3 space-y-6">
+                <div className={`lg:col-span-3 space-y-6 transition-all duration-1000 delay-500 ${
+                    isVisible 
+                        ? 'opacity-100 transform translate-y-0' 
+                        : 'opacity-0 transform translate-y-8'
+                }`}>
                     {/* Personal Information */}
                     <Card className="shadow-lg border-0 bg-black/20 rounded-2xl ring-1 ring-gray-50/20">
                         <CardHeader className="pb-2">
@@ -185,15 +198,19 @@ export default function Profile() {
                     </Card>
 
                     {isEditing && (
-                        <div className="flex justify-end gap-3">
+                        <div className={`flex justify-end gap-3 transition-all duration-1000 delay-700 ${
+                            isVisible 
+                                ? 'opacity-100 transform translate-y-0' 
+                                : 'opacity-0 transform translate-y-8'
+                        }`}>
                             <Button
                                 onClick={() => setIsEditing(false)}
                                 variant="outline"
-                                className="border-gray-300  hover:bg-gray-50 rounded-xl"
+                                className="border-gray-300 hover:bg-gray-50 rounded-xl hover:scale-105 transition-all duration-300"
                             >
                                 Cancelar
                             </Button>
-                            <Button className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border-0">
+                            <Button className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border-0 hover:scale-105 btn-hover-glow">
                                 <Save className="h-4 w-4 mr-2" />
                                 Guardar Cambios
                             </Button>
