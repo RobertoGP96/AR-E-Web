@@ -7,8 +7,13 @@ import { Button } from '../components/ui/button';
 // Token de la API de logo.dev
 const LOGO_DEV_TOKEN = 'pk_Yp6dorDSS8q1eSnYi7HhNA';
 
-// Función para generar URL del logo usando logo.dev
-const getLogoUrl = (website: string): string => {
+// Función para generar URL del logo usando logo.dev o imágenes locales
+const getLogoUrl = (website: string, storeName: string): string => {
+  // Usar imagen local para Vans
+  if (storeName.toLowerCase() === 'vans') {
+    return '/assets/stores/vans-og.svg';
+  }
+  
   return `https://img.logo.dev/${website}?token=${LOGO_DEV_TOKEN}&retina=true`;
 };
 
@@ -204,7 +209,7 @@ const Stores: React.FC = () => {
         <div className="flex items-center gap-4 mb-3">
           <div className="w-16 h-16 rounded-xl bg-background/50 flex items-center justify-center border border-border/30 shadow-sm">
             <img 
-              src={getLogoUrl(store.website)} 
+              src={getLogoUrl(store.website, store.name)} 
               alt={`${store.name} logo`}
               className="w-16 h-16 object-contain rounded-xl"
               onError={(e) => {

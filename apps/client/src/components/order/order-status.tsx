@@ -60,10 +60,9 @@ export const OrderStatusLabel = ({
     const Icon = severity.icon
 
     return (
-        <Badge className={severity.style + " p-1 px-2 flex justify-center items-center"}>
-            <Icon/>
-            <span>{status}</span>
-            
+        <Badge className={severity.style + " p-1 px-2 flex justify-center items-center gap-1"}>
+            <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="inline text-xs sm:text-sm">{status}</span>
         </Badge>)
 }
 
@@ -92,9 +91,9 @@ export const PaymentStatusLabel = ({
     
 
     return (
-        <Badge className={severity.style + " p-1 px-2 flex justify-center items-center"}>
-            <Icon/>
-            <span>{paidStatus}</span>
+        <Badge className={severity.style + " p-1 px-2 flex justify-center items-center gap-1"}>
+            <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="inline text-xs sm:text-sm">{paidStatus}</span>
         </Badge>)
 }
 

@@ -9,6 +9,7 @@ import Profile from '@/pages/porfile';
 import Pricing from '@/pages/pricing';
 import Stores from '@/pages/stores';
 import UserOrders from '@/pages/user-orders';
+import PurchaseCalculator from '@/components/about/calculator';
 
 
 const AppRoutes = () => {
@@ -26,8 +27,9 @@ const AppRoutes = () => {
                 <Route path="stores" element={<Stores />} />
                 <Route path="pricing" element={<Pricing />} />
                 <Route path="contact" element={<Contact />} />
-                <Route path="porfile" element={<Profile/>} />
+                <Route path="profile" element={<Profile/>} />
                 <Route path="user_orders" element={<UserOrders/>} />
+                <Route path="scrap" element={<PurchaseCalculator/>} />
             </Route>
         </Routes>
     );

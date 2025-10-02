@@ -19,37 +19,37 @@ const steps = [
     step: 3,
     icon: Compass,
     title: "Exploración",
-    description: "Navegue en la aplicación de la tienda para encontrar lo que quieres comprar."
+    description: "Navegue en la aplicación de la tienda para encontrar lo que quiere comprar."
   },
   {
     step: 4,
     icon: ShoppingCart,
     title: "Selección",
-    description: "Añada los artículos al carrito, selecciona talla, color o cualquier especificación que nos ayude a identificar lo q quieres."
+    description: "Añada los artículos al carrito, seleccione talla, color o cualquier especificación que nos ayude a identificar lo que quiere."
   },
   {
     step: 5,
     icon: ShoppingBag,
     title: "Captura",
-    description: "Compártenos tu carrito para nosotros poder comprarlo por ti."
+    description: "Compártenos su carrito para nosotros poder comprarlo por usted."
   },
   {
     step: 6,
     icon: Calculator,
     title: "Facturación",
-    description: "Obtiene la factura del pedido y realiza su pago"
+    description: "Obtendrá la factura del pedido y realizará su pago"
   },
   {
     step: 7,
     icon: CircleCheckBigIcon,
     title: "Despacho",
-    description: "Nuestros gestores le informarán en cuanto el pedido este listo para ser recogido."
+    description: "Nuestros gestores le informarán en cuanto el pedido esté listo para ser recogido."
   },
   {
     step: 8,
     icon: MapPin,
     title: "Entrega",
-    description: "Una vez listo para recoger puede pasar a buscar su pedido y pagar el costo de envio."
+    description: "Una vez listo para recoger puede pasar a buscar su pedido y pagar el costo de envío."
   }
 ]
 const warningList = [
@@ -186,7 +186,7 @@ export default function Introduction() {
 
         {/* Descripción del servicio */}
         <p className="text-gray-700 dark:text-gray-300 text-xl leading-relaxed indent-8">
-          Ofrecemos un servicio seguro y sencillo para recibir y entregar las compras que realices en tiendas internacionales (<span className="font-semibold">Shein, Temu, Amazon, AliExpress</span> y otras). Nos encargamos de recibir tus paquetes en el exterior, gestionarlos y entregarlos en tu domicilio con rapidez y seguimiento personalizado.
+          Ofrecemos un servicio seguro y sencillo para recibir y entregar las compras que realice en tiendas internacionales (<span className="font-semibold">Shein, Temu, Amazon, AliExpress</span> y otras). Nos encargamos de recibir sus paquetes en el exterior, gestionarlos y entregarlos en su domicilio con rapidez y seguimiento personalizado.
         </p>
 
         {/* Beneficios */}
@@ -198,35 +198,35 @@ export default function Introduction() {
             </h3>
           </div>
           <ul className="space-y-3 list-disc pl-8 text-lg">
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 min-w-5" />
+            <li className="flex items-start  gap-2">
+              <CheckCircle className="h-5 w-5 mt-1 min-w-5" />
               <span>
                 <strong className="text-primary">
                   Envios rápidos y seguros
                 </strong>
-                , recibe tus compras sin complicaciones.
+                , recibe sus compras sin complicaciones.
               </span>
             </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 min-w-5" />
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-5 w-5 mt-1 min-w-5" />
               <span>
                 <strong className="text-primary">
                   Tarifas claras y competitivas
                 </strong>
-                , ahorra reduciendo costos de excesivos de envíos.
+                , ahorra reduciendo costos excesivos de envíos.
               </span>
             </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 min-w-5" />
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-5 w-5 mt-1 min-w-5" />
               <span>
                 <strong className="text-primary">
                   Variedad de métodos de pagos
                 </strong>
-                , con el objetivo de facilitar el acceso a tus artículos.
+                , con el objetivo de facilitar el acceso a sus artículos.
               </span>
             </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 min-w-5" />
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-5 w-5 mt-1 min-w-5" />
               <span>
                 <strong className="text-primary">
                   Amplia red de tiendas online
@@ -234,17 +234,17 @@ export default function Introduction() {
                 , compra desde las tiendas más populares.
               </span>
             </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 min-w-5" />
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-5 w-5 mt-1 min-w-5" />
               <span>
                 <strong className="text-primary">
                   Atención personalizada
                 </strong>
-                , te guiamos paso a paso para que tu compra llegue sin complicaciones.
+                , te guiamos paso a paso para que su compra llegue sin complicaciones.
               </span>
             </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 min-w-5" />
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-5 w-5 mt-1 min-w-5" />
               <span>
                 <strong className="text-primary">
                   Experiencia y confianza
@@ -288,7 +288,7 @@ export default function Introduction() {
                 </span>
               </div>
               <span className="bg-primary/20 text-primary px-4 py-2 rounded-full text-xl  md:text-3xl font-bold">
-                08:00 a.m. - 06:00 p.m.
+                08:00 a.m. - 08:00 p.m.
               </span>
             </div>
           </div>
@@ -366,7 +366,7 @@ export default function Introduction() {
                   <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
                     Compra Previsoria
                   </h4>
-                  <p>Realice tus compras con suficiente tiempo de antelación para evitar complicaciones ajenas a nuestro servicio y sus pedidos puedan llegar en a tiempo</p>
+                  <p>Realice sus compras con suficiente tiempo de antelación para evitar complicaciones ajenas a nuestro servicio y sus pedidos puedan llegar en tiempo.</p>
                 </div>
               </li>
 
@@ -390,7 +390,7 @@ export default function Introduction() {
                   <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
                     Verificación de Paquetes
                   </h4>
-                  <p>Al recibir tu envío, revise inmediatamente y reporte cualquier empaque dañado o discrepancia para una rápida resolución.</p>
+                  <p>Al recibir su envío, revise inmediatamente y reporte cualquier dañado o discrepancia para una rápida resolución.</p>
                 </div>
               </li>
             </ul>
@@ -399,7 +399,7 @@ export default function Introduction() {
           <div className="border border-blue-100 dark:border-primary/50 rounded-lg p-4 flex items-center gap-3">
             <Info className="w-6 h-6 text-primary shrink-0" />
             <p className="text-gray-800 dark:text-gray-200 text-sm">
-              Estas recomendaciones ayudan a garantizar un proceso de envío seguro y sin complicaciones. Ante cualquier duda, nuestro equipo está disponible para asesorarl@.
+              Estas recomendaciones ayudan a garantizar un proceso de envío seguro y sin complicaciones. Ante cualquier duda, nuestro equipo está disponible para asesoramiento.
             </p>
           </div>
         </div>
@@ -460,7 +460,7 @@ export default function Introduction() {
               className="border-b border-gray-200 dark:border-gray-700 pb-4"
             >
               <AccordionTrigger className="text-xl font-semibold text-gray-800 dark:text-gray-200 hover:text-primary transition-colors">
-                ¿Que hago si mi paquete llega dañado o me faltan articulos?
+                ¿Qué hago si mi paquete llega dañado o me faltan artículos?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-300 text-base leading-relaxed">
                 Debe contactar de inmediato con el gestor de compras para realizar una investigación y darle solución lo antes posible a su problema.
@@ -472,11 +472,11 @@ export default function Introduction() {
               className="border-b border-gray-200 dark:border-gray-700 pb-4"
             >
               <AccordionTrigger className="text-xl font-semibold text-gray-800 dark:text-gray-200 hover:text-primary transition-colors">
-                ¿Que seguridad tengo de que mis compras llegaran a mis manos?
+                ¿Qué seguridad tengo de que mis compras llegarán a mis manos?
               </AccordionTrigger>
               <AccordionContent className="text-gray-300 text-base leading-relaxed">
-                Llevamos años trabajando en compras online, tenemos una amplia comunidad de clientes fieles q repiten sus compras, puede solocitar referencias e
-                indagar antes de realizar su pedido. Puede estar seguro q nuestro equipo trabaja mano a mano para asegurar ma felicidad de nuestros clientes.
+                Llevamos años trabajando en compras online, tenemos una amplia comunidad de clientes fieles que repiten sus compras, puede solicitar referencias e
+                indagar antes de realizar su pedido. Puede estar seguro que nuestro equipo trabaja mano a mano para asegurar la felicidad de nuestros clientes.
               </AccordionContent>
             </AccordionItem>
 
@@ -485,10 +485,10 @@ export default function Introduction() {
               className="border-b border-gray-700 pb-4"
             >
               <AccordionTrigger className="text-xl font-semibold text-gray-800 dark:text-gray-200 hover:text-primary dark:hover:text-primary transition-colors">
-                ¿Como debo realizar el pago de mi compra?
+                ¿Cómo debo realizar el pago de mi compra?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-300 text-base leading-relaxed">
-                Una vez el gestor genere su factura, debera pagar el <span className="font-bold text-primary">100%</span> de esta para q su compra sea realizada. El costo de envio de su paquete debe pagarlo cuando se le sea entregado.
+                Una vez el gestor genere su factura, deberá pagar el <span className="font-bold text-primary">100%</span> de esta para que su compra sea realizada. El costo de envío de su paquete debe pagarlo cuando se le sea entregado.
               </AccordionContent>
             </AccordionItem>
 
@@ -497,11 +497,11 @@ export default function Introduction() {
               className="border-b border-gray-200 dark:border-gray-700 pb-4"
             >
               <AccordionTrigger className="text-xl font-semibold text-gray-800 dark:text-gray-200 hover:text-primary dark:hover:text-primary transition-colors">
-                ¿Puedo traer con ustedes paquetes que ya tengo comprados o q mi familiar en EEUU quiere mandarme?
+                ¿Puedo traer con ustedes paquetes que ya tengo comprados o que mi familiar en EEUU quiere mandarme?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-300 text-base leading-relaxed">
-                Por supuesto q si, le facilitamos la dirección a la que deben mandar el paquete, debe enviarnos fotos y todos los articulos que desee traer con nosotros.
-                Una vez lo recibamos lo procesamos y en menos de 5 dias lo tiene listo para recogerlo.
+                Por supuesto que sí, le facilitamos la dirección a la que deben mandar el paquete, envíenos fotos de todos los artículos que desee traer.
+                Una vez lo recibamos, lo procesamos y en menos de 5 días está listo para ser recogido.
               </AccordionContent>
             </AccordionItem>
 

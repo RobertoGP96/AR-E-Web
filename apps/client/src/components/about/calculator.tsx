@@ -1,16 +1,30 @@
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, ShoppingBag, Receipt, Weight } from "lucide-react";
 
-const storeOptions = [
+// Types
+interface StoreOption {
+  value: string;
+  label: string;
+  extra: number;
+}
+
+interface CategoryOption {
+  name: string;
+  value: string;
+  price: number;
+}
+
+// Constants moved outside component for better performance
+const STORE_OPTIONS: StoreOption[] = [
   { value: "shein", label: "Shein", extra: 0.00 },
   { value: "amazon", label: "Amazon / Temu", extra: 0.03 },
   { value: "aliexpress", label: "AliExp/ eBay / ***", extra: 0.05 },
 ];
 
-const categoryOptions = [
+const CATEGORY_OPTIONS: CategoryOption[] = [
   {
     name: "Alim / Medic./ Aseo",
     value: "alimed",
@@ -28,16 +42,20 @@ const categoryOptions = [
   }
 ];
 
-function calculateBuy(price: number, store: string, additionalTax: number = 0) {
-  const baseTax = 0.07;
-  const extra = storeOptions.find(opt => opt.value === store)?.extra ?? 0;
-  const taxes = price * baseTax;
+const BASE_TAX = 0.07;
+
+// Utility functions
+function calculateBuy(price: number, store: string, additionalTax: number = 0): number {
+  if (!price || price <= 0) return 0;
+  const extra = STORE_OPTIONS.find((opt: StoreOption) => opt.value === store)?.extra ?? 0;
+  const taxes = price * BASE_TAX;
   const extraFee = (price + taxes) * extra;
   return price + taxes + extraFee + additionalTax;
 }
 
-function calculateWeight(weight: number, category: string) {
-  const extra = categoryOptions.find(opt => opt.value === category)?.price ?? 0;
+function calculateWeight(weight: number, category: string): number {
+  if (!weight || weight <= 0) return 0;
+  const extra = CATEGORY_OPTIONS.find((opt: CategoryOption) => opt.value === category)?.price ?? 0;
   return weight * extra;
 }
 
@@ -51,6 +69,22 @@ function PurchaseCalculator() {
   const [store, setStore] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [additionalTax, setAdditionalTax] = useState<number>(0);
+
+  // Input handlers with validation
+  const handlePriceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value) || 0;
+    setPrice(Math.max(0, value));
+  }, []);
+
+  const handleWeightChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value) || 0;
+    setWeight(Math.max(0, value));
+  }, []);
+
+  const handleAdditionalTaxChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value) || 0;
+    setAdditionalTax(Math.max(0, Math.min(100, value)));
+  }, []);
 
   const subtotal1 = useMemo(() => {
     if (isNaN(price) || price <= 0) return 0;
@@ -66,11 +100,15 @@ function PurchaseCalculator() {
     return subtotal1 + subtotal2;
   }, [subtotal2, subtotal1]);
 
-  const selectedStore = storeOptions.find(opt => opt.value === store);
-  const selectedCategory = categoryOptions.find(opt => opt.value === category);
+  const selectedStore = STORE_OPTIONS.find((opt: StoreOption) => opt.value === store);
+  const selectedCategory = CATEGORY_OPTIONS.find((opt: CategoryOption) => opt.value === category);
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div 
+      className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative"
+      role="application"
+      aria-label="Calculadora de envío internacional"
+    >
       <div className="p-6 sm:p-8 space-y-8">
 
 
@@ -165,11 +203,15 @@ function PurchaseCalculator() {
                 step="0.01"
                 placeholder="Ej: 100.00"
                 value={price || ""}
-                onChange={e => setPrice(Number(e.target.value))}
+                onChange={handlePriceChange}
+                aria-describedby="price-help"
                 className="bg-slate-700/50 border-orange-400/30 text-white placeholder:text-slate-400 
                           focus:border-orange-400 focus:ring-orange-400/20 transition-colors
                           h-9 text-base rounded-lg"
               />
+              <div id="price-help" className="sr-only">
+                Ingrese el precio del producto en dólares americanos
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -179,20 +221,31 @@ function PurchaseCalculator() {
               <Select value={store} onValueChange={setStore}>
                 <SelectTrigger
                   id="store"
-                  className="w-full bg-slate-700/50 border-orange-400/30 text-white 
-                           focus:border-orange-400 focus:ring-orange-400/20 h-12 rounded-lg"
+                  className="w-full min-w-0 bg-slate-700/50 border-orange-400/30 text-white 
+                           focus:border-orange-400 focus:ring-orange-400/20 h-12 rounded-lg flex items-center justify-between"
+                  style={{ minWidth: "0" }}
                 >
-                  <SelectValue placeholder="Selecciona una tienda" />
+                  <SelectValue 
+                    placeholder="Selecciona una tienda" 
+                    className="truncate w-full text-left"
+                  />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-700 border-slate-600 rounded-lg">
-                  {storeOptions.map(opt => (
+                <SelectContent 
+                  className="bg-slate-700 border-slate-600 rounded-lg"
+                  position="popper"
+                  sideOffset={5}
+                  collisionPadding={20}
+                  avoidCollisions={true}
+                  style={{ zIndex: 100001 }}
+                >
+                  {STORE_OPTIONS.map((opt: StoreOption) => (
                     <SelectItem
                       key={opt.value}
                       value={opt.value}
                       className="text-white hover:bg-slate-600 cursor-pointer"
                     >
-                      <div className="flex items-center justify-between w-full gap-3">
-                        <span className="font-medium">{opt.label}</span>
+                      <div className="flex items-center justify-between w-full gap-3 min-w-0">
+                        <span className="font-medium truncate">{opt.label}</span>
                         {opt.extra >= 0 && (
                           <Badge
                             variant="secondary"
@@ -220,11 +273,15 @@ function PurchaseCalculator() {
                 step="0.1"
                 placeholder="Ej: 5.0"
                 value={additionalTax || ""}
-                onChange={e => setAdditionalTax(Number(e.target.value))}
+                onChange={handleAdditionalTaxChange}
+                aria-describedby="tax-help"
                 className="bg-slate-700/50 border-orange-400/30 text-white placeholder:text-slate-400 
                           focus:border-orange-400 focus:ring-orange-400/20 transition-colors
                           h-9 text-base rounded-lg"
               />
+              <div id="tax-help" className="sr-only">
+                Impuesto adicional entre 0 y 100
+              </div>
             </div>
           </div>
 
@@ -271,11 +328,15 @@ function PurchaseCalculator() {
                 step="0.1"
                 placeholder="Ej: 2.5"
                 value={weight || ""}
-                onChange={e => setWeight(Number(e.target.value))}
+                onChange={handleWeightChange}
+                aria-describedby="weight-help"
                 className="bg-slate-700/50 border-green-400/30 text-white placeholder:text-slate-400 
                           focus:border-green-400 focus:ring-green-400/20 transition-colors
                           h-9 text-base rounded-lg"
               />
+              <div id="weight-help" className="sr-only">
+                Peso del producto en libras
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -285,20 +346,31 @@ function PurchaseCalculator() {
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger
                   id="category"
-                  className="bg-slate-700/50 border-green-400/30 text-white 
-                           focus:border-green-400 focus:ring-green-400/20 h-9 rounded-lg"
+                  className="w-full min-w-0 bg-slate-700/50 border-green-400/30 text-white 
+                           focus:border-green-400 focus:ring-green-400/20 h-9 rounded-lg flex items-center justify-between"
+                  style={{ minWidth: "0" }}
                 >
-                  <SelectValue placeholder="Selecciona una categoría" />
+                  <SelectValue 
+                    placeholder="Selecciona una categoría" 
+                    className="truncate w-full text-left"
+                  />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-700 border-slate-600 rounded-lg">
-                  {categoryOptions.map(opt => (
+                <SelectContent 
+                  className="bg-slate-700 border-slate-600 rounded-lg"
+                  position="popper"
+                  sideOffset={5}
+                  collisionPadding={20}
+                  avoidCollisions={true}
+                  style={{ zIndex: 100001 }}
+                >
+                  {CATEGORY_OPTIONS.map((opt: CategoryOption) => (
                     <SelectItem
                       key={opt.value}
                       value={opt.value}
                       className="text-white hover:bg-slate-600 cursor-pointer"
                     >
-                      <div className="flex items-center justify-between w-full gap-3">
-                        <span className="font-medium">{opt.name}</span>
+                      <div className="flex items-center justify-between w-full gap-3 min-w-0">
+                        <span className="font-medium truncate">{opt.name}</span>
                         <Badge
                           variant="outline"
                           className="bg-green-400/80 border-green-400/80 text-white text-xs font-medium px-2 py-1"

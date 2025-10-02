@@ -31,8 +31,10 @@ const NavBar = () => {
     }
 
     return (
-        <header className="w-full bg-black/10 backdrop-blur-md border-b border-border/20 shadow-sm">
-            <nav aria-label="Global" className="flex items-center justify-between p-3 lg:px-8">
+        <div
+            className="w-full bg-black/10 backdrop-blur-md border-b border-border/20 shadow-sm"
+        >
+            <nav className="flex items-center justify-between p-3 lg:px-8">
                 <div className="flex lg:flex-1 ml-5">
                     {/* Logo space - Responsive logo */}
                     <img src="/assets/logo/logo.svg" alt="Logo" className="hidden lg:block h-15" />
@@ -58,7 +60,7 @@ const NavBar = () => {
                     {isLoading &&
                         <LoadingSpinner />
                     }
-                    {!isLoading && !isAuthenticated ? (
+                    {!isLoading && isAuthenticated ? (
                         <div className="flex flex-row justify-center items-end">
                             <NavUser />
                         </div>
@@ -209,6 +211,6 @@ const NavBar = () => {
                     </Sheet>
                 </div>
             </nav>
-        </header>
+        </div>
     );
 }; export default NavBar;

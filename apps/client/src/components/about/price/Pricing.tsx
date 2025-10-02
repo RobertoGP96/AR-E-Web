@@ -7,13 +7,14 @@ const tiers = [
     id: 'tier-med',
     href: '#',
     priceMonthly: '$6',
-    description: "Esta categoría incluye tanto medicamentos de venta libre. ",
+    description: "Esta categoría incluye tanto medicamentos de venta libre como: ",
     features: [
       'Analgesicos',
       'Descongestionantes',
       'Complejos vitaminicos',
       'Tratamientos para la piel',
       'Productos de higiene personal',
+      'Alimentos no perecederos',
     ],
     featured: false,
   },
@@ -26,9 +27,10 @@ const tiers = [
     features: [
       'Artículos de limpieza',
       'Productos de cuidado infantil',
-      'Repuestos para vehiculos',
       'Accesorios para el hogar',
       'Productos de entretenimiento',
+      'Ropa y accesorios',
+      'Artículos deportivos',
     ],
     featured: true,
   },
@@ -37,14 +39,14 @@ const tiers = [
     id: 'tier-elect',
     href: '#',
     priceMonthly: '$8',
-    description: 'Esto puede abarcar una infinidad de productos de todo tipo.',
+    description: 'Esta categoría abarca una amplia gama de dispositivos y accesorios tecnológicos.',
     features: [
       'Productos de tecnología',
-      'Productos de cuidado infantil',
-      'Repuestos para vehiculos',
-      'Accesorios para el hogar',
-      'Productos de tecnología',
-      'Productos de entretenimiento',
+      'Repuestos para vehículos',
+      'Electrodomésticos pequeños',
+      'Gadgets y dispositivos',
+      'Accesorios electrónicos',
+      'Herramientas eléctricas',
     ],
     featured: false,
   },
@@ -61,11 +63,11 @@ export default function Pricing() {
         <h1 className="font-semibold text-primary">
           Precios</h1>
         <p className="mt-2 text-5xl font-semibold tracking-tight text-balance text-gray-900 sm:text-6xl dark:text-white">
-          Deacuerdo a la categoria de los productos
+          De acuerdo a la categoría de los productos
         </p>
       </div>
       <p className="mx-auto mt-6 max-w-2xl text-center text-lg font-medium text-pretty text-gray-600 sm:text-xl/8 dark:text-gray-400">
-        Seleciona la categoria de los productos que desea encargar.
+        Elige la categoría de los productos que desea encargar.
       </p>
       <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 items-center gap-x-2 gap-y-6 sm:mt-20 sm:gap-y-0 lg:max-w-4xl lg:grid-cols-3">
         {tiers.map((tier,) => (

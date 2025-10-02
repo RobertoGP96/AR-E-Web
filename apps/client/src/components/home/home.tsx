@@ -32,16 +32,20 @@ export default function Example() {
                                 En <strong className='text-primary'>AR&E Shipps</strong> conectamos tu día a día con las mejores tiendas, gestionando tus encargos con rapidez y confianza.
                             </p>
                             <div className="mt-10 flex items-center justify-center gap-x-6">
-                                <Button className="text-sm/6 bg-gradient-to-r from-yellow-500 to-primary font-semibold text-white cursor-pointer">
-                                    <ShoppingBag />
-                                    Comenzar
-                                </Button>
+                                <Link to="/scrap">
+                                    <Button type='button' className="text-sm/6 bg-gradient-to-r from-yellow-500 to-primary font-semibold text-white cursor-pointer">
+                                        <ShoppingBag />
+                                        Comenzar
+                                    </Button>
+                                </Link>
                                 <Link to="/about">
                                     <Button variant={"outline"} className="text-sm/6 font-semibold text-white cursor-pointer">
                                         Saber más
                                         <ArrowRight />
                                     </Button>
                                 </Link>
+
+
                             </div>
                         </div>
                     </div>
