@@ -11,7 +11,6 @@ import { apiClient } from '@/lib';
 import { 
   getStoredValue, 
   setStoredValue, 
-  removeStoredValue, 
   clearAuthStorage,
   STORAGE_KEYS 
 } from '@/utils/storage';
