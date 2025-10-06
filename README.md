@@ -166,8 +166,8 @@ POST   /api/users/verify/       # Verificar email
 
 #### **🔑 Autenticación (`/api/auth/`)**
 ```
-POST   /api/auth/token/         # Obtener tokens
-POST   /api/auth/token/refresh/ # Renovar token
+POST   /api/auth/             # Obtener tokens
+POST   /api/auth/refresh/     # Renovar token
 ```
 
 #### **🏪 Tiendas (`/api/shops/`)**

@@ -15,7 +15,7 @@
 
 ### Obtener Token JWT
 ```http
-POST /arye_system/token/
+POST /arye_system/auth/
 Content-Type: application/json
 
 {
@@ -31,7 +31,7 @@ Authorization: Bearer tu_jwt_token_aqui
 
 ### Refrescar Token
 ```http
-POST /arye_system/token/refresh/
+POST /arye_system/auth/refresh/
 Content-Type: application/json
 
 {
@@ -132,7 +132,7 @@ Content-Type: multipart/form-data
 ### Para conectar tu frontend React/Vue/Angular:
 ```javascript
 const API_BASE_URL = 'https://tu-app-name.onrender.com/arye_system/api_data/'
-const AUTH_URL = 'https://tu-app-name.onrender.com/arye_system/token/'
+const AUTH_URL = 'https://tu-app-name.onrender.com/arye_system/auth/'
 ```
 
 ### Ejemplo de configuración con Axios:

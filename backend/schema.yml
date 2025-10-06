@@ -1866,9 +1866,9 @@ paths:
       responses:
         '200':
           description: No response body
-  /arye_system/token/:
+  /arye_system/auth/:
     post:
-      operationId: arye_system_token_create
+      operationId: arye_system_auth_create
       description: Obtención de token JWT para autenticación de usuarios.
       tags:
       - arye_system
@@ -1891,9 +1891,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenObtainPair'
           description: ''
-  /arye_system/token/refresh/:
+  /arye_system/auth/refresh/:
     post:
-      operationId: arye_system_token_refresh_create
+      operationId: arye_system_auth_refresh_create
       description: |-
         Takes a refresh type JSON web token and returns an access type JSON web
         token if the refresh token is valid.

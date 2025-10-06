@@ -23,7 +23,7 @@ export const refreshToken = async (): Promise<ApiResponse<{
     access_token: string;
     refresh_token: string;
     expires_in: number;
-  }>('/auth/token/refresh/', {
+  }>('/auth/refresh/', {
     refresh: refreshToken
   });
   
@@ -41,14 +41,18 @@ export const refreshToken = async (): Promise<ApiResponse<{
 
 /**
  * Verifica si el token actual es válido
+ * NOTA: Este endpoint no está implementado en el backend actual
  */
 export const verifyToken = async (): Promise<ApiResponse<{ valid: boolean }>> => {
-  return await apiClient.post<{ valid: boolean }>('/auth/token/verify/');
+  // Endpoint no disponible - usar el endpoint de seguridad en su lugar
+  return await apiClient.get<{ valid: boolean }>('/security/');
 };
 
 /**
  * Invalida el token actual
+ * NOTA: Este endpoint no está implementado en el backend actual
  */
 export const blacklistToken = async (): Promise<ApiResponse<void>> => {
-  return await apiClient.post<void>('/auth/token/blacklist/');
+  // Endpoint no disponible - usar logout del contexto en su lugar
+  throw new Error('Endpoint not implemented. Use logout from AuthContext instead.');
 };

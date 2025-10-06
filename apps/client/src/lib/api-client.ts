@@ -346,7 +346,7 @@ export class ApiClient {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) throw new Error('No refresh token available');
 
-    const response = await this.client.post('/token/refresh/', {
+    const response = await this.client.post('/auth/refresh/', {
       refresh: refreshToken,
     }, { skipAuth: true } as ExtendedAxiosRequestConfig);
 
@@ -503,7 +503,7 @@ export class ApiClient {
    * Login de usuario
    */
   public async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await this.client.post<AuthResponse>('/token/', credentials, {
+    const response = await this.client.post<AuthResponse>('/auth/', credentials, {
       skipAuth: true,
     } as ExtendedAxiosRequestConfig);
 

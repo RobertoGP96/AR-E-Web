@@ -22,8 +22,8 @@ router.register(r"package", views.PackageViewSet)
 urlpatterns = [
     path("api_data/", include(router.urls)),
     path("verify_user/<verification_secret>", views.verify_user, name="verify_user"),
-    path("token/", views.MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("auth/", views.MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     re_path(
         r"password/(?P<password_secret>\S+)?/?$",
         views.PasswordRecoverList.as_view(),
