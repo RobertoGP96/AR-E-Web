@@ -35,6 +35,7 @@ from api.permissions.permissions import (
 from api.serializers import (
     ShoppingReceipSerializer,
     UserSerializer,
+    UserProfileSerializer,
     OrderSerializer,
     ShopSerializer,
     BuyingAccountsSerializer,
@@ -924,3 +925,44 @@ class CreateAdminUserView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class CurrentUserView(APIView):
+    """
+    Vista para obtener y actualizar información del usuario actual basado en el token de autenticación.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="Obtener perfil del usuario actual",
+        description="Obtiene la información completa del usuario autenticado actual incluyendo fecha de registro.",
+        responses={200: UserProfileSerializer},
+        tags=["Usuario Actual"]
+    )
+    def get(self, request):
+        """Obtener información del usuario actual"""
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @extend_schema(
+        summary="Actualizar perfil del usuario actual",
+        description="Actualiza información del usuario autenticado actual. Solo puede actualizar sus propios datos.",
+        request=UserProfileSerializer,
+        responses={200: UserProfileSerializer},
+        tags=["Usuario Actual"]
+    )
+    def patch(self, request):
+        """Actualizar información del usuario actual"""
+        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            # Guardar los cambios
+            serializer.save()
+            
+            # Devolver datos actualizados
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response({
+            'error': 'Datos inválidos',
+            'details': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)

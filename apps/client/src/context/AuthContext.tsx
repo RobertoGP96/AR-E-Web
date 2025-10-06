@@ -317,8 +317,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const updateUser = useCallback(async (userData: Partial<CustomUser>): Promise<void> => {
     if (!state.user) return;
 
-    // Usar el endpoint correcto para actualizar perfil del usuario actual
-    const response = await apiClient.patch('/user/', userData);
+    // Usar el método específico para actualizar perfil del usuario actual
+    const response = await apiClient.updateCurrentUser(userData);
     const updatedUser = response.data as CustomUser;
     
     dispatch({ type: 'UPDATE_USER', payload: updatedUser });

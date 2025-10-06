@@ -125,9 +125,9 @@ export const getCurrentUserProfile = async (): Promise<CustomUser> => {
  * Utiliza el endpoint /user/ que identifica al usuario por su token
  */
 export const updateCurrentUserProfile = async (userData: Partial<UpdateUserData>): Promise<CustomUser> => {
-  // Usar el endpoint /user/ para actualizar el perfil del usuario actual
-  const response = await apiClient.patch<CustomUser>('/user/', userData);
-  return response.data || {} as CustomUser;
+  // Usar el método específico para actualizar el perfil del usuario actual
+  const response = await apiClient.updateCurrentUser(userData);
+  return response.data as CustomUser || {} as CustomUser;
 };
 
 // ==================== FUNCIONES DE ESTADÍSTICAS Y EXPORTACIÓN ====================

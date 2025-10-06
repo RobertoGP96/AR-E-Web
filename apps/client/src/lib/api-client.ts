@@ -554,7 +554,24 @@ export class ApiClient {
    * Obtiene información del usuario actual
    */
   public async getCurrentUser(): Promise<ApiResponse<unknown>> {
-    return this.get('/user/');
+    // El endpoint /user/ devuelve directamente los datos del usuario
+    const response = await this.client.get('/user/');
+    return {
+      success: true,
+      data: response.data
+    };
+  }
+
+  /**
+   * Actualiza el perfil del usuario actual
+   */
+  public async updateCurrentUser(userData: unknown): Promise<ApiResponse<unknown>> {
+    // El endpoint /user/ devuelve directamente los datos del usuario
+    const response = await this.client.patch('/user/', userData);
+    return {
+      success: true,
+      data: response.data
+    };
   }
 }
 

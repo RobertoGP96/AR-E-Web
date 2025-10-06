@@ -3,17 +3,42 @@
 import { ArrowRight, ShoppingBag } from 'lucide-react'
 import { Button } from '../ui/button'
 import { CarouselStores } from '../store/store-carousel'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useEffect, useState } from 'react'
+import { useAuth } from '@/hooks/auth/useAuth'
+import { toast } from 'sonner'
 
 
 
 export default function Home() {
     const [isVisible, setIsVisible] = useState(false)
+    const { isAuthenticated, isLoading } = useAuth()
+    const navigate = useNavigate()
 
     useEffect(() => {
         setIsVisible(true)
     }, [])
+
+    const handleComenzarClick = () => {
+        if (isLoading) {
+            // Esperar a que termine la verificación de autenticación
+            return
+        }
+
+        if (!isAuthenticated) {
+            toast.warning('Debes iniciar sesión', {
+                description: 'Para acceder a los productos necesitas estar autenticado. Te redirigiremos a la página principal.'
+            })
+            // Redirigir a la página principal (home) después de un breve delay
+            setTimeout(() => {
+                navigate('/')
+            }, 2000)
+            return
+        }
+
+        // Si está autenticado, navegar a la lista de productos
+        navigate('/product-list')
+    }
 
     return (
         <div className="animate-fade-in">
@@ -58,15 +83,15 @@ export default function Home() {
                                     ? 'opacity-100 transform translate-y-0' 
                                     : 'opacity-0 transform translate-y-8'
                             }`}>
-                                <Link to="/product-list">
-                                    <Button 
-                                        type='button' 
-                                        className="text-sm/6 bg-gradient-to-r from-yellow-500 to-primary font-semibold text-white cursor-pointer hover:scale-105 hover:shadow-lg transition-all duration-300 hover:from-yellow-400 hover:to-primary/90 btn-hover-glow group"
-                                    >
-                                        <ShoppingBag className="animate-bounce group-hover:animate-pulse transition-all duration-300" />
-                                        Comenzar
-                                    </Button>
-                                </Link>
+                                <Button 
+                                    type='button'
+                                    onClick={handleComenzarClick}
+                                    disabled={isLoading}
+                                    className="text-sm/6 bg-gradient-to-r from-yellow-500 to-primary font-semibold text-white cursor-pointer hover:scale-105 hover:shadow-lg transition-all duration-300 hover:from-yellow-400 hover:to-primary/90 btn-hover-glow group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                                >
+                                    <ShoppingBag className="animate-bounce group-hover:animate-pulse transition-all duration-300" />
+                                    {isLoading ? 'Verificando...' : 'Comenzar'}
+                                </Button>
                                 <Link to="/about">
                                     <Button 
                                         variant={"outline"} 

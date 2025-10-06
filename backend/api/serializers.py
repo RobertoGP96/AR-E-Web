@@ -26,6 +26,7 @@ class UserSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(source="id", read_only=True)
     email = serializers.EmailField(write_only=True, required=False, allow_blank=True)
     password = serializers.CharField(write_only=True)
+    full_name = serializers.CharField(read_only=True)
 
     class Meta:
         """Class of model"""
@@ -42,11 +43,16 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
             "agent_profit",
             "is_staff",
+            "is_active",
+            "is_verified",
+            "date_joined",
+            "full_name",
         ]
 
     def validate_phone_number(self, value):
-        if re.search(r"^\+?\d+$", value):
-            return value
+        # Permitir números, espacios, guiones, paréntesis y el símbolo +
+        if re.search(r"^[\+\d\s\-\(\)]+$", value.strip()):
+            return value.strip()
         raise serializers.ValidationError(
             {"error": "El numero de telefono no es valido"}
         )
@@ -67,6 +73,81 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data["password"])
         user.save()
         return user
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializador específico para actualizaciones de perfil de usuario.
+    Permite la lectura y escritura de campos de perfil sin campos sensibles.
+    """
+    user_id = serializers.IntegerField(source="id", read_only=True)
+    full_name = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            "user_id",
+            "email",
+            "name", 
+            "last_name",
+            "home_address",
+            "phone_number",
+            "role",
+            "agent_profit",
+            "is_staff",
+            "is_active",
+            "is_verified",
+            "date_joined",
+            "full_name",
+        ]
+        read_only_fields = [
+            "user_id",
+            "role", 
+            "agent_profit",
+            "is_staff",
+            "is_active", 
+            "is_verified",
+            "date_joined",
+            "full_name"
+        ]
+
+    def validate_phone_number(self, value):
+        """Validar formato de número de teléfono y unicidad"""
+        # Limpiar el valor
+        clean_value = value.strip()
+        
+        # Permitir números, espacios, guiones, paréntesis y el símbolo +
+        if not re.search(r"^[\+\d\s\-\(\)]+$", clean_value):
+            raise serializers.ValidationError(
+                "El número de teléfono no es válido"
+            )
+        
+        # Verificar unicidad excluyendo el usuario actual
+        if self.instance:
+            existing_user = CustomUser.objects.filter(phone_number=clean_value).exclude(id=self.instance.id).first()
+            if existing_user:
+                raise serializers.ValidationError("El número de teléfono ya está en uso por otro usuario.")
+        else:
+            if CustomUser.objects.filter(phone_number=clean_value).exists():
+                raise serializers.ValidationError("El número de teléfono ya existe.")
+        
+        return clean_value
+
+    def validate_email(self, value):
+        """Validar email y unicidad"""
+        # Permitir email vacío
+        if not value or value.strip() == '':
+            return None
+            
+        # Verificar unicidad excluyendo el usuario actual
+        if self.instance:
+            existing_user = CustomUser.objects.filter(email=value).exclude(id=self.instance.id).first()
+            if existing_user:
+                raise serializers.ValidationError("El email ya está en uso por otro usuario.")
+        else:
+            if CustomUser.objects.filter(email=value).exists():
+                raise serializers.ValidationError("El email ya existe.")
+        return value
 
 
 class ProductSerializer(serializers.ModelSerializer):
