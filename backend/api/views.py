@@ -44,6 +44,8 @@ from api.serializers import (
     ProductReceivedSerializer,
     PackageSerializer,
     DeliverReceipSerializer,
+    AmazonScrapingRequestSerializer,
+    AmazonScrapingResponseSerializer,
 )
 from api.models import (
     Order,
@@ -660,4 +662,74 @@ class ImageUploadApiView(APIView):
                 raise ValidationError(str(e)) from e
             return Response(
                 {"destroy result": destroy_result}, status=status.HTTP_200_OK
+            )
+
+
+# Vista para Amazon Scraping
+class AmazonScrapingView(APIView):
+    """Vista para hacer scraping de productos de Amazon"""
+    
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="Obtener datos de producto o carrito de Amazon",
+        description="Realiza scraping de un producto individual o carrito de Amazon para obtener datos como título, precio, imágenes, etc. Si es un carrito, retorna información de todos los productos contenidos.",
+        request=AmazonScrapingRequestSerializer,
+        responses={
+            200: AmazonScrapingResponseSerializer,
+            400: "Error de validación",
+            500: "Error interno del servidor"
+        },
+        tags=["Amazon Scraping"]
+    )
+    def post(self, request):
+        """Endpoint para hacer scraping de productos de Amazon"""
+        try:
+            # Validar datos de entrada
+            serializer = AmazonScrapingRequestSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'Datos de entrada inválidos',
+                        'details': serializer.errors
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            url = serializer.validated_data['url']
+            
+            # Realizar scraping
+            from api.utils.amazon_scraper import amazon_scraper
+            result = amazon_scraper.scrape_product(url)
+            
+            # Validar respuesta
+            response_serializer = AmazonScrapingResponseSerializer(data=result)
+            if response_serializer.is_valid():
+                if result['success']:
+                    return Response(
+                        response_serializer.validated_data,
+                        status=status.HTTP_200_OK
+                    )
+                else:
+                    return Response(
+                        response_serializer.validated_data,
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'Error al procesar la respuesta del scraping'
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+        except Exception as e:
+            return Response(
+                {
+                    'success': False,
+                    'error': f'Error inesperado: {str(e)}'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

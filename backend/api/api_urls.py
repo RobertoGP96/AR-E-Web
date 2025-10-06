@@ -31,4 +31,5 @@ urlpatterns = [
     ),
     path("image_upload/", views.ImageUploadApiView.as_view(), name="image_upload"),
     path("security/", views.Protection.as_view(), name="posting_management"),
+    path("amazon/scrape/", views.AmazonScrapingView.as_view(), name="amazon_scraping"),
 ]

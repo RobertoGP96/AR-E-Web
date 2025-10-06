@@ -1,4 +1,5 @@
 asgiref==3.8.1
+beautifulsoup4==4.12.2
 Brotli==1.1.0
 certifi==2024.12.14
 charset-normalizer==3.4.1
@@ -12,6 +13,7 @@ djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 gunicorn==23.0.0
 idna==3.10
+lxml==4.9.3
 packaging==24.2
 pillow==11.0.0
 psycopg2-binary==2.9.10
@@ -25,6 +27,7 @@ sqlparse==0.5.1
 typing_extensions==4.12.2
 tzdata==2024.2
 urllib3==2.3.0
+user-agent==0.1.10
 whitenoise==6.8.2
 rest_framework_simplejwt
 drf-spectacular==0.27.2
