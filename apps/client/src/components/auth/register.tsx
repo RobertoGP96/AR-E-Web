@@ -42,7 +42,7 @@ export default function Register() {
             
             // Redirección al login después de 2 segundos
             setTimeout(() => {
-                navigate('/client', { replace: true });
+                navigate('/', { replace: true });
             }, 2000);
         }
     }, [registerSuccess, registerData, navigate]);
