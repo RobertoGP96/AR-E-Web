@@ -24,7 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
     Incluye validaciones personalizadas para email y teléfono, y gestiona la creación de usuarios con contraseña encriptada.
     """
     user_id = serializers.IntegerField(source="id", read_only=True)
-    email = serializers.EmailField(write_only=True)
+    email = serializers.EmailField(write_only=True, required=False, allow_blank=True)
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -53,9 +53,13 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate_email(self, value):
         """Verification of email"""
-        if value:
-            if CustomUser.objects.filter(email=value).exists():
-                raise serializers.ValidationError({"error": "El email ya existe."})
+        # Si el email está vacío o es None, retornar None
+        if not value or value.strip() == '':
+            return None
+            
+        # Solo validar unicidad si el email tiene valor
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError({"error": "El email ya existe."})
         return value
 
     def create(self, validated_data):

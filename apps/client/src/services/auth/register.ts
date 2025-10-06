@@ -31,11 +31,19 @@ export interface RegisterResponse {
  */
 export const register = async (userData: RegisterData): Promise<ApiResponse<RegisterResponse>> => {
   try {
-    const response = await apiClient.post<RegisterResponse>('/api_data/user/', {
+    // Preparar los datos de registro, excluyendo el email si está vacío
+    const registrationData = {
       ...userData,
       role: 'client',
-      is_active: true// Por defecto los nuevos registros son clientes
-    });
+      is_active: true
+    };
+
+    // Solo incluir email si tiene valor
+    if (!userData.email || userData.email.trim() === '') {
+      delete registrationData.email;
+    }
+
+    const response = await apiClient.post<RegisterResponse>('/api_data/user/', registrationData);
     
     return {
       success: true,

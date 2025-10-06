@@ -44,7 +44,7 @@ export interface AuthResponse {
 }
 
 export interface RegisterData {
-  email: string;
+  email?: string;
   password: string;
   name: string;
   last_name: string;

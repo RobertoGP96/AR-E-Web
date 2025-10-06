@@ -1,11 +1,15 @@
-import { Mail, MapPin, Phone, User2, UserPlus, X, Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { Mail, MapPin, Phone, User2, UserPlus, X, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "../ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import { useRegisterFlow, useCheckEmailAvailability, useCheckPhoneAvailability } from "@/hooks/auth/useRegister";
 import type { RegisterData } from "@/types/api";
 
 
 export default function Register() {
+    const navigate = useNavigate();
+    
     const [formData, setFormData] = useState<RegisterData>({
         name: '',
         last_name: '',
@@ -24,16 +28,84 @@ export default function Register() {
         isRegistering,
         registerError,
         registerSuccess,
+        registerData,
         reset,
     } = useRegisterFlow();
+
+    // Manejo de efectos para registro exitoso y errores
+    useEffect(() => {
+        if (registerSuccess && registerData) {
+            toast.success("¡Registro exitoso!", {
+                description: "Usuario registrado correctamente. Redirigiendo al login...",
+                duration: 3000,
+            });
+            
+            // Redirección al login después de 2 segundos
+            setTimeout(() => {
+                navigate('/client', { replace: true });
+            }, 2000);
+        }
+    }, [registerSuccess, registerData, navigate]);
+
+    useEffect(() => {
+        if (registerError) {
+            // Manejo específico de errores del backend
+            let errorMessage = "Error al registrar usuario";
+            let errorDescription = "Ha ocurrido un error inesperado";
+
+            // Verificar si el error tiene propiedades específicas
+            if (registerError && typeof registerError === 'object' && registerError !== null) {
+                // Convertir a unknown primero para evitar errores de tipo
+                const errorObj = registerError as unknown;
+                const error = errorObj as Record<string, unknown>;
+                
+                // Verificar errores específicos de campo
+                if (error.details && typeof error.details === 'object' && error.details !== null) {
+                    const details = error.details as Record<string, unknown>;
+                    
+                    if (details.phone_number) {
+                        errorMessage = "Error en número de teléfono";
+                        errorDescription = Array.isArray(details.phone_number) 
+                            ? String(details.phone_number[0])
+                            : String(details.phone_number);
+                    } else if (details.email) {
+                        errorMessage = "Error en email";
+                        errorDescription = Array.isArray(details.email) 
+                            ? String(details.email[0])
+                            : String(details.email);
+                    } else if (details.password) {
+                        errorMessage = "Error en contraseña";
+                        errorDescription = Array.isArray(details.password) 
+                            ? String(details.password[0])
+                            : String(details.password);
+                    } else if (details.non_field_errors) {
+                        errorMessage = "Error de validación";
+                        errorDescription = Array.isArray(details.non_field_errors) 
+                            ? String(details.non_field_errors[0])
+                            : String(details.non_field_errors);
+                    }
+                } else if (error.message && typeof error.message === 'string') {
+                    errorDescription = error.message;
+                } else if (registerError instanceof Error) {
+                    errorDescription = registerError.message;
+                }
+            }
+
+            toast.error(errorMessage, {
+                description: errorDescription,
+                icon: <AlertCircle className="h-4 w-4" />,
+                duration: 5000,
+            });
+        }
+    }, [registerError]);
 
     // Verificación de disponibilidad de email y teléfono
     const { 
         data: emailAvailability, 
         isLoading: checkingEmail 
     } = useCheckEmailAvailability(
-        formData.email,
-        formData.email.trim().length > 0 && formData.email.includes('@') && formData.email.length > 5
+        formData.email || '',
+        (formData.email?.trim().length || 0) > 0 && formData.email?.includes('@') && (formData.email?.length || 0) > 5
     );
 
     const { 
@@ -51,47 +123,82 @@ export default function Register() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        // Validaciones básicas
+        // Validaciones básicas con toasts
         if (!formData.name.trim()) {
-            alert('El nombre es requerido');
+            toast.error('Campo requerido', {
+                description: 'El nombre es requerido',
+                icon: <AlertCircle className="h-4 w-4" />,
+                duration: 4000,
+            });
             return;
         }
         
         if (!formData.phone_number.trim()) {
-            alert('El teléfono es requerido');
+            toast.error('Campo requerido', {
+                description: 'El número de teléfono es requerido',
+                icon: <AlertCircle className="h-4 w-4" />,
+                duration: 4000,
+            });
             return;
         }
         
         if (!formData.password.trim()) {
-            alert('La contraseña es requerida');
+            toast.error('Campo requerido', {
+                description: 'La contraseña es requerida',
+                icon: <AlertCircle className="h-4 w-4" />,
+                duration: 4000,
+            });
             return;
         }
 
         if (formData.password !== confirmPassword) {
-            alert('Las contraseñas no coinciden');
+            toast.error('Error de validación', {
+                description: 'Las contraseñas no coinciden',
+                icon: <AlertCircle className="h-4 w-4" />,
+                duration: 4000,
+            });
             return;
         }
 
         if (formData.password.length < 6) {
-            alert('La contraseña debe tener al menos 6 caracteres');
+            toast.error('Error de validación', {
+                description: 'La contraseña debe tener al menos 6 caracteres',
+                icon: <AlertCircle className="h-4 w-4" />,
+                duration: 4000,
+            });
             return;
         }
 
         if (phoneAvailability && !phoneAvailability.available) {
-            alert('Este número de teléfono ya está registrado');
+            toast.error('Número no disponible', {
+                description: 'Este número de teléfono ya está registrado',
+                icon: <AlertCircle className="h-4 w-4" />,
+                duration: 5000,
+            });
             return;
         }
 
         // Solo validar email si se ha proporcionado
-        if (formData.email.trim() && emailAvailability && !emailAvailability.available) {
-            alert('Este email ya está registrado');
+        if (formData.email?.trim() && emailAvailability && !emailAvailability.available) {
+            toast.error('Email no disponible', {
+                description: 'Este email ya está registrado',
+                icon: <AlertCircle className="h-4 w-4" />,
+                duration: 5000,
+            });
             return;
         }
 
         try {
-            await register(formData);
-        } catch {
-            // Error al registrar
+            // Preparar datos de registro, solo incluir email si tiene valor
+            const registrationData = { ...formData };
+            if (!formData.email?.trim()) {
+                delete registrationData.email;
+            }
+            
+            await register(registrationData);
+        } catch (error) {
+            // El error ya se maneja en el hook y se muestra en la UI
+            console.error('Error en registro:', error);
         }
     };
 
@@ -115,7 +222,7 @@ export default function Register() {
                        formData.password === confirmPassword &&
                        formData.password.length >= 6 &&
                        (!phoneAvailability || phoneAvailability.available) &&
-                       (!emailAvailability || emailAvailability.available || !formData.email.trim());
+                       (!emailAvailability || emailAvailability.available || !formData.email?.trim());
 
     return (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -127,20 +234,7 @@ export default function Register() {
                             Información Personal 
                         </h2>
 
-                        {/* Mostrar estados de registro */}
-                        {registerError && (
-                            <div className="mt-4 flex items-center gap-2 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
-                                <AlertCircle className="h-4 w-4" />
-                                <span>Error: {registerError?.message || 'Error al registrar usuario'}</span>
-                            </div>
-                        )}
 
-                        {registerSuccess && (
-                            <div className="mt-4 flex items-center gap-2 p-3 bg-green-100 border border-green-400 text-green-700 rounded-md dark:bg-green-900/20 dark:border-green-800 dark:text-green-300">
-                                <CheckCircle className="h-4 w-4" />
-                                <span>¡Usuario registrado exitosamente! Revisa tu correo para verificar tu cuenta.</span>
-                            </div>
-                        )}
 
                         <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                             <div className="sm:col-span-3">
@@ -240,7 +334,7 @@ export default function Register() {
                                         Este email ya está registrado
                                     </p>
                                 )}
-                                {emailAvailability && emailAvailability.available && formData.email.includes('@') && (
+                                {emailAvailability && emailAvailability.available && formData.email?.includes('@') && (
                                     <p className="mt-1 text-sm text-green-600 dark:text-green-400">
                                         Email disponible
                                     </p>
