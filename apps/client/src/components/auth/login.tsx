@@ -57,39 +57,67 @@ export default function LogIn() {
             // Redirección a la página principal después del login exitoso
             navigate('/', { replace: true });
             
-        } catch (err) {
+        } catch (err: unknown) {
             // Error en login
+            console.error('Login error:', err);
 
             // Manejar errores específicos del servidor
-            if (err instanceof Error) {
-                const errorMessage = err.message.toLowerCase();
-
-                if (errorMessage.includes("email") || errorMessage.includes("usuario")) {
-                    toast.error("Email no encontrado", {
-                        description: "Verifique que el email esté registrado en el sistema",
-                        icon: <XCircle className="h-6 w-6" />,
-                        duration: 5000,
-                    });
-                } else if (errorMessage.includes("password") || errorMessage.includes("contraseña")) {
-                    toast.error("Contraseña incorrecta", {
-                        description: "La contraseña ingresada no coincide con nuestros registros",
-                        icon: <XCircle className="h-6 w-6" />,
-                        duration: 5000,
-                    });
-                } else {
-                    toast.error("Error de conexión", {
-                        description: err.message || "Ha ocurrido un error inesperado. Intente nuevamente",
+            if (err && typeof err === 'object' && err !== null) {
+                const errorObj = err as Record<string, unknown>;
+                
+                // Verificar si el error tiene detalles específicos de campo
+                if (errorObj.details && typeof errorObj.details === 'object' && errorObj.details !== null) {
+                    const details = errorObj.details as Record<string, unknown>;
+                    
+                    if (details.phone_number) {
+                        const phoneErrors = Array.isArray(details.phone_number) ? details.phone_number : [details.phone_number];
+                        toast.error("Error en número de teléfono", {
+                            description: String(phoneErrors[0]) || "Número de teléfono inválido",
+                            icon: <XCircle className="h-6 w-6" />,
+                            duration: 5000,
+                        });
+                        return;
+                    }
+                    
+                    if (details.password) {
+                        const passwordErrors = Array.isArray(details.password) ? details.password : [details.password];
+                        toast.error("Error en contraseña", {
+                            description: String(passwordErrors[0]) || "Contraseña incorrecta",
+                            icon: <XCircle className="h-6 w-6" />,
+                            duration: 5000,
+                        });
+                        return;
+                    }
+                    
+                    // Errores generales (non_field_errors)
+                    if (details.non_field_errors) {
+                        const generalErrors = Array.isArray(details.non_field_errors) ? details.non_field_errors : [details.non_field_errors];
+                        toast.error("Error de autenticación", {
+                            description: String(generalErrors[0]) || "Credenciales incorrectas",
+                            icon: <XCircle className="h-6 w-6" />,
+                            duration: 5000,
+                        });
+                        return;
+                    }
+                }
+                
+                // Usar el mensaje del error si existe
+                if (errorObj.message && typeof errorObj.message === 'string') {
+                    toast.error("Error al iniciar sesión", {
+                        description: errorObj.message,
                         icon: <AlertCircle className="h-6 w-6" />,
                         duration: 5000,
                     });
+                    return;
                 }
-            } else {
-                toast.error("Error al iniciar sesión", {
-                    description: "Ha ocurrido un error inesperado. Por favor, intente nuevamente",
-                    icon: <XCircle className="h-6 w-6" />,
-                    duration: 5000,
-                });
             }
+            
+            // Error genérico como fallback
+            toast.error("Error al iniciar sesión", {
+                description: "Ha ocurrido un error inesperado. Por favor, intente nuevamente",
+                icon: <XCircle className="h-6 w-6" />,
+                duration: 5000,
+            });
         }
     };
 

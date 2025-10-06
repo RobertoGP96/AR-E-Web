@@ -227,7 +227,20 @@ export class ApiClient {
       if (data.message) return String(data.message);
       if (data.error) return String(data.error);
       
-      // Errores de validación
+      // Errores de validación específicos de campo
+      if (data.phone_number) {
+        const errors = data.phone_number;
+        const errorMsg = Array.isArray(errors) ? String(errors[0]) : String(errors);
+        return `Número de teléfono: ${errorMsg}`;
+      }
+      
+      if (data.password) {
+        const errors = data.password;
+        const errorMsg = Array.isArray(errors) ? String(errors[0]) : String(errors);
+        return `Contraseña: ${errorMsg}`;
+      }
+      
+      // Errores de validación generales
       if (data.non_field_errors) {
         const errors = data.non_field_errors;
         return Array.isArray(errors) ? String(errors[0]) : String(errors);
