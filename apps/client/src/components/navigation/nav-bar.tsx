@@ -171,7 +171,7 @@ const NavBar = () => {
                                         </div>
                                     ) : isAuthenticated ? (
                                         <div className="p-4 rounded-2xl bg-gradient-to-br from-accent/30 to-accent/10 border border-accent/20 shadow-inner">
-                                            <NavUser />
+                                            <NavUser onNavigate={handleLinkClick} />
                                         </div>
                                     ) : (
                                         <div className="space-y-3">

@@ -4,7 +4,11 @@ import { Avatar, AvatarFallback} from "../ui/avatar";
 import { LogOut, ShoppingCart, User } from "lucide-react";
 import { NavLink, useNavigate } from "react-router";
 
-export function NavUser() {
+interface NavUserProps {
+    onNavigate?: () => void;
+}
+
+export function NavUser({ onNavigate }: NavUserProps) {
     const auth = useAuthUser()
     const { logout } = useAuthActions();
     const navigate = useNavigate();
@@ -17,10 +21,15 @@ export function NavUser() {
             // Error durante el logout
         }
     };
+
+    const handleNavigate = (path: string) => {
+        navigate(path);
+        onNavigate?.(); // Cierra el sheet en móvil si la función está disponible
+    };
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <div className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-800/50 transition-all duration-200 group">
+                <div className="w-full flex items-center gap-3 px-2 py-1 rounded-xl hover:bg-gray-800/50 transition-all duration-200 group">
                     <Avatar className="h-10 w-10 rounded-xl">
                         <AvatarFallback className="rounded-full bg-gradient-to-r from-orange-400 to-amber-500 text-gray-900 font-semibold">
                             {auth ? auth?.name.charAt(0).toUpperCase() + auth?.last_name.charAt(0).toUpperCase() : "N/A"}
@@ -39,19 +48,19 @@ export function NavUser() {
                 sideOffset={8}
             >
                 <NavLink to={"/profile"}>
-                    <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => navigate("/profile")}>
+                    <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => handleNavigate("/profile")}>
                         <User className="h-5 w-5 text-primary" />
                         <span className="text-gray-300">Perfil</span>
                     </DropdownMenuItem>
                 </NavLink>
                 <NavLink to={"/product-list"}>
-                    <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => navigate("/product-list")}>
+                    <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => handleNavigate("/product-list")}>
                         <ShoppingCart className="h-5 w-5 text-primary" />
                         <span className="text-gray-300">Mis productos</span>
                     </DropdownMenuItem>
                 </NavLink>
                 <NavLink to={"/user_orders"}>
-                    <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => navigate("/user_orders")} >
+                    <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => handleNavigate("/user_orders")} >
                         <ShoppingCart className="h-5 w-5 text-primary" />
                         <span className="text-gray-300">Pedidos</span>
                     </DropdownMenuItem>
