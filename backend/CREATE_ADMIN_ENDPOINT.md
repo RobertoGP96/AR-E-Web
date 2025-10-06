@@ -29,7 +29,7 @@ POST /admin/create/
 
 ```json
 {
-  "secret_key": "your-secret-key-here",
+  "secret_key": "AdM1n_S3cr3t_K3y_2024_#Qw3rTy!@$%^&*()_+",
   "name": "Juan",
   "last_name": "Pérez",
   "email": "admin@empresa.com",
@@ -91,7 +91,22 @@ POST /admin/create/
 Añadir en el archivo `.env` o variables de entorno del sistema:
 
 ```env
-ADMIN_CREATION_SECRET_KEY=tu-clave-secreta-super-segura
+ADMIN_CREATION_SECRET_KEY=AdM1n_S3cr3t_K3y_2024_#Qw3rTy!@$%^&*()_+
+```
+
+### Ejemplos de Claves Secretas Seguras:
+```env
+# Ejemplo 1: Combinación alfanumérica con símbolos
+ADMIN_CREATION_SECRET_KEY=SuperAdm1n!2024@SecretKey#$%^&*
+
+# Ejemplo 2: Frase con números y símbolos
+ADMIN_CREATION_SECRET_KEY=MyApp_Admin_Creation_2024!@#$%^&*()_+
+
+# Ejemplo 3: Base64 encoded (recomendado para producción)
+ADMIN_CREATION_SECRET_KEY=QWRtaW5fU2VjcmV0X0tleV8yMDI0XyNRdzNyVHkhQCQlXiYqKClf
+
+# Ejemplo 4: UUID + sufijo personalizado
+ADMIN_CREATION_SECRET_KEY=a1b2c3d4-e5f6-7890-abcd-ef1234567890_ADMIN_KEY_2024
 ```
 
 ### Características del Usuario Creado
@@ -121,7 +136,7 @@ ADMIN_CREATION_SECRET_KEY=tu-clave-secreta-super-segura
 curl -X POST http://localhost:8000/admin/create/ \
   -H "Content-Type: application/json" \
   -d '{
-    "secret_key": "your-secret-key-here",
+    "secret_key": "AdM1n_S3cr3t_K3y_2024_#Qw3rTy!@$%^&*()_+",
     "name": "Admin",
     "last_name": "Principal", 
     "email": "admin@empresa.com",
