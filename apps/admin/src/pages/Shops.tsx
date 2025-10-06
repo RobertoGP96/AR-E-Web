@@ -9,13 +9,11 @@ export default function Shops() {
     setShops(prev => prev.map(shop =>
       shop.id === updatedShop.id ? updatedShop : shop
     ));
-    console.log("Tienda actualizada:", updatedShop.name);
   };
 
   const handleDelete = (shop: Shop) => {
     // Lógica para eliminar tienda
     setShops(prev => prev.filter(s => s.id !== shop.id));
-    console.log("Eliminar tienda:", shop.name);
   };
 
   return (

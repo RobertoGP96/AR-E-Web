@@ -111,10 +111,7 @@ export class ApiClient {
     // Response interceptor - maneja respuestas y errores
     this.client.interceptors.response.use(
       (response) => {
-        // Log de responses exitosas en desarrollo
-        if (import.meta.env.DEV) {
-          console.log(`✅ ${response.status} ${response.config.url}`, response.data);
-        }
+        
 
         return response;
       },

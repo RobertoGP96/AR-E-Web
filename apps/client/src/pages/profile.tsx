@@ -61,11 +61,17 @@ export default function Profile() {
         try {
             await updateUser(formData);
             setIsEditing(false);
-            toast.success('Perfil actualizado correctamente');
+            toast.success('¡Perfil actualizado exitosamente!', {
+                description: 'Tus cambios han sido guardados correctamente. Los datos persisten al actualizar la página.',
+                duration: 4000
+            });
         } catch (error) {
             // El error detallado se obtiene del hook updateError
             const errorMessage = updateError || 'Error al actualizar el perfil. Intenta nuevamente.';
-            toast.error(errorMessage);
+            toast.error('Error al guardar cambios', {
+                description: errorMessage,
+                duration: 5000
+            });
             console.error('Error updating profile:', error);
         }
     };

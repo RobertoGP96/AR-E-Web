@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 
 import { updateCurrentUserProfile } from '@/services/auth/user';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -52,23 +51,23 @@ export const useUser = (): UseUserReturn => {
     updateUser: authUpdateUser
   } = useAuth();
 
-  // Mutation para actualizar el perfil usando el servicio de usuarios
+  // Mutation para actualizar el perfil combinando servicio y contexto
   const updateMutation = useMutation({
     mutationFn: async (data: Partial<UpdateUserData>) => {
-      // Usar el servicio específico de usuarios que maneja el endpoint correcto
+      // 1. Primero actualizar en el backend usando el servicio específico
       const updatedUser = await updateCurrentUserProfile(data);
-      // También actualizar en el contexto de auth
-      await authUpdateUser(data);
+      
+      // 2. Luego sincronizar con el contexto de auth usando los datos completos del backend
+      await authUpdateUser(updatedUser);
+      
       return updatedUser;
     },
-    onSuccess: () => {
-      // Invalidar y refrescar los datos del usuario
+    onSuccess: (updatedUser) => {
+      // Invalidar queries para refetch si es necesario
       queryClient.invalidateQueries({ queryKey: ['user'] });
-      refreshAuth();
-      toast.success('Perfil actualizado correctamente');
+      console.log('Perfil actualizado exitosamente:', updatedUser);
     },
     onError: (error: unknown) => {
-      // Error actualizando perfil - no mostrar toast aquí, dejarlo al componente
       console.error('Error updating user profile:', error);
     }
   });

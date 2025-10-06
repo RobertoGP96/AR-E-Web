@@ -157,9 +157,6 @@ export class ApiClient {
    * Maneja errores 401 - Unauthorized
    */
   private async handleUnauthorized() {
-    // Limpiar token local
-    this.clearAuthToken();
-    
     // Intentar refresh del token si existe refresh token
     const refreshToken = this.getRefreshToken();
     if (refreshToken) {
@@ -167,14 +164,21 @@ export class ApiClient {
         await this.refreshAuthToken();
         return;
       } catch {
+        // Solo mostrar error de sesión expirada, no redirigir automáticamente
         toast.error('Sesión expirada', {
-          description: 'Por favor, inicia sesión nuevamente'
+          description: 'Por favor, inicia sesión nuevamente',
+          duration: 5000
         });
       }
     }
 
-    // Redirigir a login si no se puede refreshear
-    this.redirectToLogin();
+    // Limpiar token local después de intentar refresh
+    this.clearAuthToken();
+    
+    // Solo redirigir en casos específicos, no durante actualizaciones de perfil
+    if (!window.location.pathname.includes('/profile')) {
+      this.redirectToLogin();
+    }
   }
 
   /**
@@ -362,8 +366,13 @@ export class ApiClient {
    * Redirige a la página de login
    */
   private redirectToLogin() {
-    // Aquí implementarías la lógica de redirección según tu router
-    window.location.href = '/login';
+    // Solo redirigir si no estamos ya en la página de login
+    if (!window.location.pathname.includes('/login')) {
+      // Usar setTimeout para evitar conflictos con otros procesos
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
+    }
   }
 
   // Métodos HTTP públicos
