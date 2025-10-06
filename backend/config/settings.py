@@ -308,6 +308,9 @@ VERIFICATION_URL = config('VERIFICATION_URL', default='http://localhost:5173/ver
 # Email sending configuration
 ENABLE_EMAIL_VERIFICATION = config('ENABLE_EMAIL_VERIFICATION', default=False, cast=bool)
 
+# Admin creation configuration
+ADMIN_CREATION_SECRET_KEY = config('ADMIN_CREATION_SECRET_KEY', default='change-this-secret-key-in-production')
+
 # Logging Configuration
 import os
 

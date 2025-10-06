@@ -733,3 +733,194 @@ class AmazonScrapingView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class CreateAdminUserView(APIView):
+    """Vista para crear usuarios administrativos con clave secreta"""
+    
+    permission_classes = []  # No requiere autenticación, pero validará clave secreta
+    
+    @extend_schema(
+        summary="Crear usuario administrativo",
+        description="Crea un usuario con rol de administrador. Requiere una clave secreta para la validación. Devuelve las credenciales del usuario creado.",
+        request={
+            'type': 'object',
+            'properties': {
+                'secret_key': {
+                    'type': 'string',
+                    'description': 'Clave secreta para crear administradores'
+                },
+                'name': {
+                    'type': 'string',
+                    'description': 'Nombre del administrador'
+                },
+                'last_name': {
+                    'type': 'string', 
+                    'description': 'Apellido del administrador'
+                },
+                'email': {
+                    'type': 'string',
+                    'format': 'email',
+                    'description': 'Email del administrador (opcional)'
+                },
+                'phone_number': {
+                    'type': 'string',
+                    'description': 'Número de teléfono del administrador'
+                },
+                'home_address': {
+                    'type': 'string',
+                    'description': 'Dirección del administrador'
+                },
+                'password': {
+                    'type': 'string',
+                    'description': 'Contraseña del administrador (opcional, se genera automáticamente si no se proporciona)'
+                }
+            },
+            'required': ['secret_key', 'name', 'last_name', 'phone_number', 'home_address']
+        },
+        responses={
+            201: {
+                'type': 'object',
+                'properties': {
+                    'success': {'type': 'boolean'},
+                    'message': {'type': 'string'},
+                    'admin_user': {
+                        'type': 'object',
+                        'properties': {
+                            'id': {'type': 'integer'},
+                            'name': {'type': 'string'},
+                            'last_name': {'type': 'string'},
+                            'email': {'type': 'string'},
+                            'phone_number': {'type': 'string'},
+                            'role': {'type': 'string'},
+                            'is_staff': {'type': 'boolean'},
+                            'is_active': {'type': 'boolean'},
+                            'password': {'type': 'string', 'description': 'Solo se devuelve la contraseña generada'}
+                        }
+                    }
+                }
+            },
+            400: "Error de validación o clave secreta incorrecta",
+            500: "Error interno del servidor"
+        },
+        tags=["Administración"]
+    )
+    def post(self, request):
+        """Crear un usuario administrativo con clave secreta"""
+        try:
+            from django.conf import settings
+            
+            # Validar que se proporcione la clave secreta
+            secret_key = request.data.get('secret_key')
+            if not secret_key:
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'La clave secreta es requerida'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validar la clave secreta
+            admin_secret_key = getattr(settings, 'ADMIN_CREATION_SECRET_KEY', None)
+            if not admin_secret_key:
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'La funcionalidad de creación de administradores no está configurada'
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            if secret_key != admin_secret_key:
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'Clave secreta incorrecta'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validar datos requeridos
+            required_fields = ['name', 'last_name', 'phone_number', 'home_address']
+            for field in required_fields:
+                if not request.data.get(field):
+                    return Response(
+                        {
+                            'success': False,
+                            'error': f'El campo {field} es requerido'
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Verificar que el número de teléfono no esté en uso
+            phone_number = request.data.get('phone_number')
+            if User.objects.filter(phone_number=phone_number).exists():
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'Ya existe un usuario con ese número de teléfono'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Verificar email si se proporciona
+            email = request.data.get('email')
+            if email and User.objects.filter(email=email).exists():
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'Ya existe un usuario con ese email'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Generar contraseña si no se proporciona
+            password = request.data.get('password')
+            if not password:
+                password = get_random_string(length=12)
+            
+            # Crear el usuario administrativo
+            admin_user = User.objects.create_user(
+                phone_number=phone_number,
+                password=password,
+                name=request.data.get('name'),
+                last_name=request.data.get('last_name'),
+                email=email or '',
+                home_address=request.data.get('home_address'),
+                role='admin',
+                is_staff=True,
+                is_active=True,
+                is_verified=True,
+                is_superuser=True  # Dar permisos de superusuario
+            )
+            
+            # Preparar respuesta con credenciales
+            response_data = {
+                'success': True,
+                'message': 'Usuario administrador creado exitosamente',
+                'admin_user': {
+                    'id': admin_user.id,
+                    'name': admin_user.name,
+                    'last_name': admin_user.last_name,
+                    'email': admin_user.email,
+                    'phone_number': admin_user.phone_number,
+                    'home_address': admin_user.home_address,
+                    'role': admin_user.role,
+                    'is_staff': admin_user.is_staff,
+                    'is_active': admin_user.is_active,
+                    'is_verified': admin_user.is_verified,
+                    'password': password  # Solo devolver la contraseña generada
+                }
+            }
+            
+            return Response(response_data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response(
+                {
+                    'success': False,
+                    'error': f'Error inesperado al crear usuario administrador: {str(e)}'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
