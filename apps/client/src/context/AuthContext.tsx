@@ -8,6 +8,13 @@
 import { createContext, useReducer, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { apiClient } from '@/lib';
+import { 
+  getStoredValue, 
+  setStoredValue, 
+  removeStoredValue, 
+  clearAuthStorage,
+  STORAGE_KEYS 
+} from '@/utils/storage';
 import type { 
   LoginCredentials, 
   RegisterData, 
@@ -48,15 +55,28 @@ interface AuthContextType extends AuthState {
   clearError: () => void;
 }
 
-// Estado inicial
-const initialState: AuthState = {
-  user: null,
-  isAuthenticated: false,
-  isLoading: true, // true inicialmente para verificar token existente
-  error: null,
-  permissions: [],
-  lastActivity: null,
+// Función para obtener el estado inicial con datos persistidos
+const getInitialState = (): AuthState => {
+  const storedUser = getStoredValue<CustomUser | null>(STORAGE_KEYS.USER, null);
+  const storedPermissions = getStoredValue<string[]>(STORAGE_KEYS.PERMISSIONS, []);
+  const storedLastActivity = getStoredValue<string | null>(STORAGE_KEYS.LAST_ACTIVITY, null);
+  
+  // Solo considerar autenticado si hay token Y usuario almacenado
+  const hasToken = !!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+  const isAuthenticated = hasToken && !!storedUser;
+  
+  return {
+    user: storedUser,
+    isAuthenticated,
+    isLoading: hasToken, // Solo mostrar loading si hay token para verificar
+    error: null,
+    permissions: storedPermissions,
+    lastActivity: storedLastActivity ? new Date(storedLastActivity) : null,
+  };
 };
+
+// Estado inicial
+const initialState: AuthState = getInitialState();
 
 // Reducer para manejar el estado de autenticación
 function authReducer(state: AuthState, action: AuthAction): AuthState {
@@ -68,8 +88,8 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         error: null,
       };
 
-    case 'AUTH_SUCCESS':
-      return {
+    case 'AUTH_SUCCESS': {
+      const newState = {
         ...state,
         user: action.payload.user,
         permissions: action.payload.permissions,
@@ -78,9 +98,17 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         error: null,
         lastActivity: new Date(),
       };
+      
+      // Persistir datos en localStorage
+      setStoredValue(STORAGE_KEYS.USER, action.payload.user);
+      setStoredValue(STORAGE_KEYS.PERMISSIONS, action.payload.permissions);
+      setStoredValue(STORAGE_KEYS.LAST_ACTIVITY, newState.lastActivity.toISOString());
+      
+      return newState;
+    }
 
-    case 'AUTH_ERROR':
-      return {
+    case 'AUTH_ERROR': {
+      const newState = {
         ...state,
         user: null,
         permissions: [],
@@ -89,24 +117,48 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         error: action.payload,
         lastActivity: null,
       };
+      
+      // Limpiar datos persistidos en caso de error de autenticación
+      clearAuthStorage();
+      
+      return newState;
+    }
 
-    case 'AUTH_LOGOUT':
-      return {
+    case 'AUTH_LOGOUT': {
+      const newState = {
         ...initialState,
         isLoading: false,
       };
+      
+      // Limpiar todos los datos persistidos
+      clearAuthStorage();
+      
+      return newState;
+    }
 
-    case 'UPDATE_USER':
-      return {
+    case 'UPDATE_USER': {
+      const newState = {
         ...state,
         user: action.payload,
       };
+      
+      // Persistir usuario actualizado
+      setStoredValue(STORAGE_KEYS.USER, action.payload);
+      
+      return newState;
+    }
 
-    case 'UPDATE_ACTIVITY':
-      return {
+    case 'UPDATE_ACTIVITY': {
+      const newState = {
         ...state,
         lastActivity: new Date(),
       };
+      
+      // Persistir última actividad
+      setStoredValue(STORAGE_KEYS.LAST_ACTIVITY, newState.lastActivity.toISOString());
+      
+      return newState;
+    }
 
     case 'CLEAR_ERROR':
       return {
@@ -135,8 +187,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Verifica si existe un token válido al cargar la aplicación
    */
   const checkExistingAuth = useCallback(async () => {
+    // Si no hay token, no hacer nada (el estado inicial ya maneja esto)
     if (!apiClient.isAuthenticated()) {
-      dispatch({ type: 'AUTH_ERROR', payload: 'No authentication token found' });
+      if (state.isLoading) {
+        dispatch({ type: 'AUTH_ERROR', payload: 'No authentication token found' });
+      }
+      return;
+    }
+
+    // Si ya tenemos datos del usuario persistidos y estamos autenticados, no hacer nueva llamada
+    if (state.user && state.isAuthenticated && !state.isLoading) {
       return;
     }
 
@@ -162,7 +222,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       apiClient.clearAuthToken();
       dispatch({ type: 'AUTH_ERROR', payload: 'Invalid authentication token' });
     }
-  }, []);
+  }, [state.user, state.isAuthenticated, state.isLoading]);
 
   /**
    * Función de login
