@@ -6,6 +6,7 @@
  */
 
 import axios from 'axios';
+import { toast } from 'sonner';
 import type { 
   AxiosInstance, 
   AxiosRequestConfig, 
@@ -94,16 +95,13 @@ export class ApiClient {
 
         // Log de requests en desarrollo
         if (import.meta.env.DEV) {
-          console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`, {
-            params: config.params,
-            data: config.data,
-          });
+          // Request logging disabled
         }
 
         return config;
       },
       (error) => {
-        console.error('❌ Request error:', error);
+        // Request error occurred
         return Promise.reject(error);
       }
     );
@@ -113,7 +111,7 @@ export class ApiClient {
       (response) => {
         // Log de responses exitosas en desarrollo
         if (import.meta.env.DEV) {
-          console.log(`✅ ${response.status} ${response.config.url}`, response.data);
+          // Response logging disabled
         }
 
         return response;
@@ -132,16 +130,10 @@ export class ApiClient {
     const { response, config } = error;
     const extendedConfig = config as ExtendedInternalAxiosRequestConfig;
 
-    // Log de errores en desarrollo
-    if (import.meta.env.DEV) {
-      console.error(`❌ ${response?.status} ${config?.url}`, {
-        status: response?.status,
-        data: response?.data,
-        message: error.message,
-      });
-    }
-
-    // Error 401 - Token expirado o inválido
+        // Log de errores en desarrollo
+        if (import.meta.env.DEV) {
+          // Error logging disabled
+        }    // Error 401 - Token expirado o inválido
     if (response?.status === 401 && !extendedConfig?.skipAuth) {
       await this.handleUnauthorized();
     }
@@ -174,8 +166,10 @@ export class ApiClient {
       try {
         await this.refreshAuthToken();
         return;
-      } catch (refreshError) {
-        console.error('Error refreshing token:', refreshError);
+      } catch {
+        toast.error('Sesión expirada', {
+          description: 'Por favor, inicia sesión nuevamente'
+        });
       }
     }
 
@@ -187,17 +181,18 @@ export class ApiClient {
    * Maneja errores 403 - Forbidden
    */
   private handleForbidden() {
-    // Mostrar mensaje de error de permisos
-    console.warn('Access denied: Insufficient permissions');
-    // Aquí podrías disparar una notificación global
+    toast.error('Acceso denegado', {
+      description: 'No tienes permisos para realizar esta acción'
+    });
   }
 
   /**
    * Maneja errores 429 - Rate Limit
    */
   private handleRateLimit() {
-    console.warn('Rate limit exceeded. Please try again later.');
-    // Aquí podrías implementar retry con backoff exponencial
+    toast.warning('Demasiadas solicitudes', {
+      description: 'Por favor, espera un momento antes de intentar nuevamente'
+    });
   }
 
   /**
@@ -282,8 +277,11 @@ export class ApiClient {
       if (token) {
         this.authToken = token;
       }
-    } catch (error) {
-      console.warn('Error loading auth token:', error);
+    } catch {
+      // Error loading auth token - silent failure
+      if (import.meta.env.DEV) {
+        toast.error('Error cargando token de autenticación');
+      }
     }
   }
 
@@ -294,8 +292,10 @@ export class ApiClient {
     this.authToken = token;
     try {
       localStorage.setItem('access_token', token);
-    } catch (error) {
-      console.warn('Error saving auth token:', error);
+    } catch {
+      toast.error('Error guardando sesión', {
+        description: 'No se pudo guardar la sesión en el navegador'
+      });
     }
   }
 
@@ -307,8 +307,11 @@ export class ApiClient {
     try {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-    } catch (error) {
-      console.warn('Error clearing auth token:', error);
+    } catch {
+      // Error clearing auth token - usually not critical
+      if (import.meta.env.DEV) {
+        toast.warning('Error limpiando sesión local');
+      }
     }
   }
 
@@ -518,8 +521,10 @@ export class ApiClient {
       if (refreshToken) {
         await this.post('/logout/', { refresh_token: refreshToken });
       }
-    } catch (error) {
-      console.warn('Error during logout:', error);
+    } catch {
+      toast.warning('Error cerrando sesión', {
+        description: 'La sesión se cerró localmente'
+      });
     } finally {
       this.clearAuthToken();
     }
@@ -536,7 +541,7 @@ export class ApiClient {
    * Obtiene información del usuario actual
    */
   public async getCurrentUser(): Promise<ApiResponse<unknown>> {
-    return this.get('/user/me/');
+    return this.get('/user/');
   }
 }
 

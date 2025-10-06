@@ -157,8 +157,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           permissions 
         } 
       });
-    } catch (error) {
-      console.error('Error verifying existing auth:', error);
+    } catch {
+      // Error verifying existing auth
       apiClient.clearAuthToken();
       dispatch({ type: 'AUTH_ERROR', payload: 'Invalid authentication token' });
     }
@@ -217,8 +217,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = useCallback(async (): Promise<void> => {
     try {
       await apiClient.logout();
-    } catch (error) {
-      console.error('Error during logout:', error);
+    } catch {
+      // Error during logout
     } finally {
       dispatch({ type: 'AUTH_LOGOUT' });
     }
@@ -246,8 +246,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           permissions 
         } 
       });
-    } catch (error) {
-      console.error('Error refreshing auth:', error);
+    } catch {
+      // Error refreshing auth
       await logout();
     }
   }, [logout]);
@@ -258,15 +258,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const updateUser = useCallback(async (userData: Partial<CustomUser>): Promise<void> => {
     if (!state.user) return;
 
-    try {
-      const response = await apiClient.patch(`/users/${state.user.id}/`, userData);
-      const updatedUser = response.data as CustomUser;
-      
-      dispatch({ type: 'UPDATE_USER', payload: updatedUser });
-    } catch (error) {
-      console.error('Error updating user:', error);
-      throw error;
-    }
+    // Usar el endpoint correcto para actualizar perfil del usuario actual
+    const response = await apiClient.patch('/user/', userData);
+    const updatedUser = response.data as CustomUser;
+    
+    dispatch({ type: 'UPDATE_USER', payload: updatedUser });
   }, [state.user]);
 
   /**
@@ -337,7 +333,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const timeSinceLastActivity = now.getTime() - state.lastActivity!.getTime();
       
       if (timeSinceLastActivity > INACTIVITY_TIMEOUT) {
-        console.log('Auto-logout due to inactivity');
+        // Auto-logout due to inactivity
         logout();
       }
     };

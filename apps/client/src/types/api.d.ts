@@ -32,7 +32,7 @@ export interface PaginatedApiResponse<T = unknown> extends ApiResponse<T[]> {
 
 // Tipos para formularios de autenticación
 export interface LoginCredentials {
-  email: string;
+  phone_number: string;
   password: string;
 }
 

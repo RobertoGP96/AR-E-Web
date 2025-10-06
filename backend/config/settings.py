@@ -79,43 +79,31 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Production database configuration
+# Production database configuration (Neon PostgreSQL)
 DATABASE_URL = config('DATABASE_URL', default='')
 
 if DATABASE_URL:
+    # Use Neon PostgreSQL in production
     import dj_database_url
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL)
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+    # Add SSL configuration for Neon
+    DATABASES['default']['OPTIONS'] = {
+        'sslmode': 'require',
     }
 else:
-    # Development fallback
+    # Use SQLite3 for local development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-
-#import os
-#from dotenv import load_dotenv
-#from urllib.parse import urlparse, parse_qsl
-
-#load_dotenv()
-
-# Replace the DATABASES section of your settings.py with this
-#tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
-
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': tmpPostgres.path.replace('/', ''),
-#        'USER': tmpPostgres.username,
-#        'PASSWORD': tmpPostgres.password,
-#        'HOST': tmpPostgres.hostname,
-#        'PORT': 5432,
-#        'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
-#    }
-#}
 
 
 # Password validation
@@ -312,6 +300,13 @@ EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+
+# Website Configuration
+WEB_SITE_NAME = config('WEB_SITE_NAME', default='AR-E Web Platform')
+VERIFICATION_URL = config('VERIFICATION_URL', default='http://localhost:5173/verify?token=')
+
+# Email sending configuration
+ENABLE_EMAIL_VERIFICATION = config('ENABLE_EMAIL_VERIFICATION', default=False, cast=bool)
 
 # Logging Configuration
 import os

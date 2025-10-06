@@ -174,22 +174,39 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary="Registrar usuario",
-        description="Crea un nuevo usuario y envía correo de verificación.",
+        description="Crea un nuevo usuario. Si la verificación por email está habilitada, envía correo de verificación.",
         responses={201: UserSerializer},
         tags=["Usuarios"]
     )
     def perform_create(self, serializer):
-        try:
-            verify_secret = get_random_string(length=32)
-            send_email(
-                self.request.data["name"], self.request.data["email"], verify_secret
+        from django.conf import settings
+        
+        # Verificar si la verificación por email está habilitada
+        email_verification_enabled = getattr(settings, 'ENABLE_EMAIL_VERIFICATION', False)
+        
+        if email_verification_enabled and self.request.data.get("email"):
+            # Solo si está habilitada la verificación Y se proporciona email
+            try:
+                verify_secret = get_random_string(length=32)
+                send_email(
+                    self.request.data["name"], self.request.data["email"], verify_secret
+                )
+                return serializer.save(
+                    verification_secret=verify_secret,
+                    sent_verification_email=True,
+                    is_verified=False,  # Requiere verificación
+                    is_active=True  # Activo pero no verificado
+                )
+            except Exception as e:
+                raise ValidationError({"error": str(e)}) from e
+        else:
+            # Activación automática cuando no se requiere verificación por email
+            return serializer.save(
+                verification_secret=None,
+                sent_verification_email=False,
+                is_verified=True,  # Verificado automáticamente
+                is_active=True  # Activo
             )
-        except Exception as e:
-            raise ValidationError({"error": str(e)}) from e
-        return serializer.save(
-            verification_secret=verify_secret,
-            sent_verification_email=True,
-        )
 
 
 class PasswordRecoverList(APIView):

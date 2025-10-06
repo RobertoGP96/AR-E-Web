@@ -19,7 +19,7 @@ export type UserRole =
 export interface CustomUser {
   // Account data
   id: ID;
-  email: string;
+  email?: string;
   name: string;
   last_name: string;
   home_address: string;
@@ -63,7 +63,10 @@ export interface CreateUserData {
 }
 
 export interface UpdateUserData extends Partial<CreateUserData> {
-  id: ID;
+  id?: ID;
+  is_active?: boolean;
+  is_verified?: boolean;
+  is_staff?: boolean;
 }
 
 // Filtros para usuarios

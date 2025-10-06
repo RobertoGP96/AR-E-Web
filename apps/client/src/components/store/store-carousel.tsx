@@ -45,11 +45,10 @@ export const CarouselStores = () => {
                                 alt={`${store.name} logo`}
                                 className="w-full h-auto object-contain"
                                 onError={(e) => {
-                                    console.error(`Error loading image for ${store.name}:`, getShopLogo(store.name));
                                     e.currentTarget.style.display = 'none';
                                 }}
                                 onLoad={() => {
-                                    console.log(`Successfully loaded image for ${store.name}`);
+                                    // Image loaded successfully
                                 }}
                             />
                         </div>

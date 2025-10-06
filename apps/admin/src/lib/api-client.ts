@@ -536,7 +536,7 @@ export class ApiClient {
    * Obtiene información del usuario actual
    */
   public async getCurrentUser(): Promise<ApiResponse<unknown>> {
-    return this.get('/user/me/');
+    return this.get('/user/');
   }
 }
 

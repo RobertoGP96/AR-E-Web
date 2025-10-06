@@ -64,7 +64,7 @@ export const authService = {
    * Obtener usuario actual
    */
   getCurrentUser: async (): Promise<ApiResponse<CustomUser>> => {
-    return apiClient.get('/api_data/user/me/');
+    return apiClient.get('/api_data/user/');
   },
 
   /**

@@ -22,8 +22,8 @@ export const queryClient = new QueryClient({
       retry: 1,
       retryDelay: 1000,
       networkMode: "online",
-      onError: (error: Error) => {
-        console.error("Mutation error:", error)
+      onError: () => {
+        // Mutation error
       },
     },
   },

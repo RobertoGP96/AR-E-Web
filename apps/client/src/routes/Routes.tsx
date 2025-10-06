@@ -5,7 +5,7 @@ import Contact from '@/pages/contact';
 import { Routes, Route } from 'react-router';
 import Register from '@/components/auth/register';
 import About from '@/pages/about';
-import Profile from '@/pages/porfile';
+import Profile from '@/pages/profile';
 import Pricing from '@/pages/pricing';
 import Stores from '@/pages/stores';
 import UserOrders from '@/pages/user-orders';

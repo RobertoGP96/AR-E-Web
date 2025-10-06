@@ -9,10 +9,9 @@ import { Loader2Icon, LogIn as LoginIcon, CheckCircle, XCircle, AlertCircle } fr
 
 // Schema de validación con Zod
 const loginSchema = z.object({
-    email: z
+    phone: z
         .string()
-        .min(1, "El email es requerido")
-        .email("Por favor ingrese un email válido"),
+        .min(1, "El telefono es requerido"),
     password: z
         .string()
         .min(1, "La contraseña es requerida")
@@ -40,20 +39,26 @@ export default function LogIn() {
 
     const onSubmit = async (data: LoginFormData) => {
         try {
+            // Iniciando login
+            
             await login({
-                email: data.email,
+                phone_number: data.phone,
                 password: data.password
             });
+            
+            // Login exitoso
             
             toast.success("¡Inicio de sesión exitoso!", {
                 description: "Redirigiendo a la página principal...",
                 icon: <CheckCircle className="h-4 w-4" />,
                 duration: 3000,
             });
-            // El redirect se manejará automáticamente por el contexto de auth
+            
+            // Redirección a la página principal después del login exitoso
+            navigate('/', { replace: true });
             
         } catch (err) {
-            console.error("Error en login:", err);
+            // Error en login
 
             // Manejar errores específicos del servidor
             if (err instanceof Error) {
@@ -120,15 +125,15 @@ export default function LogIn() {
             <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
                 <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
                     <div>
-                        <label htmlFor="email" className="block text-sm/6 font-medium text-gray-900 dark:text-gray-100">
-                            Usuario
+                        <label htmlFor="phone_number" className="block text-sm/6 font-medium text-gray-900 dark:text-gray-100">
+                            Teléfono
                         </label>
                         <div className="mt-2">
                             <input
-                                id="email"
-                                type="email"
-                                autoComplete="email"
-                                {...register("email")}
+                                id="phone_number"
+                                type="tel"
+                                autoComplete="phone"
+                                {...register("phone")}
                                 className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-orange-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={isSubmitting}
                             />

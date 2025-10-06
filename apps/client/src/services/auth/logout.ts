@@ -15,7 +15,6 @@ export const logout = async (): Promise<void> => {
     // Limpiar datos locales siempre, incluso si la API falla
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
     
     // Limpiar token del cliente API
     apiClient.clearAuthToken();
@@ -31,7 +30,6 @@ export const logoutAllSessions = async (): Promise<ApiResponse<void>> => {
   // Limpiar datos locales
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
-  localStorage.removeItem('user');
   apiClient.clearAuthToken();
   
   return response;
@@ -59,9 +57,15 @@ export const getStoredRefreshToken = (): string | null => {
 };
 
 /**
- * Obtiene la información del usuario del localStorage
+ * Obtiene la información del usuario actual usando el contexto de autenticación
+ * @deprecated Use el hook useAuth() para obtener información del usuario
  */
-export const getStoredUser = () => {
-  const userData = localStorage.getItem('user');
-  return userData ? JSON.parse(userData) : null;
+export const getCurrentUserFromContext = async () => {
+  try {
+    const response = await apiClient.getCurrentUser();
+    return response.data;
+  } catch  {
+    // Error obteniendo usuario actual
+    return null;
+  }
 };

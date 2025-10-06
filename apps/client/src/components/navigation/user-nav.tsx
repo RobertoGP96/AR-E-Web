@@ -1,4 +1,4 @@
-import { useAuthUser } from "@/hooks/auth/useAuth";
+import { useAuthUser, useAuthActions } from "@/hooks/auth/useAuth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback} from "../ui/avatar";
 import { LogOut, ShoppingCart, User } from "lucide-react";
@@ -6,7 +6,17 @@ import { NavLink, useNavigate } from "react-router";
 
 export function NavUser() {
     const auth = useAuthUser()
+    const { logout } = useAuthActions();
     const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            navigate("/login");
+        } catch {
+            // Error durante el logout
+        }
+    };
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -17,7 +27,7 @@ export function NavUser() {
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 text-left">
-                        <span className="block font-semibold text-base text-white">{auth?.full_name || "Username"}</span>
+                        <span className="block font-semibold text-base text-white">{auth?.name+" "+auth?.last_name.charAt(0)+"." || "Username"}</span>
                         <span className="block text-sm text-gray-400">{auth?.phone_number || "phone number"}</span>
                     </div>
                 </div>
@@ -28,7 +38,7 @@ export function NavUser() {
                 align="end"
                 sideOffset={8}
             >
-                <NavLink to={"/porfile"}>
+                <NavLink to={"/profile"}>
                     <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => navigate("/profile")}>
                         <User className="h-5 w-5 text-primary" />
                         <span className="text-gray-300">Perfil</span>
@@ -41,13 +51,16 @@ export function NavUser() {
                     </DropdownMenuItem>
                 </NavLink>
                 <NavLink to={"/user_orders"}>
-                    <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => navigate("/settings")} >
+                    <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => navigate("/user_orders")} >
                         <ShoppingCart className="h-5 w-5 text-primary" />
                         <span className="text-gray-300">Pedidos</span>
                     </DropdownMenuItem>
                 </NavLink>
                 <DropdownMenuSeparator className="bg-gray-800" />
-                <DropdownMenuItem className="gap-3 px-3 py-3 text-base text-red-500 focus:text-red-600 cursor-pointer hover:bg-gray-500/25">
+                <DropdownMenuItem 
+                    className="gap-3 px-3 py-3 text-base text-red-500 focus:text-red-600 cursor-pointer hover:bg-gray-500/25"
+                    onClick={handleLogout}
+                >
                     <LogOut className="h-5 w-5 text-red-500" />
                     Cerrar sesión
                 </DropdownMenuItem>
