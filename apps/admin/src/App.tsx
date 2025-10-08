@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { BrowserRouter as Router } from 'react-router-dom';
+import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/context/AuthContext';
+import { ApiRedirectProvider } from '@/components/ApiRedirectProvider';
 import { AppRoutes } from '@/routes';
 
 // Crear instancia del cliente de React Query
@@ -22,10 +24,13 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <Router>
-            <AppRoutes />
+            <ApiRedirectProvider>
+              <AppRoutes />
+            </ApiRedirectProvider>
           </Router>
         </AuthProvider>
         <ReactQueryDevtools initialIsOpen={false} />
+        <Toaster />
       </QueryClientProvider>
     </div>
   );

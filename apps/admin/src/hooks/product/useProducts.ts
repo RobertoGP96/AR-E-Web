@@ -24,8 +24,8 @@ export function useProducts(filters?: ProductFilters) {
   };
 
   return {
-    products: data?.data ?? [],
-    total: data?.pagination?.count ?? 0,
+    products: data?.results ?? [],
+    total: data?.count ?? 0,
     isLoading,
     isFetching,
     error,

@@ -209,7 +209,7 @@ export const Login: React.FC<LoginProps> = ({
                           placeholder="tu@email.com o +53 1234 5678"
                           type="text"
                           disabled={isLoading}
-                          className="h-11"
+                          className="h-11 bg-white"
                           {...field}
                         />
                       </FormControl>
@@ -238,7 +238,7 @@ export const Login: React.FC<LoginProps> = ({
                             placeholder="••••••••"
                             type={showPassword ? 'text' : 'password'}
                             disabled={isLoading}
-                            className="h-11 pr-10"
+                            className="h-11 pr-10 bg-white"
                             {...field}
                           />
                           <Tooltip>

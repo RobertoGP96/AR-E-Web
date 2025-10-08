@@ -2,78 +2,61 @@
 @import "tailwindcss";
 
 :root {
-  --radius: 0.625rem;
-  /* Paleta Naranja, Blanco y Negro */
-  --background: oklch(1 0 0); /* Blanco puro */
-  --foreground: oklch(0.15 0 0); /* Negro para texto */
-  --card: oklch(0.99 0 0); /* Blanco para tarjetas */
-  --card-foreground: oklch(0.15 0 0); /* Negro para texto en tarjetas */
-  --popover: oklch(1 0 0); /* Blanco para popover */
-  --popover-foreground: oklch(0.15 0 0); /* Negro para texto en popover */
-  --primary: oklch(70.5% 0.213 47.604); /* Naranja vibrante principal */
-  --primary-foreground: oklch(1 0 0); /* Blanco para texto en primario */
-  --secondary: oklch(0.95 0.02 50); /* Naranja muy claro */
-  --secondary-foreground: oklch(0.15 0 0); /* Negro para texto secundario */
-  --muted: oklch(0.92 0 0); /* Gris muy claro neutro */
-  --muted-foreground: oklch(0.45 0 0); /* Gris medio neutro */
-  --accent: oklch(86.903% 0.03444 40.561); /* Naranja brillante para acentos */
-  --accent-foreground: oklch(1 0 0); /* Blanco para texto en acentos */
-  --destructive: oklch(78.131% 0.07626 67.616); /* Rojo naranja para destructivos */
-  --destructive-foreground: oklch(1 0 0); /* Blanco para texto destructivo */
-  --border: oklch(0.85 0 0); /* Borde gris neutro sin tinte */
-  --input: oklch(0.96 0 0); /* Input gris neutro */
-  --ring: oklch(0.68 0.15 50); /* Ring naranja igual al primario */
-  --chart-1: oklch(0.68 0.15 50); /* Naranja principal */
-  --chart-2: oklch(0.75 0.18 45); /* Naranja brillante */
-  --chart-3: oklch(0.58 0.12 55); /* Naranja oscuro */
-  --chart-4: oklch(0.45 0 0); /* Gris neutro para gráficos */
-  --chart-5: oklch(0.85 0.08 48); /* Naranja claro */
-  /* Sidebar con naranja y blanco */
-  --sidebar: oklch(0.68 0.15 50); /* Naranja principal para sidebar */
-  --sidebar-foreground: oklch(1 0 0); /* Blanco para texto del sidebar */
-  --sidebar-primary: oklch(0.15 0 0); /* Negro para elementos activos */
-  --sidebar-primary-foreground: oklch(1 0 0); /* Blanco para texto activo */
-  --sidebar-accent: oklch(83.661% 0.08201 79.699); /* Naranja claro para hover */
-  --sidebar-accent-foreground: oklch(1 0 0); /* Blanco para texto hover */
-  --sidebar-border: oklch(0.75 0 0); /* Borde gris neutro para sidebar */
-  --sidebar-ring: oklch(0.75 0.12 40); /* Ring naranja claro */
-}
-
-.dark {
-  /* Tema oscuro abejas - Tonos nocturnos con acentos naranjas */
-  --background: oklch(0.12 0.02 35); /* Marrón muy oscuro */
-  --foreground: oklch(0.88 0.06 55); /* Naranja claro para texto */
-  --card: oklch(0.18 0.03 38); /* Marrón oscuro para tarjetas */
-  --card-foreground: oklch(0.88 0.06 55);
-  --popover: oklch(0.18 0.03 38);
-  --popover-foreground: oklch(0.88 0.06 55);
-  --primary: oklch(0.72 0.16 48); /* Naranja dorado brillante */
-  --primary-foreground: oklch(0.12 0.02 35);
-  --secondary: oklch(0.25 0.05 40); /* Marrón medio */
-  --secondary-foreground: oklch(0.88 0.06 55);
-  --muted: oklch(0.22 0 0); /* Gris neutro oscuro */
-  --muted-foreground: oklch(0.65 0 0); /* Gris neutro medio */
-  --accent: oklch(72.691% 0.09519 55.946); /* Naranja miel para acentos */
-  --accent-foreground: oklch(0.12 0.02 35);
-  --destructive: oklch(0.65 0.18 25); /* Rojo anaranjado más claro */
-  --destructive-foreground: oklch(36.484% 0.00136 15.538); /* Blanco para texto destructivo */
-  --border: oklch(0.30 0 0); /* Borde gris neutro oscuro */
-  --input: oklch(0.25 0 0); /* Input gris neutro oscuro */
-  --ring: oklch(0.68 0.15 48);
-  --chart-1: oklch(0.72 0.16 48); /* Naranja dorado */
-  --chart-2: oklch(0.58 0.12 55); /* Naranja miel */
-  --chart-3: oklch(0.45 0.08 42); /* Marrón miel oscuro */
-  --chart-4: oklch(0.35 0 0); /* Gris neutro muy oscuro */
-  --chart-5: oklch(0.75 0.14 60); /* Amarillo naranja */
-  /* Sidebar oscuro con acentos naranjas */
-  --sidebar: oklch(0.15 0.03 38); /* Fondo oscuro */
-  --sidebar-foreground: oklch(0.82 0.08 52); /* Texto naranja claro */
-  --sidebar-primary: oklch(0.68 0.15 48); /* Naranja dorado para activos */
-  --sidebar-primary-foreground: oklch(0.12 0.02 35);
-  --sidebar-accent: oklch(0.25 0.05 42); /* Hover marrón claro */
-  --sidebar-accent-foreground: oklch(0.85 0.08 55);
-  --sidebar-border: oklch(0.32 0 0); /* Borde gris neutro oscuro */
-  --sidebar-ring: oklch(0.62 0.12 50);
+  --radius: 0.75rem;
+  
+  /* 🎨 Tema Claro Profesional - Naranja, Gris y Blanco */
+  
+  /* Fondos Base - Blancos y Grises Muy Claros */
+  --background: oklch(99% 0 0); /* Blanco casi puro */
+  --foreground: oklch(25% 0.01 270); /* Gris muy oscuro para texto */
+  
+  /* Tarjetas y Superficies - Blanco Puro */
+  --card: oklch(100% 0 0); /* Blanco puro para tarjetas */
+  --card-foreground: oklch(25% 0.01 270);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(25% 0.01 270);
+  
+  /* Color Primario - Naranja Vibrante */
+  --primary: oklch(65.714% 0.16341 44.35); /* Naranja profesional y vibrante */
+  --primary-foreground: oklch(100% 0 0); /* Blanco para texto */
+  
+  /* Color Secundario - Gris Medio */
+  --secondary: oklch(92% 0.005 270); /* Gris muy claro con tinte neutro */
+  --secondary-foreground: oklch(30% 0.01 270); /* Gris oscuro */
+  
+  /* Elementos Silenciados - Grises Suaves */
+  --muted: oklch(95% 0.005 270); /* Gris muy claro */
+  --muted-foreground: oklch(50% 0.01 270); /* Gris medio para texto secundario */
+  
+  /* Acentos - Naranja Claro */
+  --accent: oklch(88% 0.08 45); /* Naranja muy claro para fondos de hover */
+  --accent-foreground: oklch(30% 0.01 270); /* Texto oscuro */
+  
+  /* Destructivos - Rojo Coral Claro */
+  --destructive: oklch(58% 0.20 25); /* Rojo coral profesional */
+  --destructive-foreground: oklch(100% 0 0);
+  
+  /* Bordes y Inputs - Grises Sutiles */
+  --border: oklch(87% 0.005 270); /* Borde gris claro */
+  --input: oklch(96% 0.005 270); /* Input gris muy claro */
+  --ring: oklch(62% 0.20 40); /* Ring naranja igual al primario */
+  
+  /* Gráficos - Paleta Clara y Armoniosa */
+  --chart-1: oklch(62% 0.20 40); /* Naranja primario */
+  --chart-2: oklch(55% 0.18 30); /* Naranja oscuro */
+  --chart-3: oklch(70% 0.15 50); /* Naranja claro */
+  --chart-4: oklch(55% 0.01 270); /* Gris medio */
+  --chart-5: oklch(75% 0.12 60); /* Ámbar suave */
+  
+  /* Sidebar - Combinación Elegante */
+  --sidebar: oklch(97% 0.005 270); /* Gris casi blanco */
+  --sidebar-foreground: oklch(30% 0.01 270); /* Texto gris oscuro */
+  --sidebar-primary: oklch(62% 0.20 40); /* Naranja para activos */
+  --sidebar-primary-foreground: oklch(100% 0 0); /* Blanco */
+  --sidebar-accent: oklch(90% 0.08 45); /* Naranja claro para hover */
+  --sidebar-accent-foreground: oklch(30% 0.01 270);
+  --sidebar-border: oklch(90% 0.005 270); /* Borde gris claro */
+  --sidebar-ring: oklch(62% 0.20 40);
 }
 
 @theme inline {

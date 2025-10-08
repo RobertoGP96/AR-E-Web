@@ -24,8 +24,8 @@ export function useShops(filters?: ShopFilters) {
   };
 
   return {
-    shops: data?.data ?? [],
-    total: data?.pagination?.count ?? 0,
+    shops: data?.results ?? [],
+    total: data?.count ?? 0,
     isLoading,
     isFetching,
     error,

@@ -13,6 +13,7 @@
     "dev:backend": "cd backend && python manage.py runserver",
     "build": "pnpm build:client && pnpm build:admin",
     "build:client": "pnpm --filter client build",
+    "build:client:vercel": "pnpm --filter client build:vercel",
     "build:admin": "pnpm --filter admin build",
     "lint": "pnpm --filter \"./apps/*\" lint",
     "lint:admin": "pnpm --filter \"./apps/admin/*\" lint",

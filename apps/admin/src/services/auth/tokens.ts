@@ -3,16 +3,15 @@
  */
 
 import { apiClient } from '../../lib/api-client';
-import type { ApiResponse } from '../../types';
 
 /**
  * Refresca el token de acceso usando el refresh token
  */
-export const refreshToken = async (): Promise<ApiResponse<{
+export const refreshToken = async (): Promise<{
   access_token: string;
   refresh_token: string;
   expires_in: number;
-}>> => {
+}> => {
   const refreshToken = localStorage.getItem('refresh_token');
   
   if (!refreshToken) {
@@ -27,14 +26,12 @@ export const refreshToken = async (): Promise<ApiResponse<{
     refresh: refreshToken
   });
   
-  if (response.data) {
-    // Actualizar tokens en localStorage
-    localStorage.setItem('access_token', response.data.access_token);
-    localStorage.setItem('refresh_token', response.data.refresh_token);
-    
-    // Actualizar token en el cliente API
-    apiClient.setAuthToken(response.data.access_token);
-  }
+  // Actualizar tokens en localStorage
+  localStorage.setItem('access_token', response.access_token);
+  localStorage.setItem('refresh_token', response.refresh_token);
+  
+  // Actualizar token en el cliente API
+  apiClient.setAuthToken(response.access_token);
   
   return response;
 };
@@ -43,7 +40,7 @@ export const refreshToken = async (): Promise<ApiResponse<{
  * Verifica si el token actual es válido
  * Nota: Este endpoint no existe en el backend actual
  */
-// export const verifyToken = async (): Promise<ApiResponse<{ valid: boolean }>> => {
+// export const verifyToken = async (): Promise<{ valid: boolean }> => {
 //   return await apiClient.post<{ valid: boolean }>('/auth/token/verify/');
 // };
 
@@ -51,6 +48,6 @@ export const refreshToken = async (): Promise<ApiResponse<{
  * Invalida el token actual
  * Nota: Este endpoint no existe en el backend actual
  */
-// export const blacklistToken = async (): Promise<ApiResponse<void>> => {
+// export const blacklistToken = async (): Promise<void> => {
 //   return await apiClient.post<void>('/auth/token/blacklist/');
 // };

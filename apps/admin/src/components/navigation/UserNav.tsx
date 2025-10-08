@@ -1,12 +1,23 @@
-import { useAuthUser } from "@/hooks/auth/useAuth";
+import { useAuth } from "@/hooks/auth/useAuth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { LogOut, Settings, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export function NavUser() {
-    const auth = useAuthUser()
+    const { user: auth, logout } = useAuth()
     const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            toast.success('Sesión cerrada exitosamente');
+        } catch (error) {
+            toast.error('Error al cerrar sesión');
+            console.error('Logout error:', error);
+        }
+    };
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -51,7 +62,10 @@ export function NavUser() {
                     <span className="group-hover:text-orange-700">Configuración</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-gray-100" />
-                <DropdownMenuItem className="gap-3 px-3 py-3 text-base text-red-600 focus:text-red-600 cursor-pointer hover:bg-red-50">
+                <DropdownMenuItem 
+                    className="gap-3 px-3 py-3 text-base text-red-600 focus:text-red-600 cursor-pointer hover:bg-red-50"
+                    onClick={handleLogout}
+                >
                     <LogOut className="h-5 w-5" />
                     Cerrar sesión
                 </DropdownMenuItem>

@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Truck
 } from 'lucide-react';
+import { toast } from 'sonner';
 import logoSvg from '@/assets/logo/logo.svg';
 import {
   DropdownMenu,
@@ -82,6 +83,16 @@ export function AsideNav() {
   const { logout, user, } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Sesión cerrada exitosamente');
+    } catch (error) {
+      toast.error('Error al cerrar sesión');
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <aside className="w-64 bg-gradient-to-b from-gray-900 to-gray-800 shadow-lg border-r border-gray-700 flex flex-col h-full">
@@ -205,7 +216,10 @@ export function AsideNav() {
               <span className="group-hover:text-orange-700">Configuración</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-gray-100" />
-            <DropdownMenuItem className="gap-3 px-3 py-3 text-base text-red-600 focus:text-red-600 cursor-pointer hover:bg-red-50">
+            <DropdownMenuItem 
+              className="gap-3 px-3 py-3 text-base text-red-600 focus:text-red-600 cursor-pointer hover:bg-red-50"
+              onClick={handleLogout}
+            >
               <LogOut className="h-5 w-5" />
               Cerrar sesión
             </DropdownMenuItem>

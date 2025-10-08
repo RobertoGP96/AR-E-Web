@@ -13,7 +13,7 @@ export function useOrder(orderId: number) {
     isLoading,
     isFetching,
     refetch,
-  } = useQuery<import('../../types/api').ApiResponse<Order>, Error>({
+  } = useQuery<Order, Error>({
     queryKey: ['order', orderId],
     queryFn: () => getOrderById(orderId),
     enabled: !!orderId,
@@ -25,7 +25,7 @@ export function useOrder(orderId: number) {
   };
 
   return {
-    order: data?.data,
+    order: data,
     isLoading,
     isFetching,
     error,

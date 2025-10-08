@@ -336,15 +336,50 @@ python manage.py test --verbosity=2
 
 ## 🌐 Despliegue
 
-### **🔧 Frontend:**
-- **Vercel/Netlify** - Recomendado para React apps
-- **Build estático** con `pnpm build`
+### **� Cliente App - Deploy Automático en Vercel**
+
+#### **Configuración (Una sola vez):**
+
+1. **Conecta tu repositorio a Vercel:**
+   - Ve a [vercel.com](https://vercel.com)
+   - Importa el repositorio `RobertoGP96/AR-E-Web`
+   - Usa la configuración del `vercel.json` (ya incluido)
+
+2. **Variables de Entorno en Vercel:**
+   ```
+   VITE_API_URL=https://ar-e-web.onrender.com/arye_system
+   VITE_APP_ENV=production
+   VITE_APP_NAME=AR-E-Web Client
+   VITE_DEPLOY_TARGET=vercel
+   ```
+
+3. **Deploy Automático:**
+   - Cada push a `main` → Deploy automático
+   - Cada Pull Request → Preview deploy
+
+#### **Pre-Deploy Check:**
+```powershell
+cd apps/client
+.\pre-deploy-check.ps1  # Verifica que todo esté listo
+```
+
+📖 **Guía completa**: [`VERCEL_DEPLOY_CLIENT.md`](./VERCEL_DEPLOY_CLIENT.md)
+
+---
+
+### **🔧 Admin Panel:**
+- **Cloudflare Pages** - Configurado con Wrangler
+- **Deploy automático** desde GitHub
+- Ver `apps/admin/CLOUDFLARE_DEPLOYMENT_GUIDE.md`
+
+---
 
 ### **🔧 Backend:**
-- **Railway/Heroku** - Configurado con Gunicorn
+- **Render.com** - Configurado con Gunicorn
 - **PostgreSQL** - Base de datos de producción
 - **Cloudinary** - Almacenamiento de medios
 - **WhiteNoise** - Archivos estáticos
+- Ver `backend/RENDER_DEPLOYMENT_GUIDE.md`
 
 ---
 

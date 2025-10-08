@@ -44,7 +44,7 @@ export default function UsersTable({
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
         <div className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center gap-3">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-orange-400"></div>
             <p className="text-sm text-gray-500">Cargando usuarios...</p>
           </div>
         </div>
@@ -106,9 +106,11 @@ export default function UsersTable({
         <TableBody>
           {users.map((user, index) => {
             const RoleIcon = roleIcons[user.role];
+            // Usar user_id si existe, sino usar id
+            const userId = user.user_id ?? user.id;
             return (
               <TableRow
-                key={user.id}
+                key={userId}
                 className="cursor-pointer group "
                 onClick={() => onUserClick?.(user)}
               >

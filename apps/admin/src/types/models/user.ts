@@ -19,6 +19,7 @@ export type UserRole =
 export interface CustomUser {
   // Account data
   id: ID;
+  user_id?: ID; // Alias para la API de Django (puede venir como user_id)
   email: string;
   name: string;
   last_name: string;

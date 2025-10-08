@@ -3,12 +3,12 @@
  */
 
 import { apiClient } from '../../lib/api-client';
-import type { CustomUser, CreateUserData, ApiResponse } from '../../types';
+import type { CustomUser, CreateUserData } from '../../types';
 
 /**
  * Crea un nuevo usuario
  */
-export const createUser = async (userData: CreateUserData): Promise<ApiResponse<CustomUser>> => {
+export const createUser = async (userData: CreateUserData): Promise<CustomUser> => {
   return await apiClient.post<CustomUser>('/api_data/user/', userData);
 };
 

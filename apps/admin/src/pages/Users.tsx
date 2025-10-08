@@ -53,7 +53,7 @@ const Users = () => {
         onStatusFilterChange={setStatusFilter}
       />
       <UsersTable 
-        users={data?.data}
+        users={data?.results}
         isLoading={isLoading}
         error={error ? String(error) : null}
       />

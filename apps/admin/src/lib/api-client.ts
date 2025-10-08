@@ -13,7 +13,6 @@ import type {
   InternalAxiosRequestConfig
 } from 'axios';
 import type { 
-  ApiResponse, 
   PaginatedApiResponse, 
   AuthResponse, 
   LoginCredentials,
@@ -64,6 +63,20 @@ interface ApiErrorResponse {
   isNetworkError?: boolean;
   isServerError?: boolean;
   isClientError?: boolean;
+}
+
+// Callback para redirigir al login (se puede configurar desde fuera)
+let redirectToLoginCallback: (() => void) | null = null;
+
+// Callback para mostrar notificaciones (se puede configurar desde fuera)
+let showNotificationCallback: ((message: string, type: 'success' | 'error' | 'info' | 'warning') => void) | null = null;
+
+export function setRedirectToLoginCallback(callback: () => void) {
+  redirectToLoginCallback = callback;
+}
+
+export function setShowNotificationCallback(callback: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void) {
+  showNotificationCallback = callback;
 }
 
 // Clase principal del API Client
@@ -175,6 +188,11 @@ export class ApiClient {
       } catch (refreshError) {
         console.error('Error refreshing token:', refreshError);
       }
+    }
+
+    // Mostrar notificación de sesión expirada
+    if (showNotificationCallback) {
+      showNotificationCallback('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning');
     }
 
     // Redirigir a login si no se puede refreshear
@@ -344,67 +362,77 @@ export class ApiClient {
    * Redirige a la página de login
    */
   private redirectToLogin() {
-    // Aquí implementarías la lógica de redirección según tu router
-    window.location.href = '/login';
+    // Usar callback si está configurado (React Router)
+    if (redirectToLoginCallback) {
+      redirectToLoginCallback();
+    } else {
+      // Fallback a redirección directa
+      window.location.href = '/login';
+    }
   }
 
   // Métodos HTTP públicos
 
   /**
    * GET request
+   * Django REST Framework devuelve directamente los datos, no envueltos en ApiResponse
    */
   public async get<T = unknown>(
     url: string, 
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await this.client.get<ApiResponse<T>>(url, config);
+  ): Promise<T> {
+    const response = await this.client.get<T>(url, config);
     return response.data;
   }
 
   /**
    * POST request
+   * Django REST Framework devuelve directamente los datos, no envueltos en ApiResponse
    */
   public async post<T = unknown>(
     url: string, 
     data?: unknown, 
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await this.client.post<ApiResponse<T>>(url, data, config);
+  ): Promise<T> {
+    const response = await this.client.post<T>(url, data, config);
     return response.data;
   }
 
   /**
    * PUT request
+   * Django REST Framework devuelve directamente los datos, no envueltos en ApiResponse
    */
   public async put<T = unknown>(
     url: string, 
     data?: unknown, 
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await this.client.put<ApiResponse<T>>(url, data, config);
+  ): Promise<T> {
+    const response = await this.client.put<T>(url, data, config);
     return response.data;
   }
 
   /**
    * PATCH request
+   * Django REST Framework devuelve directamente los datos, no envueltos en ApiResponse
    */
   public async patch<T = unknown>(
     url: string, 
     data?: unknown, 
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await this.client.patch<ApiResponse<T>>(url, data, config);
+  ): Promise<T> {
+    const response = await this.client.patch<T>(url, data, config);
     return response.data;
   }
 
   /**
    * DELETE request
+   * Django REST Framework devuelve directamente los datos, no envueltos en ApiResponse
    */
   public async delete<T = unknown>(
     url: string, 
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await this.client.delete<ApiResponse<T>>(url, config);
+  ): Promise<T> {
+    const response = await this.client.delete<T>(url, config);
     return response.data;
   }
 
@@ -420,7 +448,7 @@ export class ApiClient {
       ...config,
       params: {
         page: 1,
-        per_page: 20,
+        page_size: 20, // DRF usa page_size en lugar de per_page
         ...params,
       },
     });
@@ -436,11 +464,11 @@ export class ApiClient {
     config?: RequestConfig & {
       onUploadProgress?: (progressEvent: unknown) => void;
     }
-  ): Promise<ApiResponse<unknown>> {
+  ): Promise<unknown> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await this.client.post<ApiResponse<unknown>>(url, formData, {
+    const response = await this.client.post<unknown>(url, formData, {
       ...config,
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -515,7 +543,7 @@ export class ApiClient {
   /**
    * Registro de usuario
    */
-  public async register(userData: RegisterData): Promise<ApiResponse<unknown>> {
+  public async register(userData: RegisterData): Promise<unknown> {
     return this.post('/register/', userData, { skipAuth: true });
   }
 
@@ -545,8 +573,8 @@ export class ApiClient {
   /**
    * Obtiene información del usuario actual
    */
-  public async getCurrentUser(): Promise<ApiResponse<unknown>> {
-    return this.get('/user/');
+  public async getCurrentUser(): Promise<CustomUser> {
+    return this.get<CustomUser>('/user/');
   }
 }
 

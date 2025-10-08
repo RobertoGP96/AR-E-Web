@@ -1,9 +1,9 @@
 {
   "framework": "vite",
-  "buildCommand": "cd apps/client && pnpm build:vercel",
-  "outputDirectory": "apps/client/dist",
+  "buildCommand": "pnpm build:vercel",
+  "outputDirectory": "dist",
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "devCommand": "cd apps/client && pnpm dev",
+  "devCommand": "pnpm dev",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
