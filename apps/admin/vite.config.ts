@@ -4,7 +4,7 @@ import path from "path";
 import { defineConfig } from "vite";
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode }: { mode: string }) => {
   const isProduction = mode === 'production';
   
   return {
@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       assetsDir: 'assets',
       sourcemap: !isProduction, // Solo en desarrollo
-      minify: isProduction ? 'terser' : false,
+      minify: isProduction ? 'terser' as const : false,
       target: 'es2020', // Mejor compatibilidad para Cloudflare
       terserOptions: isProduction ? {
         compress: {
@@ -90,11 +90,11 @@ export default defineConfig(({ mode }) => {
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version)
     },
     // Configuración específica para Cloudflare Pages
-    esbuild: {
-      legalComments: 'none',
-      ...(isProduction && {
-        drop: ['console', 'debugger']
-      })
-    }
+    esbuild: isProduction ? {
+      legalComments: 'none' as const,
+      minifyIdentifiers: true,
+      minifySyntax: true,
+      minifyWhitespace: true
+    } : undefined
   }
 });
