@@ -48,7 +48,7 @@ export const OrderStatusLabel = ({
         switch (status) {
             case "Encargado":
                 return OrderStatusVariants.ordered
-            case "En proceso":
+            case "Procesando":
                 return OrderStatusVariants.procesing
             case "Cancelado":
                 return OrderStatusVariants.canceled
@@ -81,7 +81,7 @@ export const PaymentStatusLabel = ({
                 return PaymentVariants.paid
             case "Parcial":
                 return PaymentVariants.partial
-            case "Pendiente":
+            case "No pagado":
                 return PaymentVariants.unpaid
         }
     }

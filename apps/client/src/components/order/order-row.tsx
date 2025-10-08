@@ -27,7 +27,7 @@ const OrderRow = ({ order }: { order: Order }) => {
                     <div className='flex flex-row gap-1 items-center min-w-0'>
                         <Clock className='h-3 w-3 md:h-4 md:w-4 text-gray-400 flex-shrink-0' />
                         <span className='text-gray-400 text-xs md:text-sm truncate'>
-                            {formatDateTime(new Date(order.create_at as string))}
+                            {formatDateTime(new Date(order.created_at as string))}
                         </span>
                     </div>
                 </div>
