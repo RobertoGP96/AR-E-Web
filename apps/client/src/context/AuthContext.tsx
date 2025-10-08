@@ -5,13 +5,15 @@
  * persistencia de sesión y verificación de permisos.
  */
 
-import { createContext, useReducer, useEffect, useCallback } from 'react';
+import { createContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { apiClient } from '@/lib';
 import { 
   getStoredValue, 
   setStoredValue, 
   clearAuthStorage,
+  validateAuthData,
+  migrateAuthData,
   STORAGE_KEYS 
 } from '@/utils/storage';
 import type { 
@@ -56,18 +58,37 @@ interface AuthContextType extends AuthState {
 
 // Función para obtener el estado inicial con datos persistidos
 const getInitialState = (): AuthState => {
+  // Migrar datos antiguos o corruptos
+  migrateAuthData();
+  
+  // Validar integridad de los datos
+  const validation = validateAuthData();
+  
+  if (!validation.isValid) {
+    // Si los datos no son válidos, empezar con estado limpio
+    clearAuthStorage();
+    return {
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+      permissions: [],
+      lastActivity: null,
+    };
+  }
+  
   const storedUser = getStoredValue<CustomUser | null>(STORAGE_KEYS.USER, null);
   const storedPermissions = getStoredValue<string[]>(STORAGE_KEYS.PERMISSIONS, []);
   const storedLastActivity = getStoredValue<string | null>(STORAGE_KEYS.LAST_ACTIVITY, null);
   
-  // Solo considerar autenticado si hay token Y usuario almacenado
-  const hasToken = !!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-  const isAuthenticated = hasToken && !!storedUser;
+  // Solo considerar autenticado si hay token Y usuario almacenado Y la validación pasó
+  const hasToken = validation.hasToken;
+  const isAuthenticated = hasToken && !!storedUser && validation.hasConsistentData;
   
   return {
     user: storedUser,
     isAuthenticated,
-    isLoading: hasToken, // Solo mostrar loading si hay token para verificar
+    isLoading: hasToken && !isAuthenticated, // Solo mostrar loading si hay token pero datos inconsistentes
     error: null,
     permissions: storedPermissions,
     lastActivity: storedLastActivity ? new Date(storedLastActivity) : null,
@@ -98,10 +119,17 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         lastActivity: new Date(),
       };
       
-      // Persistir datos en localStorage
-      setStoredValue(STORAGE_KEYS.USER, action.payload.user);
-      setStoredValue(STORAGE_KEYS.PERMISSIONS, action.payload.permissions);
-      setStoredValue(STORAGE_KEYS.LAST_ACTIVITY, newState.lastActivity.toISOString());
+      // Persistir datos en localStorage de manera robusta
+      const userStored = setStoredValue(STORAGE_KEYS.USER, action.payload.user);
+      const permissionsStored = setStoredValue(STORAGE_KEYS.PERMISSIONS, action.payload.permissions);
+      const activityStored = setStoredValue(STORAGE_KEYS.LAST_ACTIVITY, newState.lastActivity.toISOString());
+      
+      // Si falló el almacenamiento, mostrar advertencia pero continuar
+      if (!userStored || !permissionsStored || !activityStored) {
+        if (import.meta.env.DEV) {
+          console.warn('Some auth data could not be persisted to localStorage');
+        }
+      }
       
       return newState;
     }
@@ -141,8 +169,11 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         user: action.payload,
       };
       
-      // Persistir usuario actualizado
-      setStoredValue(STORAGE_KEYS.USER, action.payload);
+      // Persistir usuario actualizado de manera robusta
+      const stored = setStoredValue(STORAGE_KEYS.USER, action.payload);
+      if (!stored && import.meta.env.DEV) {
+        console.warn('Updated user data could not be persisted to localStorage');
+      }
       
       return newState;
     }
@@ -153,8 +184,11 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         lastActivity: new Date(),
       };
       
-      // Persistir última actividad
-      setStoredValue(STORAGE_KEYS.LAST_ACTIVITY, newState.lastActivity.toISOString());
+      // Persistir última actividad de manera robusta
+      const stored = setStoredValue(STORAGE_KEYS.LAST_ACTIVITY, newState.lastActivity.toISOString());
+      if (!stored && import.meta.env.DEV) {
+        console.warn('Activity data could not be persisted to localStorage');
+      }
       
       return newState;
     }
@@ -181,30 +215,63 @@ interface AuthProviderProps {
 // Componente proveedor del contexto
 export function AuthProvider({ children }: AuthProviderProps) {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const hasCheckedAuth = useRef(false);
+  const isCheckingAuth = useRef(false);
 
   /**
    * Verifica si existe un token válido al cargar la aplicación
    */
   const checkExistingAuth = useCallback(async () => {
-    // Si no hay token, no hacer nada (el estado inicial ya maneja esto)
+    // Evitar múltiples verificaciones simultáneas
+    if (isCheckingAuth.current || hasCheckedAuth.current) {
+      return;
+    }
+
+    // Verificar validación de datos antes de proceder
+    const validation = validateAuthData();
+    
+    // Si no hay datos válidos, limpiar y salir
+    if (!validation.isValid || !validation.hasToken) {
+      hasCheckedAuth.current = true;
+      if (state.isLoading) {
+        dispatch({ type: 'AUTH_ERROR', payload: 'No valid authentication data found' });
+      }
+      return;
+    }
+
+    // Si no hay autenticación del cliente API, limpiar datos locales
     if (!apiClient.isAuthenticated()) {
+      hasCheckedAuth.current = true;
+      clearAuthStorage();
       if (state.isLoading) {
         dispatch({ type: 'AUTH_ERROR', payload: 'No authentication token found' });
       }
       return;
     }
 
-    // Si ya tenemos datos del usuario persistidos y estamos autenticados, no hacer nueva llamada
-    if (state.user && state.isAuthenticated && !state.isLoading) {
+    // Si ya tenemos datos del usuario válidos y estamos autenticados, no hacer nueva llamada
+    if (state.user && state.isAuthenticated && !state.isLoading && validation.hasConsistentData) {
+      hasCheckedAuth.current = true;
+      return;
+    }
+
+    // Evitar múltiples llamadas simultáneas
+    if (state.isLoading && !isCheckingAuth.current) {
       return;
     }
 
     try {
+      isCheckingAuth.current = true;
       dispatch({ type: 'AUTH_START' });
       
       // Obtener información del usuario actual
       const response = await apiClient.getCurrentUser();
       const user = response.data as CustomUser;
+      
+      // Verificar que el usuario obtenido sea válido
+      if (!user || !user.id) {
+        throw new Error('Invalid user data received from server');
+      }
       
       // Por ahora, permissions vacío hasta implementar sistema de permisos
       const permissions: string[] = [];
@@ -216,10 +283,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
           permissions 
         } 
       });
-    } catch {
+      
+      hasCheckedAuth.current = true;
+    } catch (error) {
       // Error verifying existing auth
       apiClient.clearAuthToken();
-      dispatch({ type: 'AUTH_ERROR', payload: 'Invalid authentication token' });
+      clearAuthStorage();
+      
+      const errorMessage = error instanceof Error ? error.message : 'Invalid authentication token';
+      dispatch({ type: 'AUTH_ERROR', payload: errorMessage });
+      hasCheckedAuth.current = true;
+    } finally {
+      isCheckingAuth.current = false;
     }
   }, [state.user, state.isAuthenticated, state.isLoading]);
 
@@ -279,6 +354,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch {
       // Error during logout
     } finally {
+      // Resetear referencias de verificación
+      hasCheckedAuth.current = false;
+      isCheckingAuth.current = false;
       dispatch({ type: 'AUTH_LOGOUT' });
     }
   }, []);
@@ -289,12 +367,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const refreshAuth = useCallback(async (): Promise<void> => {
     if (!apiClient.isAuthenticated()) {
       dispatch({ type: 'AUTH_LOGOUT' });
+      hasCheckedAuth.current = false;
       return;
     }
 
     try {
       const response = await apiClient.getCurrentUser();
       const user = response.data as CustomUser;
+      
+      // Verificar que el usuario obtenido sea válido
+      if (!user || !user.id) {
+        throw new Error('Invalid user data received from server');
+      }
+      
       // Por ahora, permissions vacío hasta implementar sistema de permisos
       const permissions: string[] = [];
       
@@ -358,7 +443,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Verificar autenticación existente al montar el componente
   useEffect(() => {
-    checkExistingAuth();
+    // Solo verificar si no se ha hecho antes
+    if (!hasCheckedAuth.current) {
+      checkExistingAuth();
+    }
   }, [checkExistingAuth]);
 
   // Configurar listener para actividad del usuario
@@ -427,3 +515,19 @@ export { AuthContext };
 
 // Export por defecto del proveedor
 export default AuthProvider;
+
+/* 
+ * MEJORAS IMPLEMENTADAS PARA PERSISTENCIA EN PRODUCCIÓN:
+ * 
+ * 1. Validación de integridad de datos almacenados
+ * 2. Migración automática de datos corruptos
+ * 3. Manejo robusto de errores de localStorage (modo incógnito, cuota excedida)
+ * 4. Verificación de consistencia entre token y datos de usuario
+ * 5. Optimización para evitar múltiples verificaciones simultáneas
+ * 6. Límites de tiempo para datos de actividad (auto-limpieza después de 7 días)
+ * 7. Recuperación automática en caso de datos inconsistentes
+ * 8. Mejor manejo de fallos en persistencia sin afectar la funcionalidad
+ * 
+ * Estas mejoras aseguran que los datos del usuario persistan correctamente
+ * al recargar la página, incluso en entornos de producción con limitaciones.
+ */

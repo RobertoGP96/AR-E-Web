@@ -19,19 +19,23 @@ export interface Order {
   status: OrderStatus;
   pay_status: PayStatus;
   
-  //Productos
+  //Productos y entregas
   delivery: DeliverReceip[];
   products: Product[]
     
-  //Money
+  //Money - propiedades computadas
+  total_cost: number;
   received_value_of_client?: number;
   extra_payments?: number;
-  total_cost: number;
+
+  // Propiedades computadas adicionales del backend
+  total_products_requested: number;
+  total_products_purchased: number;
+  total_products_delivered: number;
 
   //Date
-  create_at?:string
-  update_at?:string
-  
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Tipos para crear/editar pedido

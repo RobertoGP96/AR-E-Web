@@ -9,41 +9,40 @@ export type DateTime = string; // ISO string format
 export type Date = string; // ISO date format
 
 // Union types para estados
-export type OrderStatus = "Encargado" | "En proceso" | "Completado" | "Cancelado";
-export type PayStatus = "Pendiente" | "Pagado" | "Parcial";
-export type ProductStatus = "Encargado" | "Comprado" | "Recivido" | "Entregado";
-export type ShoppingStatus = "Pendiente" | "Pagado" | "En proceso";
-export type DeliveryStatus = "Enviado" | "In Transit" | "Entregado";
-export type PackageStatus = "Enviado" | "Procesado" | "Recivido";
+export type OrderStatus = "Encargado" | "Procesando" | "Completado" | "Cancelado";
+export type PayStatus = "No pagado" | "Pagado" | "Parcial";
+export type ProductStatus = "Encargado" | "Procesando" | "Completado" | "Cancelado"; // Usa los mismos estados que Order
+export type ShoppingStatus = "No pagado" | "Pagado" | "Parcial"; // Usa los mismos estados que Payment
+export type DeliveryStatus = "Pendiente" | "En transito" | "Entregado" | "Fallida";
+export type PackageStatus = "Encargado" | "Procesando" | "Completado" | "Cancelado"; // Usa los mismos estados que Order
 
 // Constantes para los valores
 export const ORDER_STATUSES = {
-  ORDERED: "Encargado",
-  PROCESSING: "Enproceso", 
-  COMPLETED: "Completado",
-  CANCELLED: "Cancelado"
+  ENCARGADO: "Encargado",
+  PROCESANDO: "Procesando", 
+  COMPLETADO: "Completado",
+  CANCELADO: "Cancelado"
 } as const;
 
 export const PAY_STATUSES = {
-  UNPAID: "Unpaid",
-  PAID: "Paid",
-  PARTIAL: "Partial"
+  NO_PAGADO: "No pagado",
+  PAGADO: "Pagado",
+  PARCIAL: "Parcial"
 } as const;
 
 export const PRODUCT_STATUSES = {
-  ORDERED: "Ordered",
-  PURCHASED: "Purchased",
-  RECEIVED: "Received",
-  DELIVERED: "Delivered"
+  ENCARGADO: "Encargado",
+  PROCESANDO: "Procesando",
+  COMPLETADO: "Completado",
+  CANCELADO: "Cancelado"
 } as const;
-
 
 export const DELIVERY_STATUSES = {
-  SENT: "Sent",
-  IN_TRANSIT: "In Transit",
-  DELIVERED: "Delivered"
+  PENDIENTE: "Pendiente",
+  EN_TRANSITO: "En transito",
+  ENTREGADO: "Entregado",
+  FALLIDA: "Fallida"
 } as const;
 
-
-// Tipos de roles de usuario
-export type UserRole = 'agent' | 'accountant' | 'buyer' | 'logistical' | 'community_manager' | 'client';
+// Tipos de roles de usuario (corregido con 'user' faltante)
+export type UserRole = 'user' | 'agent' | 'accountant' | 'buyer' | 'logistical' | 'community_manager' | 'admin' | 'client';

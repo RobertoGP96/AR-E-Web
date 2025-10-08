@@ -7,23 +7,11 @@ import LoadingSpinner from '@/components/utils/loading-spinner'
 import useAuth from '@/hooks/auth/useAuth'
 import { useOrders } from '@/hooks/order/useOrders'
 import { OrderFilters } from '@/types/api'
-import { Order } from '@/types/order'
 
 import { ShoppingBag } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 
-const mockOrders: Order[] = [{
-    id: 1,
-    delivery: [],
-    extra_payments: 0,
-    pay_status: 'Pendiente',
-    products: [],
-    total_cost: 100.0,
-    status: 'Completado',
-    create_at: new Date().toDateString()
-
-}]
 
 export default function UserOrders() {
     const [isVisible, setIsVisible] = useState(false)
@@ -82,17 +70,6 @@ export default function UserOrders() {
                             <div 
                                 key={item.id} 
                                 className="animate-scale-in" 
-                                style={{ animationDelay: `${index * 100}ms` }}
-                            >
-                                <OrderRow order={item} />
-                            </div>
-                        ))}
-
-
-                        {mockOrders.map((item, index) => (
-                            <div 
-                                key={item.id} 
-                                className="animate-scale-in hover:scale-105 transition-transform duration-300" 
                                 style={{ animationDelay: `${index * 100}ms` }}
                             >
                                 <OrderRow order={item} />

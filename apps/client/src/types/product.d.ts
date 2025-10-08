@@ -2,8 +2,7 @@
  * Tipos para el modelo Product
  */
 
-import type { ID, UUID, ProductStatus } from './base';
-import type { Shop } from './shop';
+import type { ID, UUID, ProductStatus, DateTime } from './base';
 import type { Order } from './order';
 import type { EvidenceImage } from './evidence';
 
@@ -13,11 +12,16 @@ export interface Product {
   sku: string;
   name: string;
   link?: string;
-  shop: Shop;
+  shop: ShopID;
   description?: string;
   observation?: string;
   category?: string;
+  
+  // Nuevos campos para control de cantidades
   amount_requested: number;
+  amount_purchased: number;
+  amount_delivered: number;
+  
   order: Order;
   status: ProductStatus;
   product_pictures: EvidenceImage[];
@@ -29,6 +33,16 @@ export interface Product {
   own_taxes: number;
   added_taxes: number;
   total_cost: number;
+  
+  // Timestamps
+  created_at: DateTime;
+  updated_at: DateTime;
+  
+  // Propiedades computadas
+  pending_purchase: number;
+  pending_delivery: number;
+  is_fully_purchased: boolean;
+  is_fully_delivered: boolean;
 }
 
 // Tipos para crear/editar producto
@@ -41,6 +55,8 @@ export interface CreateProductData {
   observation?: string;
   category?: string;
   amount_requested?: number;
+  amount_purchased?: number;
+  amount_delivered?: number;
   order_id: ID;
   status?: ProductStatus;
   shop_cost?: number;

@@ -5,6 +5,8 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
+  const isProduction = mode === 'production';
+  
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
@@ -15,11 +17,25 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
-      sourcemap: mode === 'development',
-      minify: 'terser',
+      sourcemap: !isProduction, // Solo en desarrollo
+      minify: isProduction ? 'terser' : false,
+      target: 'es2020', // Mejor compatibilidad para Cloudflare
+      terserOptions: isProduction ? {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+        },
+        mangle: {
+          safari10: true,
+        },
+        format: {
+          comments: false,
+        },
+      } : undefined,
       rollupOptions: {
         output: {
           manualChunks: {
+            // Chunks optimizados para Cloudflare
             vendor: ['react', 'react-dom'],
             router: ['react-router-dom'],
             query: ['@tanstack/react-query'],
@@ -35,11 +51,17 @@ export default defineConfig(({ mode }) => {
               '@radix-ui/react-scroll-area',
               '@radix-ui/react-separator',
               '@radix-ui/react-tooltip'
-            ]
-          }
+            ],
+            utils: ['axios', 'clsx', 'tailwind-merge', 'class-variance-authority'],
+            icons: ['lucide-react']
+          },
+          // Optimización para Cloudflare CDN
+          entryFileNames: isProduction ? 'assets/[name]-[hash].js' : 'assets/[name].js',
+          chunkFileNames: isProduction ? 'assets/[name]-[hash].js' : 'assets/[name].js',
+          assetFileNames: isProduction ? 'assets/[name]-[hash].[ext]' : 'assets/[name].[ext]'
         }
       },
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 800, // Reducido para mejor performance en Cloudflare
       cssCodeSplit: true,
     },
     optimizeDeps: {
@@ -66,6 +88,13 @@ export default defineConfig(({ mode }) => {
     base: '/',
     define: {
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version)
+    },
+    // Configuración específica para Cloudflare Pages
+    esbuild: {
+      legalComments: 'none',
+      ...(isProduction && {
+        drop: ['console', 'debugger']
+      })
     }
   }
 });

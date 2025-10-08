@@ -6,7 +6,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, Group, Permission
 from django.utils.translation import gettext_lazy as _
 from api.managers import CustomUserManager
-from api.enums import OrderStatusEnum, PaymentStatusEnum
+from api.enums import OrderStatusEnum, PaymentStatusEnum, DeliveryStatusEnum
 
 # Create your models here.
 
@@ -370,8 +370,8 @@ class DeliverReceip(models.Model):
     weight = models.FloatField()
     status = models.CharField(
         max_length=100,
-        choices=[(tag.value, tag.value) for tag in OrderStatusEnum],
-        default=OrderStatusEnum.ENCARGADO.value
+        choices=[(tag.value, tag.value) for tag in DeliveryStatusEnum],
+        default=DeliveryStatusEnum.PENDIENTE.value
     )
     deliver_date = models.DateTimeField(default=timezone.now)
     deliver_picture = models.ManyToManyField(EvidenceImages, blank=True)

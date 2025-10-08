@@ -38,6 +38,10 @@ export interface CustomUser {
   verification_secret?: string;
   password_secret?: string;
 
+  // Timestamps
+  created_at: DateTime;
+  updated_at: DateTime;
+
   // Django related fields (for compatibility)
   groups?: number[]; // IDs de grupos
   user_permissions?: number[]; // IDs de permisos
