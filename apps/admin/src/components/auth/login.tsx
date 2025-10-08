@@ -10,25 +10,47 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Eye, EyeOff, LogIn, Loader2, Info, Mail } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Loader2, Info, Mail, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { LoginCredentials } from '@/types/api';
 import logoSvg from '@/assets/logo/logo.svg';
 
-// Schema de validación con Zod
+// Función helper para detectar si es email o teléfono
+const detectInputType = (value: string): 'email' | 'phone' | 'unknown' => {
+  const trimmedValue = value.trim();
+  
+  // Detectar email (contiene @ y formato válido)
+  if (trimmedValue.includes('@') && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
+    return 'email';
+  }
+  
+  // Detectar teléfono (solo números, +, espacios, guiones, paréntesis)
+  if (/^[+\d\s\-()]+$/.test(trimmedValue) && trimmedValue.replace(/[\s\-()]/g, '').length >= 8) {
+    return 'phone';
+  }
+  
+  return 'unknown';
+};
+
+// Schema de validación con Zod - Campo flexible para email o teléfono
 const loginSchema = z.object({
-  email: z
+  emailOrPhone: z
     .string()
-    .trim() // Eliminar espacios en blanco al inicio y final
-    .min(1, 'El email es requerido')
-    .email('Ingresa un email válido')
-    .toLowerCase(), // Normalizar a minúsculas para consistencia
+    .trim()
+    .min(1, 'El email o número de teléfono es requerido')
+    .refine(
+      (val) => {
+        const type = detectInputType(val);
+        return type === 'email' || type === 'phone';
+      },
+      'Ingresa un email válido o un número de teléfono válido'
+    ),
   password: z
     .string()
-    .min(1, 'La contraseña es requerida') // Verificar que no esté vacía primero
+    .min(1, 'La contraseña es requerida')
     .min(6, 'La contraseña debe tener al menos 6 caracteres')
-    .max(128, 'La contraseña es demasiado larga') // Aumentado el límite razonable
+    .max(128, 'La contraseña es demasiado larga')
     .refine(
       (val) => val.trim().length === val.length,
       'La contraseña no debe contener espacios al inicio o final'
@@ -61,11 +83,26 @@ export const Login: React.FC<LoginProps> = ({
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      emailOrPhone: '',
       password: '',
       rememberMe: false,
     },
   });
+
+  // Estado para mostrar el icono según el tipo detectado
+  const [inputType, setInputType] = useState<'email' | 'phone' | 'unknown'>('unknown');
+
+  // Watch del campo para detectar el tipo en tiempo real
+  const emailOrPhoneValue = form.watch('emailOrPhone');
+
+  useEffect(() => {
+    if (emailOrPhoneValue) {
+      const detected = detectInputType(emailOrPhoneValue);
+      setInputType(detected);
+    } else {
+      setInputType('unknown');
+    }
+  }, [emailOrPhoneValue]);
 
   // Redirigir si ya está autenticado
   useEffect(() => {
@@ -90,12 +127,15 @@ export const Login: React.FC<LoginProps> = ({
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const credentials: LoginCredentials = {
-        email: data.email,
-        password: data.password,
-      };
+      const inputValue = data.emailOrPhone.trim();
+      const type = detectInputType(inputValue);
       
-      await login(credentials);
+      // Crear credenciales según el tipo detectado
+      const credentials: LoginCredentials & { phone_number?: string } = type === 'email'
+        ? { email: inputValue.toLowerCase(), password: data.password }
+        : { email: '', phone_number: inputValue, password: data.password };
+      
+      await login(credentials as LoginCredentials);
       
       // Si llegamos aquí, el login fue exitoso
       if (onSuccess) {
@@ -104,7 +144,11 @@ export const Login: React.FC<LoginProps> = ({
         navigate(from, { replace: true });
       }
     } catch (err) {
-      console.error('Login failed:', err);
+      // El error ya es manejado por el AuthContext y useAuth
+      // Solo logueamos en consola para debugging
+      if (import.meta.env.DEV) {
+        console.error('Login failed:', err);
+      }
     }
   };
 
@@ -151,23 +195,31 @@ export const Login: React.FC<LoginProps> = ({
                 
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="emailOrPhone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">
-                        <Mail className="inline h-4 w-4 mr-1" />
-                        Correo Electrónico
+                      <FormLabel className="text-gray-700 font-medium flex items-center gap-1">
+                        {inputType === 'email' && <Mail className="h-4 w-4" />}
+                        {inputType === 'phone' && <Phone className="h-4 w-4" />}
+                        {inputType === 'unknown' && <Mail className="h-4 w-4 opacity-50" />}
+                        Email o Teléfono
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="tu@email.com"
-                          type="email"
+                          placeholder="tu@email.com o +53 1234 5678"
+                          type="text"
                           disabled={isLoading}
                           className="h-11"
                           {...field}
                         />
                       </FormControl>
                       <FormMessage />
+                      {inputType !== 'unknown' && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {inputType === 'email' && '✓ Email detectado'}
+                          {inputType === 'phone' && '✓ Teléfono detectado'}
+                        </p>
+                      )}
                     </FormItem>
                   )}
                 />
