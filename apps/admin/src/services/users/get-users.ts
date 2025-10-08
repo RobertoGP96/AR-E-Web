@@ -15,21 +15,21 @@ import type { UserFilters } from '../../types/api';
 export const getUsers = async (
   filters?: UserFilters
 ): Promise<PaginatedApiResponse<CustomUser>> => {
-  return await apiClient.getPaginated<CustomUser>('/users/', filters);
+  return await apiClient.getPaginated<CustomUser>('/api_data/user/', filters);
 };
 
 /**
  * Obtiene un usuario por ID
  */
 export const getUserById = async (id: number) => {
-  return await apiClient.get<CustomUser>(`/users/${id}/`);
+  return await apiClient.get<CustomUser>(`/api_data/user/${id}/`);
 };
 
 /**
  * Obtiene el perfil del usuario actual
  */
 export const getCurrentUserProfile = async () => {
-  return await apiClient.get<CustomUser>('/users/me/');
+  return await apiClient.get<CustomUser>('/user/');
 };
 
 /**
@@ -37,7 +37,7 @@ export const getCurrentUserProfile = async () => {
  */
 export const getUsersByRole = async (role: string, filters?: UserFilters) => {
   const roleFilters = { ...filters, role };
-  return await apiClient.getPaginated<CustomUser>('/users/', roleFilters);
+  return await apiClient.getPaginated<CustomUser>('/api_data/user/', roleFilters);
 };
 
 /**
@@ -45,7 +45,7 @@ export const getUsersByRole = async (role: string, filters?: UserFilters) => {
  */
 export const searchUsers = async (searchTerm: string, filters?: UserFilters) => {
   const searchFilters = { ...filters, search: searchTerm };
-  return await apiClient.getPaginated<CustomUser>('/users/', searchFilters);
+  return await apiClient.getPaginated<CustomUser>('/api_data/user/', searchFilters);
 };
 
 /**

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,11 +9,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Eye, EyeOff, LogIn, Loader2, Info, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/auth/useAuthHook';
+import { useAuth } from '@/hooks/auth/useAuth';
 import type { LoginCredentials } from '@/types/api';
 import logoSvg from '@/assets/logo/logo.svg';
 
@@ -21,12 +20,19 @@ import logoSvg from '@/assets/logo/logo.svg';
 const loginSchema = z.object({
   email: z
     .string()
+    .trim() // Eliminar espacios en blanco al inicio y final
     .min(1, 'El email es requerido')
-    .email('Ingresa un email válido'),
+    .email('Ingresa un email válido')
+    .toLowerCase(), // Normalizar a minúsculas para consistencia
   password: z
     .string()
+    .min(1, 'La contraseña es requerida') // Verificar que no esté vacía primero
     .min(6, 'La contraseña debe tener al menos 6 caracteres')
-    .max(100, 'La contraseña es demasiado larga'),
+    .max(128, 'La contraseña es demasiado larga') // Aumentado el límite razonable
+    .refine(
+      (val) => val.trim().length === val.length,
+      'La contraseña no debe contener espacios al inicio o final'
+    ),
   rememberMe: z.boolean(),
 });
 
@@ -40,12 +46,16 @@ interface LoginProps {
 
 export const Login: React.FC<LoginProps> = ({ 
   onSuccess, 
-  redirectTo = '/dashboard',
+  redirectTo = '/',
   className 
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, isLoading, error, clearError, isAuthenticated } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+
+  // Obtener la ubicación desde donde se redirigió o usar la ruta por defecto
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || redirectTo;
 
   // Configuración del formulario con react-hook-form y zod
   const form = useForm<LoginFormData>({
@@ -63,10 +73,10 @@ export const Login: React.FC<LoginProps> = ({
       if (onSuccess) {
         onSuccess();
       } else {
-        navigate(redirectTo);
+        navigate(from, { replace: true });
       }
     }
-  }, [isAuthenticated, navigate, onSuccess, redirectTo]);
+  }, [isAuthenticated, navigate, onSuccess, from]);
 
   // Limpiar errores cuando el usuario comience a escribir
   useEffect(() => {
@@ -91,7 +101,7 @@ export const Login: React.FC<LoginProps> = ({
       if (onSuccess) {
         onSuccess();
       } else {
-        navigate(redirectTo);
+        navigate(from, { replace: true });
       }
     } catch (err) {
       console.error('Login failed:', err);
@@ -106,9 +116,6 @@ export const Login: React.FC<LoginProps> = ({
     navigate('/forgot-password');
   };
 
-  const handleRegister = () => {
-    navigate('/register');
-  };
 
   return (
     <TooltipProvider>
@@ -273,22 +280,7 @@ export const Login: React.FC<LoginProps> = ({
             </form>
           </Form>
           
-          <Separator className="" />
           
-          <div className="px-2">
-            <div className="text-center text-sm text-gray-600">
-              ¿No tienes una cuenta?{' '}
-              <Button
-                type="button"
-                variant="link"
-                className="px-0 font-medium"
-                onClick={handleRegister}
-                disabled={isLoading}
-              >
-                Regístrate aquí
-              </Button>
-            </div>
-          </div>
         </Card>
       </div>
     </TooltipProvider>

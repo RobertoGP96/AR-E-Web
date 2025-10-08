@@ -20,6 +20,7 @@ import type {
   RegisterData,
   BaseFilters
 } from '../types/api';
+import type { CustomUser } from '../types/models';
 
 // Configuración base de la API
 const API_CONFIG = {
@@ -327,7 +328,7 @@ export class ApiClient {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) throw new Error('No refresh token available');
 
-    const response = await this.client.post('/token/refresh/', {
+    const response = await this.client.post('/auth/refresh/', {
       refresh: refreshToken,
     }, { skipAuth: true } as ExtendedAxiosRequestConfig);
 
@@ -484,11 +485,23 @@ export class ApiClient {
    * Login de usuario
    */
   public async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await this.client.post<AuthResponse>('/token/', credentials, {
+    const response = await this.client.post<{
+      access: string;
+      refresh: string;
+      user: CustomUser;
+    }>('/auth/', credentials, {
       skipAuth: true,
     } as ExtendedAxiosRequestConfig);
 
-    const authData = response.data;
+    const backendData = response.data;
+    
+    // Mapear respuesta del backend al formato esperado por el frontend
+    const authData: AuthResponse = {
+      access_token: backendData.access,
+      refresh_token: backendData.refresh,
+      user: backendData.user,
+      expires_in: 3600, // Valor por defecto, ajustar según configuración JWT
+    };
     
     // Guardar tokens
     this.setAuthToken(authData.access_token);

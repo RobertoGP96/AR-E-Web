@@ -23,7 +23,7 @@ export const refreshToken = async (): Promise<ApiResponse<{
     access_token: string;
     refresh_token: string;
     expires_in: number;
-  }>('/auth/token/refresh/', {
+  }>('/auth/refresh/', {
     refresh: refreshToken
   });
   
@@ -41,14 +41,16 @@ export const refreshToken = async (): Promise<ApiResponse<{
 
 /**
  * Verifica si el token actual es válido
+ * Nota: Este endpoint no existe en el backend actual
  */
-export const verifyToken = async (): Promise<ApiResponse<{ valid: boolean }>> => {
-  return await apiClient.post<{ valid: boolean }>('/auth/token/verify/');
-};
+// export const verifyToken = async (): Promise<ApiResponse<{ valid: boolean }>> => {
+//   return await apiClient.post<{ valid: boolean }>('/auth/token/verify/');
+// };
 
 /**
  * Invalida el token actual
+ * Nota: Este endpoint no existe en el backend actual
  */
-export const blacklistToken = async (): Promise<ApiResponse<void>> => {
-  return await apiClient.post<void>('/auth/token/blacklist/');
-};
+// export const blacklistToken = async (): Promise<ApiResponse<void>> => {
+//   return await apiClient.post<void>('/auth/token/blacklist/');
+// };

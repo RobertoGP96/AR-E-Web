@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/auth/useAuth';
 import LoadingSpinner from './LoadingSpinner';
 import type { UserRole } from '@/types';
@@ -19,6 +20,7 @@ export function ProtectedRoute({
   fallback = <div>Access denied</div>
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, hasPermission, hasRole } = useAuth();
+  const location = useLocation();
 
   // Mostrar loading mientras se verifica la autenticación
   if (isLoading) {
@@ -27,7 +29,8 @@ export function ProtectedRoute({
 
   // Verificar autenticación
   if (requireAuth && !isAuthenticated) {
-    return fallback;
+    // Guardar la ubicación actual para redirigir después del login
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Verificar permisos específicos

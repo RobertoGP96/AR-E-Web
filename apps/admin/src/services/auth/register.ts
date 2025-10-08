@@ -14,14 +14,16 @@ export const register = async (userData: RegisterData): Promise<ApiResponse<unkn
 
 /**
  * Verifica disponibilidad de email
+ * Nota: Este endpoint no existe en el backend actual
  */
-export const checkEmailAvailability = async (email: string): Promise<ApiResponse<{ available: boolean }>> => {
-  return await apiClient.post<{ available: boolean }>('/auth/check-email/', { email });
-};
+// export const checkEmailAvailability = async (email: string): Promise<ApiResponse<{ available: boolean }>> => {
+//   return await apiClient.post<{ available: boolean }>('/auth/check-email/', { email });
+// };
 
 /**
  * Verifica disponibilidad de teléfono
+ * Nota: Este endpoint no existe en el backend actual
  */
-export const checkPhoneAvailability = async (phone: string): Promise<ApiResponse<{ available: boolean }>> => {
-  return await apiClient.post<{ available: boolean }>('/auth/check-phone/', { phone_number: phone });
-};
+// export const checkPhoneAvailability = async (phone: string): Promise<ApiResponse<{ available: boolean }>> => {
+//   return await apiClient.post<{ available: boolean }>('/auth/check-phone/', { phone_number: phone });
+// };

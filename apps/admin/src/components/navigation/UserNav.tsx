@@ -36,8 +36,8 @@ export function NavUser() {
                             <AvatarFallback className="rounded-xl bg-gradient-to-r from-orange-400 to-amber-500 text-gray-900 font-semibold">AD</AvatarFallback>
                         </Avatar>
                         <div className="grid flex-1 text-left text-sm leading-tight">
-                            <span className="truncate font-semibold text-base text-gray-800">Administrador</span>
-                            <span className="truncate text-sm text-gray-500">admin@example.com</span>
+                            <span className="truncate font-semibold text-base text-gray-800">{auth?.full_name}</span>
+                            <span className="truncate text-sm text-gray-500">{auth?.phone_number}</span>
                         </div>
                     </div>
                 </DropdownMenuLabel>

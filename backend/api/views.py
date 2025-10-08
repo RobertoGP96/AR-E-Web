@@ -104,18 +104,93 @@ class PhoneTokenObtainPairSerializer(TokenObtainPairSerializer):
             "user": user_data
         }
 
+
+class EmailOrPhoneTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Serializer personalizado para login con email o número de teléfono.
+    Permite flexibilidad para usar cualquiera de los dos métodos de autenticación.
+    """
+    username_field = None  # No usar campo username por defecto
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Eliminar el campo username heredado
+        self.fields.pop('username', None)
+        # Agregar campos personalizados
+        self.fields['email'] = serializers.EmailField(required=False)
+        self.fields['phone_number'] = serializers.CharField(required=False)
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        phone_number = attrs.get("phone_number")
+        password = attrs.get("password")
+        user = None
+
+        # Validar que se proporcione al menos uno de los identificadores
+        if not email and not phone_number:
+            raise serializers.ValidationError({
+                "error": "Debe proporcionar email o número de teléfono."
+            })
+
+        # Validar contraseña
+        if not password:
+            raise serializers.ValidationError({"password": "La contraseña es requerida."})
+
+        # Intentar autenticar por email
+        if email:
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                raise serializers.ValidationError({
+                    "email": "No existe usuario con ese email."
+                })
+        
+        # Intentar autenticar por teléfono si no se proporcionó email o no se encontró usuario
+        elif phone_number:
+            try:
+                user = User.objects.get(phone_number=phone_number)
+            except User.DoesNotExist:
+                raise serializers.ValidationError({
+                    "phone_number": "No existe usuario con ese número de teléfono."
+                })
+
+        # Validar contraseña
+        if user and not user.check_password(password):
+            raise serializers.ValidationError({"password": "Contraseña incorrecta."})
+
+        # Validar que el usuario esté activo
+        if user and not user.is_active:
+            raise serializers.ValidationError({
+                "error": "Usuario inactivo. Contacte al administrador."
+            })
+
+        # Generar tokens
+        refresh = RefreshToken.for_user(user)
+        user_data = UserSerializer(user).data
+        
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "user": user_data
+        }
+
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
 
 @extend_schema(
-    summary="Login con número de teléfono",
-    description="Obtiene el par de tokens JWT usando el número de teléfono y contraseña.",
-    request=PhoneTokenObtainPairSerializer,
+    summary="Login con email o número de teléfono",
+    description="Obtiene el par de tokens JWT usando email o número de teléfono con contraseña.",
+    request=EmailOrPhoneTokenObtainPairSerializer,
     responses={200: OpenApiTypes.OBJECT},
     tags=["Autenticación"],
     examples=[
         OpenApiExample(
-            "Ejemplo login",
+            "Ejemplo login con email",
+            value={"email": "usuario@correo.com", "password": "123456"},
+            request_only=True
+        ),
+        OpenApiExample(
+            "Ejemplo login con teléfono",
             value={"phone_number": "+5355555555", "password": "123456"},
             request_only=True
         ),
@@ -141,8 +216,11 @@ from drf_spectacular.types import OpenApiTypes
     ]
 )
 class MyTokenObtainPairView(TokenObtainPairView):
-    "Obtención de token JWT para autenticación de usuarios por número de teléfono."
-    serializer_class = PhoneTokenObtainPairSerializer
+    """
+    Obtención de token JWT para autenticación de usuarios.
+    Permite autenticación usando email o número de teléfono.
+    """
+    serializer_class = EmailOrPhoneTokenObtainPairSerializer
 
 
 class Protection(APIView):

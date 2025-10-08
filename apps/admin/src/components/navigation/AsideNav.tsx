@@ -23,6 +23,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
+import useAuth from '@/hooks/auth/useAuth';
 
 const navigation = [
   {
@@ -78,6 +79,7 @@ const bottomNavigation = [
 export function AsideNav() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout, user, } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -170,8 +172,8 @@ export function AsideNav() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 text-left">
-                <span className="block font-semibold text-base text-white">Administrador</span>
-                <span className="block text-sm text-gray-400">admin@example.com</span>
+                <span className="block font-semibold text-base text-white">{user?.name}</span>
+                <span className="block text-sm text-gray-400">{user?.phone_number}</span>
               </div>
             </button>
           </DropdownMenuTrigger>
@@ -188,8 +190,8 @@ export function AsideNav() {
                   <AvatarFallback className="rounded-xl bg-gradient-to-r from-orange-400 to-amber-500 text-gray-900 font-semibold">AD</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold text-base text-gray-800">Administrador</span>
-                  <span className="truncate text-sm text-gray-500">admin@example.com</span>
+                  <span className="truncate font-semibold text-base text-gray-800">{user?.name+" "+user?.last_name.charAt(0).toUpperCase()}</span>
+                  <span className="truncate text-sm text-gray-500">{user?.phone_number}</span>
                 </div>
               </div>
             </DropdownMenuLabel>

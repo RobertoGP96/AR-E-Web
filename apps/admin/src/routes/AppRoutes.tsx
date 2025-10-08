@@ -11,18 +11,24 @@ import Orders from '@/pages/Orders';
 import Settings from '@/pages/Settings';
 import Profile from '@/pages/Profile';
 import NotFound from '@/pages/NotFound';
-import TailwindTest from '@/TailwindTest';
 import LoginPage from '@/pages/LoginPage';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const AppRoutes = () => {
     return (
         <Routes>
             {/* Rutas públicas */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/test" element={<TailwindTest />} />
 
             {/* Rutas protegidas */}
-            <Route path="/" element={<MainLayout />}>
+            <Route 
+                path="/" 
+                element={
+                    <ProtectedRoute>
+                        <MainLayout />
+                    </ProtectedRoute>
+                }
+            >
                 <Route index element={<Dashboard />} />
                 <Route path="users" element={<Users />} />
                 <Route path="shops" element={<Shops />} />

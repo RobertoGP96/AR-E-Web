@@ -9,7 +9,7 @@ import type { CustomUser, CreateUserData, ApiResponse } from '../../types';
  * Crea un nuevo usuario
  */
 export const createUser = async (userData: CreateUserData): Promise<ApiResponse<CustomUser>> => {
-  return await apiClient.post<CustomUser>('/users/', userData);
+  return await apiClient.post<CustomUser>('/api_data/user/', userData);
 };
 
 /**
@@ -17,7 +17,7 @@ export const createUser = async (userData: CreateUserData): Promise<ApiResponse<
  */
 export const createAgent = async (userData: Omit<CreateUserData, 'role'>) => {
   const agentData = { ...userData, role: 'agent' as const };
-  return await apiClient.post<CustomUser>('/users/', agentData);
+  return await apiClient.post<CustomUser>('/api_data/user/', agentData);
 };
 
 /**
@@ -25,7 +25,7 @@ export const createAgent = async (userData: Omit<CreateUserData, 'role'>) => {
  */
 export const createAccountant = async (userData: Omit<CreateUserData, 'role'>) => {
   const accountantData = { ...userData, role: 'accountant' as const };
-  return await apiClient.post<CustomUser>('/users/', accountantData);
+  return await apiClient.post<CustomUser>('/api_data/user/', accountantData);
 };
 
 /**
@@ -33,7 +33,7 @@ export const createAccountant = async (userData: Omit<CreateUserData, 'role'>) =
  */
 export const createBuyer = async (userData: Omit<CreateUserData, 'role'>) => {
   const buyerData = { ...userData, role: 'buyer' as const };
-  return await apiClient.post<CustomUser>('/users/', buyerData);
+  return await apiClient.post<CustomUser>('/api_data/user/', buyerData);
 };
 
 /**
@@ -41,7 +41,7 @@ export const createBuyer = async (userData: Omit<CreateUserData, 'role'>) => {
  */
 export const createLogistical = async (userData: Omit<CreateUserData, 'role'>) => {
   const logisticalData = { ...userData, role: 'logistical' as const };
-  return await apiClient.post<CustomUser>('/users/', logisticalData);
+  return await apiClient.post<CustomUser>('/api_data/user/', logisticalData);
 };
 
 /**
@@ -49,5 +49,5 @@ export const createLogistical = async (userData: Omit<CreateUserData, 'role'>) =
  */
 export const createCommunityManager = async (userData: Omit<CreateUserData, 'role'>) => {
   const cmData = { ...userData, role: 'community_manager' as const };
-  return await apiClient.post<CustomUser>('/users/', cmData);
+  return await apiClient.post<CustomUser>('/api_data/user/', cmData);
 };

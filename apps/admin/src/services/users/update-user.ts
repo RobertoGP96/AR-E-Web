@@ -9,14 +9,14 @@ import type { CustomUser, UpdateUserData, ApiResponse } from '../../types';
  * Actualiza un usuario existente
  */
 export const updateUser = async (id: number, userData: Partial<UpdateUserData>): Promise<ApiResponse<CustomUser>> => {
-  return await apiClient.patch<CustomUser>(`/users/${id}/`, userData);
+  return await apiClient.patch<CustomUser>(`/api_data/user/${id}/`, userData);
 };
 
 /**
  * Actualiza el perfil del usuario actual
  */
 export const updateCurrentUserProfile = async (userData: Partial<UpdateUserData>) => {
-  return await apiClient.patch<CustomUser>('/users/me/', userData);
+  return await apiClient.patch<CustomUser>('/user/', userData);
 };
 
 /**
@@ -28,33 +28,33 @@ export const updateUserBasicInfo = async (id: number, basicInfo: {
   phone_number?: string;
   home_address?: string;
 }) => {
-  return await apiClient.patch<CustomUser>(`/users/${id}/`, basicInfo);
+  return await apiClient.patch<CustomUser>(`/api_data/user/${id}/`, basicInfo);
 };
 
 /**
  * Actualiza el rol de un usuario
  */
 export const updateUserRole = async (id: number, role: string) => {
-  return await apiClient.patch<CustomUser>(`/users/${id}/`, { role });
+  return await apiClient.patch<CustomUser>(`/api_data/user/${id}/`, { role });
 };
 
 /**
  * Actualiza el estado activo de un usuario
  */
 export const updateUserActiveStatus = async (id: number, is_active: boolean) => {
-  return await apiClient.patch<CustomUser>(`/users/${id}/`, { is_active });
+  return await apiClient.patch<CustomUser>(`/api_data/user/${id}/`, { is_active });
 };
 
 /**
  * Actualiza el estado de verificación de un usuario
  */
 export const updateUserVerificationStatus = async (id: number, is_verified: boolean) => {
-  return await apiClient.patch<CustomUser>(`/users/${id}/`, { is_verified });
+  return await apiClient.patch<CustomUser>(`/api_data/user/${id}/`, { is_verified });
 };
 
 /**
  * Actualiza la ganancia del agente
  */
 export const updateAgentProfit = async (id: number, agent_profit: number) => {
-  return await apiClient.patch<CustomUser>(`/users/${id}/`, { agent_profit });
+  return await apiClient.patch<CustomUser>(`/api_data/user/${id}/`, { agent_profit });
 };

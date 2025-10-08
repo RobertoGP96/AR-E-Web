@@ -64,7 +64,7 @@ export const authService = {
    * Obtener usuario actual
    */
   getCurrentUser: async (): Promise<ApiResponse<CustomUser>> => {
-    return apiClient.get('/api_data/user/');
+    return apiClient.get('/user/');
   },
 
   /**
@@ -78,7 +78,7 @@ export const authService = {
    * Refrescar token
    */
   refreshToken: async (refreshToken: string): Promise<AuthResponse> => {
-    const response = await apiClient.post('/token/refresh/', { refresh: refreshToken }, { skipAuth: true });
+    const response = await apiClient.post('/auth/refresh/', { refresh: refreshToken }, { skipAuth: true });
     return response as unknown as AuthResponse;
   },
 };
