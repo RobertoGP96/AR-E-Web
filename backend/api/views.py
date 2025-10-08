@@ -110,15 +110,15 @@ class EmailOrPhoneTokenObtainPairSerializer(TokenObtainPairSerializer):
     Serializer personalizado para login con email o número de teléfono.
     Permite flexibilidad para usar cualquiera de los dos métodos de autenticación.
     """
-    username_field = None  # No usar campo username por defecto
+    # Definir campos sin source redundante
+    email = serializers.EmailField(required=False, allow_blank=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True)
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Eliminar el campo username heredado
-        self.fields.pop('username', None)
-        # Agregar campos personalizados
-        self.fields['email'] = serializers.EmailField(required=False)
-        self.fields['phone_number'] = serializers.CharField(required=False)
+        # Eliminar el campo username heredado del padre
+        if 'username' in self.fields:
+            self.fields.pop('username')
 
     def validate(self, attrs):
         email = attrs.get("email")

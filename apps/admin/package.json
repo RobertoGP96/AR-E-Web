@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5174",
+    "dev": "vite --port 5173",
     "build": "tsc -b && vite build",
     "build:cloudflare": "NODE_ENV=production tsc -b && vite build",
     "lint": "eslint . --max-warnings 0",
