@@ -1,8 +1,7 @@
-
 import OrderStatusBadge from './OrderStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { formatCurrency, type CustomUser, type DeliverReceip, type Order, type OrderStatus, type PayStatus } from '@/types';
+import { formatCurrency, type CustomUser, type Order, type OrderStatus, type PayStatus } from '@/types';
 import { Edit2, ShoppingCart, Trash2 } from 'lucide-react';
 import AvatarUser from '../utils/AvatarUser';
 import PayStatusBadge from '../utils/PayStatusBadge';
@@ -48,34 +47,52 @@ const mockOrder: Order[] = [
     id: 1,
     sales_manager: mockManager,
     client: mockClient,
-    status: 'Ordered',
-    pay_status: 'Paid',
+    status: 'Encargado',
+    pay_status: 'Pagado',
     extra_payments: 0,
-    received_products: [] as DeliverReceip[],
+    products: [],
+    delivery_receipts: [],
     received_value_of_client: 0,
     total_cost: 150.75,
+    total_products_requested: 5,
+    total_products_purchased: 5,
+    total_products_delivered: 0,
+    created_at: "2023-10-01T10:00:00Z",
+    updated_at: "2023-10-01T10:00:00Z"
   },
   {
     id: 2,
     sales_manager: mockManager,
     client: mockClient,
-    status: 'Processing',
-    pay_status: 'Unpaid',
+    status: 'Procesando',
+    pay_status: 'No pagado',
     extra_payments: 0,
-    received_products: [] as DeliverReceip[],
+    products: [],
+    delivery_receipts: [],
     received_value_of_client: 0,
     total_cost: 200.00,
+    total_products_requested: 3,
+    total_products_purchased: 3,
+    total_products_delivered: 0,
+    created_at: "2023-10-02T10:00:00Z",
+    updated_at: "2023-10-02T10:00:00Z"
   },
   {
     id: 3,
     sales_manager: mockManager,
     client: mockClient,
-    status: 'Cancelled',
-    pay_status: 'Paid',
+    status: 'Cancelado',
+    pay_status: 'Pagado',
     extra_payments: 0,
-    received_products: [] as DeliverReceip[],
+    products: [],
+    delivery_receipts: [],
     received_value_of_client: 0,
     total_cost: 100.00,
+    total_products_requested: 2,
+    total_products_purchased: 0,
+    total_products_delivered: 0,
+    created_at: "2023-10-03T10:00:00Z",
+    updated_at: "2023-10-03T10:00:00Z"
   }
 ]
 
@@ -129,7 +146,7 @@ const OrderTable: React.FC<OrderTableProps> = () => {
                 <div className='flex flex-row items-center gap-0.5 text-gray-600'>
                   <ShoppingCart className='h-4 w-4'/>
                   <span>
-                    {order.received_products?.length || 0}
+                    {order.products?.length || 0}
                   </span>
                 </div>
               </TableCell>

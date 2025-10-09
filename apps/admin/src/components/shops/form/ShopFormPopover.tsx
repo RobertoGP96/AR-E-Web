@@ -120,11 +120,7 @@ export default function ShopFormPopover({
                 console.log('Tienda actualizada:', result.name);
             } else {
                 // Crear nueva tienda
-                const response = await createShopService.createShopSafe(submitData);
-                if (!response.data) {
-                    throw new Error('No se recibió respuesta del servidor');
-                }
-                result = response.data;
+                result = await createShopService.createShopSafe(submitData);
                 console.log('Tienda creada:', result.name);
             }
 

@@ -14,6 +14,39 @@
 // import type { DashboardMetrics, ChartData, ApiResponse } from '../../types';
 
 /**
+ * Funciones temporales stub hasta que se implementen los endpoints en el backend
+ */
+export const getDashboardMetrics = async () => {
+  // TODO: Implementar cuando el backend esté listo
+  return Promise.resolve({ data: null });
+};
+
+export const getUsersStats = async (_period: 'day' | 'week' | 'month' | 'year' = 'month') => {
+  // TODO: Implementar cuando el backend esté listo
+  return Promise.resolve({ data: null });
+};
+
+export const getOrdersStats = async (_period: 'day' | 'week' | 'month' | 'year' = 'month') => {
+  // TODO: Implementar cuando el backend esté listo
+  return Promise.resolve({ data: null });
+};
+
+export const getSalesStats = async (_period: 'day' | 'week' | 'month' | 'year' = 'month') => {
+  // TODO: Implementar cuando el backend esté listo
+  return Promise.resolve({ data: null });
+};
+
+export const getTopProducts = async (_limit: number = 10) => {
+  // TODO: Implementar cuando el backend esté listo
+  return Promise.resolve({ data: null });
+};
+
+export const getTopAgents = async (_limit: number = 10) => {
+  // TODO: Implementar cuando el backend esté listo
+  return Promise.resolve({ data: null });
+};
+
+/**
  * Obtiene métricas generales del dashboard
  * Nota: Este endpoint no existe, usar /api_data/dashboard/stats/ del api.ts
  */

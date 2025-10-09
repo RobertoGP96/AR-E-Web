@@ -106,11 +106,9 @@ export default function UsersTable({
         <TableBody>
           {users.map((user, index) => {
             const RoleIcon = roleIcons[user.role];
-            // Usar user_id si existe, sino usar id
-            const userId = user.user_id ?? user.id;
             return (
               <TableRow
-                key={userId}
+                key={user.id}
                 className="cursor-pointer group "
                 onClick={() => onUserClick?.(user)}
               >

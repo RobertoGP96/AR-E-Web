@@ -67,7 +67,7 @@ const getInitialState = (): AuthState => {
   return {
     user: storedUser,
     isAuthenticated,
-    isLoading: hasToken, // Solo mostrar loading si hay token para verificar
+    isLoading: hasToken && !!storedUser, // Solo mostrar loading si hay token y usuario para verificar
     error: null,
     permissions: storedPermissions,
     lastActivity: storedLastActivity ? new Date(storedLastActivity) : null,
@@ -186,21 +186,62 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Verifica si existe un token válido al cargar la aplicación
    */
   const checkExistingAuth = useCallback(async () => {
+    // Si no hay token, no hay nada que verificar
     if (!apiClient.isAuthenticated()) {
+      // Si hay datos de usuario guardados pero no hay token, limpiar todo
+      const storedUser = getStoredValue<CustomUser | null>(STORAGE_KEYS.USER, null);
+      if (storedUser) {
+        console.warn('Usuario guardado sin token válido, limpiando almacenamiento');
+        clearAuthStorage();
+      }
       dispatch({ type: 'AUTH_ERROR', payload: 'No authentication token found' });
       return;
     }
 
+    // Si hay token pero no hay usuario guardado, intentar obtenerlo
+    const storedUser = getStoredValue<CustomUser | null>(STORAGE_KEYS.USER, null);
+    if (!storedUser) {
+      try {
+        dispatch({ type: 'AUTH_START' });
+        
+        // Obtener información del usuario actual
+        // apiClient.getCurrentUser() devuelve directamente CustomUser, no un objeto con data
+        const user = await apiClient.getCurrentUser();
+        
+        // Por ahora, permissions vacío hasta implementar sistema de permisos
+        const permissions: string[] = [];
+        
+        dispatch({ 
+          type: 'AUTH_SUCCESS', 
+          payload: { 
+            user, 
+            permissions 
+          } 
+        });
+      } catch (error) {
+        console.error('Error verifying existing auth:', error);
+        apiClient.clearAuthToken();
+        dispatch({ type: 'AUTH_ERROR', payload: 'Invalid authentication token' });
+      }
+      return;
+    }
+
+    // Si hay token Y usuario guardado, usar el usuario guardado y verificar en segundo plano
+    const storedPermissions = getStoredValue<string[]>(STORAGE_KEYS.PERMISSIONS, []);
+    dispatch({ 
+      type: 'AUTH_SUCCESS', 
+      payload: { 
+        user: storedUser, 
+        permissions: storedPermissions 
+      } 
+    });
+
+    // Verificar token en segundo plano sin bloquear la UI
     try {
-      dispatch({ type: 'AUTH_START' });
-      
-      // Obtener información del usuario actual
-      const response = await apiClient.getCurrentUser();
-      const user = response.data as CustomUser;
-      
-      // Por ahora, permissions vacío hasta implementar sistema de permisos
+      const user = await apiClient.getCurrentUser();
       const permissions: string[] = [];
       
+      // Actualizar con datos frescos del servidor
       dispatch({ 
         type: 'AUTH_SUCCESS', 
         payload: { 
@@ -209,9 +250,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } 
       });
     } catch (error) {
-      console.error('Error verifying existing auth:', error);
-      apiClient.clearAuthToken();
-      dispatch({ type: 'AUTH_ERROR', payload: 'Invalid authentication token' });
+      // Si falla la verificación, mantener los datos guardados pero loggear el error
+      console.warn('Error al verificar autenticación en segundo plano:', error);
+      // No hacer logout aquí, dejar que el interceptor maneje errores 401
     }
   }, []);
 
@@ -249,12 +290,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       dispatch({ type: 'AUTH_START' });
       
+      // apiClient.register devuelve los datos directamente
       const response = await apiClient.register(userData);
       
       // Después del registro exitoso, podrías hacer login automático
       // o requerir verificación de email según tu lógica de negocio
       
-      return response;
+      return response as unknown as ApiResponse;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Registration failed';
       dispatch({ type: 'AUTH_ERROR', payload: errorMessage });
@@ -285,8 +327,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     try {
-      const response = await apiClient.getCurrentUser();
-      const user = response.data as CustomUser;
+      // apiClient.getCurrentUser() devuelve directamente CustomUser, no un objeto con data
+      const user = await apiClient.getCurrentUser();
       // Por ahora, permissions vacío hasta implementar sistema de permisos
       const permissions: string[] = [];
       
@@ -310,8 +352,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!state.user) return;
 
     try {
-      const response = await apiClient.patch(`/users/${state.user.id}/`, userData);
-      const updatedUser = response.data as CustomUser;
+      // apiClient.patch devuelve directamente CustomUser, no un objeto con data
+      const updatedUser = await apiClient.patch<CustomUser>(`/users/${state.user.id}/`, userData);
       
       dispatch({ type: 'UPDATE_USER', payload: updatedUser });
     } catch (error) {

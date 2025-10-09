@@ -49,12 +49,18 @@ const mockOrder = (id: number): Order => ({
   id,
   client: mockUser,
   sales_manager: mockManager,
-  status: "Ordered",
-  pay_status: "Paid",
+  status: "Encargado",
+  pay_status: "Pagado",
   total_cost: 100.0 + id,
-  received_products: [],
+  products: [],
+  delivery_receipts: [],
   received_value_of_client: 50.0,
-  extra_payments: 0
+  extra_payments: 0,
+  total_products_requested: 5,
+  total_products_purchased: 0,
+  total_products_delivered: 0,
+  created_at: "2023-10-01T10:00:00Z",
+  updated_at: "2023-10-01T10:00:00Z"
 });
 
 const mockDelivery: DeliverReceip[] = [
@@ -62,28 +68,40 @@ const mockDelivery: DeliverReceip[] = [
     id: 1,
     order: mockOrder(101),
     weight: 2.5,
-    status: "Sent",
+    status: "Pendiente",
     deliver_date: "2023-10-05T15:00:00Z",
     deliver_picture: [],
-    total_cost_of_deliver: 15.99
+    weight_cost: 5.0,
+    manager_profit: 2.0,
+    total_cost_of_deliver: 15.99,
+    created_at: "2023-10-05T10:00:00Z",
+    updated_at: "2023-10-05T10:00:00Z"
   },
   {
     id: 2,
     order: mockOrder(102),
     weight: 1.2,
-    status: "In Transit",
+    status: "En transito",
     deliver_date: "2023-10-06T16:00:00Z",
     deliver_picture: [],
-    total_cost_of_deliver: 10.50
+    weight_cost: 3.0,
+    manager_profit: 1.5,
+    total_cost_of_deliver: 10.50,
+    created_at: "2023-10-06T10:00:00Z",
+    updated_at: "2023-10-06T10:00:00Z"
   },
   {
     id: 3,
     order: mockOrder(103),
     weight: 3.0,
-    status: "Delivered",
+    status: "Entregado",
     deliver_date: "2023-10-07T17:00:00Z",
     deliver_picture: [],
-    total_cost_of_deliver: 20.00
+    weight_cost: 6.0,
+    manager_profit: 3.0,
+    total_cost_of_deliver: 20.00,
+    created_at: "2023-10-07T10:00:00Z",
+    updated_at: "2023-10-07T10:00:00Z"
   }
 ];
 

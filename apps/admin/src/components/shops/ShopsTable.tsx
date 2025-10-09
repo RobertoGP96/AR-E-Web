@@ -48,14 +48,21 @@ const mockShops: Shop[] = [
     id: 1,
     name: "Adidas",
     link: "https://adidas.com",
+    is_active: true,
+    created_at: "2024-01-01T10:00:00Z",
+    updated_at: "2024-01-01T10:00:00Z",
     buying_accounts: [
       {
         id: 1,
         account_name: "Cuenta Adidas 1",
+        created_at: "2024-01-01T10:00:00Z",
+        updated_at: "2024-01-01T10:00:00Z"
       },
       {
         id: 2,
         account_name: "Cuenta Adidas 2",
+        created_at: "2024-01-02T10:00:00Z",
+        updated_at: "2024-01-02T10:00:00Z"
       }
     ]
   },
@@ -63,34 +70,52 @@ const mockShops: Shop[] = [
     id: 2,
     name: "Nike",
     link: "https://nike.com",
+    is_active: true,
+    created_at: "2024-01-03T10:00:00Z",
+    updated_at: "2024-01-03T10:00:00Z",
     buying_accounts: []
   },
   {
     id: 3,
     name: "Amazon",
     link: "https://amazon.com",
+    is_active: true,
+    created_at: "2024-01-04T10:00:00Z",
+    updated_at: "2024-01-04T10:00:00Z",
     buying_accounts: []
   },
   {
     id: 4,
     name: "eBay",
     link: "https://ebay.com",
+    is_active: true,
+    created_at: "2024-01-05T10:00:00Z",
+    updated_at: "2024-01-05T10:00:00Z",
     buying_accounts: []
   },
   {
     id: 5,
     name: "Shein",
     link: "https://shein.com",
+    is_active: true,
+    created_at: "2024-01-06T10:00:00Z",
+    updated_at: "2024-01-06T10:00:00Z",
     buying_accounts: []
   }, {
     id: 6,
     name: "Temu",
     link: "https://temu.com",
+    is_active: true,
+    created_at: "2024-01-07T10:00:00Z",
+    updated_at: "2024-01-07T10:00:00Z",
     buying_accounts: []
   }, {
     id: 7,
     name: "Aliexpress",
     link: "https://aliexpress.com",
+    is_active: true,
+    created_at: "2024-01-08T10:00:00Z",
+    updated_at: "2024-01-08T10:00:00Z",
     buying_accounts: []
   }
 ];

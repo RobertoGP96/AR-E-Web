@@ -15,7 +15,7 @@ const mockPackages: Package[] = [
     id: 1,
     agency_name: "2",
     number_of_tracking: "PKG-001234",
-    status_of_processing: "Sent",
+    status_of_processing: "Encargado",
     created_at: "2023-10-01T12:00:00Z",
     updated_at: "2023-10-01T12:00:00Z",
     package_picture: []
@@ -24,7 +24,7 @@ const mockPackages: Package[] = [
     id: 2,
     agency_name: "3",
     number_of_tracking: "PKG-001235",
-    status_of_processing: "Sent",
+    status_of_processing: "Procesando",
     created_at: "2023-10-01T12:00:00Z",
     updated_at: "2023-10-01T12:00:00Z",
     package_picture: []
@@ -33,7 +33,7 @@ const mockPackages: Package[] = [
     id: 3,
     agency_name: "24",
     number_of_tracking: "PKG-001236",
-    status_of_processing: "Received",
+    status_of_processing: "Completado",
     created_at: "2023-10-01T12:00:00Z",
     updated_at: "2023-10-01T12:00:00Z",
     package_picture: []
@@ -42,7 +42,7 @@ const mockPackages: Package[] = [
     id: 4,
     agency_name: "34",
     number_of_tracking: "PKG-001237",
-    status_of_processing: "Processed",
+    status_of_processing: "Cancelado",
     created_at: "2023-10-01T12:00:00Z",
     updated_at: "2023-10-01T12:00:00Z",
     package_picture: []

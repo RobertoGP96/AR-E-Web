@@ -13,8 +13,8 @@ const Orders = () => {
   // Calcular estadísticas
   const ordersArray = orders || [];
   const totalRevenue = ordersArray.reduce((sum: number, order: Order) => sum + (order.total_cost || 0), 0);
-  const completedOrders = ordersArray.filter((order: Order) => order.status === 'Completed').length;
-  const pendingOrders = ordersArray.filter((order: Order) => order.status === 'Ordered').length;
+  const completedOrders = ordersArray.filter((order: Order) => order.status === 'Completado').length;
+  const pendingOrders = ordersArray.filter((order: Order) => order.status === 'Encargado').length;
 
   const stats = {
     total: ordersArray.length,
