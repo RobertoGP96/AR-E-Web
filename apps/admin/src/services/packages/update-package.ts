@@ -3,7 +3,7 @@
  */
 
 import { apiClient } from '../../lib/api-client';
-import type { Package, ApiResponse } from '../../types';
+import type { Package } from '../../types';
 
 export interface UpdatePackageData {
   description?: string;
@@ -16,20 +16,20 @@ export interface UpdatePackageData {
 /**
  * Actualiza un paquete existente
  */
-export const updatePackage = async (id: number, packageData: UpdatePackageData): Promise<ApiResponse<Package>> => {
-  return await apiClient.patch<Package>(`/packages/${id}/`, packageData);
+export const updatePackage = async (id: number, packageData: UpdatePackageData): Promise<Package> => {
+  return await apiClient.patch<Package>(`/api_data/package/${id}/`, packageData);
 };
 
 /**
  * Actualiza el estado de un paquete
  */
-export const updatePackageStatus = async (id: number, status: string): Promise<ApiResponse<Package>> => {
-  return await apiClient.patch<Package>(`/packages/${id}/`, { status });
+export const updatePackageStatus = async (id: number, status: string): Promise<Package> => {
+  return await apiClient.patch<Package>(`/api_data/package/${id}/`, { status });
 };
 
 /**
  * Actualiza el número de seguimiento
  */
-export const updatePackageTracking = async (id: number, trackingNumber: string): Promise<ApiResponse<Package>> => {
-  return await apiClient.patch<Package>(`/packages/${id}/`, { tracking_number: trackingNumber });
+export const updatePackageTracking = async (id: number, trackingNumber: string): Promise<Package> => {
+  return await apiClient.patch<Package>(`/api_data/package/${id}/`, { tracking_number: trackingNumber });
 };

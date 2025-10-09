@@ -8,45 +8,45 @@ import type { CustomUser, UserRole } from "./models/user";
 
 // Mapas de etiquetas para mostrar en la UI
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  "Ordered": "Encargado",
-  "Processing": "Procesando",
-  "Completed": "Completado",
-  "Cancelled": "Cancelado"
+  "Encargado": "Encargado",
+  "Procesando": "Procesando",
+  "Completado": "Completado",
+  "Cancelado": "Cancelado"
 };
 
 export const PAY_STATUS_LABELS: Record<PayStatus, string> = {
-  "Unpaid": "No pagado",
-  "Paid": "Pagado",
-  "Partial": "Parcial"
+  "No pagado": "No pagado",
+  "Pagado": "Pagado",
+  "Parcial": "Parcial"
 };
 
 // Colores para estados
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  "Ordered": "blue",
-  "Processing": "orange", 
-  "Completed": "green",
-  "Cancelled": "red"
+  "Encargado": "blue",
+  "Procesando": "orange", 
+  "Completado": "green",
+  "Cancelado": "red"
 };
 
 export const PAY_STATUS_COLORS: Record<PayStatus, string> = {
-  "Unpaid": "red",
-  "Paid": "green",
-  "Partial": "orange"
+  "No pagado": "red",
+  "Pagado": "green",
+  "Parcial": "orange"
 };
 
 // Mapas de etiquetas para ProductStatus
 export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
-  "Ordered": "Encargado",
-  "Purchased": "Comprado",
-  "Received": "Recibido",
-  "Delivered": "Entregado"
+  "Encargado": "Encargado",
+  "Procesando": "Procesando",
+  "Completado": "Completado",
+  "Cancelado": "Cancelado"
 };
 
 export const PRODUCT_STATUS_COLORS: Record<ProductStatus, string> = {
-  "Ordered": "blue",
-  "Purchased": "orange",
-  "Received": "purple",
-  "Delivered": "green"
+  "Encargado": "blue",
+  "Procesando": "orange",
+  "Completado": "green",
+  "Cancelado": "red"
 };
 
 // Funciones de utilidad para usuarios

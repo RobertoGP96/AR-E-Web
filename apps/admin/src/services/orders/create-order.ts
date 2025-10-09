@@ -3,7 +3,7 @@
  */
 
 import { apiClient } from '../../lib/api-client';
-import type { Order, ApiResponse } from '../../types';
+import type { Order } from '../../types';
 
 export interface CreateOrderData {
   client_email: string;
@@ -15,14 +15,14 @@ export interface CreateOrderData {
 /**
  * Crea una nueva orden
  */
-export const createOrder = async (orderData: CreateOrderData): Promise<ApiResponse<Order>> => {
-  return await apiClient.post<Order>('/orders/', orderData);
+export const createOrder = async (orderData: CreateOrderData): Promise<Order> => {
+  return await apiClient.post<Order>('/api_data/order/', orderData);
 };
 
 /**
  * Crea orden rápida para un cliente existente
  */
-export const createQuickOrder = async (clientEmail: string): Promise<ApiResponse<Order>> => {
+export const createQuickOrder = async (clientEmail: string): Promise<Order> => {
   return await createOrder({
     client_email: clientEmail,
     status: 'pending',
@@ -42,20 +42,20 @@ export const createOrderWithProducts = async (
     shop_cost: number;
     total_cost: number;
   }>
-): Promise<ApiResponse<Order>> => {
+): Promise<Order> => {
   const order = await createOrder(orderData);
   
-  if (order.success && order.data) {
+  if (order && order.id) {
     // Crear productos para la orden
     for (const productData of products) {
-      await apiClient.post('/products/', {
+      await apiClient.post('/api_data/product/', {
         ...productData,
-        order: order.data.id
+        order: order.id
       });
     }
     
     // Recargar la orden con productos
-    return await apiClient.get<Order>(`/orders/${order.data.id}/`);
+    return await apiClient.get<Order>(`/api_data/order/${order.id}/`);
   }
   
   return order;

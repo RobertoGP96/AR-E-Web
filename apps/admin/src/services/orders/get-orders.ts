@@ -12,14 +12,14 @@ import type { Order } from '../../types';
 export const getOrders = async (
   filters?: OrderFilters
 ): Promise<PaginatedApiResponse<Order>> => {
-  return await apiClient.getPaginated<Order>('/orders/', filters);
+  return await apiClient.getPaginated<Order>('/api_data/order/', filters);
 };
 
 /**
  * Obtiene una orden por ID
  */
 export const getOrderById = async (id: number) => {
-  return await apiClient.get<Order>(`/orders/${id}/`);
+  return await apiClient.get<Order>(`/api_data/order/${id}/`);
 };
 
 /**
@@ -27,7 +27,7 @@ export const getOrderById = async (id: number) => {
  */
 export const getOrdersByStatus = async (status: string, filters?: OrderFilters) => {
   const statusFilters = { ...filters, status };
-  return await apiClient.getPaginated<Order>('/orders/', statusFilters);
+  return await apiClient.getPaginated<Order>('/api_data/order/', statusFilters);
 };
 
 /**
@@ -35,7 +35,7 @@ export const getOrdersByStatus = async (status: string, filters?: OrderFilters) 
  */
 export const getOrdersByPaymentStatus = async (payStatus: string, filters?: OrderFilters) => {
   const payFilters = { ...filters, pay_status: payStatus };
-  return await apiClient.getPaginated<Order>('/orders/', payFilters);
+  return await apiClient.getPaginated<Order>('/api_data/order/', payFilters);
 };
 
 /**
@@ -43,7 +43,7 @@ export const getOrdersByPaymentStatus = async (payStatus: string, filters?: Orde
  */
 export const getOrdersByClient = async (clientId: number, filters?: OrderFilters) => {
   const clientFilters = { ...filters, client_id: clientId };
-  return await apiClient.getPaginated<Order>('/orders/', clientFilters);
+  return await apiClient.getPaginated<Order>('/api_data/order/', clientFilters);
 };
 
 /**
@@ -51,7 +51,7 @@ export const getOrdersByClient = async (clientId: number, filters?: OrderFilters
  */
 export const getOrdersByAgent = async (agentId: number, filters?: OrderFilters) => {
   const agentFilters = { ...filters, sales_manager_id: agentId };
-  return await apiClient.getPaginated<Order>('/orders/', agentFilters);
+  return await apiClient.getPaginated<Order>('/api_data/order/', agentFilters);
 };
 
 /**
@@ -59,5 +59,5 @@ export const getOrdersByAgent = async (agentId: number, filters?: OrderFilters) 
  */
 export const searchOrders = async (searchTerm: string, filters?: OrderFilters) => {
   const searchFilters = { ...filters, search: searchTerm };
-  return await apiClient.getPaginated<Order>('/orders/', searchFilters);
+  return await apiClient.getPaginated<Order>('/api_data/order/', searchFilters);
 };

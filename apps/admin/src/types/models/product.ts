@@ -2,7 +2,7 @@
  * Tipos para el modelo Product
  */
 
-import type { ID, UUID, ProductStatus } from './base';
+import type { ID, UUID, ProductStatus, DateTime } from './base';
 import type { Shop } from './shop';
 import type { Order } from './order';
 import type { EvidenceImage } from './evidence';
@@ -17,7 +17,12 @@ export interface Product {
   description?: string;
   observation?: string;
   category?: string;
+  
+  // Cantidades (alineado con backend)
   amount_requested: number;
+  amount_purchased: number;
+  amount_delivered: number;
+  
   order: Order;
   status: ProductStatus;
   product_pictures: EvidenceImage[];
@@ -30,11 +35,18 @@ export interface Product {
   added_taxes: number;
   total_cost: number;
   
-  // Propiedades computadas
+  // Timestamps
+  created_at: DateTime;
+  updated_at: DateTime;
+  
+  // Propiedades computadas (del backend)
   cost_per_product: number;
   amount_buyed: number;
   amount_received: number;
-  amount_delivered: number;
+  pending_purchase: number;
+  pending_delivery: number;
+  is_fully_purchased: boolean;
+  is_fully_delivered: boolean;
 }
 
 // Tipos para crear/editar producto
@@ -47,6 +59,8 @@ export interface CreateProductData {
   observation?: string;
   category?: string;
   amount_requested: number;
+  amount_purchased?: number;
+  amount_delivered?: number;
   order_id: ID;
   status?: ProductStatus;
   shop_cost: number;

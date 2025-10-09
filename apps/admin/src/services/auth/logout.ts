@@ -3,7 +3,7 @@
  */
 
 import { apiClient } from '../../lib/api-client';
-import type { ApiResponse } from '../../types';
+
 
 /**
  * Cierra sesión del usuario actual
@@ -25,16 +25,14 @@ export const logout = async (): Promise<void> => {
 /**
  * Cierra todas las sesiones del usuario
  */
-export const logoutAllSessions = async (): Promise<ApiResponse<void>> => {
-  const response = await apiClient.post<void>('/auth/logout-all/');
+export const logoutAllSessions = async (): Promise<void> => {
+  await apiClient.post<void>('/auth/logout-all/');
   
   // Limpiar datos locales
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user');
   apiClient.clearAuthToken();
-  
-  return response;
 };
 
 /**

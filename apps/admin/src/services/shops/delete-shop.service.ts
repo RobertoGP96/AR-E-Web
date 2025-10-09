@@ -4,7 +4,6 @@
  */
 
 import { apiClient } from '@/lib/api-client';
-import type { ApiResponse } from '@/types/api';
 import type { Shop } from '@/types/models/shop';
 
 export interface DeleteShopOptions {
@@ -20,7 +19,7 @@ export class DeleteShopService {
   /**
    * Elimina una tienda específica
    */
-  async deleteShop(id: string | number, options?: DeleteShopOptions): Promise<ApiResponse<void>> {
+  async deleteShop(id: string | number, options?: DeleteShopOptions): Promise<void> {
     const params = new URLSearchParams();
     
     if (options?.force) {
@@ -46,7 +45,7 @@ export class DeleteShopService {
       // Intentar obtener la tienda para verificar que existe
       const shopResponse = await apiClient.get<Shop>(`${this.endpoint}/${id}/`);
       
-      if (!shopResponse.data) {
+      if (!shopResponse) {
         return {
           canDelete: false,
           reason: 'La tienda no existe',
@@ -70,7 +69,7 @@ export class DeleteShopService {
   /**
    * Elimina una tienda con confirmación previa
    */
-  async deleteShopSafe(id: string | number, options?: DeleteShopOptions): Promise<ApiResponse<void>> {
+  async deleteShopSafe(id: string | number, options?: DeleteShopOptions): Promise<void> {
     // Verificar si se puede eliminar
     const canDelete = await this.canDeleteShop(id);
     

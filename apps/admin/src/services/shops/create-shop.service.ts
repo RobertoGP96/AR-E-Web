@@ -4,7 +4,6 @@
  */
 
 import { apiClient } from '@/lib/api-client';
-import type { ApiResponse } from '@/types/api';
 import type { 
   Shop, 
   CreateShopData 
@@ -47,7 +46,7 @@ export class CreateShopService {
   /**
    * Crea una nueva tienda
    */
-  async createShop(data: CreateShopPayload): Promise<ApiResponse<Shop>> {
+  async createShop(data: CreateShopPayload): Promise<Shop> {
     // Validar datos antes de enviar
     this.validateShopData(data);
 
@@ -91,7 +90,7 @@ export class CreateShopService {
         per_page: 1,
       });
 
-      return (response.data && response.data.length > 0) || false;
+      return (response.results && response.results.length > 0) || false;
     } catch (error) {
       console.error('Error checking shop existence:', error);
       return false;
@@ -108,7 +107,7 @@ export class CreateShopService {
         per_page: 1,
       });
 
-      return (response.data && response.data.length > 0) || false;
+      return (response.results && response.results.length > 0) || false;
     } catch (error) {
       console.error('Error checking link existence:', error);
       return false;
@@ -118,7 +117,7 @@ export class CreateShopService {
   /**
    * Crea una tienda con verificación previa de duplicados
    */
-  async createShopSafe(data: CreateShopPayload): Promise<ApiResponse<Shop>> {
+  async createShopSafe(data: CreateShopPayload): Promise<Shop> {
     // Verificar si ya existe una tienda con el mismo nombre
     const nameExists = await this.checkShopExists(data.name);
     if (nameExists) {

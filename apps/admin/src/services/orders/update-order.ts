@@ -16,35 +16,35 @@ export interface UpdateOrderData {
  * Actualiza una orden existente
  */
 export const updateOrder = async (id: number, orderData: UpdateOrderData): Promise<Order> => {
-  return await apiClient.patch<Order>(`/orders/${id}/`, orderData);
+  return await apiClient.patch<Order>(`/api_data/order/${id}/`, orderData);
 };
 
 /**
  * Actualiza el estado de una orden
  */
 export const updateOrderStatus = async (id: number, status: string): Promise<Order> => {
-  return await apiClient.patch<Order>(`/orders/${id}/`, { status });
+  return await apiClient.patch<Order>(`/api_data/order/${id}/`, { status });
 };
 
 /**
  * Actualiza el estado de pago de una orden
  */
 export const updateOrderPaymentStatus = async (id: number, payStatus: string): Promise<Order> => {
-  return await apiClient.patch<Order>(`/orders/${id}/`, { pay_status: payStatus });
+  return await apiClient.patch<Order>(`/api_data/order/${id}/`, { pay_status: payStatus });
 };
 
 /**
  * Actualiza las observaciones de una orden
  */
 export const updateOrderObservations = async (id: number, observations: string): Promise<Order> => {
-  return await apiClient.patch<Order>(`/orders/${id}/`, { observations });
+  return await apiClient.patch<Order>(`/api_data/order/${id}/`, { observations });
 };
 
 /**
  * Asigna una orden a un agente
  */
 export const assignOrderToAgent = async (orderId: number, agentEmail: string): Promise<Order> => {
-  return await apiClient.patch<Order>(`/orders/${orderId}/`, { sales_manager: agentEmail });
+  return await apiClient.patch<Order>(`/api_data/order/${orderId}/`, { sales_manager: agentEmail });
 };
 
 /**
@@ -69,5 +69,5 @@ export const cancelOrder = async (id: number, reason?: string): Promise<Order> =
   if (reason) {
     updateData.observations = reason;
   }
-  return await apiClient.patch<Order>(`/orders/${id}/`, updateData);
+  return await apiClient.patch<Order>(`/api_data/order/${id}/`, updateData);
 };

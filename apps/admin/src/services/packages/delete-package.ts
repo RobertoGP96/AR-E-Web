@@ -3,18 +3,17 @@
  */
 
 import { apiClient } from '@/lib/api-client';
-import type { ApiResponse } from '../../types';
 
 /**
  * Elimina un paquete por ID
  */
-export const deletePackage = async (id: number): Promise<ApiResponse<void>> => {
-  return await apiClient.delete<void>(`/packages/${id}/`);
+export const deletePackage = async (id: number): Promise<void> => {
+  return await apiClient.delete<void>(`/api_data/package/${id}/`);
 };
 
 /**
  * Elimina múltiples paquetes
  */
-export const deleteMultiplePackages = async (ids: number[]): Promise<ApiResponse<void>> => {
-  return await apiClient.post<void>('/packages/bulk-delete/', { package_ids: ids });
+export const deleteMultiplePackages = async (ids: number[]): Promise<void> => {
+  return await apiClient.post<void>('/api_data/package/bulk-delete/', { package_ids: ids });
 };

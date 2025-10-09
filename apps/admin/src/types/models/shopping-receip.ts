@@ -18,6 +18,10 @@ export interface ShoppingReceip {
   // Propiedades computadas
   total_cost_of_shopping: number;
   buyed_products?: ProductBuyed[];
+  
+  // Timestamps
+  created_at: DateTime;
+  updated_at: DateTime;
 }
 
 // Tipos para crear/editar recibo de compra

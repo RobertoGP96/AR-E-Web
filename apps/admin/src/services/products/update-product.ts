@@ -3,7 +3,7 @@
  */
 
 import { apiClient } from '../../lib/api-client';
-import type { Product, ApiResponse } from '../../types';
+import type { Product } from '../../types';
 
 export interface UpdateProductData {
   shop_name?: string;
@@ -17,19 +17,19 @@ export interface UpdateProductData {
 /**
  * Actualiza un producto existente
  */
-export const updateProduct = async (id: number, productData: UpdateProductData): Promise<ApiResponse<Product>> => {
+export const updateProduct = async (id: number, productData: UpdateProductData): Promise<Product> => {
   const { shop_name, ...data } = productData;
   
   const updateData = shop_name ? { ...data, shop: shop_name } : data;
   
-  return await apiClient.patch<Product>(`/products/${id}/`, updateData);
+  return await apiClient.patch<Product>(`/api_data/product/${id}/`, updateData);
 };
 
 /**
  * Actualiza la descripción de un producto
  */
-export const updateProductDescription = async (id: number, description: string): Promise<ApiResponse<Product>> => {
-  return await apiClient.patch<Product>(`/products/${id}/`, { description });
+export const updateProductDescription = async (id: number, description: string): Promise<Product> => {
+  return await apiClient.patch<Product>(`/api_data/product/${id}/`, { description });
 };
 
 /**
@@ -42,13 +42,13 @@ export const updateProductCosts = async (
     total_cost?: number;
     amount_requested?: number;
   }
-): Promise<ApiResponse<Product>> => {
-  return await apiClient.patch<Product>(`/products/${id}/`, costs);
+): Promise<Product> => {
+  return await apiClient.patch<Product>(`/api_data/product/${id}/`, costs);
 };
 
 /**
  * Actualiza las imágenes de un producto
  */
-export const updateProductImages = async (id: number, imageUrls: string[]): Promise<ApiResponse<Product>> => {
-  return await apiClient.patch<Product>(`/products/${id}/`, { product_pictures: imageUrls });
+export const updateProductImages = async (id: number, imageUrls: string[]): Promise<Product> => {
+  return await apiClient.patch<Product>(`/api_data/product/${id}/`, { product_pictures: imageUrls });
 };

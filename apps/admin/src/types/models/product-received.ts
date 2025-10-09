@@ -2,7 +2,7 @@
  * Tipos para el modelo ProductReceived
  */
 
-import type { ID, Date } from './base';
+import type { ID, UUID, Date, DateTime } from './base';
 import type { Product } from './product';
 import type { Order } from './order';
 import type { Package } from './package';
@@ -20,11 +20,13 @@ export interface ProductReceived {
   amount_received: number;
   amount_delivered: number;
   observation?: string;
+  created_at: DateTime;
+  updated_at: DateTime;
 }
 
 // Tipos para crear/editar producto recibido
 export interface CreateProductReceivedData {
-  original_product_id: string; // UUID
+  original_product_id: UUID; // UUID porque Product usa UUID
   order_id: ID;
   reception_date_in_eeuu: Date;
   reception_date_in_cuba?: Date;

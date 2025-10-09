@@ -3,12 +3,12 @@
  */
 
 import { apiClient } from '../../lib/api-client';
-import type { CustomUser, UpdateUserData, ApiResponse } from '../../types';
+import type { CustomUser, UpdateUserData } from '../../types';
 
 /**
  * Actualiza un usuario existente
  */
-export const updateUser = async (id: number, userData: Partial<UpdateUserData>): Promise<ApiResponse<CustomUser>> => {
+export const updateUser = async (id: number, userData: Partial<UpdateUserData>): Promise<CustomUser> => {
   return await apiClient.patch<CustomUser>(`/api_data/user/${id}/`, userData);
 };
 

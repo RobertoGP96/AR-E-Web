@@ -3,13 +3,13 @@
  */
 
 import { apiClient } from '../../lib/api-client';
-import type { RegisterData, ApiResponse } from '../../types';
+import type { RegisterData, CustomUser } from '../../types';
 
 /**
  * Registra un nuevo usuario
  */
-export const register = async (userData: RegisterData): Promise<ApiResponse<unknown>> => {
-  return await apiClient.register(userData);
+export const register = async (userData: RegisterData): Promise<CustomUser> => {
+  return await apiClient.register(userData) as CustomUser;
 };
 
 /**

@@ -4,7 +4,6 @@
  */
 
 import { apiClient } from '@/lib/api-client';
-import type { ApiResponse } from '@/types/api';
 import type { 
   Shop, 
   UpdateShopData 
@@ -22,7 +21,7 @@ export class UpdateShopService {
   /**
    * Actualiza una tienda específica
    */
-  async updateShop(id: string | number, data: UpdateShopPayload): Promise<ApiResponse<Shop>> {
+  async updateShop(id: string | number, data: UpdateShopPayload): Promise<Shop> {
     // Filtrar datos vacíos o undefined
     const cleanData = this.cleanUpdateData(data);
     
@@ -36,7 +35,7 @@ export class UpdateShopService {
   /**
    * Actualiza completamente una tienda (PUT)
    */
-  async replaceShop(id: string | number, data: Required<UpdateShopPayload>): Promise<ApiResponse<Shop>> {
+  async replaceShop(id: string | number, data: Required<UpdateShopPayload>): Promise<Shop> {
     // Validar que todos los campos requeridos estén presentes
     this.validateCompleteShopData(data);
 
@@ -46,7 +45,7 @@ export class UpdateShopService {
   /**
    * Actualiza solo el nombre de una tienda
    */
-  async updateShopName(id: string | number, name: string): Promise<ApiResponse<Shop>> {
+  async updateShopName(id: string | number, name: string): Promise<Shop> {
     if (!name || name.trim().length === 0) {
       throw new Error('El nombre no puede estar vacío');
     }
@@ -57,7 +56,7 @@ export class UpdateShopService {
   /**
    * Actualiza solo el enlace de una tienda
    */
-  async updateShopLink(id: string | number, link: string): Promise<ApiResponse<Shop>> {
+  async updateShopLink(id: string | number, link: string): Promise<Shop> {
     if (!link || link.trim().length === 0) {
       throw new Error('El enlace no puede estar vacío');
     }
@@ -74,7 +73,7 @@ export class UpdateShopService {
   /**
    * Obtiene una tienda antes de actualizarla (para verificar cambios)
    */
-  async getShopForUpdate(id: string | number): Promise<ApiResponse<Shop>> {
+  async getShopForUpdate(id: string | number): Promise<Shop> {
     return apiClient.get<Shop>(`${this.endpoint}/${id}/`);
   }
 
@@ -85,7 +84,7 @@ export class UpdateShopService {
     id: string | number, 
     newData: UpdateShopPayload, 
     currentData: Shop
-  ): Promise<ApiResponse<Shop> | null> {
+  ): Promise<Shop | null> {
     const changes = this.detectChanges(newData, currentData);
     
     if (Object.keys(changes).length === 0) {

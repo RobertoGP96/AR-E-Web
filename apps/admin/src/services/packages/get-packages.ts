@@ -12,14 +12,14 @@ import type { Package } from '../../types';
 export const getPackages = async (
   filters?: BaseFilters
 ): Promise<PaginatedApiResponse<Package>> => {
-  return await apiClient.getPaginated<Package>('/packages/', filters);
+  return await apiClient.getPaginated<Package>('/api_data/package/', filters);
 };
 
 /**
  * Obtiene un paquete por ID
  */
 export const getPackageById = async (id: number) => {
-  return await apiClient.get<Package>(`/packages/${id}/`);
+  return await apiClient.get<Package>(`/api_data/package/${id}/`);
 };
 
 /**
@@ -27,7 +27,7 @@ export const getPackageById = async (id: number) => {
  */
 export const getPackagesByStatus = async (status: string, filters?: BaseFilters) => {
   const statusFilters = { ...filters, status };
-  return await apiClient.getPaginated<Package>('/packages/', statusFilters);
+  return await apiClient.getPaginated<Package>('/api_data/package/', statusFilters);
 };
 
 /**
@@ -35,7 +35,7 @@ export const getPackagesByStatus = async (status: string, filters?: BaseFilters)
  */
 export const getPackagesByOrder = async (orderId: number, filters?: BaseFilters) => {
   const orderFilters = { ...filters, order_id: orderId };
-  return await apiClient.getPaginated<Package>('/packages/', orderFilters);
+  return await apiClient.getPaginated<Package>('/api_data/package/', orderFilters);
 };
 
 /**
@@ -43,5 +43,5 @@ export const getPackagesByOrder = async (orderId: number, filters?: BaseFilters)
  */
 export const searchPackages = async (searchTerm: string, filters?: BaseFilters) => {
   const searchFilters = { ...filters, search: searchTerm };
-  return await apiClient.getPaginated<Package>('/packages/', searchFilters);
+  return await apiClient.getPaginated<Package>('/api_data/package/', searchFilters);
 };

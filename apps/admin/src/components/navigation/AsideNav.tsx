@@ -179,12 +179,15 @@ export function AsideNav() {
               <Avatar className="h-10 w-10 rounded-xl ring-2 ring-orange-500/20">
                 <AvatarImage src="" alt="Administrador" />
                 <AvatarFallback className="rounded-xl bg-gradient-to-r from-orange-400 to-amber-500 text-gray-900 font-semibold">
-                  AD
+                  {user?.name.charAt(0).toUpperCase() +""+ user?.last_name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 text-left">
                 <span className="block font-semibold text-base text-white">{user?.name}</span>
                 <span className="block text-sm text-gray-400">{user?.phone_number}</span>
+              </div>
+              <div>
+                <Badge variant="default" className='bg-gray-600 text-[12px] text-orange-200'>{user?.role}</Badge>
               </div>
             </button>
           </DropdownMenuTrigger>
@@ -201,8 +204,11 @@ export function AsideNav() {
                   <AvatarFallback className="rounded-xl bg-gradient-to-r from-orange-400 to-amber-500 text-gray-900 font-semibold">AD</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold text-base text-gray-800">{user?.name+" "+user?.last_name.charAt(0).toUpperCase()}</span>
+                  <span className="truncate font-semibold text-base text-gray-800">{user?.name + " " + user?.last_name.charAt(0).toUpperCase()}</span>
                   <span className="truncate text-sm text-gray-500">{user?.phone_number}</span>
+                </div>
+                <div>
+                  <Badge variant="default" className='bg-gray-100 text-gray-600'>{user?.role}</Badge>
                 </div>
               </div>
             </DropdownMenuLabel>
@@ -216,7 +222,7 @@ export function AsideNav() {
               <span className="group-hover:text-orange-700">Configuración</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-gray-100" />
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="gap-3 px-3 py-3 text-base text-red-600 focus:text-red-600 cursor-pointer hover:bg-red-50"
               onClick={handleLogout}
             >

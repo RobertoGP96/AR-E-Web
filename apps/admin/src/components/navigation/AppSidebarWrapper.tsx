@@ -1,7 +1,5 @@
 import { AsideNav } from './AsideNav';
-import { Search } from 'lucide-react';
 import { useLocation} from 'react-router-dom';
-import { Input } from '@/components/ui/input';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 
 interface AppSidebarWrapperProps {
@@ -47,29 +45,11 @@ export function AppSidebarWrapper({ children }: AppSidebarWrapperProps) {
             </div>
           </div>
 
-          {/* Barra de búsqueda */}
-          <div className="hidden lg:flex flex-1 max-w-lg">
-            <div className="relative w-full">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-gray-400" />
-              </div>
-              <Input
-                type="search"
-                placeholder="Buscar..."
-                className="pl-10 h-10 bg-background/50 border-border focus:ring-primary focus:border-primary"
-              />
-            </div>
-          </div>
+          
 
           {/* Acciones del header */}
           <div className="flex items-center space-x-3 flex-shrink-0">
-            {/* Búsqueda móvil */}
-            <button
-              type="button"
-              className="lg:hidden p-3 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-colors"
-            >
-              <Search className="h-5 w-5" />
-            </button>
+            
             {/* Notificaciones */}
             <NotificationsPopover />
           </div>

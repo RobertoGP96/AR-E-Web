@@ -3,7 +3,7 @@
  */
 
 import { apiClient } from '@/lib/api-client';
-import type { Package, ApiResponse } from '../../types';
+import type { Package } from '../../types';
 
 export interface CreatePackageData {
   order_id: number;
@@ -17,10 +17,10 @@ export interface CreatePackageData {
 /**
  * Crea un nuevo paquete
  */
-export const createPackage = async (packageData: CreatePackageData): Promise<ApiResponse<Package>> => {
+export const createPackage = async (packageData: CreatePackageData): Promise<Package> => {
   const { order_id, ...data } = packageData;
   
-  return await apiClient.post<Package>('/packages/', {
+  return await apiClient.post<Package>('/api_data/package/', {
     ...data,
     order: order_id
   });

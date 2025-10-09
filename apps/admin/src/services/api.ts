@@ -523,35 +523,35 @@ export const dashboardService = {
   /**
    * Obtener métricas del dashboard
    */
-  getDashboardStats: async (): Promise<ApiResponse<DashboardMetrics>> => {
+  getDashboardStats: async (): Promise<DashboardMetrics> => {
     return apiClient.get('/api_data/dashboard/stats/');
   },
 
   /**
    * Obtener estadísticas de órdenes
    */
-  getOrderStats: async (period?: string): Promise<ApiResponse<unknown>> => {
+  getOrderStats: async (period?: string): Promise<unknown> => {
     return apiClient.get('/api_data/dashboard/orders/', { params: { period } });
   },
 
   /**
    * Obtener estadísticas de productos
    */
-  getProductStats: async (period?: string): Promise<ApiResponse<unknown>> => {
+  getProductStats: async (period?: string): Promise<unknown> => {
     return apiClient.get('/api_data/dashboard/products/', { params: { period } });
   },
 
   /**
    * Obtener estadísticas de ventas
    */
-  getSalesStats: async (period?: string): Promise<ApiResponse<unknown>> => {
+  getSalesStats: async (period?: string): Promise<unknown> => {
     return apiClient.get('/api_data/dashboard/sales/', { params: { period } });
   },
 
   /**
    * Obtener actividad reciente
    */
-  getRecentActivity: async (limit?: number): Promise<ApiResponse<unknown[]>> => {
+  getRecentActivity: async (limit?: number): Promise<unknown[]> => {
     return apiClient.get('/api_data/dashboard/activity/', { params: { limit } });
   },
 };
@@ -582,14 +582,14 @@ export const utilService = {
   /**
    * Subir archivo genérico
    */
-  uploadFile: async (endpoint: string, file: File): Promise<ApiResponse<unknown>> => {
+  uploadFile: async (endpoint: string, file: File): Promise<unknown> => {
     return apiClient.uploadFile(endpoint, file);
   },
 
   /**
    * Verificar salud de la API
    */
-  healthCheck: async (): Promise<ApiResponse<{ status: string; timestamp: string }>> => {
+  healthCheck: async (): Promise<{ status: string; timestamp: string }> => {
     return apiClient.get('/health/', { skipAuth: true });
   },
 };

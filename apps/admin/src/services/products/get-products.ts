@@ -12,14 +12,14 @@ import type { Product } from '../../types';
 export const getProducts = async (
   filters?: ProductFilters
 ): Promise<PaginatedApiResponse<Product>> => {
-  return await apiClient.getPaginated<Product>('/products/', filters);
+  return await apiClient.getPaginated<Product>('/api_data/product/', filters);
 };
 
 /**
  * Obtiene un producto por ID
  */
 export const getProductById = async (id: number) => {
-  return await apiClient.get<Product>(`/products/${id}/`);
+  return await apiClient.get<Product>(`/api_data/product/${id}/`);
 };
 
 /**
@@ -27,7 +27,7 @@ export const getProductById = async (id: number) => {
  */
 export const getProductsByStatus = async (status: string, filters?: ProductFilters) => {
   const statusFilters = { ...filters, status };
-  return await apiClient.getPaginated<Product>('/products/', statusFilters);
+  return await apiClient.getPaginated<Product>('/api_data/product/', statusFilters);
 };
 
 /**
@@ -35,7 +35,7 @@ export const getProductsByStatus = async (status: string, filters?: ProductFilte
  */
 export const getProductsByShop = async (shopId: number, filters?: ProductFilters) => {
   const shopFilters = { ...filters, shop_id: shopId };
-  return await apiClient.getPaginated<Product>('/products/', shopFilters);
+  return await apiClient.getPaginated<Product>('/api_data/product/', shopFilters);
 };
 
 /**
@@ -43,7 +43,7 @@ export const getProductsByShop = async (shopId: number, filters?: ProductFilters
  */
 export const getProductsByOrder = async (orderId: number, filters?: ProductFilters) => {
   const orderFilters = { ...filters, order_id: orderId };
-  return await apiClient.getPaginated<Product>('/products/', orderFilters);
+  return await apiClient.getPaginated<Product>('/api_data/product/', orderFilters);
 };
 
 /**
@@ -51,5 +51,5 @@ export const getProductsByOrder = async (orderId: number, filters?: ProductFilte
  */
 export const searchProducts = async (searchTerm: string, filters?: ProductFilters) => {
   const searchFilters = { ...filters, search: searchTerm };
-  return await apiClient.getPaginated<Product>('/products/', searchFilters);
+  return await apiClient.getPaginated<Product>('/api_data/product/', searchFilters);
 };

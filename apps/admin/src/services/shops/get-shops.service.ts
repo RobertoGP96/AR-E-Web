@@ -102,20 +102,21 @@ export class GetShopsService {
       });
 
       // Si hay más páginas, recopilar todas
-      if (response.pagination && response.pagination.pages > 1) {
-        const allShops: Shop[] = [...(response.data || [])];
+      const totalPages = Math.ceil(response.count / 1000);
+      if (response.next && totalPages > 1) {
+        const allShops: Shop[] = [...(response.results || [])];
         
-        for (let page = 2; page <= response.pagination.pages; page++) {
+        for (let page = 2; page <= totalPages; page++) {
           const pageResponse = await this.getShopsPage(page, 1000);
-          if (pageResponse.data) {
-            allShops.push(...pageResponse.data);
+          if (pageResponse.results) {
+            allShops.push(...pageResponse.results);
           }
         }
         
         return allShops;
       }
 
-      return response.data || [];
+      return response.results || [];
     } catch (error) {
       console.error('Error fetching all shops:', error);
       throw error;

@@ -5,6 +5,7 @@
 import type { ID, DateTime, OrderStatus, PayStatus } from './base';
 import type { CustomUser } from './user';
 import type { DeliverReceip } from './delivery';
+import type { Product } from './product';
 
 // Modelo principal
 export interface Order {
@@ -14,11 +15,23 @@ export interface Order {
   status: OrderStatus;
   pay_status: PayStatus;
   
-  // Propiedades computadas
+  // Productos y entregas
+  products?: Product[];
+  delivery_receipts?: DeliverReceip[];
+  
+  // Propiedades computadas de dinero
   total_cost: number;
-  received_products?: DeliverReceip[];
   received_value_of_client?: number;
   extra_payments?: number;
+  
+  // Propiedades computadas de productos (del backend)
+  total_products_requested: number;
+  total_products_purchased: number;
+  total_products_delivered: number;
+  
+  // Timestamps
+  created_at: DateTime;
+  updated_at: DateTime;
 }
 
 // Tipos para crear/editar pedido

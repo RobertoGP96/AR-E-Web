@@ -5,7 +5,6 @@
 
 import { apiClient } from '@/lib/api-client';
 import type { 
-  ApiResponse, 
   PaginatedApiResponse, 
   BaseFilters 
 } from '@/types/api';
@@ -37,28 +36,28 @@ export class ShopsService {
   /**
    * Obtiene una tienda específica por ID
    */
-  async getShop(id: string | number): Promise<ApiResponse<Shop>> {
+  async getShop(id: string | number): Promise<Shop> {
     return apiClient.get<Shop>(`${this.baseUrl}/${id}/`);
   }
 
   /**
    * Crea una nueva tienda
    */
-  async createShop(data: CreateShopData): Promise<ApiResponse<Shop>> {
+  async createShop(data: CreateShopData): Promise<Shop> {
     return apiClient.post<Shop>(`${this.baseUrl}/`, data);
   }
 
   /**
    * Actualiza una tienda existente
    */
-  async updateShop(id: string | number, data: Partial<UpdateShopData>): Promise<ApiResponse<Shop>> {
+  async updateShop(id: string | number, data: Partial<UpdateShopData>): Promise<Shop> {
     return apiClient.patch<Shop>(`${this.baseUrl}/${id}/`, data);
   }
 
   /**
    * Elimina una tienda
    */
-  async deleteShop(id: string | number): Promise<ApiResponse<void>> {
+  async deleteShop(id: string | number): Promise<void> {
     return apiClient.delete<void>(`${this.baseUrl}/${id}/`);
   }
 
