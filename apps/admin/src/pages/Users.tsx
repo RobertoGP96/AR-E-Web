@@ -1,7 +1,8 @@
 import { UsersHeader, UsersFilters, UsersTable } from '@/components/users';
 import { useState, useMemo } from 'react';
-import { useUsers } from '@/hooks/user';
+import { useUsers, useCreateUser } from '@/hooks/user';
 import type { UserRole } from '@/types/models/user';
+import type { CreateUserData, UpdateUserData } from '@/types/models/user';
 
 const Users = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,6 +41,18 @@ const Users = () => {
 
   // Obtener usuarios con el hook
   const { data, isLoading, error } = useUsers(filters);
+  
+  // Hook para crear usuario
+  const createUserMutation = useCreateUser();
+
+  // Manejador para crear usuario
+  const handleCreateUser = async (userData: CreateUserData | UpdateUserData) => {
+    try {
+      await createUserMutation.mutateAsync(userData as CreateUserData);
+    } catch (err) {
+      console.error('Error al crear usuario:', err);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -51,6 +64,8 @@ const Users = () => {
         onRoleFilterChange={setRoleFilter}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
+        onCreateUser={handleCreateUser}
+        isCreatingUser={createUserMutation.isPending}
       />
       <UsersTable 
         users={data?.results}

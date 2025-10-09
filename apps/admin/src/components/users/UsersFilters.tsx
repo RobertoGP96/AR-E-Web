@@ -1,6 +1,8 @@
 import { Filter, Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
+import { UserForm } from './UserForm';
+import type { CreateUserData, UpdateUserData } from '../../types/models/user';
 
 interface UsersFiltersProps {
   searchTerm?: string;
@@ -9,11 +11,15 @@ interface UsersFiltersProps {
   onRoleFilterChange?: (value: string) => void;
   statusFilter?: string;
   onStatusFilterChange?: (value: string) => void;
+  onCreateUser?: (data: CreateUserData | UpdateUserData) => void;
+  isCreatingUser?: boolean;
 }
 
 export default function UsersFilters({
   searchTerm,
   onSearchChange,
+  onCreateUser,
+  isCreatingUser = false,
 }: UsersFiltersProps) {
   return (
         <div className="flex flex-col sm:flex-row gap-4">
@@ -33,10 +39,17 @@ export default function UsersFilters({
             <Filter className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
-          <Button className="h-10">
-            <Plus className="h-4 w-4 mr-2" />
-            Agregar usuario
-          </Button>
+          <UserForm 
+            mode="create"
+            onSubmit={onCreateUser}
+            loading={isCreatingUser}
+            trigger={
+              <Button className="h-10">
+                <Plus className="h-4 w-4 mr-2" />
+                Agregar usuario
+              </Button>
+            }
+          />
         </div>
   );
 }

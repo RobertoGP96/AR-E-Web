@@ -1,12 +1,17 @@
-import { Edit, Trash2, MoreHorizontal, Shield, User, ShoppingCart, Truck, Calculator, Megaphone, Clock, Phone, Handshake } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Shield, User, ShoppingCart, Truck, Calculator, Megaphone, Clock, Phone, Handshake, Eye, CheckCircle, XCircle, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import type { CustomUser, UserRole } from '@/types/models/user';
 import { roleLabels } from '@/types/models/user';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { formatDate } from '@/lib/format-date';
+import { useDeleteUser, useVerifyUser, useToggleUserActive } from '@/hooks/user';
+import { toast } from 'sonner';
+import { useState } from 'react';
+import UserDetailsDialog from './UserDetailsDialog';
 
 interface UsersTableProps {
   users?: CustomUser[];
@@ -29,6 +34,14 @@ const roleIcons: Record<UserRole, React.ElementType> = {
   client: User,
 };
 
+// Tipos para el diálogo de confirmación
+type DialogType = 'delete' | 'verify' | 'activate' | 'deactivate' | null;
+
+interface DialogState {
+  type: DialogType;
+  user: CustomUser | null;
+}
+
 
 export default function UsersTable({
   users = [],
@@ -38,6 +51,143 @@ export default function UsersTable({
   isLoading = false,
   error = null
 }: UsersTableProps) {
+  // Estados para los diálogos de confirmación
+  const [dialogState, setDialogState] = useState<DialogState>({
+    type: null,
+    user: null
+  });
+
+  // Estado para el diálogo de detalles
+  const [selectedUser, setSelectedUser] = useState<CustomUser | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+
+  // Hooks de mutación
+  const deleteUserMutation = useDeleteUser();
+  const verifyUserMutation = useVerifyUser();
+  const toggleUserActiveMutation = useToggleUserActive();
+
+  // Manejador para ver detalles
+  const handleViewDetails = (user: CustomUser) => {
+    setSelectedUser(user);
+    setShowDetails(true);
+    onUserClick?.(user);
+  };
+
+  // Manejadores de acciones
+  const handleDeleteConfirm = async () => {
+    if (!dialogState.user) return;
+
+    try {
+      await deleteUserMutation.mutateAsync(dialogState.user.id);
+      toast.success('Usuario eliminado exitosamente');
+      onDeleteUser?.(dialogState.user);
+    } catch (error) {
+      toast.error('Error al eliminar usuario');
+      console.error(error);
+    } finally {
+      setDialogState({ type: null, user: null });
+    }
+  };
+
+  const handleVerifyConfirm = async () => {
+    if (!dialogState.user) return;
+
+    try {
+      await verifyUserMutation.mutateAsync({
+        userId: dialogState.user.id,
+        verified: true
+      });
+      toast.success('Usuario verificado exitosamente');
+    } catch (error) {
+      toast.error('Error al verificar usuario');
+      console.error(error);
+    } finally {
+      setDialogState({ type: null, user: null });
+    }
+  };
+
+  const handleToggleActiveConfirm = async () => {
+    if (!dialogState.user) return;
+
+    const isActivating = dialogState.type === 'activate';
+
+    try {
+      await toggleUserActiveMutation.mutateAsync({
+        userId: dialogState.user.id,
+        isActive: isActivating
+      });
+      toast.success(`Usuario ${isActivating ? 'activado' : 'desactivado'} exitosamente`);
+    } catch (error) {
+      toast.error(`Error al ${isActivating ? 'activar' : 'desactivar'} usuario`);
+      console.error(error);
+    } finally {
+      setDialogState({ type: null, user: null });
+    }
+  };
+
+  const handleConfirm = () => {
+    switch (dialogState.type) {
+      case 'delete':
+        handleDeleteConfirm();
+        break;
+      case 'verify':
+        handleVerifyConfirm();
+        break;
+      case 'activate':
+      case 'deactivate':
+        handleToggleActiveConfirm();
+        break;
+    }
+  };
+
+  const handleCancel = () => {
+    setDialogState({ type: null, user: null });
+  };
+
+  // Función para obtener el contenido del diálogo según el tipo
+  const getDialogContent = () => {
+    if (!dialogState.user) return { title: '', description: '' };
+
+    switch (dialogState.type) {
+      case 'delete':
+        return {
+          title: '¿Eliminar usuario?',
+          description: `¿Estás seguro de que deseas eliminar a ${dialogState.user.full_name}? Esta acción no se puede deshacer.`,
+          actionText: 'Eliminar',
+          variant: 'destructive' as const
+        };
+      case 'verify':
+        return {
+          title: '¿Verificar usuario?',
+          description: `¿Deseas marcar a ${dialogState.user.full_name} como verificado?`,
+          actionText: 'Verificar',
+          variant: 'default' as const
+        };
+      case 'activate':
+        return {
+          title: '¿Activar usuario?',
+          description: `¿Deseas activar la cuenta de ${dialogState.user.full_name}?`,
+          actionText: 'Activar',
+          variant: 'default' as const
+        };
+      case 'deactivate':
+        return {
+          title: '¿Desactivar usuario?',
+          description: `¿Deseas desactivar la cuenta de ${dialogState.user.full_name}? El usuario no podrá acceder al sistema.`,
+          actionText: 'Desactivar',
+          variant: 'destructive' as const
+        };
+      default:
+        return {
+          title: '',
+          description: '',
+          actionText: 'Confirmar',
+          variant: 'default' as const
+        };
+    }
+  };
+
+  const dialogContent = getDialogContent();
   // Estado de carga
   if (isLoading) {
     return (
@@ -110,7 +260,7 @@ export default function UsersTable({
               <TableRow
                 key={user.id}
                 className="cursor-pointer group "
-                onClick={() => onUserClick?.(user)}
+                onClick={() => handleViewDetails(user)}
               >
                 <TableCell className="py-4 px-3 text-center w-16">
                   <span className="inline-flex items-center justify-center w-8 h-8 text-gray-700 text-sm font-medium">
@@ -174,6 +324,58 @@ export default function UsersTable({
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
+                          handleViewDetails(user);
+                        }}
+                        className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Ver detalles
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuSeparator />
+                      
+                      {!user.is_verified && (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDialogState({ type: 'verify', user });
+                          }}
+                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                        >
+                          <UserCheck className="h-4 w-4" />
+                          Verificar usuario
+                        </DropdownMenuItem>
+                      )}
+                      
+                      {user.is_active ? (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDialogState({ type: 'deactivate', user });
+                          }}
+                          className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
+                        >
+                          <XCircle className="h-4 w-4" />
+                          Desactivar usuario
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDialogState({ type: 'activate', user });
+                          }}
+                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Activar usuario
+                        </DropdownMenuItem>
+                      )}
+                      
+                      <DropdownMenuSeparator />
+                      
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
                           onEditUser?.(user);
                         }}
                         className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
@@ -184,7 +386,7 @@ export default function UsersTable({
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
-                          onDeleteUser?.(user);
+                          setDialogState({ type: 'delete', user });
                         }}
                         className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
                       >
@@ -199,6 +401,34 @@ export default function UsersTable({
           })}
         </TableBody>
       </Table>
+
+      {/* Diálogo de confirmación */}
+      <AlertDialog open={dialogState.type !== null} onOpenChange={(open) => !open && handleCancel()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{dialogContent.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {dialogContent.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancel}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirm}
+              className={dialogContent.variant === 'destructive' ? 'bg-red-600 hover:bg-red-700' : ''}
+            >
+              {dialogContent.actionText}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo de detalles del usuario */}
+      <UserDetailsDialog
+        user={selectedUser}
+        open={showDetails}
+        onOpenChange={setShowDetails}
+      />
     </div>
   );
 }

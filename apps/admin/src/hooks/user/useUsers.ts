@@ -2,15 +2,21 @@
  * Hook personalizado para gestionar usuarios con TanStack Query
  */
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { 
   getUsers, 
   getUserById, 
   getCurrentUserProfile,
   searchUsers,
-  getUsersByRole
+  getUsersByRole,
+  createUser,
+  updateUser,
+  deleteUser,
+  updateUserVerificationStatus,
+  updateUserActiveStatus
 } from '@/services/users';
 import type { UserFilters } from '@/types/api';
+import type { CreateUserData, UpdateUserData } from '@/types/models/user';
 
 /**
  * Query key factory para usuarios
@@ -90,4 +96,84 @@ export function useInvalidateUsers() {
     invalidateLists: () => queryClient.invalidateQueries({ queryKey: userKeys.lists() }),
     invalidateUser: (id: number) => queryClient.invalidateQueries({ queryKey: userKeys.detail(id) }),
   };
+}
+
+/**
+ * Hook para crear un nuevo usuario
+ */
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userData: CreateUserData) => createUser(userData),
+    onSuccess: () => {
+      // Invalidar el cache de la lista de usuarios
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook para actualizar un usuario
+ */
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userData: UpdateUserData) => updateUser(userData.id, userData),
+    onSuccess: (data) => {
+      // Invalidar el cache del usuario específico y las listas
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook para eliminar un usuario
+ */
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: number) => deleteUser(userId),
+    onSuccess: () => {
+      // Invalidar el cache de las listas de usuarios
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook para verificar un usuario manualmente
+ */
+export function useVerifyUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, verified }: { userId: number; verified: boolean }) => 
+      updateUserVerificationStatus(userId, verified),
+    onSuccess: (data) => {
+      // Invalidar el cache del usuario específico y las listas
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook para activar/desactivar un usuario
+ */
+export function useToggleUserActive() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, isActive }: { userId: number; isActive: boolean }) => 
+      updateUserActiveStatus(userId, isActive),
+    onSuccess: (data) => {
+      // Invalidar el cache del usuario específico y las listas
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
 }
