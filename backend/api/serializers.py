@@ -23,7 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
     Serializador para el modelo CustomUser.
     Incluye validaciones personalizadas para email y teléfono, y gestiona la creación de usuarios con contraseña encriptada.
     """
-    user_id = serializers.IntegerField(source="id", read_only=True)
+    # Removido user_id, usar id directamente
     email = serializers.EmailField(write_only=True, required=False, allow_blank=True)
     password = serializers.CharField(write_only=True)
     full_name = serializers.CharField(read_only=True)
@@ -33,7 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
 
         model = CustomUser
         fields = [
-            "user_id",
+            "id",  # Cambiado de user_id a id
             "email",
             "name",
             "password",
@@ -48,6 +48,7 @@ class UserSerializer(serializers.ModelSerializer):
             "date_joined",
             "full_name",
         ]
+        read_only_fields = ["id"]  # Asegurar que id sea read-only
 
     def validate_phone_number(self, value):
         # Permitir números, espacios, guiones, paréntesis y el símbolo +
@@ -80,13 +81,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
     Serializador específico para actualizaciones de perfil de usuario.
     Permite la lectura y escritura de campos de perfil sin campos sensibles.
     """
-    user_id = serializers.IntegerField(source="id", read_only=True)
+    # Removido user_id, usar id directamente
     full_name = serializers.CharField(read_only=True)
 
     class Meta:
         model = CustomUser
         fields = [
-            "user_id",
+            "id",  # Cambiado de user_id a id
             "email",
             "name", 
             "last_name",
@@ -101,7 +102,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "full_name",
         ]
         read_only_fields = [
-            "user_id",
+            "id",  # Cambiado de user_id a id
             "role", 
             "agent_profit",
             "is_staff",

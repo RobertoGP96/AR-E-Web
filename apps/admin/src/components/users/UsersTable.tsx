@@ -18,6 +18,8 @@ interface UsersTableProps {
   onEditUser?: (user: CustomUser) => void;
   onDeleteUser?: (user: CustomUser) => void;
   onUserClick?: (user: CustomUser) => void;
+  onVerifyUser?: (userId: number, isVerified: boolean) => void;
+  onToggleUserActive?: (userId: number, isActive: boolean) => void;
   isLoading?: boolean;
   error?: string | null;
 }
@@ -48,6 +50,8 @@ export default function UsersTable({
   onEditUser,
   onDeleteUser,
   onUserClick,
+  onVerifyUser,
+  onToggleUserActive,
   isLoading = false,
   error = null
 }: UsersTableProps) {
@@ -61,7 +65,7 @@ export default function UsersTable({
   const [selectedUser, setSelectedUser] = useState<CustomUser | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Hooks de mutación
+  // Hooks de mutación (solo para eliminar desde la tabla)
   const deleteUserMutation = useDeleteUser();
   const verifyUserMutation = useVerifyUser();
   const toggleUserActiveMutation = useToggleUserActive();
@@ -77,13 +81,23 @@ export default function UsersTable({
   const handleDeleteConfirm = async () => {
     if (!dialogState.user) return;
 
+    const userId = dialogState.user.id;
+    
+    // Debug: verificar que el ID sea válido
+    if (!userId || userId === undefined) {
+      console.error('Error: ID de usuario inválido', dialogState.user);
+      toast.error('Error: ID de usuario inválido');
+      setDialogState({ type: null, user: null });
+      return;
+    }
+
     try {
-      await deleteUserMutation.mutateAsync(dialogState.user.id);
+      await deleteUserMutation.mutateAsync(userId);
       toast.success('Usuario eliminado exitosamente');
       onDeleteUser?.(dialogState.user);
     } catch (error) {
       toast.error('Error al eliminar usuario');
-      console.error(error);
+      console.error('Error al eliminar usuario:', error);
     } finally {
       setDialogState({ type: null, user: null });
     }
@@ -93,14 +107,19 @@ export default function UsersTable({
     if (!dialogState.user) return;
 
     try {
-      await verifyUserMutation.mutateAsync({
-        userId: dialogState.user.id,
-        verified: true
-      });
+      // Usar prop si está disponible, sino usar mutación interna
+      if (onVerifyUser) {
+        await onVerifyUser(dialogState.user.id, true);
+      } else {
+        await verifyUserMutation.mutateAsync({
+          userId: dialogState.user.id,
+          verified: true
+        });
+      }
       toast.success('Usuario verificado exitosamente');
     } catch (error) {
       toast.error('Error al verificar usuario');
-      console.error(error);
+      console.error('Error al verificar usuario:', error);
     } finally {
       setDialogState({ type: null, user: null });
     }
@@ -112,14 +131,19 @@ export default function UsersTable({
     const isActivating = dialogState.type === 'activate';
 
     try {
-      await toggleUserActiveMutation.mutateAsync({
-        userId: dialogState.user.id,
-        isActive: isActivating
-      });
+      // Usar prop si está disponible, sino usar mutación interna
+      if (onToggleUserActive) {
+        await onToggleUserActive(dialogState.user.id, isActivating);
+      } else {
+        await toggleUserActiveMutation.mutateAsync({
+          userId: dialogState.user.id,
+          isActive: isActivating
+        });
+      }
       toast.success(`Usuario ${isActivating ? 'activado' : 'desactivado'} exitosamente`);
     } catch (error) {
       toast.error(`Error al ${isActivating ? 'activar' : 'desactivar'} usuario`);
-      console.error(error);
+      console.error(`Error al ${isActivating ? 'activar' : 'desactivar'} usuario:`, error);
     } finally {
       setDialogState({ type: null, user: null });
     }
@@ -248,7 +272,8 @@ export default function UsersTable({
             <TableHead>Usuario</TableHead>
             <TableHead>Teléfono</TableHead>
             <TableHead>Rol</TableHead>
-            <TableHead>Estado</TableHead>
+            <TableHead>Verificación</TableHead>
+            <TableHead>Activación</TableHead>
             <TableHead>Registro</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
@@ -256,11 +281,11 @@ export default function UsersTable({
         <TableBody>
           {users.map((user, index) => {
             const RoleIcon = roleIcons[user.role];
+            
             return (
               <TableRow
                 key={user.id}
-                className="cursor-pointer group "
-                onClick={() => handleViewDetails(user)}
+                className="group"
               >
                 <TableCell className="py-4 px-3 text-center w-16">
                   <span className="inline-flex items-center justify-center w-8 h-8 text-gray-700 text-sm font-medium">
@@ -298,10 +323,33 @@ export default function UsersTable({
                 </TableCell>
                 
                 <TableCell>
-                  <Badge className={`rounded-full px-3 py-1 w-fit ${user.is_active ? (user.is_verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700') : 'bg-gray-100 text-gray-500'}`}>
-                    {user.is_active ? (user.is_verified ? 'Verificado' : 'Activo') : 'Inactivo'}
-                  </Badge>
+                  {user.is_verified ? (
+                    <Badge className="rounded-full px-3 py-1 w-fit bg-green-100 text-green-700 flex items-center gap-1">
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      Verificado
+                    </Badge>
+                  ) : (
+                    <Badge className="rounded-full px-3 py-1 w-fit bg-yellow-100 text-yellow-700 flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      Sin verificar
+                    </Badge>
+                  )}
                 </TableCell>
+                
+                <TableCell>
+                  {user.is_active ? (
+                    <Badge className="rounded-full px-3 py-1 w-fit bg-blue-100 text-blue-700 flex items-center gap-1">
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      Activo
+                    </Badge>
+                  ) : (
+                    <Badge className="rounded-full px-3 py-1 w-fit bg-gray-100 text-gray-600 flex items-center gap-1">
+                      <XCircle className="h-3.5 w-3.5" />
+                      Inactivo
+                    </Badge>
+                  )}
+                </TableCell>
+                
                 <TableCell>
                   <div className='flex items-center'>
                     <Clock className="h-4 w-4 inline-block mr-1" />
@@ -386,6 +434,14 @@ export default function UsersTable({
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
+                          
+                          // Validación: verificar que el usuario tenga un ID válido
+                          if (!user || !user.id) {
+                            console.error('Error: Usuario sin ID válido', user);
+                            toast.error('Error: No se puede eliminar un usuario sin ID');
+                            return;
+                          }
+                          
                           setDialogState({ type: 'delete', user });
                         }}
                         className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
