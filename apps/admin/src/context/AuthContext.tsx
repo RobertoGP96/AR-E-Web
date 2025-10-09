@@ -194,7 +194,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.warn('Usuario guardado sin token válido, limpiando almacenamiento');
         clearAuthStorage();
       }
-      dispatch({ type: 'AUTH_ERROR', payload: 'No authentication token found' });
+      // No despachar error cuando simplemente no hay token - es una condición normal
+      // Solo asegurarse de que el estado esté limpio
+      dispatch({ type: 'AUTH_LOGOUT' });
       return;
     }
 
