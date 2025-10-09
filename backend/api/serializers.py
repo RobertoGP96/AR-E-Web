@@ -24,7 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
     Incluye validaciones personalizadas para email y teléfono, y gestiona la creación de usuarios con contraseña encriptada.
     """
     # Removido user_id, usar id directamente
-    email = serializers.EmailField(write_only=True, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)  # Removido write_only para que se devuelva en GET
     password = serializers.CharField(write_only=True)
     full_name = serializers.CharField(read_only=True)
 

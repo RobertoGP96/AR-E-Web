@@ -240,7 +240,7 @@ export const UserForm: React.FC<UserFormProps> = ({
           role: data.role as import('../../types/models/user').UserRole,
           agent_profit: data.agent_profit || 0,
         };
-        
+
         onSubmit(createUserData);
         
         toast.success('Usuario creado exitosamente', {

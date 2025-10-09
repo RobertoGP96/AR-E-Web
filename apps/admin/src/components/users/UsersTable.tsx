@@ -1,4 +1,4 @@
-import { Edit, Trash2, MoreHorizontal, Shield, User, ShoppingCart, Truck, Calculator, Megaphone, Clock, Phone, Handshake, Eye, CheckCircle, XCircle, UserCheck } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Shield, User, ShoppingCart, Truck, Calculator, Megaphone, Clock, Phone, Handshake, Eye, CheckCircle, XCircle, UserCheck, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -270,7 +270,7 @@ export default function UsersTable({
           <TableRow>
             <TableHead className="text-center">#</TableHead>
             <TableHead>Usuario</TableHead>
-            <TableHead>Teléfono</TableHead>
+            <TableHead>Correo</TableHead>
             <TableHead>Rol</TableHead>
             <TableHead>Verificación</TableHead>
             <TableHead>Activación</TableHead>
@@ -303,16 +303,19 @@ export default function UsersTable({
                       <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">
                         {user.full_name}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {user.email}
+                      <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                        <Phone className="h-3 w-3" />
+                        {user.phone_number}
                       </div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div>
-                    <Phone className="h-4 w-4 inline-block mr-1" />
-                    <span>{user.phone_number}</span>
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">
+                      {user.email || <span className="text-gray-400 italic">Sin email</span>}
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell>
