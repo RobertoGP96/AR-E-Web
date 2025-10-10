@@ -366,15 +366,34 @@ class OrderSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(float)
     def get_total_cost(self, obj):
-        return getattr(obj, 'total_cost', 0.0)
+        val = getattr(obj, 'total_cost', None)
+        # Si el atributo es un método, llamarlo; si es un valor (ej. anotación), retornarlo
+        if callable(val):
+            try:
+                return float(val())
+            except Exception:
+                return 0.0
+        return float(val) if val is not None else 0.0
 
     @extend_schema_field(float)
     def get_received_value_of_client(self, obj):
-        return getattr(obj, 'received_value_of_client', 0.0)
+        val = getattr(obj, 'received_value_of_client', None)
+        if callable(val):
+            try:
+                return float(val())
+            except Exception:
+                return 0.0
+        return float(val) if val is not None else 0.0
 
     @extend_schema_field(float)
     def get_extra_payments(self, obj):
-        return getattr(obj, 'extra_payments', 0.0)
+        val = getattr(obj, 'extra_payments', None)
+        if callable(val):
+            try:
+                return float(val())
+            except Exception:
+                return 0.0
+        return float(val) if val is not None else 0.0
 
     class Meta:
         """Class of model"""
