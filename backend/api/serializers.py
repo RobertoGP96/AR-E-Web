@@ -862,6 +862,7 @@ class AmazonScrapingResponseSerializer(serializers.Serializer):
     data = serializers.SerializerMethodField()
     error = serializers.CharField(max_length=500, required=False, allow_blank=True)
     
+    @extend_schema_field(serializers.DictField)
     def get_data(self, obj):
         """Determinar qué serializer usar según el tipo de datos"""
         if not obj.get('success', False) or 'data' not in obj:

@@ -24,7 +24,7 @@ router.register(r"category", views.CategoryViewSet)
 urlpatterns = [
     path("api_data/", include(router.urls)),
     path("user/", views.CurrentUserView.as_view(), name="current_user"),
-    path("verify_user/<verification_secret>", views.verify_user, name="verify_user"),
+    path("verify_user/<str:verification_secret>", views.verify_user, name="verify_user"),
     path("auth/", views.MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     re_path(

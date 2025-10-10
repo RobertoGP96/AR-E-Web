@@ -246,7 +246,9 @@ SPECTACULAR_SETTINGS = {
     'ENUM_NAME_OVERRIDES': {
         'OrderStatusEnum': 'api.enums.OrderStatusEnum',
         'PaymentStatusEnum': 'api.enums.PaymentStatusEnum',
-        'StatusOfProcessingEnum': 'api.enums.StatusOfProcessingEnum',
+        'DeliveryStatusEnum': 'api.enums.DeliveryStatusEnum',
+        'NotificationType': 'api.models_notifications.NotificationType',
+        'NotificationPriority': 'api.models_notifications.NotificationPriority',
     },
     'AUTHENTICATION_WHITELIST': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',

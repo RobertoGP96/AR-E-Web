@@ -345,15 +345,6 @@ class PasswordRecoverList(APIView):
 @extend_schema(
     summary="Verificar correo de usuario",
     description="Verifica el correo electrónico del usuario usando el secreto de verificación.",
-    parameters=[
-        {
-            'name': 'verification_secret',
-            'required': True,
-            'type': 'string',
-            'location': 'path',
-            'schema': {'type': 'string'}
-        }
-    ],
     responses={200: None},
     tags=["Usuarios"]
 )
@@ -838,8 +829,8 @@ class AmazonScrapingView(APIView):
         request=AmazonScrapingRequestSerializer,
         responses={
             200: AmazonScrapingResponseSerializer,
-            400: "Error de validación",
-            500: "Error interno del servidor"
+            400: OpenApiTypes.OBJECT,
+            500: OpenApiTypes.OBJECT
         },
         tags=["Amazon Scraping"]
     )
@@ -904,65 +895,11 @@ class CreateAdminUserView(APIView):
     @extend_schema(
         summary="Crear usuario administrativo",
         description="Crea un usuario con rol de administrador. Requiere una clave secreta para la validación. Devuelve las credenciales del usuario creado.",
-        request={
-            'type': 'object',
-            'properties': {
-                'secret_key': {
-                    'type': 'string',
-                    'description': 'Clave secreta para crear administradores'
-                },
-                'name': {
-                    'type': 'string',
-                    'description': 'Nombre del administrador'
-                },
-                'last_name': {
-                    'type': 'string', 
-                    'description': 'Apellido del administrador'
-                },
-                'email': {
-                    'type': 'string',
-                    'format': 'email',
-                    'description': 'Email del administrador (opcional)'
-                },
-                'phone_number': {
-                    'type': 'string',
-                    'description': 'Número de teléfono del administrador'
-                },
-                'home_address': {
-                    'type': 'string',
-                    'description': 'Dirección del administrador'
-                },
-                'password': {
-                    'type': 'string',
-                    'description': 'Contraseña del administrador (opcional, se genera automáticamente si no se proporciona)'
-                }
-            },
-            'required': ['secret_key', 'name', 'last_name', 'phone_number', 'home_address']
-        },
+        request=OpenApiTypes.OBJECT,
         responses={
-            201: {
-                'type': 'object',
-                'properties': {
-                    'success': {'type': 'boolean'},
-                    'message': {'type': 'string'},
-                    'admin_user': {
-                        'type': 'object',
-                        'properties': {
-                            'id': {'type': 'integer'},
-                            'name': {'type': 'string'},
-                            'last_name': {'type': 'string'},
-                            'email': {'type': 'string'},
-                            'phone_number': {'type': 'string'},
-                            'role': {'type': 'string'},
-                            'is_staff': {'type': 'boolean'},
-                            'is_active': {'type': 'boolean'},
-                            'password': {'type': 'string', 'description': 'Solo se devuelve la contraseña generada'}
-                        }
-                    }
-                }
-            },
-            400: "Error de validación o clave secreta incorrecta",
-            500: "Error interno del servidor"
+            201: OpenApiTypes.OBJECT,
+            400: OpenApiTypes.OBJECT,
+            500: OpenApiTypes.OBJECT
         },
         tags=["Administración"]
     )

@@ -49,6 +49,10 @@ class NotificationViewSet(viewsets.ModelViewSet):
         Filtrar notificaciones solo del usuario autenticado.
         Excluir notificaciones expiradas.
         """
+        # Para documentación swagger, devolver queryset vacío si no hay usuario
+        if getattr(self, "swagger_fake_view", False) or not self.request.user.is_authenticated:
+            return Notification.objects.none()
+        
         return Notification.objects.filter(
             recipient=self.request.user
         ).select_related('sender', 'recipient').prefetch_related('content_type')
@@ -326,6 +330,14 @@ class NotificationViewSet(viewsets.ModelViewSet):
     @extend_schema(
         summary="Expandir grupo de notificaciones",
         description="Obtiene todas las notificaciones individuales de un grupo.",
+        parameters=[
+            OpenApiParameter(
+                name='group_id',
+                type=int,
+                location=OpenApiParameter.PATH,
+                description='ID del grupo de notificaciones'
+            )
+        ],
         responses={200: NotificationSerializer(many=True)},
         tags=["Notificaciones"]
     )
@@ -339,6 +351,14 @@ class NotificationViewSet(viewsets.ModelViewSet):
     @extend_schema(
         summary="Marcar grupo como leído",
         description="Marca un grupo completo y todas sus notificaciones como leídas.",
+        parameters=[
+            OpenApiParameter(
+                name='group_id',
+                type=int,
+                location=OpenApiParameter.PATH,
+                description='ID del grupo de notificaciones'
+            )
+        ],
         responses={200: OpenApiTypes.OBJECT},
         tags=["Notificaciones"]
     )
@@ -367,6 +387,10 @@ class NotificationPreferenceViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Solo las preferencias del usuario autenticado"""
+        # Para documentación swagger, devolver queryset vacío si no hay usuario
+        if getattr(self, "swagger_fake_view", False) or not self.request.user.is_authenticated:
+            return NotificationPreference.objects.none()
+        
         return NotificationPreference.objects.filter(user=self.request.user)
     
     @extend_schema(

@@ -3,6 +3,7 @@ Serializadores para el sistema de notificaciones.
 """
 
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 from api.models_notifications import Notification, NotificationPreference, NotificationType, NotificationPriority
 from api.serializers import UserSerializer
 
@@ -54,6 +55,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             'expires_at',
         ]
     
+    @extend_schema_field(str)
     def get_time_ago(self, obj):
         """Calcular tiempo transcurrido desde la creación de la notificación"""
         from django.utils import timezone
