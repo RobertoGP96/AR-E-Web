@@ -340,18 +340,27 @@ class OrderSerializer(serializers.ModelSerializer):
     Serializador para órdenes. Incluye validaciones de agente y campos calculados relacionados con pagos y productos.
     Acepta ID para cliente y agente.
     """
-    client = serializers.PrimaryKeyRelatedField(
+    # Devolver objetos anidados para client y sales_manager en las respuestas GET
+    # mientras se permite enviar solo los IDs en create/update mediante
+    # campos write_only (_id).
+    client = UserSerializer(read_only=True)
+    client_id = serializers.PrimaryKeyRelatedField(
         queryset=CustomUser.objects.all(),
+        write_only=True,
+        source='client',
         error_messages={
             "does_not_exist": "El cliente con ID {value} no existe.",
             "invalid": "El valor proporcionado para el cliente no es válido.",
         },
     )
-    
-    sales_manager = serializers.PrimaryKeyRelatedField(
+
+    sales_manager = UserSerializer(read_only=True)
+    sales_manager_id = serializers.PrimaryKeyRelatedField(
         queryset=CustomUser.objects.all(),
-        required=False,
+        write_only=True,
+        source='sales_manager',
         allow_null=True,
+        required=False,
         error_messages={
             "does_not_exist": "El agente con ID {value} no existe.",
             "invalid": "El valor proporcionado para el agente no es válido.",
@@ -401,8 +410,12 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             "id",
+            # Readable nested objects
             "client",
             "sales_manager",
+            # Write-only IDs for create/update
+            "client_id",
+            "sales_manager_id",
             "status",
             "pay_status",
             "observations",

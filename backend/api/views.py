@@ -368,7 +368,9 @@ class OrderViewSet(viewsets.ModelViewSet):
     Soporta filtrado por estado, estado de pago, cliente, agente y fechas.
     Los administradores y agentes tienen acceso completo (crear, ver, editar, eliminar).
     """
-    queryset = Order.objects.all().prefetch_related("delivery_receipts", "products")
+    # Seleccionar related users para que el serializer anidado los incluya
+    # en la misma respuesta (evita N+1 queries)
+    queryset = Order.objects.all().select_related('client', 'sales_manager').prefetch_related("delivery_receipts", "products")
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated, (AgentPermission | AdminPermission)]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
