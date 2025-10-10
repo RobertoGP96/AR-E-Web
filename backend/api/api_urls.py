@@ -19,6 +19,7 @@ router.register(r"buyed_product", views.ProductBuyedViewSet)
 router.register(r"deliver_reciep", views.DeliverReceipViewSet)
 router.register(r"product_received", views.ProductReceivedViewSet)
 router.register(r"package", views.PackageViewSet)
+
 urlpatterns = [
     path("api_data/", include(router.urls)),
     path("user/", views.CurrentUserView.as_view(), name="current_user"),
@@ -34,4 +35,6 @@ urlpatterns = [
     path("security/", views.Protection.as_view(), name="posting_management"),
     path("amazon/scrape/", views.AmazonScrapingView.as_view(), name="amazon_scraping"),
     path("admin/create/", views.CreateAdminUserView.as_view(), name="create_admin_user"),
+    # URLs de notificaciones (sin prefijo para usar el router)
+    path("", include("api.urls_notifications")),
 ]

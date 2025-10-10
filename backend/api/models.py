@@ -10,6 +10,9 @@ from api.enums import OrderStatusEnum, PaymentStatusEnum, DeliveryStatusEnum
 
 # Create your models here.
 
+# Importar modelos de notificaciones para que Django los reconozca
+from api.models_notifications import Notification, NotificationPreference  # noqa
+
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     """Custom user model"""

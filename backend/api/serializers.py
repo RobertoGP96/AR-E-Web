@@ -327,23 +327,26 @@ class ProductSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     """
     Serializador para órdenes. Incluye validaciones de agente y campos calculados relacionados con pagos y productos.
+    Acepta ID para cliente y agente.
     """
-    client = serializers.SlugRelatedField(
+    client = serializers.PrimaryKeyRelatedField(
         queryset=CustomUser.objects.all(),
-        slug_field="email",
         error_messages={
-            "does_not_exist": "El cliente con el correo {value} no existe.",
+            "does_not_exist": "El cliente con ID {value} no existe.",
             "invalid": "El valor proporcionado para el cliente no es válido.",
         },
     )
-    sales_manager = serializers.SlugRelatedField(
-        slug_field="email",
-        read_only=True,
+    
+    sales_manager = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(),
+        required=False,
+        allow_null=True,
         error_messages={
-            "does_not_exist": "El agente con el correo {value} no existe.",
+            "does_not_exist": "El agente con ID {value} no existe.",
             "invalid": "El valor proporcionado para el agente no es válido.",
         },
     )
+    
     products = ProductSerializer(many=True, read_only=True)
 
     total_cost = serializers.SerializerMethodField(read_only=True)
@@ -382,9 +385,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def validate_sales_manager(self, value):
         """Agent Validation"""
-        if CustomUser.objects.get(email=value.email).role == 'agent':
-            return value
-        raise serializers.ValidationError("El usuario no es agente.")
+        if value and value.role != 'agent':
+            raise serializers.ValidationError("El usuario no es agente.")
+        return value
 
 
 class BuyingAccountsSerializer(serializers.ModelSerializer):

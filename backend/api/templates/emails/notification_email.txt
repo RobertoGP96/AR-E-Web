@@ -1,0 +1,27 @@
+{{ app_name|default:"AR-E System" }}
+{{ "=" * 60 }}
+
+Hola {{ recipient_name|default:"Usuario" }},
+
+{% if priority %}[{{ priority|upper }}] {% endif %}{{ title }}
+
+{{ message }}
+
+{% if metadata %}
+Información Adicional:
+{{ "-" * 60 }}
+{% for key, value in metadata.items %}
+{{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
+
+{% if action_url %}
+Ver detalles: {{ base_url }}{{ action_url }}
+{% endif %}
+
+{{ "-" * 60 }}
+
+Esta notificación fue generada automáticamente por el sistema.
+Puedes gestionar tus preferencias desde: {{ base_url }}/notification-preferences
+
+© {{ current_year }} {{ app_name|default:"AR-E System" }}

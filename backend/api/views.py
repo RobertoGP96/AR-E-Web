@@ -386,13 +386,16 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary="Crear orden",
-        description="Crea una nueva orden y la asocia al usuario actual.",
+        description="Crea una nueva orden. Si no se especifica sales_manager, se asigna el usuario actual.",
         responses={201: OrderSerializer},
         tags=["Órdenes"]
     )
     def perform_create(self, serializer):
         user = User.objects.get(id=self.request.user.id)
-        return serializer.save(sales_manager=user)
+        # Si no se proporciona sales_manager en el request, usar el usuario actual
+        if not serializer.validated_data.get('sales_manager'):
+            return serializer.save(sales_manager=user)
+        return serializer.save()
 
     # @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
 
