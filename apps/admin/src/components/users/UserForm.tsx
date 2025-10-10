@@ -40,14 +40,13 @@ const createUserSchema = z.object({
   agent_profit: z.number().min(0).optional(),
 });
 
-// Schema para editar usuario (contraseña opcional)
+// Schema para editar usuario (sin contraseña)
 const editUserSchema = z.object({
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   name: z.string().min(2, 'Nombre requerido'),
   last_name: z.string().min(2, 'Apellido requerido'),
   home_address: z.string().optional(),
   phone_number: z.string().min(7, 'Teléfono requerido'),
-  password: z.string().min(6, 'Contraseña debe tener al menos 6 caracteres').optional().or(z.literal('')),
   role: z.string(),
   agent_profit: z.number().min(0).optional(),
 });
@@ -112,7 +111,6 @@ export const UserForm: React.FC<UserFormProps> = ({
         last_name: user.last_name,
         home_address: user.home_address,
         phone_number: user.phone_number,
-        password: '',
         role: user.role,
         agent_profit: user.agent_profit,
       };
@@ -123,7 +121,6 @@ export const UserForm: React.FC<UserFormProps> = ({
       last_name: '',
       home_address: '',
       phone_number: '',
-      password: '',
       role: 'user',
       agent_profit: 0,
     };
@@ -160,7 +157,7 @@ export const UserForm: React.FC<UserFormProps> = ({
     }
   }, [error]);
 
-  const submitHandler = (data: UserFormSchema) => {
+  const submitHandler = async (data: UserFormSchema) => {
     if (!onSubmit) {
       toast.error('Error de configuración', {
         description: 'No se ha proporcionado una función para guardar el usuario',
@@ -190,7 +187,7 @@ export const UserForm: React.FC<UserFormProps> = ({
       return;
     }
 
-    if (isCreate && (!data.password || data.password.length < 6)) {
+    if (isCreate && (!(data as CreateUserFormSchema).password || (data as CreateUserFormSchema).password.length < 6)) {
       toast.error('Error de validación', {
         description: 'La contraseña debe tener al menos 6 caracteres',
       });
@@ -209,26 +206,47 @@ export const UserForm: React.FC<UserFormProps> = ({
 
     try {
       if (isEdit && user) {
-        const updateData: UpdateUserData = {
+        // Preparar datos de actualización - solo enviar campos modificados
+        const updateData: Partial<UpdateUserData> = {
           id: user.id,
-          email: data.email || '',
-          name: data.name,
-          last_name: data.last_name,
-          home_address: data.home_address || '',
-          phone_number: data.phone_number,
-          role: data.role as import('../../types/models/user').UserRole,
-          agent_profit: data.agent_profit || 0,
         };
-        // Solo incluir password si se proporcionó
-        if (data.password && data.password.trim() !== '') {
-          updateData.password = data.password;
+
+        // Solo incluir campos que realmente cambiaron
+        if (data.name !== user.name) {
+          updateData.name = data.name;
+        }
+        if (data.last_name !== user.last_name) {
+          updateData.last_name = data.last_name;
+        }
+        if (data.phone_number !== user.phone_number) {
+          updateData.phone_number = data.phone_number;
+        }
+        if (data.home_address !== user.home_address) {
+          updateData.home_address = data.home_address || '';
+        }
+        // Solo incluir email si cambió y no está vacío
+        if (data.email && data.email !== user.email) {
+          updateData.email = data.email;
+        }
+        if (data.role !== user.role) {
+          updateData.role = data.role as import('../../types/models/user').UserRole;
+        }
+        if (data.agent_profit !== user.agent_profit) {
+          updateData.agent_profit = data.agent_profit || 0;
+        }
+
+        // Verificar que hay al menos un campo para actualizar
+        if (Object.keys(updateData).length <= 1) {
+          toast.info('Sin cambios', {
+            description: 'No se detectaron cambios en los datos del usuario',
+          });
+          return;
         }
         
-        onSubmit(updateData);
+        // Llamar a onSubmit y esperar (puede lanzar error)
+        await onSubmit(updateData as UpdateUserData);
         
-        toast.success('Usuario actualizado', {
-          description: `Los datos de ${data.name} ${data.last_name} han sido actualizados correctamente`,
-        });
+        // Si llegamos aquí, fue exitoso - NO mostrar toast, lo hace el padre
       } else if (isCreate) {
         const createUserData: CreateUserData = {
           email: data.email || '',
@@ -236,12 +254,12 @@ export const UserForm: React.FC<UserFormProps> = ({
           last_name: data.last_name,
           home_address: data.home_address || '',
           phone_number: data.phone_number,
-          password: data.password ?? '',
+          password: (data as CreateUserFormSchema).password ?? '',
           role: data.role as import('../../types/models/user').UserRole,
           agent_profit: data.agent_profit || 0,
         };
 
-        onSubmit(createUserData);
+        await onSubmit(createUserData);
         
         toast.success('Usuario creado exitosamente', {
           description: `${data.name} ${data.last_name} ha sido registrado como ${roleLabels[data.role as keyof typeof roleLabels]}`,
@@ -251,9 +269,9 @@ export const UserForm: React.FC<UserFormProps> = ({
         setOpen(false);
       }
     } catch (err) {
-      toast.error('Error al guardar', {
-        description: err instanceof Error ? err.message : 'Ha ocurrido un error inesperado',
-      });
+      // El error ya se maneja en el componente padre, no hacer nada aquí
+      // Solo loguearlo para debugging
+      console.error('Error en submitHandler:', err);
     }
   };
 
@@ -610,37 +628,40 @@ export const UserForm: React.FC<UserFormProps> = ({
 
           <Separator />
 
-          {/* Seguridad */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
-              <Lock className="h-4 w-4" />
-              Seguridad
-            </h3>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password" className="flex items-center gap-2">
-                <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                Contraseña {isEdit && <span className="text-xs text-muted-foreground">(opcional - dejar vacío para no cambiar)</span>}
-                {isCreate && <span className="text-destructive">*</span>}
-              </Label>
-              <Input 
-                id="password"
-                type="password" 
-                placeholder={isEdit ? "Nueva contraseña (opcional)" : "Mínimo 6 caracteres"} 
-                {...register('password')} 
-                disabled={loading}
-                className="h-10"
-              />
-              {errors.password && (
-                <span className="text-destructive text-xs flex items-center gap-1">
-                  <XCircle className="h-3 w-3" />
-                  {errors.password.message}
-                </span>
-              )}
-            </div>
-          </div>
+          {/* Seguridad - Solo mostrar en modo crear */}
+          {isCreate && (
+            <>
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+                  <Lock className="h-4 w-4" />
+                  Seguridad
+                </h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="flex items-center gap-2">
+                    <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                    Contraseña <span className="text-destructive">*</span>
+                  </Label>
+                  <Input 
+                    id="password"
+                    type="password" 
+                    placeholder="Mínimo 6 caracteres" 
+                    {...register('password')} 
+                    disabled={loading}
+                    className="h-10"
+                  />
+                  {isCreate && (errors as Record<string, { message?: string }>).password && (
+                    <span className="text-destructive text-xs flex items-center gap-1">
+                      <XCircle className="h-3 w-3" />
+                      {(errors as Record<string, { message?: string }>).password.message}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-          <Separator />
+              <Separator />
+            </>
+          )}
 
           {/* Rol y permisos */}
           <div className="space-y-4">

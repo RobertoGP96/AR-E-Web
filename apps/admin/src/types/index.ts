@@ -101,6 +101,13 @@ export type {
   UserFilters as ApiUserFilters,
   OrderFilters as ApiOrderFilters,
   ProductFilters as ApiProductFilters,
+  ShopFilters as ApiShopFilters,
+  BuyingAccountFilters as ApiBuyingAccountFilters,
+  ShoppingReceipFilters as ApiShoppingReceipFilters,
+  ProductBuyedFilters as ApiProductBuyedFilters,
+  ProductReceivedFilters as ApiProductReceivedFilters,
+  PackageFilters as ApiPackageFilters,
+  DeliverReceipFilters as ApiDeliverReceipFilters,
   
   // Dashboard y métricas
   DashboardMetrics,

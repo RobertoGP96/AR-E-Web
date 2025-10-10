@@ -19,6 +19,8 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import api_view, action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
@@ -248,10 +250,16 @@ class Protection(APIView):
 class UserViewSet(viewsets.ModelViewSet):
     """
     Gestión de usuarios: registro, consulta, actualización y eliminación.
+    Soporta filtrado por rol, estado activo, estado verificado y búsqueda por texto.
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticatedOrReadOnly | ReadOnlyorPost]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['role', 'is_active', 'is_verified']
+    search_fields = ['name', 'last_name', 'email', 'phone_number']
+    ordering_fields = ['id', 'name', 'date_joined']
+    ordering = ['-date_joined']  # Orden por defecto: más recientes primero
 
     @extend_schema(
         summary="Registrar usuario",
@@ -364,10 +372,16 @@ def verify_user(request, verification_secret: str):
 class OrderViewSet(viewsets.ModelViewSet):
     """
     Gestión de órdenes: creación, consulta, actualización y eliminación de órdenes.
+    Soporta filtrado por estado, estado de pago, cliente, agente y fechas.
     """
     queryset = Order.objects.all().prefetch_related("delivery_receipts", "products")
     serializer_class = OrderSerializer
     permission_classes = [AgentPermission & (IsAuthenticated | ReadOnlyorPost)]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['status', 'pay_status', 'client', 'sales_manager']
+    search_fields = ['client__name', 'client__last_name', 'client__email', 'sales_manager__name']
+    ordering_fields = ['id', 'created_at', 'updated_at']
+    ordering = ['-created_at']
 
     @extend_schema(
         summary="Crear orden",
@@ -417,11 +431,17 @@ class ShopViewSet(viewsets.ModelViewSet):
         return super().retrieve(request, *args, **kwargs)
     """
     Gestión de tiendas: consulta, actualización y eliminación por nombre.
+    Soporta filtrado por estado activo y búsqueda por nombre.
     """
     queryset = Shop.objects.all()
     serializer_class = ShopSerializer
     permission_classes = [ReadOnly | AdminPermission]
     lookup_field = "name"
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['is_active']
+    search_fields = ['name', 'link']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
 
     @extend_schema(
         summary="Obtener tienda por nombre",
@@ -457,10 +477,16 @@ class BuyingAccountsViewsSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
     """
     Gestión de cuentas de compra.
+    Soporta filtrado por tienda y búsqueda por nombre de cuenta.
     """
     queryset = BuyingAccounts.objects.all()
     serializer_class = BuyingAccountsSerializer
     permission_classes = [ReadOnly | AdminPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['shop']
+    search_fields = ['account_name']
+    ordering_fields = ['account_name', 'created_at']
+    ordering = ['account_name']
 
 
 class CommonInformationViewSet(viewsets.ModelViewSet):
@@ -501,19 +527,31 @@ class ProductViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
     """
     Gestión de productos.
+    Soporta filtrado por estado, tienda, orden, categoría y búsqueda por nombre/SKU.
     """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [ReadOnly | AgentPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['status', 'shop', 'order', 'category']
+    search_fields = ['name', 'sku', 'description', 'link']
+    ordering_fields = ['created_at', 'name', 'shop_cost', 'total_cost']
+    ordering = ['-created_at']
 
 
 class ShoppingReceipViewSet(viewsets.ModelViewSet):
     """
     Gestión de recibos de compra y productos comprados.
+    Soporta filtrado por estado, cuenta y tienda, y búsqueda por fecha.
     """
     queryset = ShoppingReceip.objects.all()
     serializer_class = ShoppingReceipSerializer
     permission_classes = [ReadOnly | BuyerPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['status_of_shopping', 'shopping_account', 'shop_of_buy']
+    search_fields = ['shopping_account__account_name', 'shop_of_buy__name']
+    ordering_fields = ['buy_date', 'created_at']
+    ordering = ['-buy_date']
 
     @extend_schema(
         summary="Crear recibo de compra",
@@ -564,19 +602,31 @@ class ProductBuyedViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
     """
     Gestión de productos comprados.
+    Soporta filtrado por orden, producto original y recibo de compra.
     """
     queryset = ProductBuyed.objects.all()
     serializer_class = ProductBuyedSerializer
     permission_classes = [ReadOnly | AccountantPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['order', 'original_product', 'shoping_receip']
+    search_fields = ['original_product__name', 'original_product__sku']
+    ordering_fields = ['buy_date', 'created_at', 'actual_cost_of_product']
+    ordering = ['-buy_date']
 
 
 class ProductReceivedViewSet(viewsets.ModelViewSet):
     """
     Gestión de productos recibidos y entrega de productos.
+    Soporta filtrado por orden, producto, paquete y recibo de entrega.
     """
     queryset = ProductReceived.objects.all()
     serializer_class = ProductReceivedSerializer
     permission_classes = [ReadOnly | LogisticalPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['order', 'original_product', 'package_where_was_send', 'deliver_receip']
+    search_fields = ['original_product__name', 'original_product__sku', 'package_where_was_send__number_of_tracking']
+    ordering_fields = ['reception_date_in_eeuu', 'reception_date_in_cuba', 'created_at']
+    ordering = ['-reception_date_in_eeuu']
 
     @extend_schema(
         summary="Registrar productos recibidos",
@@ -659,10 +709,16 @@ class PackageViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
     """
     Gestión de paquetes.
+    Soporta filtrado por estado y agencia, y búsqueda por número de tracking.
     """
     queryset = Package.objects.all()
     serializer_class = PackageSerializer
     permission_classes = [ReadOnly | LogisticalPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['status_of_processing', 'agency_name']
+    search_fields = ['number_of_tracking', 'agency_name']
+    ordering_fields = ['created_at', 'agency_name']
+    ordering = ['-created_at']
 
 
 class DeliverReceipViewSet(viewsets.ModelViewSet):
@@ -685,10 +741,16 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
     """
     Gestión de recibos de entrega.
+    Soporta filtrado por orden y estado, y búsqueda por fecha.
     """
     queryset = DeliverReceip.objects.all()
     serializer_class = DeliverReceipSerializer
     permission_classes = [ReadOnly | LogisticalPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['order', 'status']
+    search_fields = ['order__client__name', 'order__client__last_name']
+    ordering_fields = ['deliver_date', 'created_at', 'weight']
+    ordering = ['-deliver_date']
 
 
 class ImageUploadApiView(APIView):

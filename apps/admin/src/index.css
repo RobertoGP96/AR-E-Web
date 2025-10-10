@@ -106,3 +106,69 @@
   }
 }
 
+/* Estilos personalizados para Toasts (Sonner) */
+[data-sonner-toast] {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+}
+
+[data-sonner-toast] [data-title] {
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.4 !important;
+  margin-bottom: 4px !important;
+}
+
+[data-sonner-toast] [data-description] {
+  font-weight: 400 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  opacity: 0.9 !important;
+  margin-top: 4px !important;
+  color: inherit !important;
+}
+
+/* Estilos para diferentes tipos de toast */
+[data-sonner-toast][data-type="success"] [data-description] {
+  color: oklch(30% 0.08 145) !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-description] {
+  color: oklch(30% 0.15 25) !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-description] {
+  color: oklch(30% 0.12 60) !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-description] {
+  color: oklch(30% 0.10 250) !important;
+}
+
+/* Mejorar contraste del icono */
+[data-sonner-toast] [data-icon] {
+  margin-right: 12px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Mejorar el botón de cerrar */
+[data-sonner-toast] [data-close-button] {
+  background: transparent !important;
+  border: none !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.2s !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  opacity: 1 !important;
+}
+
+/* Asegurar que el contenido no se corte */
+[data-sonner-toast] [data-content] {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  width: 100% !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+}
+

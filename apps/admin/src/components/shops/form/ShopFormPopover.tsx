@@ -9,6 +9,7 @@ import {
     PopoverTrigger,
 } from '@/components/ui/popover';
 import { createShopService } from '@/services/shops/create-shop.service';
+import { toast } from 'sonner';
 import type { Shop, CreateShopData } from '@/types/models/shop';
 
 interface ShopFormPopoverProps {
@@ -114,13 +115,13 @@ export default function ShopFormPopover({
             let result: Shop;
 
             if (mode === 'edit' && shop) {
-                // TODO: Implementar servicio de actualización
-                // Por ahora simularemos la edición
-                result = { ...shop, ...submitData };
+                // Actualizar tienda existente
+                const { updateShopService } = await import('@/services/shops');
+                result = await updateShopService.updateShop(shop.id, submitData);
                 console.log('Tienda actualizada:', result.name);
             } else {
-                // Crear nueva tienda
-                result = await createShopService.createShopSafe(submitData);
+                // Crear nueva tienda - el backend valida unicidad
+                result = await createShopService.createShop(submitData);
                 console.log('Tienda creada:', result.name);
             }
 
@@ -130,8 +131,10 @@ export default function ShopFormPopover({
 
         } catch (error) {
             console.error('Error saving shop:', error);
-            // Mostrar error en consola por ahora
-            alert(error instanceof Error ? error.message : "Ha ocurrido un error inesperado");
+            const errorMessage = error instanceof Error ? error.message : "Ha ocurrido un error inesperado";
+            toast.error('Error al guardar tienda', {
+                description: errorMessage
+            });
         } finally {
             setIsLoading(false);
         }

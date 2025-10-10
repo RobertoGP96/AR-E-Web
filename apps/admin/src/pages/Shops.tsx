@@ -1,30 +1,108 @@
-import { useState } from 'react';
 import { ShopsHeader, ShopsTable } from '@/components/shops';
+import { useShops } from '@/hooks/useShops';
+import { buyingAccountService } from '@/services/api';
+import { toast } from 'sonner';
 import type { Shop } from '@/types/models/shop';
+import type { BuyingAccount } from '@/types/models/buying-account';
 
 export default function Shops() {
-  const [shops, setShops] = useState<Shop[]>([]);
+  const {
+    shops,
+    selectedShop,
+    isLoading,
+    addShop,
+    updateShop,
+    deleteShop,
+    selectShop,
+    updateShopAccounts
+  } = useShops({
+    onError: (error) => {
+      toast.error('Error', {
+        description: error.message,
+      });
+    },
+    onSuccess: (message) => {
+      toast.success('Éxito', {
+        description: message,
+      });
+    }
+  });
 
-  const handleShopUpdated = (updatedShop: Shop) => {
-    setShops(prev => prev.map(shop =>
-      shop.id === updatedShop.id ? updatedShop : shop
-    ));
+  // Handler para actualizar tienda
+  const handleShopUpdate = async (shop: Shop) => {
+    try {
+      await updateShop(shop.id, {
+        name: shop.name,
+        link: shop.link,
+        is_active: shop.is_active
+      });
+    } catch (error) {
+      toast.error('Error al actualizar tienda', {
+        description: error instanceof Error ? error.message : 'Error desconocido'
+      });
+    }
   };
 
-  const handleDelete = (shop: Shop) => {
-    // Lógica para eliminar tienda
-    setShops(prev => prev.filter(s => s.id !== shop.id));
+  // Handler para actualizar cuenta
+  const handleAccountUpdate = async (account: BuyingAccount) => {
+    if (!selectedShop) return;
+
+    try {
+      await buyingAccountService.updateBuyingAccount(account.id, {
+        account_name: account.account_name
+      });
+
+      toast.success('Cuenta actualizada', {
+        description: `"${account.account_name}" ha sido actualizada`
+      });
+
+      // Recargar las tiendas para actualizar las cuentas
+      updateShopAccounts();
+    } catch (error) {
+      toast.error('Error al actualizar cuenta', {
+        description: error instanceof Error ? error.message : 'Error desconocido'
+      });
+    }
+  };
+
+  // Handler para eliminar cuenta
+  const handleAccountDelete = async (accountId: number) => {
+    if (!selectedShop) return;
+
+    try {
+      await buyingAccountService.deleteBuyingAccount(accountId);
+
+      toast.success('Cuenta eliminada', {
+        description: 'La cuenta ha sido eliminada exitosamente'
+      });
+
+      // Recargar las tiendas para actualizar las cuentas
+      updateShopAccounts();
+    } catch (error) {
+      toast.error('Error al eliminar cuenta', {
+        description: error instanceof Error ? error.message : 'Error desconocido'
+      });
+      throw error; // Propagar el error para que el dialog lo maneje
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <ShopsHeader />
+    <div className="flex flex-col h-full space-y-6">
+      <ShopsHeader onShopCreated={addShop} />
 
-      <ShopsTable
-        shops={shops.length > 0 ? shops : undefined}
-        onShopUpdated={handleShopUpdated}
-        onDelete={handleDelete}
-      />
+      <div className="flex-1 min-h-0">
+        <ShopsTable
+          shops={shops}
+          selectedShop={selectedShop}
+          isLoading={isLoading}
+          onShopSelect={selectShop}
+          onShopUpdate={handleShopUpdate}
+          onShopDelete={deleteShop}
+          onAccountAdded={updateShopAccounts}
+          onAccountUpdate={handleAccountUpdate}
+          onAccountDelete={handleAccountDelete}
+        />
+      </div>
     </div>
   );
 }

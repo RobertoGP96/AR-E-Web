@@ -13,7 +13,8 @@ import {
   updateUser,
   deleteUser,
   updateUserVerificationStatus,
-  updateUserActiveStatus
+  updateUserActiveStatus,
+  changeUserPassword
 } from '@/services/users';
 import type { UserFilters } from '@/types/api';
 import type { CreateUserData, UpdateUserData } from '@/types/models/user';
@@ -174,6 +175,22 @@ export function useToggleUserActive() {
       // Invalidar el cache del usuario específico y las listas
       queryClient.invalidateQueries({ queryKey: userKeys.detail(data.id) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook para cambiar la contraseña de un usuario
+ */
+export function useChangePassword() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, password }: { userId: number; password: string }) => 
+      changeUserPassword(userId, password),
+    onSuccess: (data) => {
+      // Invalidar el cache del usuario específico
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(data.id) });
     },
   });
 }

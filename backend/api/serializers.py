@@ -25,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
     """
     # Removido user_id, usar id directamente
     email = serializers.EmailField(required=False, allow_blank=True)  # Removido write_only para que se devuelva en GET
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, required=False)  # Password es opcional en updates
     full_name = serializers.CharField(read_only=True)
 
     class Meta:
@@ -53,6 +53,14 @@ class UserSerializer(serializers.ModelSerializer):
     def validate_phone_number(self, value):
         # Permitir números, espacios, guiones, paréntesis y el símbolo +
         if re.search(r"^[\+\d\s\-\(\)]+$", value.strip()):
+            # Verificar unicidad excluyendo el usuario actual en actualizaciones
+            if self.instance:
+                existing_user = CustomUser.objects.filter(phone_number=value.strip()).exclude(id=self.instance.id).first()
+                if existing_user:
+                    raise serializers.ValidationError("El número de teléfono ya está en uso por otro usuario.")
+            else:
+                if CustomUser.objects.filter(phone_number=value.strip()).exists():
+                    raise serializers.ValidationError("El número de teléfono ya existe.")
             return value.strip()
         raise serializers.ValidationError(
             {"error": "El numero de telefono no es valido"}
@@ -64,16 +72,56 @@ class UserSerializer(serializers.ModelSerializer):
         if not value or value.strip() == '':
             return None
             
-        # Solo validar unicidad si el email tiene valor
-        if CustomUser.objects.filter(email=value).exists():
-            raise serializers.ValidationError({"error": "El email ya existe."})
+        # Verificar unicidad excluyendo el usuario actual en actualizaciones
+        if self.instance:
+            existing_user = CustomUser.objects.filter(email=value).exclude(id=self.instance.id).first()
+            if existing_user:
+                raise serializers.ValidationError("El email ya está en uso por otro usuario.")
+        else:
+            # Solo validar unicidad si el email tiene valor
+            if CustomUser.objects.filter(email=value).exists():
+                raise serializers.ValidationError({"error": "El email ya existe."})
         return value
+
+    def validate(self, attrs):
+        """
+        Validaciones a nivel de objeto.
+        Verificar que campos requeridos estén presentes según el contexto (create vs update).
+        """
+        # En creación, la contraseña es requerida
+        if not self.instance and 'password' not in attrs:
+            raise serializers.ValidationError({"password": "La contraseña es requerida al crear un usuario."})
+        
+        # Validar que agent_profit sea >= 0 si está presente
+        if 'agent_profit' in attrs and attrs['agent_profit'] < 0:
+            raise serializers.ValidationError({"agent_profit": "La ganancia del agente no puede ser negativa."})
+        
+        return attrs
 
     def create(self, validated_data):
         user = super().create(validated_data)
         user.set_password(validated_data["password"])
         user.save()
         return user
+
+    def update(self, instance, validated_data):
+        """
+        Actualización de usuario con soporte para actualizaciones parciales.
+        Solo actualiza los campos que se envían en la petición.
+        """
+        # Extraer la contraseña si está presente (no se debe asignar directamente)
+        password = validated_data.pop('password', None)
+        
+        # Actualizar todos los demás campos
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # Si se proporcionó una contraseña, encriptarla antes de guardar
+        if password:
+            instance.set_password(password)
+        
+        instance.save()
+        return instance
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -339,21 +387,6 @@ class OrderSerializer(serializers.ModelSerializer):
         raise serializers.ValidationError("El usuario no es agente.")
 
 
-class ShopSerializer(serializers.ModelSerializer):
-    """
-    Serializador para tiendas. Muestra cuentas de compra asociadas.
-    """
-    """Serializer of diferents shops"""
-
-    buying_accounts = serializers.StringRelatedField(many=True, read_only=True)
-
-    class Meta:
-        """Class of model"""
-
-        model = Shop
-        fields = ["name", "link", "buying_accounts"]
-
-
 class BuyingAccountsSerializer(serializers.ModelSerializer):
     """
     Serializador para cuentas de compra asociadas a tiendas.
@@ -373,7 +406,32 @@ class BuyingAccountsSerializer(serializers.ModelSerializer):
         """Class of model"""
 
         model = BuyingAccounts
-        fields = ["account_name", "shop"]
+        fields = ["id", "account_name", "shop"]
+        read_only_fields = ["id"]
+
+
+class BuyingAccountsNestedSerializer(serializers.ModelSerializer):
+    """
+    Serializador anidado para cuentas de compra (solo lectura).
+    Usado para mostrar cuentas dentro de ShopSerializer.
+    """
+    class Meta:
+        model = BuyingAccounts
+        fields = ["id", "account_name"]
+        read_only_fields = ["id", "account_name"]
+
+
+class ShopSerializer(serializers.ModelSerializer):
+    """
+    Serializador para tiendas. Incluye cuentas de compra asociadas como objetos completos.
+    """
+    buying_accounts = BuyingAccountsNestedSerializer(many=True, read_only=True)
+
+    class Meta:
+        """Class of model"""
+        model = Shop
+        fields = ["id", "name", "link", "is_active", "created_at", "updated_at", "buying_accounts"]
+        read_only_fields = ["id", "created_at", "updated_at"]
 
 
 class CommonInformationSerializer(serializers.ModelSerializer):

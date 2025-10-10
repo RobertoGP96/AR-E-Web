@@ -43,6 +43,11 @@ const navigation = [
     icon: Store
   },
   {
+    name: 'Órdenes',
+    href: '/orders',
+    icon: ShoppingCart
+  },
+  {
     name: 'Productos',
     href: '/products',
     icon: Package
@@ -62,11 +67,7 @@ const navigation = [
     href: '/delivery',
     icon: Truck
   },
-  {
-    name: 'Órdenes',
-    href: '/orders',
-    icon: ShoppingCart
-  },
+  
 ];
 
 const bottomNavigation = [
@@ -183,7 +184,7 @@ export function AsideNav() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 text-left">
-                <span className="block font-semibold text-base text-white">{user?.name}</span>
+                <span className="block font-semibold text-base text-white">{user?.name+" "+ user?.last_name.charAt(0).toUpperCase()}</span>
                 <span className="block text-sm text-gray-400">{user?.phone_number}</span>
               </div>
               <div>

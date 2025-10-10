@@ -15,6 +15,9 @@ import type { UserFilters } from '../../types/api';
 export const getUsers = async (
   filters?: UserFilters
 ): Promise<PaginatedApiResponse<CustomUser>> => {
+  // Debug: Ver qué filtros se reciben
+  console.log('🌐 getUsers - Filtros recibidos:', filters);
+  
   const response = await apiClient.getPaginated<CustomUser>('/api_data/user/', filters);
   
   // Debug temporal: verificar campos del usuario

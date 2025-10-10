@@ -1,4 +1,4 @@
-import { Edit, Trash2, MoreHorizontal, Shield, User, ShoppingCart, Truck, Calculator, Megaphone, Clock, Phone, Handshake, Eye, CheckCircle, XCircle, UserCheck, Mail } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Shield, User, ShoppingCart, Truck, Calculator, Megaphone, Clock, Phone, Handshake, Eye, CheckCircle, XCircle, UserCheck, Mail, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -8,10 +8,11 @@ import type { CustomUser, UserRole } from '@/types/models/user';
 import { roleLabels } from '@/types/models/user';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { formatDate } from '@/lib/format-date';
-import { useDeleteUser, useVerifyUser, useToggleUserActive } from '@/hooks/user';
+import { useDeleteUser, useVerifyUser, useToggleUserActive, useChangePassword } from '@/hooks/user';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import UserDetailsDialog from './UserDetailsDialog';
+import { ChangePasswordDialog } from './ChangePasswordDialog';
 
 interface UsersTableProps {
   users?: CustomUser[];
@@ -65,10 +66,15 @@ export default function UsersTable({
   const [selectedUser, setSelectedUser] = useState<CustomUser | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
+  // Estado para el popover de cambio de contraseña
+  const [showPasswordPopover, setShowPasswordPopover] = useState(false);
+  const [userToChangePassword, setUserToChangePassword] = useState<CustomUser | null>(null);
+
   // Hooks de mutación (solo para eliminar desde la tabla)
   const deleteUserMutation = useDeleteUser();
   const verifyUserMutation = useVerifyUser();
   const toggleUserActiveMutation = useToggleUserActive();
+  const changePasswordMutation = useChangePassword();
 
   // Manejador para ver detalles
   const handleViewDetails = (user: CustomUser) => {
@@ -146,6 +152,18 @@ export default function UsersTable({
       console.error(`Error al ${isActivating ? 'activar' : 'desactivar'} usuario:`, error);
     } finally {
       setDialogState({ type: null, user: null });
+    }
+  };
+
+  const handleChangePassword = async (userId: number, newPassword: string) => {
+    try {
+      await changePasswordMutation.mutateAsync({
+        userId,
+        password: newPassword
+      });
+    } catch (error) {
+      console.error('Error al cambiar contraseña:', error);
+      throw error; // Re-lanzar para que el popover lo maneje
     }
   };
 
@@ -434,6 +452,21 @@ export default function UsersTable({
                         <Edit className="h-4 w-4" />
                         Editar usuario
                       </DropdownMenuItem>
+                      
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setUserToChangePassword(user);
+                          setShowPasswordPopover(true);
+                        }}
+                        className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                      >
+                        <Key className="h-4 w-4" />
+                        Cambiar contraseña
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuSeparator />
+                      
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
@@ -488,6 +521,23 @@ export default function UsersTable({
         open={showDetails}
         onOpenChange={setShowDetails}
       />
+
+      {/* Diálogo para cambiar contraseña */}
+      {userToChangePassword && showPasswordPopover && (
+        <ChangePasswordDialog
+          userId={userToChangePassword.id}
+          userName={userToChangePassword.full_name}
+          onChangePassword={handleChangePassword}
+          loading={changePasswordMutation.isPending}
+          open={showPasswordPopover}
+          onOpenChange={(open) => {
+            setShowPasswordPopover(open);
+            if (!open) {
+              setUserToChangePassword(null);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

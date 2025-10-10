@@ -97,19 +97,64 @@ export interface UserFilters extends BaseFilters {
 export interface OrderFilters extends BaseFilters {
   status?: string;
   pay_status?: string;
-  client_id?: number;
-  sales_manager_id?: number;
+  client?: number;
+  sales_manager?: number;
   created_from?: string;
   created_to?: string;
 }
 
 export interface ProductFilters extends BaseFilters {
   status?: string;
-  shop_id?: number;
-  order_id?: number;
+  shop?: number;
+  order?: number;
   category?: string;
   price_min?: number;
   price_max?: number;
+}
+
+export interface ShopFilters extends BaseFilters {
+  is_active?: boolean;
+}
+
+export interface BuyingAccountFilters extends BaseFilters {
+  shop?: number;
+}
+
+export interface ShoppingReceipFilters extends BaseFilters {
+  status_of_shopping?: string;
+  shopping_account?: number;
+  shop_of_buy?: number;
+  buy_date_from?: string;
+  buy_date_to?: string;
+}
+
+export interface ProductBuyedFilters extends BaseFilters {
+  order?: number;
+  original_product?: string;  // UUID
+  shoping_receip?: number;
+  buy_date_from?: string;
+  buy_date_to?: string;
+}
+
+export interface ProductReceivedFilters extends BaseFilters {
+  order?: number;
+  original_product?: string;  // UUID
+  package_where_was_send?: number;
+  deliver_receip?: number;
+  reception_date_from?: string;
+  reception_date_to?: string;
+}
+
+export interface PackageFilters extends BaseFilters {
+  status_of_processing?: string;
+  agency_name?: string;
+}
+
+export interface DeliverReceipFilters extends BaseFilters {
+  order?: number;
+  status?: string;
+  deliver_date_from?: string;
+  deliver_date_to?: string;
 }
 
 // Tipos para estadísticas del dashboard

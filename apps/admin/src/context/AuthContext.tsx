@@ -279,7 +279,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       return authResponse;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      const errorMessage = error instanceof Error ? error.message : 'Inicio de Sesion Fallido';
       dispatch({ type: 'AUTH_ERROR', payload: errorMessage });
       throw error;
     }

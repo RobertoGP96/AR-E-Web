@@ -58,3 +58,10 @@ export const updateUserVerificationStatus = async (id: number, is_verified: bool
 export const updateAgentProfit = async (id: number, agent_profit: number) => {
   return await apiClient.patch<CustomUser>(`/api_data/user/${id}/`, { agent_profit });
 };
+
+/**
+ * Cambia la contraseña de un usuario
+ */
+export const changeUserPassword = async (id: number, password: string) => {
+  return await apiClient.patch<CustomUser>(`/api_data/user/${id}/`, { password });
+};

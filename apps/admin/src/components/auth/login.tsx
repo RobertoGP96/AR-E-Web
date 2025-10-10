@@ -7,14 +7,28 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Eye, EyeOff, LogIn, Loader2, Info, Mail, Phone } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Loader2, Mail, Phone } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { LoginCredentials } from '@/types/api';
 import logoSvg from '@/assets/logo/logo.svg';
+
+// Tipo para errores de Axios
+interface ApiError {
+  response?: {
+    status: number;
+    data?: {
+      message?: string;
+      detail?: string;
+      [key: string]: unknown;
+    };
+  };
+  code?: string;
+  message?: string;
+}
 
 // Función helper para detectar si es email o teléfono
 const detectInputType = (value: string): 'email' | 'phone' | 'unknown' => {
@@ -115,20 +129,55 @@ export const Login: React.FC<LoginProps> = ({
     }
   }, [isAuthenticated, navigate, onSuccess, from]);
 
-  // Limpiar errores cuando el usuario comience a escribir
+  // Mostrar errores usando Sonner
   useEffect(() => {
-    const subscription = form.watch(() => {
-      if (error) {
-        clearError();
+    if (error) {
+      // Determinar el tipo de error y mostrar mensaje descriptivo
+      let errorMessage = error;
+
+      if (error.toLowerCase().includes('credenciales') || 
+          error.toLowerCase().includes('credentials') || 
+          error.toLowerCase().includes('incorrect')) {
+        errorMessage = 'Credenciales incorrectas. El email/teléfono o la contraseña son incorrectos. Por favor, verifica tus datos.';
+      } else if (error.toLowerCase().includes('network') || 
+                 error.toLowerCase().includes('conexión') ||
+                 error.toLowerCase().includes('connection')) {
+        errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+      } else if (error.toLowerCase().includes('bloqueado') || 
+                 error.toLowerCase().includes('blocked') ||
+                 error.toLowerCase().includes('disabled')) {
+        errorMessage = 'Tu cuenta ha sido bloqueada. Contacta al administrador del sistema.';
+      } else if (error.toLowerCase().includes('timeout')) {
+        errorMessage = 'El servidor tardó demasiado en responder. Por favor, intenta nuevamente.';
+      } else if (error.toLowerCase().includes('not found') || 
+                 error.toLowerCase().includes('no existe')) {
+        errorMessage = 'No se encontró una cuenta con estas credenciales. Verifica tu información.';
+      } else if (error.toLowerCase().includes('inactiv')) {
+        errorMessage = 'Tu cuenta está inactiva. Por favor, activa tu cuenta para continuar.';
       }
-    });
-    return () => subscription.unsubscribe();
-  }, [error, clearError, form]);
+
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: 'top-center',
+      });
+      
+      clearError();
+    }
+  }, [error, clearError]);
 
   const onSubmit = async (data: LoginFormData) => {
     try {
       const inputValue = data.emailOrPhone.trim();
       const type = detectInputType(inputValue);
+      
+      // Validar tipo de entrada antes de enviar
+      if (type === 'unknown') {
+        toast.error('Por favor, ingresa un email válido (ejemplo@correo.com) o un número de teléfono válido (+53 1234 5678).', {
+          duration: 5000,
+          position: 'top-center',
+        });
+        return;
+      }
       
       // Crear credenciales según el tipo detectado
       const credentials: LoginCredentials & { phone_number?: string } = type === 'email'
@@ -138,16 +187,52 @@ export const Login: React.FC<LoginProps> = ({
       await login(credentials as LoginCredentials);
       
       // Si llegamos aquí, el login fue exitoso
+      toast.success('¡Bienvenido! Redirigiendo al panel de administración...', {
+        duration: 2000,
+        position: 'top-center',
+      });
+
       if (onSuccess) {
         onSuccess();
       } else {
         navigate(from, { replace: true });
       }
-    } catch (err) {
-      // El error ya es manejado por el AuthContext y useAuth
-      // Solo logueamos en consola para debugging
+    } catch (err: unknown) {
+      // Manejo de errores más descriptivo
       if (import.meta.env.DEV) {
         console.error('Login failed:', err);
+      }
+
+      // El error ya se muestra en el useEffect, pero por si acaso
+      // el AuthContext no lo maneja, mostramos un error genérico
+      if (!error) {
+        let errorMessage = 'Ocurrió un error inesperado. Por favor, intenta nuevamente.';
+        
+        const apiError = err as ApiError;
+        const responseStatus = apiError?.response?.status;
+        
+        if (responseStatus === 401) {
+          errorMessage = 'Credenciales incorrectas. Verifica tu email/teléfono y contraseña.';
+        } else if (responseStatus === 403) {
+          errorMessage = 'No tienes permisos para acceder al sistema. Contacta al administrador.';
+        } else if (responseStatus === 404) {
+          errorMessage = 'Usuario no encontrado. Verifica tus credenciales.';
+        } else if (responseStatus && responseStatus >= 500) {
+          errorMessage = 'Error del servidor. Por favor, intenta más tarde.';
+        } else if (apiError?.code === 'ERR_NETWORK') {
+          errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+        } else if (apiError?.response?.data?.message) {
+          errorMessage = apiError.response.data.message;
+        } else if (apiError?.response?.data?.detail) {
+          errorMessage = apiError.response.data.detail;
+        } else if (apiError?.message) {
+          errorMessage = apiError.message;
+        }
+
+        toast.error(errorMessage, {
+          duration: 5000,
+          position: 'top-center',
+        });
       }
     }
   };
@@ -184,25 +269,16 @@ export const Login: React.FC<LoginProps> = ({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <CardContent className="space-y-6">
-                {error && (
-                  <Alert variant="destructive" className="border-red-200 bg-red-50">
-                    <Info className="h-4 w-4" />
-                    <AlertDescription className="text-red-700">
-                      {error}
-                    </AlertDescription>
-                  </Alert>
-                )}
-                
                 <FormField
                   control={form.control}
                   name="emailOrPhone"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-gray-700 font-medium flex items-center gap-1">
-                        {inputType === 'email' && <Mail className="h-4 w-4" />}
-                        {inputType === 'phone' && <Phone className="h-4 w-4" />}
-                        {inputType === 'unknown' && <Mail className="h-4 w-4 opacity-50" />}
-                        Email o Teléfono
+                        <Mail className="h-4 w-4" />
+                        Email o 
+                        <Phone className="h-4 w-4" />
+                        Teléfono
                       </FormLabel>
                       <FormControl>
                         <Input
