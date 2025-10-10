@@ -33,6 +33,15 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='client')
     agent_profit = models.FloatField(default=0)
+    assigned_agent = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        limit_choices_to={'role': 'agent'},
+        related_name='assigned_clients',
+        help_text='Agente asignado para este cliente'
+    )
 
     # Account management
     is_staff = models.BooleanField(default=False)
