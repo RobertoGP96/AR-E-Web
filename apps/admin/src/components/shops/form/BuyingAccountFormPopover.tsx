@@ -90,32 +90,29 @@ export default function BuyingAccountFormPopover({
     setIsLoading(true);
 
     try {
+      const { buyingAccountService } = await import('@/services/api');
       let result: BuyingAccount;
 
       if (mode === 'edit' && account) {
         // Actualizar cuenta existente
-        const { buyingAccountService } = await import('@/services/api');
-        const response = await buyingAccountService.updateBuyingAccount(account.id, {
+        result = await buyingAccountService.updateBuyingAccount(account.id, {
           account_name: formData.account_name.trim(),
-          shop: shopName as unknown as BuyingAccount['shop'] // El backend espera el nombre (string)
+          shop: shopName
         });
-        if (!response.data) {
-          throw new Error('No se recibió respuesta del servidor');
-        }
-        result = response.data;
-        console.log('Cuenta actualizada:', result.account_name);
+        console.log('Cuenta actualizada:', result);
+        toast.success('Cuenta actualizada', {
+          description: `"${result.account_name}" ha sido actualizada exitosamente`
+        });
       } else {
         // Crear nueva cuenta
-        const { buyingAccountService } = await import('@/services/api');
-        const response = await buyingAccountService.createBuyingAccount({
+        result = await buyingAccountService.createBuyingAccount({
           account_name: formData.account_name.trim(),
-          shop: shopName as unknown as BuyingAccount['shop'] // El backend espera el nombre (string)
+          shop: shopName
         });
-        if (!response.data) {
-          throw new Error('No se recibió respuesta del servidor');
-        }
-        result = response.data;
-        console.log('Cuenta creada:', result.account_name);
+        console.log('Cuenta creada:', result);
+        toast.success('Cuenta creada', {
+          description: `"${result.account_name}" ha sido creada exitosamente`
+        });
       }
 
       onSuccess?.(result);

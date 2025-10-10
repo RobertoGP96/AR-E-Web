@@ -118,11 +118,17 @@ export default function ShopFormPopover({
                 // Actualizar tienda existente
                 const { updateShopService } = await import('@/services/shops');
                 result = await updateShopService.updateShop(shop.id, submitData);
-                console.log('Tienda actualizada:', result.name);
+                console.log('Tienda actualizada:', result);
+                toast.success('Tienda actualizada', {
+                    description: `"${result.name}" ha sido actualizada exitosamente`
+                });
             } else {
                 // Crear nueva tienda - el backend valida unicidad
                 result = await createShopService.createShop(submitData);
-                console.log('Tienda creada:', result.name);
+                console.log('Tienda creada:', result);
+                toast.success('Tienda creada', {
+                    description: `"${result.name}" ha sido creada exitosamente`
+                });
             }
 
             onSuccess?.(result);

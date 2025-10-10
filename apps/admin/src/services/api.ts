@@ -346,21 +346,21 @@ export const buyingAccountService = {
   /**
    * Crear cuenta de compra
    */
-  createBuyingAccount: async (data: Partial<BuyingAccount>): Promise<ApiResponse<BuyingAccount>> => {
+  createBuyingAccount: async (data: Partial<BuyingAccount>): Promise<BuyingAccount> => {
     return apiClient.post('/api_data/buying_account/', data);
   },
 
   /**
    * Actualizar cuenta de compra
    */
-  updateBuyingAccount: async (id: number, data: Partial<BuyingAccount>): Promise<ApiResponse<BuyingAccount>> => {
+  updateBuyingAccount: async (id: number, data: Partial<BuyingAccount>): Promise<BuyingAccount> => {
     return apiClient.patch(`/api_data/buying_account/${id}/`, data);
   },
 
   /**
    * Eliminar cuenta de compra
    */
-  deleteBuyingAccount: async (id: number): Promise<ApiResponse<void>> => {
+  deleteBuyingAccount: async (id: number): Promise<void> => {
     return apiClient.delete(`/api_data/buying_account/${id}/`);
   },
 };

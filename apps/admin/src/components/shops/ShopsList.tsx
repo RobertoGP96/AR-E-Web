@@ -45,7 +45,7 @@ export default function ShopsList({
               className={cn(
                 "cursor-pointer transition-all duration-200",
                 selectedShop?.id === shop.id
-                  ? "bg-blue-50 border-l-4 border-l-blue-500 hover:bg-blue-100"
+                  ? "bg-gray-50 border-l-4 border-l-gray-700 hover:bg-gray-100"
                   : "hover:bg-gray-50 border-l-4 border-l-transparent"
               )}
               onClick={() => onShopSelect(shop)}

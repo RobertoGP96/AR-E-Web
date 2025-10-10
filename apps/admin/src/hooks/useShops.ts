@@ -58,8 +58,8 @@ export function useShops(options: UseShopsOptions = {}) {
    */
   const addShop = useCallback((shop: Shop) => {
     setShops(prev => [...prev, shop].sort((a, b) => a.name.localeCompare(b.name)));
-    onSuccess?.(`Tienda "${shop.name}" creada exitosamente`);
-  }, [onSuccess]);
+    // No mostrar toast aquí, lo hace el componente
+  }, []);
 
   /**
    * Actualiza una tienda existente
@@ -76,14 +76,14 @@ export function useShops(options: UseShopsOptions = {}) {
         setSelectedShop(updatedShop);
       }
 
-      onSuccess?.(`Tienda "${updatedShop.name}" actualizada exitosamente`);
+      // No mostrar toast aquí, lo hace el componente
       return updatedShop;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Error al actualizar la tienda');
       onError?.(error);
       throw error;
     }
-  }, [selectedShop, onError, onSuccess]);
+  }, [selectedShop, onError]);
 
   /**
    * Elimina una tienda

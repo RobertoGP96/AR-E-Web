@@ -82,7 +82,7 @@ export default function AccountsList({
                 <TableCell className="py-4 px-6">
                   <div className="flex flex-row justify-start items-center gap-3">
                     <Avatar className="h-10 w-10 bg-gradient-to-br from-blue-100 to-purple-100">
-                      <AvatarFallback className="bg-transparent text-blue-700">
+                      <AvatarFallback className="bg-transparent text-gray-500">
                         <User className="h-5 w-5" />
                       </AvatarFallback>
                     </Avatar>

@@ -44,25 +44,10 @@ export default function Shops() {
   };
 
   // Handler para actualizar cuenta
-  const handleAccountUpdate = async (account: BuyingAccount) => {
-    if (!selectedShop) return;
-
-    try {
-      await buyingAccountService.updateBuyingAccount(account.id, {
-        account_name: account.account_name
-      });
-
-      toast.success('Cuenta actualizada', {
-        description: `"${account.account_name}" ha sido actualizada`
-      });
-
-      // Recargar las tiendas para actualizar las cuentas
-      updateShopAccounts();
-    } catch (error) {
-      toast.error('Error al actualizar cuenta', {
-        description: error instanceof Error ? error.message : 'Error desconocido'
-      });
-    }
+  const handleAccountUpdate = async (_account: BuyingAccount) => {
+    // Simplemente recargar las tiendas para actualizar las cuentas
+    // El toast ya se muestra en BuyingAccountFormPopover
+    updateShopAccounts();
   };
 
   // Handler para eliminar cuenta
