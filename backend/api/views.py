@@ -373,10 +373,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     """
     Gestión de órdenes: creación, consulta, actualización y eliminación de órdenes.
     Soporta filtrado por estado, estado de pago, cliente, agente y fechas.
+    Los administradores y agentes tienen acceso completo (crear, ver, editar, eliminar).
     """
     queryset = Order.objects.all().prefetch_related("delivery_receipts", "products")
     serializer_class = OrderSerializer
-    permission_classes = [AgentPermission & (IsAuthenticated | ReadOnlyorPost)]
+    permission_classes = [IsAuthenticated, (AgentPermission | AdminPermission)]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['status', 'pay_status', 'client', 'sales_manager']
     search_fields = ['client__name', 'client__last_name', 'client__email', 'sales_manager__name']

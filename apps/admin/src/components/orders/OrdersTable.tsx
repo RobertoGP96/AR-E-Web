@@ -1,106 +1,49 @@
 import OrderStatusBadge from './OrderStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { formatCurrency, type CustomUser, type Order, type OrderStatus, type PayStatus } from '@/types';
+import { formatCurrency, type Order, type OrderStatus, type PayStatus } from '@/types';
 import { Edit2, ShoppingCart, Trash2 } from 'lucide-react';
 import AvatarUser from '../utils/AvatarUser';
 import PayStatusBadge from '../utils/PayStatusBadge';
 
-const mockManager: CustomUser = {
-  id: 2,
-  email: "albert@gmail.com",
-  name: "Alberto",
-  last_name: "Do Rego",
-  full_name: "Alberto Do Rego",
-  home_address: "Calle Progreso #105",
-  phone_number: "+53-5545-5678",
-  role: "admin",
-  agent_profit: 0,
-  is_staff: true,
-  is_active: true,
-  is_verified: true,
-  date_joined: "2023-01-02T11:00:00Z",
-  sent_verification_email: true
-};
-
-const mockClient: CustomUser = {
-  id: 3,
-  email: "client@demo.com",
-  name: "Carlos",
-  last_name: "Pérez",
-  full_name: "Carlos Pérez",
-  home_address: "Av. Principal 456",
-  phone_number: "+51-555-5678",
-  role: "client",
-  agent_profit: 0,
-  is_staff: true,
-  is_active: true,
-  is_verified: true,
-  date_joined: "2023-01-02T11:00:00Z",
-  sent_verification_email: true
-};
-
-
-// Datos de ejemplo
-const mockOrder: Order[] = [
-  {
-    id: 1,
-    sales_manager: mockManager,
-    client: mockClient,
-    status: 'Encargado',
-    pay_status: 'Pagado',
-    extra_payments: 0,
-    products: [],
-    delivery_receipts: [],
-    received_value_of_client: 0,
-    total_cost: 150.75,
-    total_products_requested: 5,
-    total_products_purchased: 5,
-    total_products_delivered: 0,
-    created_at: "2023-10-01T10:00:00Z",
-    updated_at: "2023-10-01T10:00:00Z"
-  },
-  {
-    id: 2,
-    sales_manager: mockManager,
-    client: mockClient,
-    status: 'Procesando',
-    pay_status: 'No pagado',
-    extra_payments: 0,
-    products: [],
-    delivery_receipts: [],
-    received_value_of_client: 0,
-    total_cost: 200.00,
-    total_products_requested: 3,
-    total_products_purchased: 3,
-    total_products_delivered: 0,
-    created_at: "2023-10-02T10:00:00Z",
-    updated_at: "2023-10-02T10:00:00Z"
-  },
-  {
-    id: 3,
-    sales_manager: mockManager,
-    client: mockClient,
-    status: 'Cancelado',
-    pay_status: 'Pagado',
-    extra_payments: 0,
-    products: [],
-    delivery_receipts: [],
-    received_value_of_client: 0,
-    total_cost: 100.00,
-    total_products_requested: 2,
-    total_products_purchased: 0,
-    total_products_delivered: 0,
-    created_at: "2023-10-03T10:00:00Z",
-    updated_at: "2023-10-03T10:00:00Z"
-  }
-]
-
 interface OrderTableProps {
+  orders: Order[];
+  isLoading?: boolean;
+  onEdit?: (order: Order) => void;
+  onDelete?: (order: Order) => void;
   onViewDetails?: (order: Order) => void;
 }
 
-const OrderTable: React.FC<OrderTableProps> = () => {
+const OrderTable: React.FC<OrderTableProps> = ({ 
+  orders, 
+  isLoading = false,
+  onEdit,
+  onDelete,
+}) => {
+  if (isLoading) {
+    return (
+      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+        <div className="flex flex-col items-center justify-center h-64 text-center p-4">
+          <ShoppingCart className="h-16 w-16 text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">No hay pedidos</h3>
+          <p className="text-sm text-gray-500">
+            Comienza creando un nuevo pedido usando el botón "Agregar Pedido"
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
       <Table>
@@ -118,7 +61,7 @@ const OrderTable: React.FC<OrderTableProps> = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {mockOrder.map((order, index) => (
+          {orders.map((order, index) => (
             <TableRow key={order.id}>
               <TableCell>{index + 1}</TableCell>
               <TableCell>
@@ -161,12 +104,22 @@ const OrderTable: React.FC<OrderTableProps> = () => {
               </TableCell>
 
               <TableCell>
-                <Button variant="secondary" className="mr-2">
-                  <Edit2 className="h-5 w-5" />
-                </Button>
-                <Button variant="secondary">
-                  <Trash2 className="h-5 w-5" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="secondary" 
+                    size="sm"
+                    onClick={() => onEdit?.(order)}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="secondary" 
+                    size="sm"
+                    onClick={() => onDelete?.(order)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

@@ -10,254 +10,180 @@ import {
   TableHead,
 } from "@/components/ui/table";
 import { Button } from "../ui/button";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface ProductsTableProps {
   products: Product[];
+  onEdit?: (product: Product) => void;
+  onDelete?: (product: Product) => void;
 }
 
-
-
-const mockUser: import("../../types/models/user").CustomUser = {
-  id: 1,
-  email: "cliente@demo.com",
-  name: "Cliente",
-  last_name: "Demo",
-  home_address: "Calle Falsa 123",
-  phone_number: "555-1234",
-  role: "user",
-  agent_profit: 0,
-  is_staff: false,
-  is_active: true,
-  is_verified: true,
-  date_joined: "2025-01-01T00:00:00Z",
-  sent_verification_email: false,
-  full_name: "Cliente Demo",
+// Función helper para obtener el color del badge según el estado
+const getStatusBadgeVariant = (status: string) => {
+  const statusMap: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+    "Encargado": "default",
+    "Comprado": "secondary",
+    "Completado": "outline",
+    "Cancelado": "destructive",
+  };
+  return statusMap[status] || "default";
 };
 
-const mockManager: import("../../types/models/user").CustomUser = {
-  id: 2,
-  email: "manager@demo.com",
-  name: "Manager",
-  last_name: "Demo",
-  home_address: "Calle Real 456",
-  phone_number: "555-5678",
-  role: "admin",
-  agent_profit: 0,
-  is_staff: true,
-  is_active: true,
-  is_verified: true,
-  date_joined: "2025-01-01T00:00:00Z",
-  sent_verification_email: false,
-  full_name: "Manager Demo",
-};
+const ProductsTable: React.FC<ProductsTableProps> = ({ 
+  products, 
+  onEdit, 
+  onDelete 
+}) => {
+  // Si no hay productos, mostrar mensaje
+  if (!products || products.length === 0) {
+    return (
+      <div className="rounded-lg border border-muted bg-background p-8 text-center shadow">
+        <p className="text-muted-foreground">No hay productos disponibles</p>
+      </div>
+    );
+  }
 
-const mockProducts: Product[] = [
-  {
-    id: "1",
-    sku: "SKU001",
-    name: "Laptop Lenovo",
-    link: "https://example.com/laptop",
-    shop: { 
-      id: 1, 
-      name: "TechStore", 
-      link: "https://techstore.com",
-      buying_accounts: [],
-      is_active: true,
-      created_at: "2024-01-01",
-      updated_at: "2024-01-01"
-    },
-    description: "Laptop de alto rendimiento",
-    observation: "Entrega rápida",
-    category: "Electrónica",
-    amount_requested: 5,
-    amount_purchased: 5,
-    amount_delivered: 0,
-    order: {
-      id: 101,
-      client: mockUser,
-      sales_manager: mockManager,
-      status: "Encargado",
-      pay_status: "Pagado",
-      total_cost: 905,
-      products: [],
-      delivery_receipts: [],
-      received_value_of_client: 0,
-      extra_payments: 0,
-      total_products_requested: 5,
-      total_products_purchased: 5,
-      total_products_delivered: 0,
-      created_at: "2024-01-01T10:00:00Z",
-      updated_at: "2024-01-01T10:00:00Z"
-    },
-    status: "Encargado",
-    product_pictures: [],
-    shop_cost: 800,
-    shop_delivery_cost: 50,
-    shop_taxes: 40,
-    own_taxes: 10,
-    added_taxes: 5,
-    total_cost: 905,
-    cost_per_product: 181,
-    amount_buyed: 5,
-    amount_received: 0,
-    pending_purchase: 0,
-    pending_delivery: 5,
-    is_fully_purchased: true,
-    is_fully_delivered: false,
-    created_at: "2024-01-01T10:00:00Z",
-    updated_at: "2024-01-01T10:00:00Z"
-  },
-  {
-    id: "2",
-    sku: "SKU002",
-    name: "Mouse Logitech",
-    link: "https://example.com/mouse",
-    shop: { 
-      id: 2, 
-      name: "Peripherals", 
-      link: "https://peripherals.com",
-      is_active: true,
-      created_at: "2024-01-01",
-      updated_at: "2024-01-01",
-      buying_accounts: []
-    },
-    description: "Mouse inalámbrico",
-    observation: "Garantía 2 años",
-    category: "Accesorios",
-    amount_requested: 10,
-    amount_purchased: 10,
-    amount_delivered: 10,
-    order: {
-      id: 102,
-      client: mockUser,
-      sales_manager: mockManager,
-      status: "Completado",
-      pay_status: "Pagado",
-      total_cost: 28.5,
-      products: [],
-      delivery_receipts: [],
-      received_value_of_client: 0,
-      extra_payments: 0,
-      total_products_requested: 10,
-      total_products_purchased: 10,
-      total_products_delivered: 10,
-      created_at: "2024-01-02T10:00:00Z",
-      updated_at: "2024-01-02T10:00:00Z"
-    },
-    status: "Completado",
-    product_pictures: [],
-    shop_cost: 20,
-    shop_delivery_cost: 5,
-    shop_taxes: 2,
-    own_taxes: 1,
-    added_taxes: 0.5,
-    total_cost: 28.5,
-    cost_per_product: 2.85,
-    amount_buyed: 10,
-    amount_received: 10,
-    pending_purchase: 0,
-    pending_delivery: 0,
-    is_fully_purchased: true,
-    is_fully_delivered: true,
-    created_at: "2024-01-02T10:00:00Z",
-    updated_at: "2024-01-02T10:00:00Z"
-  },
-  {
-    id: "3",
-    sku: "SKU003",
-    name: "Monitor Samsung",
-    link: "https://example.com/monitor",
-    shop: { 
-      id: 3, 
-      name: "Displays", 
-      link: "https://displays.com",
-      is_active: true,
-      created_at: "2024-01-01",
-      updated_at: "2024-01-01",
-      buying_accounts: []
-    },
-    description: "Monitor 24 pulgadas",
-    observation: "Incluye cable HDMI",
-    category: "Electrónica",
-    amount_requested: 3,
-    amount_purchased: 3,
-    amount_delivered: 3,
-    order: {
-      id: 103,
-      client: mockUser,
-      sales_manager: mockManager,
-      status: "Completado",
-      pay_status: "Pagado",
-      total_cost: 183,
-      products: [],
-      delivery_receipts: [],
-      received_value_of_client: 0,
-      extra_payments: 0,
-      total_products_requested: 3,
-      total_products_purchased: 3,
-      total_products_delivered: 3,
-      created_at: "2024-01-03T10:00:00Z",
-      updated_at: "2024-01-03T10:00:00Z"
-    },
-    status: "Completado",
-    product_pictures: [],
-    shop_cost: 150,
-    shop_delivery_cost: 20,
-    shop_taxes: 10,
-    own_taxes: 2,
-    added_taxes: 1,
-    total_cost: 183,
-    cost_per_product: 61,
-    amount_buyed: 3,
-    amount_received: 3,
-    pending_purchase: 0,
-    pending_delivery: 0,
-    is_fully_purchased: true,
-    is_fully_delivered: true,
-    created_at: "2024-01-03T10:00:00Z",
-    updated_at: "2024-01-03T10:00:00Z"
-  },
-];
-
-const ProductsTable: React.FC<ProductsTableProps> = () => {
   return (
     <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
       <Table>
-        <TableHeader className="bg-gray-100 ">
+        <TableHeader className="bg-gray-100">
           <TableRow>
-            <TableHead>#</TableHead>
+            <TableHead className="w-12">#</TableHead>
             <TableHead>SKU</TableHead>
             <TableHead>Nombre</TableHead>
             <TableHead>Tienda</TableHead>
-            <TableHead>Cantidad Solicitada</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Costo Total</TableHead>
-            <TableHead>Acciones</TableHead>
+            <TableHead>Categoría</TableHead>
+            <TableHead className="text-center">Solicitado</TableHead>
+            <TableHead className="text-center">Comprado</TableHead>
+            <TableHead className="text-center">Entregado</TableHead>
+            <TableHead className="text-center">Estado</TableHead>
+            <TableHead className="text-right">Costo Total</TableHead>
+            <TableHead className="text-right">Costo/Unidad</TableHead>
+            <TableHead className="text-center">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {mockProducts.map((product, idx) => (
+          {products.map((product, idx) => (
             <TableRow key={product.id}>
-              <TableCell>{idx + 1}</TableCell>
-              <TableCell>{product.sku}</TableCell>
-              <TableCell>{product.name}</TableCell>
-              <TableCell>{product.shop?.name}</TableCell>
-              <TableCell>{product.amount_requested}</TableCell>
-              <TableCell>{product.status}</TableCell>
-              <TableCell>${product.total_cost.toFixed(2)}</TableCell>
+              <TableCell className="font-medium">{idx + 1}</TableCell>
+              <TableCell className="font-mono text-sm">{product.sku}</TableCell>
               <TableCell>
-                <Button variant="secondary" className="mr-2">
-                  <Edit2 className="h-5 w-5" />
-                </Button>
-                <Button variant="secondary">
-                  <Trash2 className="h-5 w-5" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{product.name}</span>
+                  {product.link && (
+                    <a
+                      href={product.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800"
+                      title="Ver producto en tienda"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+                {product.description && (
+                  <p className="text-sm text-muted-foreground">{product.description}</p>
+                )}
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col">
+                  <span className="font-medium">{product.shop?.name || "N/A"}</span>
+                  {product.shop?.link && (
+                    <a
+                      href={product.shop.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Ir a tienda
+                    </a>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                {product.category && (
+                  <Badge variant="outline">{product.category}</Badge>
+                )}
+              </TableCell>
+              <TableCell className="text-center">{product.amount_requested}</TableCell>
+              <TableCell className="text-center">
+                <span className={product.is_fully_purchased ? "font-semibold text-green-600" : ""}>
+                  {product.amount_purchased}
+                </span>
+                {product.pending_purchase > 0 && (
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    (pendiente: {product.pending_purchase})
+                  </span>
+                )}
+              </TableCell>
+              <TableCell className="text-center">
+                <span className={product.is_fully_delivered ? "font-semibold text-green-600" : ""}>
+                  {product.amount_delivered}
+                </span>
+                {product.pending_delivery > 0 && (
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    (pendiente: {product.pending_delivery})
+                  </span>
+                )}
+              </TableCell>
+              <TableCell className="text-center">
+                <Badge variant={getStatusBadgeVariant(product.status)}>
+                  {product.status}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right font-semibold">
+                ${product.total_cost.toFixed(2)}
+              </TableCell>
+              <TableCell className="text-right text-muted-foreground">
+                ${product.cost_per_product.toFixed(2)}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center justify-center gap-2">
+                  {onEdit && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEdit(product)}
+                      title="Editar producto"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDelete(product)}
+                      title="Eliminar producto"
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      
+      {/* Resumen de totales */}
+      <div className="border-t bg-gray-50 p-4">
+        <div className="flex justify-end gap-8 text-sm">
+          <div>
+            <span className="text-muted-foreground">Total productos: </span>
+            <span className="font-semibold">{products.length}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Costo total: </span>
+            <span className="font-semibold">
+              ${products.reduce((sum, p) => sum + p.total_cost, 0).toFixed(2)}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
