@@ -3,7 +3,7 @@
  */
 
 import type { ID, DateTime } from './base';
-import type { BuyingAccount } from './buying-account';
+import type { BuyingAccountNested } from './buying-account';
 
 // Modelo principal
 export interface Shop {
@@ -13,7 +13,7 @@ export interface Shop {
   is_active: boolean;
   created_at: DateTime;
   updated_at: DateTime;
-  buying_accounts?: BuyingAccount[]; // Lista de cuentas de compra asociadas
+  buying_accounts?: BuyingAccountNested[]; // Lista de cuentas de compra asociadas
 }
 
 // Tipos para crear/editar tienda

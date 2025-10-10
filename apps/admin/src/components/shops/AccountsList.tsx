@@ -90,9 +90,11 @@ export default function AccountsList({
                       <span className="font-semibold text-gray-800 text-base">
                         {account.account_name}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        Creada: {new Date(account.created_at).toLocaleDateString('es-ES')}
-                      </span>
+                      {account.created_at && (
+                        <span className="text-xs text-gray-500">
+                          Creada: {new Date(account.created_at).toLocaleDateString('es-ES')}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </TableCell>

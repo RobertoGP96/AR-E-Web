@@ -417,8 +417,8 @@ class BuyingAccountsNestedSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = BuyingAccounts
-        fields = ["id", "account_name"]
-        read_only_fields = ["id", "account_name"]
+        fields = ["id", "account_name", "created_at", "updated_at"]
+        read_only_fields = ["id", "account_name", "created_at", "updated_at"]
 
 
 class ShopSerializer(serializers.ModelSerializer):

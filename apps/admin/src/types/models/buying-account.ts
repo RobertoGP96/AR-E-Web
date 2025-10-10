@@ -3,21 +3,24 @@
  */
 
 import type { ID, DateTime } from './base';
-import type { Shop } from './shop';
 
-// Modelo principal
-export interface BuyingAccount {
+// Modelo anidado (cuando viene dentro de Shop)
+export interface BuyingAccountNested {
   id: ID;
   account_name: string;
-  shop?: Shop; // Relación con Shop (del backend)
-  created_at: DateTime;
-  updated_at: DateTime;
+  created_at?: DateTime;
+  updated_at?: DateTime;
+}
+
+// Modelo principal (cuando se obtiene directamente)
+export interface BuyingAccount extends BuyingAccountNested {
+  shop?: string; // Nombre de la tienda (slug field del backend)
 }
 
 // Tipos para crear/editar cuenta de compra
 export interface CreateBuyingAccountData {
   account_name: string;
-  shop_id?: ID;
+  shop?: string; // Nombre de la tienda (el backend usa slug_field)
 }
 
 export interface UpdateBuyingAccountData extends Partial<CreateBuyingAccountData> {
