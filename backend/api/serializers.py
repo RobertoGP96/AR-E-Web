@@ -375,6 +375,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "sales_manager",
             "status",
             "pay_status",
+            "observations",
             "total_cost",
             "products",
             "received_value_of_client",

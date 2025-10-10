@@ -140,6 +140,7 @@ class Order(models.Model):
         choices=[(tag.value, tag.value) for tag in PaymentStatusEnum],
         default=PaymentStatusEnum.NO_PAGADO.value
     )
+    observations = models.TextField(blank=True, null=True)
     
     # Timestamps
     created_at = models.DateTimeField(default=timezone.now)
