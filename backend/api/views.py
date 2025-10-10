@@ -47,6 +47,7 @@ from api.serializers import (
     ProductReceivedSerializer,
     PackageSerializer,
     DeliverReceipSerializer,
+    CategorySerializer,
     AmazonScrapingRequestSerializer,
     AmazonScrapingResponseSerializer,
 )
@@ -62,6 +63,7 @@ from api.models import (
     Package,
     DeliverReceip,
     EvidenceImages,
+    Category,
 )
 from api.utils.email_sender import send_email
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -509,6 +511,20 @@ class CommonInformationViewSet(viewsets.ModelViewSet):
     )
     def get_object(self):
         return CommonInformation.get_instance()
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    """
+    Gestión de categorías de productos.
+    Soporta filtrado por nombre y búsqueda.
+    """
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [ReadOnly | AdminPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at', 'shipping_cost_per_pound']
+    ordering = ['name']
 
 
 class ProductViewSet(viewsets.ModelViewSet):

@@ -13,6 +13,7 @@ from api.models import (
     ProductReceived,
     Order,
     EvidenceImages,
+    Category,
 )
 from drf_spectacular.utils import extend_schema_field
 import re
@@ -219,6 +220,16 @@ class ProductSerializer(serializers.ModelSerializer):
         error_messages={
             "does_not_exist": "El pedido {value} no existe.",
             "invalid": "El valor proporcionado para el pedido no es válido.",
+        },
+    )
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(),
+        slug_field="name",
+        required=False,
+        allow_null=True,
+        error_messages={
+            "does_not_exist": "La categoría {value} no existe.",
+            "invalid": "El valor proporcionado para la categoría no es válido.",
         },
     )
     product_pictures = serializers.SlugRelatedField(
@@ -449,6 +460,41 @@ class CommonInformationSerializer(serializers.ModelSerializer):
 
         model = CommonInformation
         fields = ["change_rate", "cost_per_pound"]
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    """
+    Serializador para categorías de productos con costo de envío por libra.
+    """
+
+    class Meta:
+        model = Category
+        fields = [
+            "id",
+            "name",
+            "shipping_cost_per_pound",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def validate_name(self, value):
+        """Validar unicidad del nombre de categoría"""
+        if self.instance:
+            # En actualización, excluir la instancia actual
+            if Category.objects.filter(name=value).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError("Ya existe una categoría con este nombre.")
+        else:
+            # En creación, verificar unicidad
+            if Category.objects.filter(name=value).exists():
+                raise serializers.ValidationError("Ya existe una categoría con este nombre.")
+        return value
+
+    def validate_shipping_cost_per_pound(self, value):
+        """Validar que el costo de envío no sea negativo"""
+        if value < 0:
+            raise serializers.ValidationError("El costo de envío por libra no puede ser negativo.")
+        return value
 
 
 class ProductBuyedSerializer(serializers.ModelSerializer):

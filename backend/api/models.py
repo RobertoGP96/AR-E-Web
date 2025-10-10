@@ -208,6 +208,25 @@ class Shop(models.Model):
         ordering = ['name']
 
 
+class Category(models.Model):
+    """Categorías de productos con costo de envío por libra"""
+
+    name = models.CharField(max_length=100, unique=True)
+    shipping_cost_per_pound = models.FloatField(default=0, help_text="Costo de envío por libra para esta categoría")
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = "Categoría"
+        verbose_name_plural = "Categorías"
+
+
 class BuyingAccounts(models.Model):
     """Accounts for buying in Shops"""
 
@@ -285,7 +304,7 @@ class Product(models.Model):
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
     description = models.TextField(max_length=200, null=True)
     observation = models.TextField(max_length=200, null=True)
-    category = models.CharField(max_length=200, null=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     amount_requested = models.IntegerField()
     
     # Nuevos campos para control de cantidades

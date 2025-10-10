@@ -6,6 +6,7 @@ import type { ID, UUID, ProductStatus, DateTime } from './base';
 import type { Shop } from './shop';
 import type { Order } from './order';
 import type { EvidenceImage } from './evidence';
+import type { Category } from './category';
 
 // Modelo principal
 export interface Product {
@@ -16,7 +17,7 @@ export interface Product {
   shop: Shop;
   description?: string;
   observation?: string;
-  category?: string;
+  category?: Category | null;
   
   // Cantidades (alineado con backend)
   amount_requested: number;
@@ -57,7 +58,7 @@ export interface CreateProductData {
   shop_id: ID;
   description?: string;
   observation?: string;
-  category?: string;
+  category?: ID | null;
   amount_requested: number;
   amount_purchased?: number;
   amount_delivered?: number;
@@ -80,6 +81,6 @@ export interface ProductFilters {
   status?: ProductStatus;
   shop_id?: ID;
   order_id?: ID;
-  category?: string;
+  category?: ID;
   name?: string;
 }

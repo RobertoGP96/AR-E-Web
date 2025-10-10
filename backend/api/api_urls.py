@@ -19,6 +19,7 @@ router.register(r"buyed_product", views.ProductBuyedViewSet)
 router.register(r"deliver_reciep", views.DeliverReceipViewSet)
 router.register(r"product_received", views.ProductReceivedViewSet)
 router.register(r"package", views.PackageViewSet)
+router.register(r"category", views.CategoryViewSet)
 
 urlpatterns = [
     path("api_data/", include(router.urls)),

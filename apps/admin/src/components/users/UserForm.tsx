@@ -27,6 +27,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Eye, Mail, Phone, MapPin, Shield, Percent, User2, Lock, CheckCircle, XCircle, UserCheck, UserX, UserPlus, Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useUsersByRole } from '@/hooks/user';
 
 // Schema para crear usuario (contraseña requerida)
 const createUserSchema = z.object({
@@ -38,6 +39,7 @@ const createUserSchema = z.object({
   password: z.string().min(6, 'Contraseña requerida (mínimo 6 caracteres)'),
   role: z.string(),
   agent_profit: z.number().min(0).optional(),
+  assigned_agent: z.number().optional(),
 });
 
 // Schema para editar usuario (sin contraseña)
@@ -49,6 +51,7 @@ const editUserSchema = z.object({
   phone_number: z.string().min(7, 'Teléfono requerido'),
   role: z.string(),
   agent_profit: z.number().min(0).optional(),
+  assigned_agent: z.number().optional(),
 });
 
 type CreateUserFormSchema = z.infer<typeof createUserSchema>;
@@ -102,6 +105,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         password: '',
         role: 'user',
         agent_profit: 0,
+        assigned_agent: undefined,
       };
     }
     if (user) {
@@ -113,6 +117,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         phone_number: user.phone_number,
         role: user.role,
         agent_profit: user.agent_profit,
+        assigned_agent: user.assigned_agent || undefined,
       };
     }
     return {
@@ -123,6 +128,7 @@ export const UserForm: React.FC<UserFormProps> = ({
       phone_number: '',
       role: 'user',
       agent_profit: 0,
+      assigned_agent: undefined,
     };
   };
 
@@ -140,6 +146,9 @@ export const UserForm: React.FC<UserFormProps> = ({
 
   // Observar el rol seleccionado para mostrar/ocultar ganancia de agente
   const selectedRole = watch('role');
+
+  // Obtener lista de agentes para asignar
+  const { data: agentsData } = useUsersByRole('agent');
 
   // Resetear el formulario cuando cambia el usuario o el modo
   React.useEffect(() => {
@@ -234,6 +243,9 @@ export const UserForm: React.FC<UserFormProps> = ({
         if (data.agent_profit !== user.agent_profit) {
           updateData.agent_profit = data.agent_profit || 0;
         }
+        if (data.assigned_agent !== user.assigned_agent) {
+          updateData.assigned_agent = data.assigned_agent || null;
+        }
 
         // Verificar que hay al menos un campo para actualizar
         if (Object.keys(updateData).length <= 1) {
@@ -257,6 +269,7 @@ export const UserForm: React.FC<UserFormProps> = ({
           password: (data as CreateUserFormSchema).password ?? '',
           role: data.role as import('../../types/models/user').UserRole,
           agent_profit: data.agent_profit || 0,
+          assigned_agent: data.assigned_agent || null,
         };
 
         await onSubmit(createUserData);
@@ -396,6 +409,22 @@ export const UserForm: React.FC<UserFormProps> = ({
                   <div className="flex-1">
                     <Label className="text-xs font-medium text-muted-foreground">Ganancia de agente</Label>
                     <p className="text-sm font-medium mt-1">{user.agent_profit}%</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Solo mostrar agente asignado si el rol es 'client' */}
+              {user.role === 'client' && user.assigned_agent && (
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <UserCheck className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-xs font-medium text-muted-foreground">Agente asignado</Label>
+                    <p className="text-sm font-medium mt-1">
+                      {/* Aquí necesitarías obtener el nombre del agente, por ahora mostrar ID */}
+                      Agente ID: {user.assigned_agent}
+                    </p>
                   </div>
                 </div>
               )}
@@ -728,6 +757,44 @@ export const UserForm: React.FC<UserFormProps> = ({
                     <span className="text-destructive text-xs flex items-center gap-1">
                       <XCircle className="h-3 w-3" />
                       {errors.agent_profit.message}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Solo mostrar agente asignado si el rol es 'client' */}
+              {selectedRole === 'client' && (
+                <div className="space-y-2">
+                  <Label htmlFor="assigned_agent" className="flex items-center gap-2">
+                    <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                    Agente asignado
+                  </Label>
+                  <Controller
+                    name="assigned_agent"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value?.toString() || ''}
+                        onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
+                        disabled={loading}
+                      >
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Seleccionar agente" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {agentsData?.results?.map((agent) => (
+                            <SelectItem key={agent.id} value={agent.id.toString()}>
+                              {agent.name} {agent.last_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.assigned_agent && (
+                    <span className="text-destructive text-xs flex items-center gap-1">
+                      <XCircle className="h-3 w-3" />
+                      {errors.assigned_agent.message}
                     </span>
                   )}
                 </div>

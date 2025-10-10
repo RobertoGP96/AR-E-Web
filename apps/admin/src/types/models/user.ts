@@ -28,6 +28,7 @@ export interface CustomUser {
   // Roles
   role: UserRole;
   agent_profit: number;
+  assigned_agent?: ID | null;
 
   // Account management
   is_staff: boolean;
@@ -60,6 +61,7 @@ export interface CreateUserData {
   password: string;
   role?: UserRole;
   agent_profit?: number;
+  assigned_agent?: ID | null;
 }
 
 export interface UpdateUserData extends Partial<CreateUserData> {

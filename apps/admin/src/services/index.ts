@@ -15,6 +15,9 @@ export * from './orders';
 // Servicios de productos
 export * from './products';
 
+// Servicios de categorías
+export * from './category';
+
 // Servicios de tiendas
 export * from './shops';
 

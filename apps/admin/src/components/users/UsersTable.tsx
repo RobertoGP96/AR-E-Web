@@ -1,4 +1,4 @@
-import { Edit, Trash2, MoreHorizontal, Shield, User, ShoppingCart, Truck, Calculator, Megaphone, Clock, Phone, Handshake, Eye, CheckCircle, XCircle, UserCheck, Mail, Key } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Shield, User, ShoppingCart, Truck, Calculator, Megaphone, Clock, Phone, Handshake, Eye, CheckCircle, XCircle, UserCheck, Mail, Key, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -234,11 +234,8 @@ export default function UsersTable({
   if (isLoading) {
     return (
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
-        <div className="flex items-center justify-center py-12">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-orange-400"></div>
-            <p className="text-sm text-gray-500">Cargando usuarios...</p>
-          </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
         </div>
       </div>
     );
@@ -251,7 +248,7 @@ export default function UsersTable({
         <div className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center gap-3 text-center px-4">
             <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
-              <span className="text-2xl">⚠️</span>
+              <TriangleAlert className="h-6 w-6 text-red-600" />
             </div>
             <div>
               <p className="text-sm font-semibold text-red-900">Error al cargar usuarios</p>
