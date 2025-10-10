@@ -6,7 +6,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from api.models import CustomUser
+# from api.models import CustomUser  # Eliminado para evitar importación circular
 
 
 class NotificationManager(models.Manager):
@@ -107,7 +107,7 @@ class Notification(models.Model):
     
     # Usuario destinatario
     recipient = models.ForeignKey(
-        CustomUser,
+        'api.CustomUser',
         on_delete=models.CASCADE,
         related_name='notifications',
         verbose_name='Destinatario'
@@ -115,7 +115,7 @@ class Notification(models.Model):
     
     # Usuario que generó la notificación (opcional)
     sender = models.ForeignKey(
-        CustomUser,
+        'api.CustomUser',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -318,7 +318,7 @@ class NotificationPreference(models.Model):
     """
     
     user = models.OneToOneField(
-        CustomUser,
+        'api.CustomUser',
         on_delete=models.CASCADE,
         related_name='notification_preferences',
         verbose_name='Usuario'

@@ -8,15 +8,11 @@ from django.utils.translation import gettext_lazy as _
 from api.managers import CustomUserManager
 from api.enums import OrderStatusEnum, PaymentStatusEnum, DeliveryStatusEnum
 
-# Create your models here.
-
 # Importar modelos de notificaciones para que Django los reconozca
 from api.models_notifications import Notification, NotificationPreference  # noqa
 
-
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     """Custom user model"""
-    # Account data
     email = models.EmailField(_("email"), unique=True, blank=True, null=True)
     name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
