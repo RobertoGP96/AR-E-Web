@@ -28,7 +28,7 @@ export function useCreateQuickOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (clientEmail: string) => createQuickOrder(clientEmail),
+    mutationFn: (clientId: number) => createQuickOrder(clientId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
     },

@@ -544,7 +544,8 @@ class ProductViewSet(viewsets.ModelViewSet):
     """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [ReadOnly | AgentPermission]
+    # Allow read-only for everyone and write access for agents or admins
+    permission_classes = [ReadOnly | (AgentPermission | AdminPermission)]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['status', 'shop', 'order', 'category']
     search_fields = ['name', 'sku', 'description', 'link']

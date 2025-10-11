@@ -1,8 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useOrders } from '../hooks/order/useOrders';
-import { OrdersHeader, OrdersStats, OrdersFilters, OrdersTable } from '@/components/orders';
+import { OrdersHeader, OrdersStats, OrdersFilters, OrdersTable, AddProductsDialog } from '@/components/orders';
 import type { Order } from '@/types';
 import { toast } from 'sonner';
+import { useDeleteOrder } from '@/hooks/order/useDeleteOrder';
+import { useMarkOrderAsPaid } from '@/hooks/order/useMarkOrderAsPaid';
+import { useAddProductsToOrder } from '@/hooks/order/useAddProductsToOrder';
 
 const Orders = () => {
   const [searchValue, setSearchValue] = useState("");
@@ -62,11 +65,53 @@ const Orders = () => {
     // TODO: Implementar diálogo de edición
   };
 
+  // Hook para eliminar orden
+  const deleteOrderMutation = useDeleteOrder();
+
   // Manejar eliminación de orden
-  const handleDelete = (order: Order) => {
-    console.log("Eliminar orden:", order.id);
-    toast.info("Función de eliminación en desarrollo");
-    // TODO: Implementar confirmación y eliminación
+  const handleDelete = async (order: Order) => {
+    try {
+      await deleteOrderMutation.mutateAsync(order.id);
+      toast.success(`Pedido #${order.id} eliminado`);
+    } catch (err) {
+      console.error('Error eliminando orden:', err);
+      toast.error('Error al eliminar el pedido');
+    }
+  };
+
+  // Estado para el diálogo de añadir productos
+  const [addProductsOrder, setAddProductsOrder] = useState<Order | null>(null);
+
+  // Hooks para mutaciones reales
+  const markPaidMutation = useMarkOrderAsPaid();
+  const addProductsMutation = useAddProductsToOrder();
+
+  // Handler para confirmar pago usando mutación
+  const handleConfirmPayment = async (order: Order) => {
+    try {
+      await markPaidMutation.mutateAsync(order.id);
+      toast.success(`Pago confirmado para pedido #${order.id}`);
+    } catch (err) {
+      console.error('Error confirmando pago:', err);
+      toast.error('Error al confirmar el pago');
+    }
+  };
+
+  // Handler para abrir diálogo de añadir productos
+  const handleAddProducts = (order: Order) => {
+    setAddProductsOrder(order);
+  };
+
+  const handleAddProductsConfirm = async (order: Order, products: Array<{ shop_name: string; description: string; amount_requested: number; shop_cost: number; total_cost: number }>) => {
+    try {
+      await addProductsMutation.mutateAsync({ orderId: order.id, products });
+      toast.success(`Se añadieron ${products.length} producto(s) al pedido #${order.id}`);
+    } catch (err) {
+      console.error('Error añadiendo productos:', err);
+      toast.error('Error al añadir productos');
+    } finally {
+      setAddProductsOrder(null);
+    }
   };
 
   // Mostrar error si existe
@@ -96,7 +141,19 @@ const Orders = () => {
         isLoading={isLoading}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onConfirmPayment={handleConfirmPayment}
+        onAddProducts={handleAddProducts}
       />
+
+      {/* Dialogo de añadir productos */}
+      {addProductsOrder && (
+        <AddProductsDialog
+          order={addProductsOrder}
+          open={Boolean(addProductsOrder)}
+          onOpenChange={(open) => !open && setAddProductsOrder(null)}
+          onAdd={handleAddProductsConfirm}
+        />
+      )}
     </div>
   );
 };

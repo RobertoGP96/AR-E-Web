@@ -13,7 +13,6 @@ import {
 } from '../../services/category';
 import type { CreateCategoryData } from '../../services/category/create-category';
 import type { UpdateCategoryData } from '../../services/category/update-category';
-import type { Category } from '../../types/models/category';
 
 /**
  * Query key factory para categorías

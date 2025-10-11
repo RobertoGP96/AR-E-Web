@@ -51,7 +51,8 @@ export const assignOrderToAgent = async (orderId: number, agentEmail: string): P
  * Marca una orden como pagada
  */
 export const markOrderAsPaid = async (id: number): Promise<Order> => {
-  return await updateOrderPaymentStatus(id, 'paid');
+  // El backend y los tipos usan etiquetas en español (ej. 'Pagado')
+  return await updateOrderPaymentStatus(id, 'Pagado');
 };
 
 /**

@@ -84,7 +84,14 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                   )}
                 </div>
                 {product.description && (
-                  <p className="text-sm text-muted-foreground">{product.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {(() => {
+                      const SEP = "\n\n--TAGS--\n"
+                      const desc = product.description as string
+                      const idx = desc.indexOf(SEP)
+                      return idx === -1 ? desc : desc.substring(0, idx)
+                    })()}
+                  </p>
                 )}
               </TableCell>
               <TableCell>
@@ -104,7 +111,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
               </TableCell>
               <TableCell>
                 {product.category && (
-                  <Badge variant="outline">{product.category}</Badge>
+                  <Badge variant="outline">{product.category.name}</Badge>
                 )}
               </TableCell>
               <TableCell className="text-center">{product.amount_requested}</TableCell>

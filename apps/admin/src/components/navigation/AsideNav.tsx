@@ -9,7 +9,8 @@ import {
   LogOut,
   Store,
   ShoppingBag,
-  Truck
+  Truck,
+  Tag
 } from 'lucide-react';
 import { toast } from 'sonner';
 import logoSvg from '@/assets/logo/logo.svg';
@@ -43,6 +44,11 @@ const navigation = [
     icon: Store
   },
   {
+    name: 'Categorías',
+    href: '/categories',
+    icon: Tag
+  },
+  {
     name: 'Órdenes',
     href: '/orders',
     icon: ShoppingCart
@@ -67,6 +73,7 @@ const navigation = [
     href: '/delivery',
     icon: Truck
   },
+  
   
 ];
 

@@ -13,6 +13,7 @@ import Profile from '@/pages/Profile';
 import NotFound from '@/pages/NotFound';
 import LoginPage from '@/pages/LoginPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import Categories from '@/pages/Categories';
 
 const AppRoutes = () => {
     return (
@@ -39,6 +40,7 @@ const AppRoutes = () => {
                 <Route path="orders" element={<Orders />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="profile" element={<Profile />} />
+                <Route path="categories" element={<Categories />} />
             </Route>
 
             {/* Ruta 404 */}

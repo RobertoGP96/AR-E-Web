@@ -12,6 +12,8 @@ export interface CreateProductData {
   amount_requested: number;
   shop_cost: number;
   total_cost: number;
+  category?: string | null;
+  shop_taxes?: number;
   product_pictures?: string[];
 }
 
@@ -23,8 +25,13 @@ export const createProduct = async (productData: CreateProductData): Promise<Pro
   
   return await apiClient.post<Product>('/api_data/product/', {
     ...data,
+    // backend expects shop as slug (name) and order as id
     shop: shop_name,
-    order: order_id
+    order: order_id,
+    // ensure category field is null if not provided
+    category: data.category ?? null,
+    // map shop_taxes if provided
+    shop_taxes: data.shop_taxes ?? data.shop_taxes,
   });
 };
 

@@ -77,8 +77,8 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
 
     try {
       await createOrderMutation.mutateAsync({
-        client: formData.client_id,
-        sales_manager: formData.sales_manager_id || undefined,
+        client_id: formData.client_id,
+        sales_manager_id: formData.sales_manager_id || undefined,
         observations: formData.observations || undefined,
         pay_status: formData.pay_status,
         status: formData.status,

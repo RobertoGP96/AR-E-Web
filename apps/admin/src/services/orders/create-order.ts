@@ -6,8 +6,8 @@ import { apiClient } from '../../lib/api-client';
 import type { Order } from '../../types';
 
 export interface CreateOrderData {
-  client: number;
-  sales_manager?: number;
+  client_id: number;
+  sales_manager_id?: number;
   observations?: string;
   pay_status?: string;
   status?: string;
@@ -25,7 +25,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
  */
 export const createQuickOrder = async (clientId: number): Promise<Order> => {
   return await createOrder({
-    client: clientId,
+    client_id: clientId,
     status: 'pending',
     pay_status: 'pending'
   });

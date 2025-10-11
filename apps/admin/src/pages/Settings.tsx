@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ShopsHeader, ShopsTable } from '@/components/shops';
+import { ShopsHeader } from '@/components/shops';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
@@ -354,7 +354,6 @@ const Settings = () => {
                 <ShopsHeader/>
               </CardHeader>
               <CardContent className="space-y-6">
-                <ShopsTable/>
               </CardContent>
             </Card>
           )}
