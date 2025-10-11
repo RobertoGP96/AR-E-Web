@@ -298,7 +298,7 @@ class Product(models.Model):
     id = models.UUIDField(
         default=uuid.uuid4, unique=True, primary_key=True, editable=False
     )
-    sku = models.CharField(max_length=100)
+    sku = models.CharField(max_length=100, null=True, blank=True)
     name = models.CharField(max_length=100)
     link = models.URLField(blank=True, null=True)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
