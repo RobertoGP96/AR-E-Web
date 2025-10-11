@@ -1,6 +1,9 @@
-import { Filter, Plus, Search } from 'lucide-react';
+import { Filter, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
+import ProductsColumnsSelector from './ProductsColumnsSelector';
+import type { VisibleColumn } from './ProductsColumnsSelector';
+
 
 interface ProductsFiltersProps {
   searchValue?: string;
@@ -9,15 +12,21 @@ interface ProductsFiltersProps {
   onSearchChange?: (value: string) => void;
   onCategoryChange?: (value: string) => void;
   onStatusChange?: (value: string) => void;
+  visibleColumns?: VisibleColumn[];
+  onVisibleColumnsChange?: (cols: VisibleColumn[]) => void;
 }
+
 
 export default function ProductsFilters({
   searchValue = "",
-  onSearchChange,
-}: ProductsFiltersProps) {
-  return (
 
-    <div className="flex flex-col sm:flex-row gap-4">
+  onSearchChange,
+  visibleColumns = ['name','category','status','total_cost','actions', 'shop'] as VisibleColumn[],
+  onVisibleColumnsChange,
+}: ProductsFiltersProps) {
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-4 items-center">
       <div className="flex-1">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -30,16 +39,16 @@ export default function ProductsFilters({
           />
         </div>
       </div>
-      <Button variant="secondary">
-        <Filter className="h-5 w-5 mr-2" />
-        Filtrar
-      </Button>
-      <Button
-        className="flex items-center gap-2 l border-0"
-      >
-        <Plus className="h-5 w-5" />
-        Nuevo Producto
-      </Button>
+
+      <div className="flex items-center gap-2">
+        <ProductsColumnsSelector value={visibleColumns} onChange={onVisibleColumnsChange || (() => {})} />
+
+        <Button variant="secondary" onClick={() => { /* opcional: abrir modal avanzado */ }}>
+          <Filter className="h-5 w-5 mr-2" />
+          Filtros
+        </Button>
+
+      </div>
     </div>
   );
 }

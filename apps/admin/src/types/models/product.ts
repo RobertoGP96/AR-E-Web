@@ -3,10 +3,8 @@
  */
 
 import type { ID, UUID, ProductStatus, DateTime } from './base';
-import type { Shop } from './shop';
 import type { Order } from './order';
 import type { EvidenceImage } from './evidence';
-import type { Category } from './category';
 
 // Modelo principal
 export interface Product {
@@ -14,10 +12,10 @@ export interface Product {
   sku: string;
   name: string;
   link?: string;
-  shop: Shop;
+  shop: string;
   description?: string;
   observation?: string;
-  category?: Category | null;
+  category?: string;
   
   // Cantidades (alineado con backend)
   amount_requested: number;

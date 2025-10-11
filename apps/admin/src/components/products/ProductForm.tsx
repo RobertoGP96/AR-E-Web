@@ -1,9 +1,11 @@
 import { Plus, Save, Tag, X, Store, Link2, FileText, CheckCircle, AlertCircle, CircleAlert } from "lucide-react"
+import { serializeTagsToDescription, type StoredTag } from '@/lib/tags'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useState, useEffect } from 'react'
 import type { CreateProductData } from '@/services/products/create-product'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useShops } from '@/hooks/shop/useShops'
 import { useCategories } from '@/hooks/category/useCategory'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -84,6 +86,7 @@ type FormState = {
     shop_cost: number
     total_cost: number
     category_id?: number | undefined
+    category?: string
     tax?: number
 }
 
@@ -116,7 +119,8 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
         amount_requested: initialValues?.amount_requested ?? 1,
         shop_cost: initialValues?.shop_cost ?? 0,
         total_cost: initialValues?.total_cost ?? 0,
-        category_id: initialValues?.category_id ?? undefined,
+    category_id: initialValues?.category_id ?? undefined,
+    category: initialValues?.category ?? '',
         tax: initialValues?.tax ?? 0,
     });
     const [tags, setTags] = useState<tag[]>(initialParsed.parsedTags || [])
@@ -136,6 +140,41 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
             }
         }
     }, [newProduct.link, newProduct.shop])
+
+    // Cuando se detecta un shop por link, intentar normalizar con las shops de la BD
+    const { shops: availableShops } = useShops()
+    useEffect(() => {
+        if (!newProduct.shop || !availableShops || availableShops.length === 0) return
+
+        // Buscar coincidencia por nombre (case-insensitive) o por link que incluya el hostname
+        const detected = newProduct.shop.toLowerCase()
+
+        // Primero buscar por nombre exacto/insensible a mayúsculas
+        let matched = availableShops.find(s => s.name && s.name.toLowerCase() === detected)
+
+        // Si no hay match por nombre, intentar buscar por hostname dentro del link de la shop
+        if (!matched) {
+            try {
+                const urlObj = new URL(newProduct.link)
+                const hostname = urlObj.hostname.replace(/^www\./, '').toLowerCase()
+                matched = availableShops.find(s => s.link && s.link.toLowerCase().includes(hostname))
+            } catch {
+                // ignore
+            }
+        }
+
+        // Si encontramos una tienda en la BD, normalizar el campo shop con su name
+        if (matched) {
+            if (matched.name && matched.name !== newProduct.shop) {
+                setNewProduct(prev => ({ ...prev, shop: matched!.name }))
+            }
+            // almacenar id en un campo temporal del estado (no persistir en backend form state)
+            setMatchedShopId(matched.id)
+        }
+    }, [newProduct.shop, newProduct.link, availableShops])
+
+    // Id de la tienda detectada en la BD (si existe)
+    const [matchedShopId, setMatchedShopId] = useState<number | undefined>(undefined)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -165,13 +204,21 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
         }
 
         // Convertir tags a formato string array y enviar el producto
-        // Merge tags into description using a separator and JSON so they can be parsed when editing
+        // Usar util de serialización centralizada
+        // import dinámico local para evitar cambios globales en top-level imports si no se desea
         let finalDescription = newProduct.description || ''
-        if (tags.length > 0) {
-            try {
-                finalDescription = `${finalDescription}${TAGS_SEPARATOR}${JSON.stringify(tags)}`
-            } catch {
-                // fallback: ignore tags serialization on error
+        try {
+            // Mapear tags locales al tipo StoredTag
+            const normalizedTags: StoredTag[] = tags.map(t => ({ name: t.name, value: t.value }))
+            finalDescription = serializeTagsToDescription(finalDescription, normalizedTags)
+        } catch {
+            // fallback a la lógica previa en caso de error
+            if (tags.length > 0) {
+                try {
+                    finalDescription = `${finalDescription}${TAGS_SEPARATOR}${JSON.stringify(tags)}`
+                } catch {
+                    // ignore
+                }
             }
         }
 
@@ -180,17 +227,23 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
         const taxPct = Number(newProduct.tax) || 0
         const computedTotal = qty * unit * (1 + taxPct / 100)
 
-        const productToSubmit: CreateProductData = {
-            shop_name: newProduct.shop || extractShopName(newProduct.link) || 'Unknown',
+    const productToSubmit = {
+            // Asegurar que se envía el nombre del producto
+            name: newProduct.name,
+            // Enviar shop_name como nombre (lo que espera la API). Si tenemos
+            // matchedShopId pero no queremos usar ID, buscamos el nombre en
+            // availableShops.
+            shop_name: (matchedShopId ? (availableShops.find(s => s.id === matchedShopId)?.name) : newProduct.shop) || extractShopName(newProduct.link) || 'Unknown',
             order_id: orderId,
             description: finalDescription,
             amount_requested: qty,
             shop_cost: unit,
             total_cost: Number(computedTotal) || 0,
-            category: newProduct.category_id ? (categories.find(c => c.id === newProduct.category_id)?.name ?? null) : null,
+            // category: enviar el nombre de la categoría (la API espera nombre)
+            category: newProduct.category ?? '',
             shop_taxes: taxPct,
             product_pictures: []
-        }
+    } as unknown as CreateProductData
 
         onSubmit(productToSubmit)
         
@@ -210,7 +263,10 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
             description: '',
             amount_requested: 1,
             shop_cost: 0,
-            total_cost: 0
+            total_cost: 0,
+            category_id: undefined,
+            category: '',
+            tax: 0,
         })
         // Restore to initial parsed tags if editing, otherwise clear
         setTags(initialParsed.parsedTags || [])
@@ -329,8 +385,8 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                             Categoría
                         </label>
                         <Select
-                            value={newProduct.category_id ? String(newProduct.category_id) : '0'}
-                            onValueChange={(val) => setNewProduct(prev => ({ ...prev, category_id: val !== '0' ? Number(val) : undefined }))}
+                            value={newProduct.category ? newProduct.category : '0'}
+                            onValueChange={(val) => setNewProduct(prev => ({ ...prev, category: val !== '0' ? val : '' }))}
                         >
                             <SelectTrigger id="category">
                                 <SelectValue placeholder="Selecciona una categoría (opcional)" />
@@ -338,7 +394,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                             <SelectContent>
                                 <SelectItem value="0">Sin categoría</SelectItem>
                                 {categories.map((c: { id: number; name: string }) => (
-                                    <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                                    <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

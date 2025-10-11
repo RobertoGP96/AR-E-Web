@@ -3,6 +3,7 @@ import { useOrders } from '../hooks/order/useOrders';
 import { OrdersHeader, OrdersStats, OrdersFilters, OrdersTable, AddProductsDialog } from '@/components/orders';
 import type { Order } from '@/types';
 import { toast } from 'sonner';
+import type { CreateProductData } from '@/services/products/create-product';
 import { useDeleteOrder } from '@/hooks/order/useDeleteOrder';
 import { useMarkOrderAsPaid } from '@/hooks/order/useMarkOrderAsPaid';
 import { useAddProductsToOrder } from '@/hooks/order/useAddProductsToOrder';
@@ -59,11 +60,7 @@ const Orders = () => {
   }, [orders]);
 
   // Manejar edición de orden
-  const handleEdit = (order: Order) => {
-    console.log("Editar orden:", order.id);
-    toast.info("Función de edición en desarrollo");
-    // TODO: Implementar diálogo de edición
-  };
+
 
   // Hook para eliminar orden
   const deleteOrderMutation = useDeleteOrder();
@@ -102,7 +99,7 @@ const Orders = () => {
     setAddProductsOrder(order);
   };
 
-  const handleAddProductsConfirm = async (order: Order, products: Array<{ shop_name: string; description: string; amount_requested: number; shop_cost: number; total_cost: number }>) => {
+  const handleAddProductsConfirm = async (order: Order, products: CreateProductData[]) => {
     try {
       await addProductsMutation.mutateAsync({ orderId: order.id, products });
       toast.success(`Se añadieron ${products.length} producto(s) al pedido #${order.id}`);
@@ -139,7 +136,7 @@ const Orders = () => {
       <OrdersTable 
         orders={filteredOrders}
         isLoading={isLoading}
-        onEdit={handleEdit}
+        
         onDelete={handleDelete}
         onConfirmPayment={handleConfirmPayment}
         onAddProducts={handleAddProducts}

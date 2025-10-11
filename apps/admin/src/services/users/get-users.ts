@@ -16,18 +16,10 @@ export const getUsers = async (
   filters?: UserFilters
 ): Promise<PaginatedApiResponse<CustomUser>> => {
   // Debug: Ver qué filtros se reciben
-  console.log('🌐 getUsers - Filtros recibidos:', filters);
   
   const response = await apiClient.getPaginated<CustomUser>('/api_data/user/', filters);
   
-  // Debug temporal: verificar campos del usuario
-  if (response.results && response.results.length > 0) {
-    console.log('📧 Verificando datos del primer usuario:', {
-      nombre: response.results[0].name,
-      email: response.results[0].email,
-      camposDisponibles: Object.keys(response.results[0])
-    });
-  }
+ 
   
   // Verificar y mapear user_id a id si es necesario (compatibilidad con backend)
   if (response.results && response.results.length > 0) {

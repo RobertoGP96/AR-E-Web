@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-// ...existing imports
+
 import type { Order } from '@/types';
 import { ProductForm } from '@/components/products/ProductForm';
 import type { CreateProductData } from '@/services/products/create-product';
@@ -15,10 +14,9 @@ interface AddProductsDialogProps {
   onAdd: (order: Order, products: CreateProductData[]) => void;
 }
 
-export default function AddProductsDialog({ order = null, open, onOpenChange, onAdd }: AddProductsDialogProps) {
+export default function AddProductsDialog({ order = null, open, onOpenChange }: AddProductsDialogProps) {
   const [errors, setErrors] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
   useEffect(() => {
     if (!open) {
       setErrors(null);
@@ -31,11 +29,9 @@ export default function AddProductsDialog({ order = null, open, onOpenChange, on
       return;
     }
 
-    setIsSubmitting(true);
     try {
       await createProduct(product);
       toast.success('Producto añadido correctamente.');
-      onAdd(order, [product]);
       onOpenChange(false);
     } catch (err: unknown) {
       let msg = 'Error creando producto';
@@ -45,14 +41,12 @@ export default function AddProductsDialog({ order = null, open, onOpenChange, on
       }
       setErrors(msg);
       toast.error(`Error creando producto: ${msg}`);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="sm:max-w-[800px]">
+      <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>Añadir producto al pedido {order ? `#${order.id}` : ''}</DialogTitle>
         </DialogHeader>
@@ -61,13 +55,8 @@ export default function AddProductsDialog({ order = null, open, onOpenChange, on
           {errors && (
             <div className="text-sm text-red-600">{errors}</div>
           )}
-
           <div className="p-2 bg-white rounded-md">
             <ProductForm onSubmit={handleProductSubmit} orderId={order?.id} />
-          </div>
-
-          <div className="flex justify-end">
-            <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cerrar</Button>
           </div>
         </div>
 

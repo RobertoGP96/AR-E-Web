@@ -302,8 +302,8 @@ class Product(models.Model):
     name = models.CharField(max_length=100)
     link = models.URLField(blank=True, null=True)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
-    description = models.TextField(max_length=200, null=True)
-    observation = models.TextField(max_length=200, null=True)
+    description = models.TextField(max_length=200,blank=True, null=True)
+    observation = models.TextField(max_length=200,blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     amount_requested = models.IntegerField()
     

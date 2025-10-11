@@ -99,7 +99,6 @@ export default function BuyingAccountFormPopover({
           account_name: formData.account_name.trim(),
           shop: shopName
         });
-        console.log('Cuenta actualizada:', result);
         toast.success('Cuenta actualizada', {
           description: `"${result.account_name}" ha sido actualizada exitosamente`
         });
@@ -109,7 +108,6 @@ export default function BuyingAccountFormPopover({
           account_name: formData.account_name.trim(),
           shop: shopName
         });
-        console.log('Cuenta creada:', result);
         toast.success('Cuenta creada', {
           description: `"${result.account_name}" ha sido creada exitosamente`
         });

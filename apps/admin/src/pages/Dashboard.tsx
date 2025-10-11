@@ -1,4 +1,5 @@
-import { BarChart3, Users, Package, ShoppingCart, TrendingUp, LayoutDashboard } from 'lucide-react';
+import { Users, Package, ShoppingCart, TrendingUp, LayoutDashboard } from 'lucide-react';
+import AdminFeatures from '@/components/admin/AdminFeatures';
 
 const Dashboard = () => {
   // Datos por defecto para mostrar cuando no hay datos de la API
@@ -49,19 +50,19 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
-      
+
       {/* Header Section with Logo and Title */}
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
             <LayoutDashboard className="h-8 w-8 text-orange-500" />
             Dashboard
           </h1>
           <p className="text-gray-600 mt-2">
-           Resumen general del panel de administración
+            Resumen general del panel de administración
           </p>
         </div>
-        
+
       </div>
 
       {/* Stats Cards */}
@@ -99,48 +100,14 @@ const Dashboard = () => {
         })}
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Chart placeholder */}
-        <div className="bg-white shadow-sm rounded-lg p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Ventas Mensuales</h3>
-            <BarChart3 className="h-5 w-5 text-gray-400" />
-          </div>
-          <div className="h-64 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-            <p className="text-gray-500 font-medium">Gráfico de ventas aquí</p>
-          </div>
-        </div>
+      {/* Lista de funcionalidades del admin */}
+      <AdminFeatures />
 
-        {/* Recent Orders */}
-        <div className="bg-white shadow-sm rounded-lg p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Órdenes Recientes</h3>
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((order) => (
-              <div key={order} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                <div className="flex-shrink-0">
-                  <div className="h-10 w-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-semibold text-sm">#{order}</span>
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">
-                    Orden #{1000 + order}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Cliente #{order}
-                  </p>
-                </div>
-                <div className="flex-shrink-0 text-sm font-semibold text-gray-900">
-                  ${(Math.random() * 500 + 50).toFixed(2)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      
+
+
+
+
     </div>
   );
 };

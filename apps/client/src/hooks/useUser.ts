@@ -62,15 +62,14 @@ export const useUser = (): UseUserReturn => {
       
       return updatedUser;
     },
-    onSuccess: (updatedUser) => {
+    onSuccess: () => {
       // Invalidar queries para refetch si es necesario
       queryClient.invalidateQueries({ queryKey: ['user'] });
-      console.log('Perfil actualizado exitosamente:', updatedUser);
     },
     onError: (error: unknown) => {
       console.error('Error updating user profile:', error);
     }
-  });
+  }); 
 
   // Función para actualizar el usuario
   const updateUser = useCallback(async (data: Partial<UpdateUserData>) => {

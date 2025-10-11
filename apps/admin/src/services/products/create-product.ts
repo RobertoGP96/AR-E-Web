@@ -4,35 +4,62 @@
 
 import { apiClient } from '../../lib/api-client';
 import type { Product } from '../../types';
+import type { CreateProductData as ModelCreateProductData } from '@/types/models/product';
 
-export interface CreateProductData {
-  shop_name: string;
-  order_id: number;
-  description: string;
-  amount_requested: number;
-  shop_cost: number;
-  total_cost: number;
-  category?: string | null;
-  shop_taxes?: number;
+/**
+ * Usamos el tipo canónico `CreateProductData` del modelo, pero el formulario
+ * históricamente enviaba `shop_name`. Para mantener compatibilidad, este
+ * servicio acepta ambos: preferimos `shop_id` si está presente, si no, se
+ * permite `shop_name` y lo mapeamos a `shop` en el payload.
+ */
+export type CreateProductData = Omit<ModelCreateProductData, 'shop_id' | 'sku'> & {
+  // hacer sku opcional para payloads creados por la UI
+  sku?: string;
+  // Mantener link y nombre opcionales usados por UI
+  link?: string;
+  // shop_id opcional: permitimos enviar shop_id o shop_name (compatibilidad)
+  shop_id?: number;
+  shop_name?: string;
+  // category puede ser nombre (string) o null según lo que espere la API
+  category: string;
   product_pictures?: string[];
-}
+};
 
 /**
  * Crea un nuevo producto
  */
 export const createProduct = async (productData: CreateProductData): Promise<Product> => {
-  const { shop_name, order_id, ...data } = productData;
-  
-  return await apiClient.post<Product>('/api_data/product/', {
-    ...data,
-    // backend expects shop as slug (name) and order as id
-    shop: shop_name,
-    order: order_id,
-    // ensure category field is null if not provided
-    category: data.category ?? null,
-    // map shop_taxes if provided
-    shop_taxes: data.shop_taxes ?? data.shop_taxes,
-  });
+  const { shop_id, shop_name, order_id, ...data } = productData as unknown as Partial<ModelCreateProductData> & { shop_name?: string };
+
+  // Construir payload como objeto genérico (la API acepta campos específicos)
+  const payload: Record<string, unknown> = {
+    ...(data as Partial<ModelCreateProductData>),
+    order: order_id as number | undefined,
+  };
+
+  const shopTaxes = (data as Partial<ModelCreateProductData>).shop_taxes;
+  if (typeof shopTaxes !== 'undefined') payload.shop_taxes = shopTaxes;
+
+  // La API en el backend devuelve errores esperando nombres (shop, category).
+  // Por compatibilidad: si recibimos shop_id o category (IDs), intentamos
+  // mapearlos a nombres si la UI conoce los mappings. Aquí asumimos que el
+  // frontend envía shop_name y category como nombre cuando sea necesario.
+  // Si se reciben IDs, dejamos pasar los IDs (backend debería resolverlos)
+  if (typeof shop_id !== 'undefined') {
+    payload.shop = shop_id;
+  } else if (typeof shop_name !== 'undefined') {
+    payload.shop = shop_name;
+  }
+
+  // category en ModelCreateProductData es ID, pero muchos endpoints esperan
+  // category como nombre; si data.category es un number, no lo convertimos
+  // aquí (no tenemos mapa de id->name en este servicio). El formulario
+  // se encargará de enviar nombre cuando corresponda.
+  if (typeof (data as Partial<ModelCreateProductData>).category !== 'undefined') {
+    payload.category = (data as Partial<ModelCreateProductData>).category;
+  }
+
+  return await apiClient.post<Product>('/api_data/product/', payload as unknown as object);
 };
 
 /**

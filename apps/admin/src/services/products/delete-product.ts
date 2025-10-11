@@ -6,8 +6,9 @@ import { apiClient } from '../../lib/api-client';
 
 /**
  * Elimina un producto por ID
+ * Acepta id como number o string para compatibilidad con distintos modelos
  */
-export const deleteProduct = async (id: number): Promise<void> => {
+export const deleteProduct = async (id: string | number): Promise<void> => {
   return await apiClient.delete<void>(`/api_data/product/${id}/`);
 };
 
