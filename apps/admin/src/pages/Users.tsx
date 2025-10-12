@@ -51,8 +51,6 @@ const Users = () => {
     return filters;
   }, [searchTerm, userFilters]);
 
-  // Debug: Mostrar filtros que se están aplicando
-  console.log('🔍 Filtros aplicados:', apiFilters);
 
   // Obtener usuarios con el hook
   const { data, isLoading, error } = useUsers(apiFilters);

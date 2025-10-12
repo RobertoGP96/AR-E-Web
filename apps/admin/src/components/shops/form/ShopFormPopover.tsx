@@ -23,11 +23,13 @@ interface ShopFormPopoverProps {
 interface FormData {
     name: string;
     link: string;
+    tax_rate: number;
 }
 
 interface FormErrors {
     name?: string;
     link?: string;
+    tax_rate?: number;
 }
 
 export default function ShopFormPopover({
@@ -41,7 +43,8 @@ export default function ShopFormPopover({
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState<FormData>({
         name: '',
-        link: ''
+        link: '',
+        tax_rate: 0.0
     });
     const [errors, setErrors] = useState<FormErrors>({});
 
@@ -50,7 +53,8 @@ export default function ShopFormPopover({
         if (open) {
             setFormData({
                 name: shop?.name || '',
-                link: shop?.link || ''
+                link: shop?.link || '',
+                tax_rate: shop?.tax_rate || 0.0,
             });
             setErrors({});
         }
@@ -85,7 +89,7 @@ export default function ShopFormPopover({
     const handleInputChange = (field: keyof FormData, value: string) => {
         setFormData(prev => ({
             ...prev,
-            [field]: value
+            [field]: field === 'tax_rate' ? (value === '' ? 0 : parseFloat(value) || 0) : value
         }));
 
         // Limpiar error del campo cuando el usuario empiece a escribir
@@ -109,15 +113,18 @@ export default function ShopFormPopover({
         try {
             const submitData: CreateShopData = {
                 name: formData.name.trim(),
-                link: formData.link.trim()
+                link: formData.link.trim(),
+                tax_rate: formData.tax_rate
             };
 
             let result: Shop;
 
-            if (mode === 'edit' && shop) {
+                if (mode === 'edit' && shop) {
                 // Actualizar tienda existente
+                // El backend usa lookup_field = 'name', por lo que la URL espera el nombre de la tienda
                 const { updateShopService } = await import('@/services/shops');
-                result = await updateShopService.updateShop(shop.id, submitData);
+                // Usar el nombre original (shop.name) para buscar la instancia y enviar los datos actualizados
+                result = await updateShopService.updateShop(shop.name, submitData);
                 toast.success('Tienda actualizada', {
                     description: `"${result.name}" ha sido actualizada exitosamente`
                 });
@@ -131,7 +138,7 @@ export default function ShopFormPopover({
 
             onSuccess?.(result);
             setOpen(false);
-            setFormData({ name: '', link: '' });
+            setFormData({ name: '', link: '', tax_rate: 0.0 });
 
         } catch (error) {
             console.error('Error saving shop:', error);
@@ -146,7 +153,7 @@ export default function ShopFormPopover({
 
     const handleCancel = () => {
         setOpen(false);
-        setFormData({ name: '', link: '' });
+        setFormData({ name: '', link: '', tax_rate: 0.0 });
         setErrors({});
         onCancel?.();
     };
@@ -245,6 +252,34 @@ export default function ShopFormPopover({
                             <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                                 <X className="h-3 w-3" />
                                 {errors.link}
+                            </p>
+                        )}
+                    </div>
+
+
+                    <div className="space-y-2">
+                        <Label htmlFor="tax" className="text-sm font-medium text-gray-700">
+                            Tasa de impuesto (%) *
+                        </Label>
+                        <Input
+                            id="tax"
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={1}
+                            value={formData.tax_rate}
+                            onChange={(e) => setFormData({ ...formData, tax_rate: Number(e.target.value) })}
+                            placeholder="0"
+                            className={`transition-colors ${errors.tax_rate
+                                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                                    : 'border-gray-200 focus:border-orange-400 focus:ring-orange-400'
+                                }`}
+                            disabled={isLoading}
+                        />
+                        {errors.tax_rate && (
+                            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                                <X className="h-3 w-3" />
+                                {errors.tax_rate}
                             </p>
                         )}
                     </div>

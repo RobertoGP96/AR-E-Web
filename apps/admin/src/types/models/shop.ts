@@ -10,6 +10,7 @@ export interface Shop {
   id: ID;
   name: string;
   link: string;
+  tax_rate: number; // Porcentaje de impuestos aplicado a la tienda
   is_active: boolean;
   created_at: DateTime;
   updated_at: DateTime;
@@ -20,6 +21,7 @@ export interface Shop {
 export interface CreateShopData {
   name: string;
   link: string;
+  tax_rate?: number;
   is_active?: boolean;
 }
 

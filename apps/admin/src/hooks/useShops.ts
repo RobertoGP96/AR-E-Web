@@ -64,15 +64,15 @@ export function useShops(options: UseShopsOptions = {}) {
   /**
    * Actualiza una tienda existente
    */
-  const updateShop = useCallback(async (id: number, data: Partial<Shop>) => {
+  const updateShop = useCallback(async (name: string, data: Partial<Shop>) => {
     try {
-      const updatedShop = await updateShopService.updateShop(id, data);
+      const updatedShop = await updateShopService.updateShop(name, data);
       
       setShops(prev => prev.map(shop =>
-        shop.id === id ? updatedShop : shop
+        shop.name === name ? updatedShop : shop
       ));
 
-      if (selectedShop?.id === id) {
+      if (selectedShop?.name === name) {
         setSelectedShop(updatedShop);
       }
 

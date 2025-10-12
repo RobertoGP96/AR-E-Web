@@ -3,7 +3,6 @@ import { useShops } from '@/hooks/useShops';
 import { buyingAccountService } from '@/services/api';
 import { toast } from 'sonner';
 import type { Shop } from '@/types/models/shop';
-import type { BuyingAccount } from '@/types/models/buying-account';
 
 export default function Shops() {
   const {
@@ -31,7 +30,7 @@ export default function Shops() {
   // Handler para actualizar tienda
   const handleShopUpdate = async (shop: Shop) => {
     try {
-      await updateShop(shop.id, {
+      await updateShop(shop.name, {
         name: shop.name,
         link: shop.link,
         is_active: shop.is_active
@@ -44,7 +43,7 @@ export default function Shops() {
   };
 
   // Handler para actualizar cuenta
-  const handleAccountUpdate = async (_account: BuyingAccount) => {
+  const handleAccountUpdate = async () => {
     // Simplemente recargar las tiendas para actualizar las cuentas
     // El toast ya se muestra en BuyingAccountFormPopover
     updateShopAccounts();

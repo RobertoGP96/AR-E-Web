@@ -16,6 +16,7 @@ export interface Product {
   description?: string;
   observation?: string;
   category?: string;
+  image_url?: string;
   
   // Cantidades (alineado con backend)
   amount_requested: number;
@@ -53,6 +54,7 @@ export interface CreateProductData {
   sku: string;
   name: string;
   link?: string;
+  image_url?: string;
   shop_id: ID;
   description?: string;
   observation?: string;
