@@ -23,8 +23,10 @@ interface CategoriesTableProps {
 const CategoriesTable: React.FC<CategoriesTableProps> = ({ categories, isLoading, onEdit, onDelete }) => {
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-muted bg-background p-8 text-center shadow">
-        <p className="text-muted-foreground">Cargando categorías...</p>
+      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
+        </div>
       </div>
     );
   }

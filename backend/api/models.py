@@ -196,6 +196,7 @@ class Shop(models.Model):
     name = models.CharField(max_length=100, unique=True)
     link = models.URLField(unique=True)
     is_active = models.BooleanField(default=True)
+    tax_rate = models.FloatField(default=0.0, help_text="Tasa de impuestos para esta tienda")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -301,6 +302,7 @@ class Product(models.Model):
     sku = models.CharField(max_length=100, null=True, blank=True)
     name = models.CharField(max_length=100)
     link = models.URLField(blank=True, null=True)
+    image_url = models.URLField(blank=True, null=True)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
     description = models.TextField(max_length=200,blank=True, null=True)
     observation = models.TextField(max_length=200,blank=True, null=True)

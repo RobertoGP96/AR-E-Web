@@ -257,6 +257,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "sku",
             "name",
             "link",
+            "image_url",
             "shop",
             "description",
             "observation",
@@ -477,7 +478,7 @@ class ShopSerializer(serializers.ModelSerializer):
     class Meta:
         """Class of model"""
         model = Shop
-        fields = ["id", "name", "link", "is_active", "created_at", "updated_at", "buying_accounts"]
+        fields = ["id", "name", "link", "is_active", "tax_rate", "created_at", "updated_at", "buying_accounts"]
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
