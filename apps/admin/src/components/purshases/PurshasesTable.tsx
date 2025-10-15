@@ -27,6 +27,7 @@ const mockPurchases: ShoppingReceip[] = [
             updated_at: "2023-09-01T10:00:00Z"
         },
         shop_of_buy: {
+            tax_rate:0,
             name: "Amazon",
             id: 0,
             link: "https://amazon.com",
@@ -50,6 +51,7 @@ const mockPurchases: ShoppingReceip[] = [
             updated_at: "2023-09-15T10:00:00Z"
         },
         shop_of_buy: {
+            tax_rate:3,
             name: "Temu",
             id: 0,
             link: "https://temu.com",
@@ -72,6 +74,7 @@ const mockPurchases: ShoppingReceip[] = [
             updated_at: "2023-09-20T10:00:00Z"
         },
         shop_of_buy: {
+            tax_rate: 3,
             name: "Temu",
             id: 0,
             link: "https://temu.com",
