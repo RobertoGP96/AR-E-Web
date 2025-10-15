@@ -1,4 +1,4 @@
-import { ExternalLink, Edit, User, Plus, Trash2 } from 'lucide-react';
+import { ExternalLink, Edit, User, Plus, Trash2, Circle, CircleCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -64,33 +64,41 @@ export default function ShopsList({
                         <span className="font-semibold text-gray-800 text-base">
                           {shop.name}
                         </span>
-                        {/* Indicador de estado activo */}
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${shop.is_active
-                          ? 'bg-green-100 text-green-700 border border-green-200'
-                          : 'bg-gray-100 text-gray-600 border border-gray-200'
-                          }`}>
-                          {shop.is_active ? '● Activa' : '○ Inactiva'}
-                        </span>
+
                       </div>
-                      <Badge variant="outline" className="w-fit">
-                        <a
-                          href={shop.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          Visitar
-                        </a>
-                      </Badge>
-                      {shop.tax_rate &&
+                      <div className='flex flex-row justify-center gap-2 items-center'>
+
                         <Badge variant="secondary" className="w-fit text-xs">
                           <span className="font-medium">
-                            {shop.tax_rate.toFixed(2)}%
+                            {shop.tax_rate.toFixed(2)} %
                           </span>
                         </Badge>
-                      }
+
+                        <Badge variant="outline" className="w-fit">
+                          <a
+                            href={shop.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            Visitar
+                          </a>
+                        </Badge>
+
+                        {/* Indicador de estado activo */}
+                        <Badge variant={"outline"} className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${shop.is_active
+                          ? 'bg-green-100 text-green-700 border border-green-200'
+                          : 'bg-gray-100 text-gray-600 border border-gray-200'
+                          }`} >
+                          {shop.is_active ? <CircleCheck className='text-green-600' /> : <Circle className='' />}
+                          <span >
+                            {shop.is_active ? 'Activa' : 'Inactiva'}
+                          </span>
+                        </Badge>
+
+                      </div>
                     </div>
                   </div>
                 </TableCell>
