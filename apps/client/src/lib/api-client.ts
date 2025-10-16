@@ -516,9 +516,9 @@ export class ApiClient {
     } as RequestConfig);
 
     // Guardar tokens
-    this.setAuthToken(authData.access_token);
-    if (authData.refresh_token) {
-      localStorage.setItem('refresh_token', authData.refresh_token);
+    this.setAuthToken(authData.access);
+    if (authData.refresh) {
+      localStorage.setItem('refresh_token', authData.refresh);
     }
 
     return authData;

@@ -43,13 +43,9 @@ export const register = async (userData: RegisterData): Promise<ApiResponse<Regi
       delete registrationData.email;
     }
 
-    const response = await apiClient.post<RegisterResponse>('/api_data/user/', registrationData);
+    const response = await apiClient.post<ApiResponse<RegisterResponse>>('/api_data/user/', registrationData);
 
-    return {
-      success: true,
-      data: response,
-      message: 'Usuario registrado exitosamente. Revisa tu correo para verificar tu cuenta.'
-    };
+    return response;
   } catch (error) {
     const apiError = error as ApiError;
     throw {

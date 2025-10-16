@@ -308,15 +308,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Persistir tokens explícitamente usando STORAGE_KEYS utilities
       try {
-        // authResponse viene con access_token y opcionalmente refresh_token
-        if (authResponse.access_token) {
-          setStoredValue(STORAGE_KEYS.ACCESS_TOKEN, authResponse.access_token);
+        // authResponse viene con access y opcionalmente refresh
+        if (authResponse.access) {
+          setStoredValue(STORAGE_KEYS.ACCESS_TOKEN, authResponse.access);
           // Asegurar que apiClient también tenga el token en memoria
-          apiClient.setAuthToken(authResponse.access_token);
+          apiClient.setAuthToken(authResponse.access);
         }
 
-        if (authResponse.refresh_token) {
-          setStoredValue(STORAGE_KEYS.REFRESH_TOKEN, authResponse.refresh_token);
+        if (authResponse.refresh) {
+          setStoredValue(STORAGE_KEYS.REFRESH_TOKEN, authResponse.refresh);
         }
       } catch (err) {
         // Si falla persistencia no impedir login, solo warn en dev
@@ -526,28 +526,3 @@ export { AuthContext };
 
 // Export por defecto del proveedor
 export default AuthProvider;
-
-/* Nota: Persistencia de tokens
- * - Al hacer `login`, se persisten explícitamente los campos `access_token` y
- *   `refresh_token` usando las claves de `STORAGE_KEYS` a través de `setStoredValue`.
- * - También se llama a `apiClient.setAuthToken(access_token)` para asegurar que
- *   las siguientes peticiones envíen el header Authorization y que `apiClient`
- *   reporte `isAuthenticated()` correctamente.
- * - En caso de error al guardar en localStorage, el flujo de login continúa,
- *   pero puede fallar la persistencia entre recargas del navegador.
- */
-/* 
- * MEJORAS IMPLEMENTADAS PARA PERSISTENCIA EN PRODUCCIÓN:
- * 
- * 1. Validación de integridad de datos almacenados
- * 2. Migración automática de datos corruptos
- * 3. Manejo robusto de errores de localStorage (modo incógnito, cuota excedida)
- * 4. Verificación de consistencia entre token y datos de usuario
- * 5. Optimización para evitar múltiples verificaciones simultáneas
- * 6. Límites de tiempo para datos de actividad (auto-limpieza después de 7 días)
- * 7. Recuperación automática en caso de datos inconsistentes
- * 8. Mejor manejo de fallos en persistencia sin afectar la funcionalidad
- * 
- * Estas mejoras aseguran que los datos del usuario persistan correctamente
- * al recargar la página, incluso en entornos de producción con limitaciones.
- */

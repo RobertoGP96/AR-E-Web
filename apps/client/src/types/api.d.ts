@@ -37,10 +37,9 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
+  refresh: string;
+  access: string;
   user: CustomUser;
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
 }
 
 export interface RegisterData {

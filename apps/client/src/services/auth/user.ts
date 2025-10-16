@@ -6,7 +6,8 @@
 import type { 
   PaginatedApiResponse, 
   UserFilters,
-  BaseFilters
+  BaseFilters,
+  ApiResponse
 } from '@/types/api';
 import type { 
   CustomUser, 
@@ -51,8 +52,8 @@ export const getUsers = async (filters?: UserFilters & BaseFilters): Promise<Pag
  * Crear un nuevo usuario
  */
 export const createUser = async (userData: CreateUserData): Promise<CustomUser> => {
-  const response = await apiClient.post<CustomUser>('/api_data/user/', userData);
-  return response || ({} as CustomUser);
+  const response = await apiClient.post<ApiResponse<CustomUser>>('/api_data/user/', userData);
+  return (response?.data as CustomUser) || ({} as CustomUser);
 };
 
 /**

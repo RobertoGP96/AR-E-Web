@@ -3,6 +3,7 @@
  */
 
 import { apiClient } from '@/lib';
+import type { ApiResponse } from '@/types/api';
 
 /**
  * Refresca el token de acceso usando el refresh token
@@ -18,24 +19,28 @@ export const refreshToken = async (): Promise<{
     throw new Error('No refresh token available');
   }
   
-  const response = await apiClient.post<{
+  const response = await apiClient.post<ApiResponse<{
     access_token: string;
     refresh_token: string;
     expires_in: number;
-  }>('/auth/refresh/', {
+  }>>('/auth/refresh/', {
     refresh: refreshToken
   });
 
-  if (response) {
+  if (response && response.data) {
     // Actualizar tokens en localStorage
-    localStorage.setItem('access_token', response.access_token);
-    localStorage.setItem('refresh_token', response.refresh_token);
+    localStorage.setItem('access_token', response.data.access_token);
+    localStorage.setItem('refresh_token', response.data.refresh_token);
 
     // Actualizar token en el cliente API
-    apiClient.setAuthToken(response.access_token);
+    apiClient.setAuthToken(response.data.access_token);
   }
 
-  return response;
+  return response?.data as {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+  };
 };
 
 /**
