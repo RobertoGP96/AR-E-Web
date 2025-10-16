@@ -7,6 +7,12 @@ import { apiClient } from '@/lib';
 import type { OrderFilters, BaseFilters } from '../../types/api';
 
 
+/**
+ * Obtiene órdenes de un cliente específico
+ */
+export const getOrderById = async (orderId: number) => {
+  return await apiClient.get<Order>(`/api_data/order/${orderId}/`);
+};
 
 /**
  * Obtiene las órdenes del usuario autenticado (mi cuenta).

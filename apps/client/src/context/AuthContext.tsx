@@ -305,9 +305,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'AUTH_START' });
       
       const authResponse = await apiClient.login(credentials);
+
+      // Persistir tokens explícitamente usando STORAGE_KEYS utilities
+      try {
+        // authResponse viene con access_token y opcionalmente refresh_token
+        if (authResponse.access_token) {
+          setStoredValue(STORAGE_KEYS.ACCESS_TOKEN, authResponse.access_token);
+          // Asegurar que apiClient también tenga el token en memoria
+          apiClient.setAuthToken(authResponse.access_token);
+        }
+
+        if (authResponse.refresh_token) {
+          setStoredValue(STORAGE_KEYS.REFRESH_TOKEN, authResponse.refresh_token);
+        }
+      } catch (err) {
+        // Si falla persistencia no impedir login, solo warn en dev
+        if (import.meta.env.DEV) console.warn('Could not persist auth tokens', err);
+      }
+
       // Por ahora, permissions vacío hasta implementar sistema de permisos
       const permissions: string[] = [];
-      
+
       dispatch({ 
         type: 'AUTH_SUCCESS', 
         payload: { 
@@ -315,7 +333,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           permissions 
         } 
       });
-      
+
       return authResponse;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Login failed';
@@ -509,6 +527,15 @@ export { AuthContext };
 // Export por defecto del proveedor
 export default AuthProvider;
 
+/* Nota: Persistencia de tokens
+ * - Al hacer `login`, se persisten explícitamente los campos `access_token` y
+ *   `refresh_token` usando las claves de `STORAGE_KEYS` a través de `setStoredValue`.
+ * - También se llama a `apiClient.setAuthToken(access_token)` para asegurar que
+ *   las siguientes peticiones envíen el header Authorization y que `apiClient`
+ *   reporte `isAuthenticated()` correctamente.
+ * - En caso de error al guardar en localStorage, el flujo de login continúa,
+ *   pero puede fallar la persistencia entre recargas del navegador.
+ */
 /* 
  * MEJORAS IMPLEMENTADAS PARA PERSISTENCIA EN PRODUCCIÓN:
  * 

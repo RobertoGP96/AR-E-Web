@@ -19,7 +19,7 @@ export default function UserOrders() {
     const [isVisible, setIsVisible] = useState(false)
 
     const { user } = useAuth()
-    const [filters, setFilters] = useState<OrderFilters>({ client_id: user?.id });
+    const [filters, setFilters] = useState<OrderFilters>({});
     const { orders, error, isLoading} = useOrders(filters)
 
     useEffect(() => {
