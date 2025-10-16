@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite'
 import path from "path"
 import tailwindcss from "@tailwindcss/vite"
@@ -6,15 +5,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const isCloudflare = process.env.VITE_DEPLOY_TARGET === 'cloudflare';
-  const isVercel = process.env.VITE_DEPLOY_TARGET === 'vercel';
   const isProduction = mode === 'production';
-  
-  // Configurar base según la plataforma
-  let base = '/';
-  if (isProduction && !isCloudflare && !isVercel) {
-    base = '/AR-E-Web/';
-  }
   
   return {
     plugins: [react(), tailwindcss()],
@@ -35,8 +26,21 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
-      sourcemap: mode === 'development',
-      minify: 'esbuild', // Cambiar a esbuild en lugar de terser para Vercel
+      sourcemap: !isProduction, // Solo en desarrollo
+      minify: isProduction ? 'terser' as const : false,
+      target: 'es2020', // Mejor compatibilidad para Cloudflare
+      terserOptions: isProduction ? {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+        },
+        mangle: {
+          safari10: true,
+        },
+        format: {
+          comments: false,
+        },
+      } : undefined, // Cambiar a esbuild en lugar de terser para Vercel
       rollupOptions: {
         output: {
           entryFileNames: 'assets/[name]-[hash].js',
@@ -61,8 +65,7 @@ export default defineConfig(({ mode }) => {
       cssCodeSplit: true,
       // Asegurar que TypeScript compile correctamente
       emptyOutDir: true,
-      // Configuración para mejor compatibilidad
-      target: 'es2020',
+      
       // Asegurar que todos los archivos vayan a dist
       copyPublicDir: true,
     },
@@ -85,7 +88,7 @@ export default defineConfig(({ mode }) => {
       port: 4173,
       host: true,
     },
-    base: base,
+    base: '/',
     // Variables de entorno que serán expuestas al cliente
     define: {
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version)
