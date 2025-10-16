@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
       sourcemap: !isProduction, // Solo en desarrollo
       minify: isProduction ? 'terser' as const : false,
       target: 'es2020', // Mejor compatibilidad para Cloudflare
+      symlinks: false, // Evitar enlaces simbólicos en el build para compatibilidad con Vercel
       terserOptions: isProduction ? {
         compress: {
           drop_console: true,
