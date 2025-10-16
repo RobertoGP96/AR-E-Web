@@ -432,7 +432,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const timeSinceLastActivity = now.getTime() - state.lastActivity!.getTime();
       
       if (timeSinceLastActivity > INACTIVITY_TIMEOUT) {
-        console.log('Auto-logout due to inactivity');
         logout();
       }
     };
