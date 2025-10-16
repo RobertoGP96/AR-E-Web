@@ -28,12 +28,25 @@ export const refreshToken = async (): Promise<{
   });
 
   if (response && response.data) {
-    // Actualizar tokens en localStorage
-    localStorage.setItem('access_token', response.data.access_token);
-    localStorage.setItem('refresh_token', response.data.refresh_token);
+    // Actualizar tokens en localStorage (soportar diferentes nombres)
+    const data = response.data as Record<string, unknown>;
+    const access = (data.access as string) || (data.access_token as string) || '';
+    const refresh = (data.refresh as string) || (data.refresh_token as string) || '';
 
-    // Actualizar token en el cliente API
-    apiClient.setAuthToken(response.data.access_token);
+    if (access) {
+      try {
+        localStorage.setItem('access_token', access);
+        try { localStorage.setItem('access', access); } catch { /* silent */ }
+      } catch { /* silent */ }
+      apiClient.setAuthToken(access);
+    }
+
+    if (refresh) {
+      try {
+        localStorage.setItem('refresh_token', refresh);
+        try { localStorage.setItem('refresh', refresh); } catch { /* silent */ }
+      } catch { /* silent */ }
+    }
   }
 
   return response?.data as {

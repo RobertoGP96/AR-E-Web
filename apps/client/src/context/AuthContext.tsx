@@ -308,15 +308,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Persistir tokens explícitamente usando STORAGE_KEYS utilities
       try {
-        // authResponse viene con access y opcionalmente refresh
-        if (authResponse.access) {
-          setStoredValue(STORAGE_KEYS.ACCESS_TOKEN, authResponse.access);
+        // El backend puede devolver access/refresh o access_token/refresh_token
+  const authRecord = (authResponse as unknown) as Record<string, unknown>;
+  const accessToken = (authRecord.access as string) || (authRecord.access_token as string);
+  const refreshToken = (authRecord.refresh as string) || (authRecord.refresh_token as string);
+
+        if (accessToken) {
+          setStoredValue(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
           // Asegurar que apiClient también tenga el token en memoria
-          apiClient.setAuthToken(authResponse.access);
+          apiClient.setAuthToken(String(accessToken));
         }
 
-        if (authResponse.refresh) {
-          setStoredValue(STORAGE_KEYS.REFRESH_TOKEN, authResponse.refresh);
+        if (refreshToken) {
+          setStoredValue(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
         }
       } catch (err) {
         // Si falla persistencia no impedir login, solo warn en dev

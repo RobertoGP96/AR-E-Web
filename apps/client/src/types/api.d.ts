@@ -37,8 +37,12 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
-  refresh: string;
-  access: string;
+  // El backend puede devolver tokens con nombres distintos dependiendo de la versión
+  // Soportamos ambas formas para mantener compatibilidad: { access, refresh } y { access_token, refresh_token }
+  refresh?: string;
+  access?: string;
+  refresh_token?: string;
+  access_token?: string;
   user: CustomUser;
 }
 

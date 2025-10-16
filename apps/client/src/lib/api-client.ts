@@ -289,8 +289,9 @@ export class ApiClient {
    */
   private loadAuthToken() {
     try {
-      const token = localStorage.getItem('access_token');
-      if (token) {
+      // Intentar cargar token desde diferentes posibles claves (retrocompatibilidad)
+      const token = localStorage.getItem('access') || localStorage.getItem('access_token') || localStorage.getItem('auth_access_token') || localStorage.getItem('accessToken');
+      if (token && token !== 'undefined' && token !== 'null') {
         this.authToken = token;
       }
     } catch {
@@ -307,7 +308,9 @@ export class ApiClient {
   public setAuthToken(token: string) {
     this.authToken = token;
     try {
+      // Guardar en la clave principal y en la alternativa para compatibilidad
       localStorage.setItem('access_token', token);
+  try { localStorage.setItem('access', token); } catch { /* silent */ }
     } catch {
       toast.error('Error guardando sesión', {
         description: 'No se pudo guardar la sesión en el navegador'
@@ -353,11 +356,20 @@ export class ApiClient {
       refresh: refreshToken,
     }, { skipAuth: true } as ExtendedAxiosRequestConfig);
 
-    const { access, refresh } = response.data;
-    this.setAuthToken(access);
-    
+    // El backend puede devolver diferentes nombres (access/refresh o access_token/refresh_token)
+    const data = response.data as Record<string, unknown>;
+    const access = (data.access as string) || (data.access_token as string) || '';
+    const refresh = (data.refresh as string) || (data.refresh_token as string) || '';
+
+    if (access) {
+      this.setAuthToken(access);
+    }
+
     if (refresh) {
-      localStorage.setItem('refresh_token', refresh);
+      try {
+        localStorage.setItem('refresh_token', refresh);
+        try { localStorage.setItem('refresh', refresh); } catch { /* silent */ }
+      } catch { /* silent */ }
     }
   }
 
@@ -515,10 +527,20 @@ export class ApiClient {
       skipAuth: true,
     } as RequestConfig);
 
-    // Guardar tokens
-    this.setAuthToken(authData.access);
-    if (authData.refresh) {
-      localStorage.setItem('refresh_token', authData.refresh);
+    // Guardar tokens - soportar ambos nombres de campo
+  const authRecord = (authData as unknown) as Record<string, unknown>;
+  const access = (authRecord.access as string) || (authRecord.access_token as string);
+  const refresh = (authRecord.refresh as string) || (authRecord.refresh_token as string);
+
+    if (access) {
+      this.setAuthToken(String(access));
+    }
+
+    if (refresh) {
+      try {
+        localStorage.setItem('refresh_token', String(refresh));
+        try { localStorage.setItem('refresh', String(refresh)); } catch { /* silent */ }
+      } catch { /* silent */ }
     }
 
     return authData;
