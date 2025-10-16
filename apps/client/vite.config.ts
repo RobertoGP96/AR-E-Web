@@ -46,9 +46,7 @@ export default defineConfig(({ mode }) => {
               '@radix-ui/react-select',
               '@radix-ui/react-avatar',
               '@radix-ui/react-checkbox',
-              '@radix-ui/react-label',
               '@radix-ui/react-popover',
-              '@radix-ui/react-scroll-area',
               '@radix-ui/react-separator',
               '@radix-ui/react-tooltip'
             ],
