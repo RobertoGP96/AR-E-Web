@@ -9,20 +9,10 @@ export default defineConfig(({ mode }) => {
   
   return {
     plugins: [react(), tailwindcss()],
-    publicDir: 'public',
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
+        "@": path.resolve(__dirname, "src"),
       },
-      extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
-      // Mejora para resolver módulos más robustamente
-      dedupe: ['react', 'react-dom'],
-    },
-    esbuild: {
-      // Configuración específica para esbuild que puede ayudar con TypeScript
-      logOverride: { 'this-is-undefined-in-esm': 'silent' },
-      // Asegurar compatibilidad con TypeScript en builds
-      target: 'es2020'
     },
     build: {
       outDir: 'dist',
@@ -41,58 +31,70 @@ export default defineConfig(({ mode }) => {
         format: {
           comments: false,
         },
-      } : undefined, // Cambiar a esbuild en lugar de terser para Vercel
+      } : undefined,
       rollupOptions: {
         output: {
-          entryFileNames: 'assets/[name]-[hash].js',
-          chunkFileNames: 'assets/[name]-[hash].js',
-          assetFileNames: 'assets/[name]-[hash].[ext]',
           manualChunks: {
+            // Chunks optimizados para Cloudflare
             vendor: ['react', 'react-dom'],
-            router: ['react-router'],
+            router: ['react-router-dom'],
             query: ['@tanstack/react-query'],
+            forms: ['react-hook-form', 'zod', '@hookform/resolvers'],
             ui: [
               '@radix-ui/react-dialog', 
               '@radix-ui/react-dropdown-menu',
               '@radix-ui/react-select',
               '@radix-ui/react-avatar',
-              '@radix-ui/react-popover'
-            ]
-          }
+              '@radix-ui/react-checkbox',
+              '@radix-ui/react-label',
+              '@radix-ui/react-popover',
+              '@radix-ui/react-scroll-area',
+              '@radix-ui/react-separator',
+              '@radix-ui/react-tooltip'
+            ],
+            utils: ['axios', 'clsx', 'tailwind-merge', 'class-variance-authority'],
+            icons: ['lucide-react']
+          },
+          // Optimización para Cloudflare CDN
+          entryFileNames: isProduction ? 'assets/[name]-[hash].js' : 'assets/[name].js',
+          chunkFileNames: isProduction ? 'assets/[name]-[hash].js' : 'assets/[name].js',
+          assetFileNames: isProduction ? 'assets/[name]-[hash].[ext]' : 'assets/[name].[ext]'
         }
       },
-      // Optimizaciones adicionales
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 800, // Reducido para mejor performance en Cloudflare
       cssCodeSplit: true,
-      // Asegurar que TypeScript compile correctamente
-      emptyOutDir: true,
-      
-      // Asegurar que todos los archivos vayan a dist
-      copyPublicDir: true,
     },
     optimizeDeps: {
       include: [
         'react',
         'react-dom',
-        'react-router',
+        'react-router-dom',
         '@tanstack/react-query',
         'axios',
-        'lucide-react'
+        'lucide-react',
+        'react-hook-form',
+        'zod'
       ]
     },
     server: {
-      port: 5173,
+      port: 5174,
       host: true,
       strictPort: true,
     },
     preview: {
-      port: 4173,
+      port: 4174,
       host: true,
     },
     base: '/',
-    // Variables de entorno que serán expuestas al cliente
     define: {
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version)
-    }
+    },
+    // Configuración específica para Cloudflare Pages
+    esbuild: isProduction ? {
+      legalComments: 'none' as const,
+      minifyIdentifiers: true,
+      minifySyntax: true,
+      minifyWhitespace: true
+    } : undefined
   }
 })
