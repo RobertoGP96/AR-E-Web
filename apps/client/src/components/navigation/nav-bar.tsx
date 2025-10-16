@@ -37,8 +37,8 @@ const NavBar = () => {
             <nav className="flex items-center justify-between p-3 lg:px-8">
                 <div className="flex lg:flex-1 ml-5">
                     {/* Logo space - Responsive logo */}
-                    <img src="/assets/logo/logo.svg" alt="Logo" className="hidden lg:block h-15" />
-                    <img src="/assets/logo/f-logo.svg" alt="Logo" className="block lg:hidden h-12" />
+                    <img src="src/assets/logo/logo.svg" alt="Logo" className="hidden lg:block h-15" />
+                    <img src="src/assets/logo/f-logo.svg" alt="Logo" className="block lg:hidden h-12" />
                 </div>
 
                 {/* Desktop Navigation */}

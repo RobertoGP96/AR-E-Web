@@ -140,7 +140,7 @@ export default function LogIn() {
             <div className="sm:mx-auto sm:w-full sm:max-w-sm">
                 <img
                     alt="AR&E Shipps logo"
-                    src="/assets/logo/f-logo.svg"
+                    src="src/assets/logo/f-logo.svg"
                     className="mx-auto h-16 w-auto cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={handleLogoClick}
                 />
