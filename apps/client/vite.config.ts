@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
           manualChunks: {
             // Chunks optimizados para Cloudflare
             vendor: ['react', 'react-dom'],
-            router: ['react-router-dom'],
+            router: ['react-router'],
             query: ['@tanstack/react-query'],
             forms: ['react-hook-form', 'zod', '@hookform/resolvers'],
             ui: [
