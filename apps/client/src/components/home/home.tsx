@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { toast } from 'sonner'
+import logoSvg from '/assets/logo/logo.svg'
 
 
 
@@ -54,7 +55,7 @@ export default function Home() {
                             }`}>
                                 <img
                                     alt="are-logo"
-                                    src="/assets/logo/logo.svg"
+                                    src={logoSvg}
                                     className="h-24 sm:h-36 lg:h-44 w-auto animate-pulse-slow hover:scale-105 transition-transform duration-300"
                                 />
                             </div>

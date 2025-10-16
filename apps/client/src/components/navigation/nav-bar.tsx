@@ -12,6 +12,8 @@ import {
     SheetTrigger,
 } from "../ui/sheet";
 import { useState } from "react";
+import logoSvg from '/assets/logo/logo.svg';
+import fLogoSvg from '/assets/logo/f-logo.svg';
 
 const NavBar = () => {
     const { isLoading, isAuthenticated } = useAuth()
@@ -37,8 +39,8 @@ const NavBar = () => {
             <nav className="flex items-center justify-between p-3 lg:px-8">
                 <div className="flex lg:flex-1 ml-5">
                     {/* Logo space - Responsive logo */}
-                    <img src="/assets/logo/logo.svg" alt="Logo" className="hidden lg:block h-15" />
-                    <img src="/assets/logo/f-logo.svg" alt="Logo" className="block lg:hidden h-12" />
+                    <img src={logoSvg} alt="Logo" className="hidden lg:block h-15" />
+                    <img src={fLogoSvg} alt="Logo" className="block lg:hidden h-12" />
                 </div>
 
                 {/* Desktop Navigation */}

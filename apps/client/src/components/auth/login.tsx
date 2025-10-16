@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate } from "react-router";
 import { Loader2Icon, LogIn as LoginIcon, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import fLogoSvg from '/assets/logo/f-logo.svg';
 
 // Schema de validación con Zod
 const loginSchema = z.object({
@@ -140,7 +141,7 @@ export default function LogIn() {
             <div className="sm:mx-auto sm:w-full sm:max-w-sm">
                 <img
                     alt="AR&E Shipps logo"
-                    src="/assets/logo/f-logo.svg"
+                    src={fLogoSvg}
                     className="mx-auto h-16 w-auto cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={handleLogoClick}
                 />
