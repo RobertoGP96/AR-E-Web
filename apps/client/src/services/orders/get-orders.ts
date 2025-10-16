@@ -15,9 +15,3 @@ export const getOrdersByClient = async (clientId: number, filters?: OrderFilters
   return await apiClient.getPaginated<Order>('/api_data/order/', clientFilters);
 };
 
-/**
- * Obtener una orden por su ID
- */
-export const getOrderById = async (orderId: number): Promise<Order> => {
-  return await apiClient.get<Order>(`/api_data/order/${orderId}/`);
-};

@@ -393,6 +393,24 @@ class OrderViewSet(viewsets.ModelViewSet):
             return serializer.save(sales_manager=user)
         return serializer.save()
 
+    @extend_schema(
+        summary="Mis órdenes",
+        description="Retorna las órdenes pertenecientes al usuario autenticado (client).",
+        responses={200: OrderSerializer},
+        tags=["Órdenes"]
+    )
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated], url_path="my-orders")
+    def my_orders(self, request):
+        """Devuelve las órdenes cuyo campo `client` sea el usuario autenticado."""
+        # Filtrar por el cliente autenticado y aplicar los filtros/ordenación/paginación del viewset
+        queryset = self.filter_queryset(self.get_queryset().filter(client=request.user))
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     # @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
 
 

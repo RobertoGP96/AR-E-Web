@@ -58,7 +58,7 @@ const NavBar = () => {
                 {/* Desktop Auth Section */}
                 <div className="hidden lg:flex flex-row justify-center items-center gap-2 lg:flex-1 lg:justify-end">
                     {isLoading &&
-                        <LoadingSpinner />
+                        <LoadingSpinner size="sm" />
                     }
                     {!isLoading && isAuthenticated ? (
                         <div className="flex flex-row justify-center items-end">
