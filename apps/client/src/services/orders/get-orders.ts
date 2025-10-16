@@ -4,14 +4,15 @@
 
 import type { Order } from '@/types/order';
 import { apiClient } from '@/lib';
-import type { OrderFilters } from '../../types/api';
+import type { OrderFilters, BaseFilters } from '../../types/api';
+
 
 
 /**
- * Obtiene órdenes de un cliente específico
+ * Obtiene las órdenes del usuario autenticado (mi cuenta).
+ * Usa el endpoint protegido `my-orders` en el backend.
  */
-export const getOrdersByClient = async (clientId: number, filters?: OrderFilters) => {
-  const clientFilters = { ...filters, client_id: clientId };
-  return await apiClient.getPaginated<Order>('/api_data/order/', clientFilters);
+export const getMyOrders = async (filters?: OrderFilters) => {
+  return await apiClient.getPaginated<Order>('/api_data/order/my-orders/', filters as unknown as BaseFilters);
 };
 
