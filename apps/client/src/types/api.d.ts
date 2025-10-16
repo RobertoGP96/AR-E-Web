@@ -41,8 +41,6 @@ export interface AuthResponse {
   // Soportamos ambas formas para mantener compatibilidad: { access, refresh } y { access_token, refresh_token }
   refresh?: string;
   access?: string;
-  refresh_token?: string;
-  access_token?: string;
   user: CustomUser;
 }
 

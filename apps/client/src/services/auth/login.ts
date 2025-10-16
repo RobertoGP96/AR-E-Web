@@ -12,8 +12,12 @@ export const login = async (credentials: LoginCredentials): Promise<AuthResponse
   const response = await apiClient.login(credentials);
   
   // Guardar tokens en localStorage
-  localStorage.setItem('access_token', response.access);
-  localStorage.setItem('refresh_token', response.refresh);
+  if (response.access) {
+    localStorage.setItem('access', response.access);
+  }
+  if (response.refresh) {
+    localStorage.setItem('refresh_token', response.refresh);
+  }
   localStorage.setItem('user', JSON.stringify(response.user));
   
   return response;
@@ -32,6 +36,6 @@ export const verifyCredentials = async (credentials: LoginCredentials): Promise<
 export const loginWithProvider = async (provider: string, token: string): Promise<ApiResponse<AuthResponse>> => {
   return await apiClient.post<ApiResponse<AuthResponse>>('/auth/social-login/', {
     provider,
-    access_token: token
+    access: token
   });
 };
