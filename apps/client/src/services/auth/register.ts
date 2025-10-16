@@ -44,10 +44,10 @@ export const register = async (userData: RegisterData): Promise<ApiResponse<Regi
     }
 
     const response = await apiClient.post<RegisterResponse>('/api_data/user/', registrationData);
-    
+
     return {
       success: true,
-      data: response.data!,
+      data: response,
       message: 'Usuario registrado exitosamente. Revisa tu correo para verificar tu cuenta.'
     };
   } catch (error) {
@@ -67,10 +67,10 @@ export const register = async (userData: RegisterData): Promise<ApiResponse<Regi
 export const verifyEmail = async (verificationSecret: string): Promise<ApiResponse<{ message: string }>> => {
   try {
     const response = await apiClient.get<{ message: string }>(`/verify_user/${verificationSecret}`);
-    
+
     return {
       success: true,
-      data: response.data!,
+      data: response,
       message: 'Correo verificado exitosamente'
     };
   } catch (error) {
@@ -91,9 +91,9 @@ export const checkEmailAvailability = async (email: string): Promise<ApiResponse
   try {
     // Buscamos usuarios con ese email
     const response = await apiClient.get<CustomUser[]>(`/api_data/user/?email=${encodeURIComponent(email)}`);
-    
-    const available = !response.data || response.data.length === 0;
-    
+
+    const available = !response || response.length === 0;
+
     return {
       success: true,
       data: { available },
@@ -117,9 +117,9 @@ export const checkPhoneAvailability = async (phoneNumber: string): Promise<ApiRe
   try {
     // Buscamos usuarios con ese número de teléfono
     const response = await apiClient.get<CustomUser[]>(`/api_data/user/?phone_number=${encodeURIComponent(phoneNumber)}`);
-    
-    const available = !response.data || response.data.length === 0;
-    
+
+    const available = !response || response.length === 0;
+
     return {
       success: true,
       data: { available },

@@ -263,19 +263,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       isCheckingAuth.current = true;
       dispatch({ type: 'AUTH_START' });
-      
-      // Obtener información del usuario actual
-      const response = await apiClient.getCurrentUser();
-      const user = response.data as CustomUser;
-      
+
+      // Obtener información del usuario actual (apiClient devuelve el payload directamente)
+      const user = await apiClient.getCurrentUser<CustomUser>();
+
       // Verificar que el usuario obtenido sea válido
       if (!user || !user.id) {
         throw new Error('Invalid user data received from server');
       }
-      
+
       // Por ahora, permissions vacío hasta implementar sistema de permisos
       const permissions: string[] = [];
-      
+
       dispatch({ 
         type: 'AUTH_SUCCESS', 
         payload: { 
@@ -283,7 +282,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           permissions 
         } 
       });
-      
+
       hasCheckedAuth.current = true;
     } catch (error) {
       // Error verifying existing auth
@@ -333,11 +332,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'AUTH_START' });
       
       const response = await apiClient.register(userData);
-      
-      // Después del registro exitoso, podrías hacer login automático
-      // o requerir verificación de email según tu lógica de negocio
-      
-      return response;
+      // Después del registro exitoso, podrías hacer login automático o requerir verificación
+      return response as unknown as ApiResponse;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Registration failed';
       dispatch({ type: 'AUTH_ERROR', payload: errorMessage });
@@ -372,17 +368,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     try {
-      const response = await apiClient.getCurrentUser();
-      const user = response.data as CustomUser;
-      
+      const user = await apiClient.getCurrentUser<CustomUser>();
+
       // Verificar que el usuario obtenido sea válido
       if (!user || !user.id) {
         throw new Error('Invalid user data received from server');
       }
-      
+
       // Por ahora, permissions vacío hasta implementar sistema de permisos
       const permissions: string[] = [];
-      
+
       dispatch({ 
         type: 'AUTH_SUCCESS', 
         payload: { 
@@ -403,9 +398,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!state.user) return;
 
     // Usar el método específico para actualizar perfil del usuario actual
-    const response = await apiClient.updateCurrentUser(userData);
-    const updatedUser = response.data as CustomUser;
-    
+    const updatedUser = await apiClient.updateCurrentUser<CustomUser>(userData);
     dispatch({ type: 'UPDATE_USER', payload: updatedUser });
   }, [state.user]);
 

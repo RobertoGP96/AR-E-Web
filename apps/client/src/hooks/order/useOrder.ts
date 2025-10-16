@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getOrderById } from '../../services/orders/get-orders';
 import type { Order } from '@/types/order';
-import type { ApiResponse } from '@/types/api';
 
 /**
  * Hook para obtener la información de una orden específica
@@ -14,7 +13,7 @@ export function useOrder(orderId: number) {
     isLoading,
     isFetching,
     refetch,
-  } = useQuery<ApiResponse<Order>, Error>({
+  } = useQuery<Order, Error>({
     queryKey: ['order', orderId],
     queryFn: () => getOrderById(orderId),
     enabled: !!orderId,
@@ -26,7 +25,7 @@ export function useOrder(orderId: number) {
   };
 
   return {
-    order: data?.data,
+    order: data,
     isLoading,
     isFetching,
     error,

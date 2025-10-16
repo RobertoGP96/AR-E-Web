@@ -26,6 +26,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
 from api.permissions.permissions import (
+    ClientOrderViewPermission,
     ReadOnly,
     ReadOnlyorPost,
     AccountantPermission,
@@ -372,7 +373,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     # en la misma respuesta (evita N+1 queries)
     queryset = Order.objects.all().select_related('client', 'sales_manager').prefetch_related("delivery_receipts", "products")
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated, (AgentPermission | AdminPermission)]
+    permission_classes = [IsAuthenticated, (AgentPermission | AdminPermission | ClientOrderViewPermission)]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['status', 'pay_status', 'client', 'sales_manager']
     search_fields = ['client__name', 'client__last_name', 'client__email', 'sales_manager__name']

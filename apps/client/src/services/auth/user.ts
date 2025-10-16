@@ -24,7 +24,7 @@ import { apiClient } from '@/lib';
  */
 export const getUserInfo = async (id: number): Promise<CustomUser> => {
   const response = await apiClient.get<CustomUser>(`/api_data/user/${id}/`);
-  return response.data || {} as CustomUser;
+  return response || ({} as CustomUser);
 };
 
 /**
@@ -52,7 +52,7 @@ export const getUsers = async (filters?: UserFilters & BaseFilters): Promise<Pag
  */
 export const createUser = async (userData: CreateUserData): Promise<CustomUser> => {
   const response = await apiClient.post<CustomUser>('/api_data/user/', userData);
-  return response.data || {} as CustomUser;
+  return response || ({} as CustomUser);
 };
 
 /**
@@ -60,7 +60,7 @@ export const createUser = async (userData: CreateUserData): Promise<CustomUser> 
  */
 export const updateUser = async (id: number, userData: Partial<UpdateUserData>): Promise<CustomUser> => {
   const response = await apiClient.patch<CustomUser>(`/api_data/user/${id}/`, userData);
-  return response.data || {} as CustomUser;
+  return response || ({} as CustomUser);
 };
 
 /**
@@ -116,8 +116,8 @@ export const updateAgentProfit = async (id: number, agentProfit: number): Promis
  * Utiliza el endpoint /user/ que identifica al usuario por su token
  */
 export const getCurrentUserProfile = async (): Promise<CustomUser> => {
-  const response = await apiClient.getCurrentUser();
-  return response.data as CustomUser || {} as CustomUser;
+  const response = await apiClient.getCurrentUser<CustomUser>();
+  return response as CustomUser || {} as CustomUser;
 };
 
 /**
@@ -126,8 +126,8 @@ export const getCurrentUserProfile = async (): Promise<CustomUser> => {
  */
 export const updateCurrentUserProfile = async (userData: Partial<UpdateUserData>): Promise<CustomUser> => {
   // Usar el método específico para actualizar el perfil del usuario actual
-  const response = await apiClient.updateCurrentUser(userData);
-  return response.data as CustomUser || {} as CustomUser;
+  const response = await apiClient.updateCurrentUser<CustomUser>(userData);
+  return response as CustomUser || {} as CustomUser;
 };
 
 // ==================== FUNCIONES DE ESTADÍSTICAS Y EXPORTACIÓN ====================
@@ -149,7 +149,7 @@ export const getUsersStats = async (): Promise<{
     by_role: Record<string, number>;
     recent_registrations: number;
   }>('/api_data/user/stats/');
-  return response.data || {
+  return response || {
     total: 0,
     active: 0,
     verified: 0,
@@ -188,5 +188,5 @@ export const exportUsers = async (
     responseType: 'blob'
   });
   
-  return response.data || new Blob();
+  return response || new Blob();
 };

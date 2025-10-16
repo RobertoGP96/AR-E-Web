@@ -8,15 +8,14 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 import type { 
-  AxiosInstance, 
-  AxiosRequestConfig, 
+  AxiosInstance,
+  AxiosRequestConfig,
   AxiosError,
   InternalAxiosRequestConfig
 } from 'axios';
 import type { 
-  ApiResponse, 
-  PaginatedApiResponse, 
-  AuthResponse, 
+  PaginatedApiResponse,
+  AuthResponse,
   LoginCredentials,
   RegisterData,
   BaseFilters
@@ -378,13 +377,13 @@ export class ApiClient {
   // Métodos HTTP públicos
 
   /**
-   * GET request
+   * GET request - devuelve el payload tipado T
    */
   public async get<T = unknown>(
-    url: string, 
+    url: string,
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await this.client.get<ApiResponse<T>>(url, config);
+  ): Promise<T> {
+    const response = await this.client.get<T>(url, config);
     return response.data;
   }
 
@@ -392,11 +391,11 @@ export class ApiClient {
    * POST request
    */
   public async post<T = unknown>(
-    url: string, 
-    data?: unknown, 
+    url: string,
+    data?: unknown,
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await this.client.post<ApiResponse<T>>(url, data, config);
+  ): Promise<T> {
+    const response = await this.client.post<T>(url, data, config);
     return response.data;
   }
 
@@ -404,11 +403,11 @@ export class ApiClient {
    * PUT request
    */
   public async put<T = unknown>(
-    url: string, 
-    data?: unknown, 
+    url: string,
+    data?: unknown,
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await this.client.put<ApiResponse<T>>(url, data, config);
+  ): Promise<T> {
+    const response = await this.client.put<T>(url, data, config);
     return response.data;
   }
 
@@ -416,11 +415,11 @@ export class ApiClient {
    * PATCH request
    */
   public async patch<T = unknown>(
-    url: string, 
-    data?: unknown, 
+    url: string,
+    data?: unknown,
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await this.client.patch<ApiResponse<T>>(url, data, config);
+  ): Promise<T> {
+    const response = await this.client.patch<T>(url, data, config);
     return response.data;
   }
 
@@ -428,10 +427,10 @@ export class ApiClient {
    * DELETE request
    */
   public async delete<T = unknown>(
-    url: string, 
+    url: string,
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await this.client.delete<ApiResponse<T>>(url, config);
+  ): Promise<T> {
+    const response = await this.client.delete<T>(url, config);
     return response.data;
   }
 
@@ -439,8 +438,8 @@ export class ApiClient {
    * GET request para respuestas paginadas
    */
   public async getPaginated<T = unknown>(
-    url: string, 
-    params?: BaseFilters & Record<string, unknown>, 
+    url: string,
+    params?: BaseFilters & Record<string, unknown>,
     config?: RequestConfig
   ): Promise<PaginatedApiResponse<T>> {
     const response = await this.client.get<PaginatedApiResponse<T>>(url, {
@@ -457,17 +456,17 @@ export class ApiClient {
   /**
    * Upload de archivos
    */
-  public async uploadFile(
+  public async uploadFile<T = unknown>(
     url: string,
     file: File,
     config?: RequestConfig & {
       onUploadProgress?: (progressEvent: unknown) => void;
     }
-  ): Promise<ApiResponse<unknown>> {
+  ): Promise<T> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await this.client.post<ApiResponse<unknown>>(url, formData, {
+    const response = await this.client.post<T>(url, formData, {
       ...config,
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -512,12 +511,10 @@ export class ApiClient {
    * Login de usuario
    */
   public async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await this.client.post<AuthResponse>('/auth/', credentials, {
+    const authData = await this.post<AuthResponse>('/auth/', credentials, {
       skipAuth: true,
-    } as ExtendedAxiosRequestConfig);
+    } as RequestConfig);
 
-    const authData = response.data;
-    
     // Guardar tokens
     this.setAuthToken(authData.access_token);
     if (authData.refresh_token) {
@@ -530,8 +527,8 @@ export class ApiClient {
   /**
    * Registro de usuario
    */
-  public async register(userData: RegisterData): Promise<ApiResponse<unknown>> {
-    return this.post('/register/', userData, { skipAuth: true });
+  public async register<T = unknown>(userData: RegisterData): Promise<T> {
+    return this.post<T>('/register/', userData, { skipAuth: true });
   }
 
   /**
@@ -562,25 +559,19 @@ export class ApiClient {
   /**
    * Obtiene información del usuario actual
    */
-  public async getCurrentUser(): Promise<ApiResponse<unknown>> {
+  public async getCurrentUser<T = unknown>(): Promise<T> {
     // El endpoint /user/ devuelve directamente los datos del usuario
-    const response = await this.client.get('/user/');
-    return {
-      success: true,
-      data: response.data
-    };
+    const response = await this.client.get<T>('/user/');
+    return response.data;
   }
 
   /**
    * Actualiza el perfil del usuario actual
    */
-  public async updateCurrentUser(userData: unknown): Promise<ApiResponse<unknown>> {
+  public async updateCurrentUser<T = unknown>(userData: unknown): Promise<T> {
     // El endpoint /user/ devuelve directamente los datos del usuario
-    const response = await this.client.patch('/user/', userData);
-    return {
-      success: true,
-      data: response.data
-    };
+    const response = await this.client.patch<T>('/user/', userData);
+    return response.data;
   }
 }
 

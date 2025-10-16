@@ -128,3 +128,28 @@ class AdminPermission(BasePermission):
             return user.is_staff
         except Exception as e:
             raise ValidationError("El usuario no es un administrador") from e
+
+from rest_framework import permissions
+
+class ClientOrderViewPermission(permissions.BasePermission):
+    """
+    Permiso personalizado para clientes:
+    - Solo pueden ver sus propios pedidos
+    - No pueden crear, editar ni eliminar pedidos
+    """
+    def has_permission(self, request, view):
+        # Solo permitir métodos GET, HEAD, OPTIONS (solo lectura)
+        if request.method in permissions.SAFE_METHODS:
+            return request.user.is_authenticated
+        
+        # Administradores y agentes pueden realizar todas las acciones
+        return request.user.is_staff or request.user.is_superuser
+
+    def has_object_permission(self, request, view, obj):
+        # Solo métodos de lectura para clientes
+        if request.method in permissions.SAFE_METHODS:
+            # El cliente solo puede ver sus propios pedidos
+            return obj.client == request.user.client
+        
+        # Administradores y agentes pueden realizar todas las acciones
+        return request.user.is_staff or request.user.is_superuser

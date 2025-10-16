@@ -2,7 +2,6 @@
  * Servicio de logout y limpieza de sesión
  */
 
-import type { ApiResponse } from '@/types/api';
 import { apiClient } from '@/lib';
 
 /**
@@ -24,15 +23,13 @@ export const logout = async (): Promise<void> => {
 /**
  * Cierra todas las sesiones del usuario
  */
-export const logoutAllSessions = async (): Promise<ApiResponse<void>> => {
-  const response = await apiClient.post<void>('/auth/logout-all/');
-  
+export const logoutAllSessions = async (): Promise<void> => {
+  await apiClient.post<void>('/auth/logout-all/');
+
   // Limpiar datos locales
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
   apiClient.clearAuthToken();
-  
-  return response;
 };
 
 /**
@@ -63,7 +60,7 @@ export const getStoredRefreshToken = (): string | null => {
 export const getCurrentUserFromContext = async () => {
   try {
     const response = await apiClient.getCurrentUser();
-    return response.data;
+    return response;
   } catch  {
     // Error obteniendo usuario actual
     return null;
