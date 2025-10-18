@@ -12,8 +12,8 @@ import {
     SheetTrigger,
 } from "../ui/sheet";
 import { useState } from "react";
-import logoSvg from '/assets/logo/logo.svg';
-import fLogoSvg from '/assets/logo/f-logo.svg';
+import logoSvg from '@/assets/logo/logo.svg';
+import fLogoSvg from '@/assets/logo/f-logo.svg';
 
 const NavBar = () => {
     const { isLoading, isAuthenticated } = useAuth()

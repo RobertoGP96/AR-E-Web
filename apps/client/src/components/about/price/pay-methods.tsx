@@ -1,6 +1,6 @@
 import { CircleDollarSign, CreditCard, DollarSign, type LucideProps } from "lucide-react"
-import paypalSvg from '/assets/payment/paypal.svg';
-import zelleSvg from '/assets/payment/zelle.svg';
+import paypalSvg from '@/assets/payment/paypal.svg';
+import zelleSvg from '@/assets/payment/zelle.svg';
 
 type method = {
     name: string,

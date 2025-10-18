@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { toast } from 'sonner'
-import logoSvg from '/assets/logo/logo.svg'
+import logoSvg from '@/assets/logo/logo.svg'
 
 
 
