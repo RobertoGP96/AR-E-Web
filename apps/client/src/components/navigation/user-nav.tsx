@@ -1,7 +1,7 @@
 import { useAuthUser, useAuthActions } from "@/hooks/auth/useAuth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback} from "../ui/avatar";
-import { LogOut, ShoppingCart, User } from "lucide-react";
+import { LogOut, ShoppingBag, ShoppingCart, User } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 interface NavUserProps {
@@ -61,7 +61,7 @@ export function NavUser({ onNavigate }: NavUserProps) {
                 </NavLink>
                 <NavLink to={"/user_orders"}>
                     <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => handleNavigate("/user_orders")} >
-                        <ShoppingCart className="h-5 w-5 text-primary" />
+                        <ShoppingBag className="h-5 w-5 text-primary" />
                         <span className="text-gray-300">Pedidos</span>
                     </DropdownMenuItem>
                 </NavLink>
