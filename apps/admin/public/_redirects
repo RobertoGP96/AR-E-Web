@@ -1,0 +1,18 @@
+# Redirects para SPA (Single Page Application)
+# Todas las rutas del frontend van al index.html para que React Router maneje la navegación
+/*    /index.html   200
+
+# Proxy para API calls - redirige al backend en Render
+/api/*  https://ar-e-web.onrender.com/arye_system/:splat  200
+
+# Redirects adicionales para compatibilidad
+/admin/*  /index.html  200
+/dashboard/*  /index.html  200
+/login  /index.html  200
+/register  /index.html  200
+
+# Manejo de archivos estáticos
+/assets/*  /assets/:splat  200
+
+# Error 404 personalizado
+/404.html  /index.html  200
