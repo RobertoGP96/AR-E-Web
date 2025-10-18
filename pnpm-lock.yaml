@@ -2123,6 +2123,12 @@ packages:
       '@types/react-router': 5.1.20
     dev: true
 
+  /@types/react-router@5.1.20:
+    resolution: {integrity: sha512-jGjmu/ZqS7FjSH6owMcD5qpq19+1RS9DeVRqfl1FeBMxTDQAGwlMWOcs52NDoXaNKyG3d1cYQFMs9rCrb88o9Q==}
+    dependencies:
+      '@types/history': 4.7.11
+      '@types/react': 19.2.0
+    dev: true
 
   /@types/react@19.2.0:
     resolution: {integrity: sha512-1LOH8xovvsKsCBq1wnT4ntDUdCJKmnEakhsuoUSy6ExlHCkGP2hqnatagYTgFk6oeL0VU31u7SNjunPN+GchtA==}
@@ -3514,6 +3520,21 @@ packages:
       react-router: 7.9.3(react-dom@19.2.0)(react@19.2.0)
     dev: false
 
+  /react-router@7.9.3(react-dom@19.2.0)(react@19.2.0):
+    resolution: {integrity: sha512-4o2iWCFIwhI/eYAIL43+cjORXYn/aRQPgtFRRZb3VzoyQ5Uej0Bmqj7437L97N9NJW4wnicSwLOLS+yCXfAPgg==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      react: '>=18'
+      react-dom: '>=18'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+    dependencies:
+      cookie: 1.0.2
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
+      set-cookie-parser: 2.7.1
+    dev: false
 
   /react-style-singleton@2.2.3(@types/react@19.2.0)(react@19.2.0):
     resolution: {integrity: sha512-b6jSvxvVnyptAiLjbkWLE/lOnR4lfTtDAl+eUC7RZy+QQWc6wRzIV2CE6xBuMmDxc2qIihtDCZD5NPOFl7fRBQ==}
