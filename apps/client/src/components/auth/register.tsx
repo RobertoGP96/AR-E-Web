@@ -1,7 +1,7 @@
 import { Mail, MapPin, Phone, User2, UserPlus, X, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useRegisterFlow, useCheckEmailAvailability, useCheckPhoneAvailability } from "@/hooks/auth/useRegister";
 import type { RegisterData } from "@/types/api";

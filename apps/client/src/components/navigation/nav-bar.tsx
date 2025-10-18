@@ -1,6 +1,6 @@
 import { Compass, DollarSign, Headset, Home, LogIn, UserPlus, Menu, X, Store } from "lucide-react";
 import { Button } from "../ui/button";
-import { NavLink, useLocation } from "react-router";
+import { NavLink, useLocation } from "react-router-dom";
 import useAuth from "@/hooks/auth/useAuth";
 import { NavUser } from "./user-nav";
 import LoadingSpinner from "../utils/loading-spinner";

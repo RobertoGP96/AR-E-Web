@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { Loader2Icon, LogIn as LoginIcon, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import fLogoSvg from '/assets/logo/f-logo.svg';
 

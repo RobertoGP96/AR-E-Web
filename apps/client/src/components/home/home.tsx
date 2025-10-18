@@ -3,7 +3,7 @@
 import { ArrowRight, ShoppingBag } from 'lucide-react'
 import { Button } from '../ui/button'
 import { CarouselStores } from '../store/store-carousel'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { toast } from 'sonner'

@@ -2,7 +2,7 @@ import LogIn from '@/components/auth/login';
 import Home from '@/components/home/home';
 import MainLayout from '@/components/layout/main-layout';
 import Contact from '@/pages/contact';
-import { Routes, Route } from 'react-router';
+import { Routes, Route } from 'react-router-dom';
 import Register from '@/components/auth/register';
 import About from '@/pages/about';
 import Profile from '@/pages/profile';

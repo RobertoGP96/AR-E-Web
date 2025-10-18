@@ -2,7 +2,7 @@ import { useAuthUser, useAuthActions } from "@/hooks/auth/useAuth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback} from "../ui/avatar";
 import { LogOut, ShoppingCart, User } from "lucide-react";
-import { NavLink, useNavigate } from "react-router";
+import { NavLink, useNavigate } from "react-router-dom";
 
 interface NavUserProps {
     onNavigate?: () => void;

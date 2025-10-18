@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import path from "path"
 import tailwindcss from "@tailwindcss/vite"
-import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react-swc'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => {
           manualChunks: {
             // Chunks optimizados para Cloudflare
             vendor: ['react', 'react-dom'],
-            router: ['react-router'],
+            router: ['react-router-dom'],
             query: ['@tanstack/react-query'],
             forms: ['react-hook-form', 'zod', '@hookform/resolvers'],
             ui: [
@@ -49,7 +49,9 @@ export default defineConfig(({ mode }) => {
               '@radix-ui/react-avatar',
               '@radix-ui/react-checkbox',
               '@radix-ui/react-popover',
+              '@radix-ui/react-accordion',
               '@radix-ui/react-separator',
+              '@radix-ui/react-tabs',
               '@radix-ui/react-tooltip'
             ],
             utils: ['axios', 'clsx', 'tailwind-merge', 'class-variance-authority'],
@@ -68,7 +70,7 @@ export default defineConfig(({ mode }) => {
       include: [
         'react',
         'react-dom',
-        'react-router',
+        'react-router-dom',
         '@tanstack/react-query',
         'axios',
         'lucide-react',
