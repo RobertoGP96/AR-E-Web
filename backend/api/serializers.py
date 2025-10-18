@@ -420,6 +420,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "status",
             "pay_status",
             "observations",
+            "created_at",
+            "updated_at",
             "total_cost",
             "products",
             "received_value_of_client",

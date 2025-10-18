@@ -78,7 +78,7 @@ export default function UserOrders() {
                             </Empty>
                         )}
 
-                        {isLoading && !error && orders.map((item, index) => (
+                        {!isLoading && !error && orders.length > 0 && orders.map((item, index) => (
                             <div
                                 key={item.id}
                                 className="animate-scale-in"

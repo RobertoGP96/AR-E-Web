@@ -21,12 +21,12 @@ export function useOrders(filters?: OrderFilters) {
 
   // Función para invalidar la cache y forzar refetch
   const invalidateOrders = () => {
-    queryClient.invalidateQueries({ queryKey: ['orders-client'] });
+    queryClient.invalidateQueries({ queryKey: ['orders'] });
   };
 
   return {
-    orders: data?.data ?? [],
-    total: data?.pagination?.count ?? 0,
+    orders: data?.results ?? [],
+    total: data?.count ?? 0,
     isLoading,
     isFetching,
     error,

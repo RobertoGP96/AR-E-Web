@@ -19,15 +19,11 @@ export interface ApiResponse<T = unknown> {
   errors?: ApiError[];
 }
 
-export interface PaginatedApiResponse<T = unknown> extends ApiResponse<T[]> {
-  pagination: {
-    count: number;
-    page: number;
-    pages: number;
-    per_page: number;
-    next?: string;
-    previous?: string;
-  };
+export interface PaginatedApiResponse<T = unknown> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
 }
 
 // Tipos para formularios de autenticación
