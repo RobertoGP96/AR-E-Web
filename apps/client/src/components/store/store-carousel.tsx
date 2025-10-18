@@ -1,5 +1,3 @@
-
-
 import {
     Carousel,
     CarouselContent,
@@ -21,7 +19,7 @@ export const CarouselStores = () => {
         const name = shopName.toLowerCase();
         // Si el nombre está en el mapeo, usar el valor mapeado
         const fileName =  name;
-        return `src/assets/stores/${fileName}.svg`;
+        return `/stores/${fileName}.svg`;
     }
     // Asegúrate de que las imágenes estén en la carpeta pública
     return (
