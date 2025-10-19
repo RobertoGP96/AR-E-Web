@@ -23,7 +23,7 @@ export interface Product {
   amount_purchased: number;
   amount_delivered: number;
   
-  order: Order;
+  order: number | Order;
   status: ProductStatus;
   product_pictures: EvidenceImage[];
   

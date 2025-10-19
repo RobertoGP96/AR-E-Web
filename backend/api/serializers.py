@@ -276,8 +276,10 @@ class ProductSerializer(serializers.ModelSerializer):
             "added_taxes",
             "total_cost",
             "cost_per_product",
+            "created_at",
+            "updated_at",
         ]
-        read_only_fields = ["id"]
+        read_only_fields = ["id", "created_at", "updated_at"]
 
     @extend_schema_field(str)
     def get_status(self, obj):

@@ -19,6 +19,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useState } from 'react';
 import { useDeleteProduct } from '@/hooks/product/useDeleteProduct';
 import { toast } from 'sonner';
+import { Link } from "react-router-dom";
 
 interface ProductsTableProps {
   products: Product[];
@@ -42,9 +43,9 @@ const getStatusBadgeVariant = (status: string) => {
 
 // ...existing code...
 
-const ProductsTable: React.FC<ProductsTableProps> = ({ 
-  products, 
-  onEdit, 
+const ProductsTable: React.FC<ProductsTableProps> = ({
+  products,
+  onEdit,
   onViewDetails,
   onGoToOrder,
   isLoading = false,
@@ -102,249 +103,259 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
 
   return (
     <>
-    <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
-      
-      <Table>
-        <TableHeader className="bg-gray-100">
-          <TableRow>
-            <TableHead className="w-12">#</TableHead>
-            {visibleColumns.includes('index') && <TableHead className="w-12">#</TableHead>}
-            {visibleColumns.includes('sku') && <TableHead>SKU</TableHead>}
-            {visibleColumns.includes('name') && <TableHead>Nombre</TableHead>}
-            {visibleColumns.includes('shop') && <TableHead>Tienda</TableHead>}
-            {visibleColumns.includes('category') && <TableHead>Categoría</TableHead>}
-            {visibleColumns.includes('amount_requested') && <TableHead className="text-center">Solicitado</TableHead>}
-            {visibleColumns.includes('amount_purchased') && <TableHead className="text-center">Comprado</TableHead>}
-            {visibleColumns.includes('amount_delivered') && <TableHead className="text-center">Entregado</TableHead>}
-            {visibleColumns.includes('status') && <TableHead className="text-center">Estado</TableHead>}
-            {visibleColumns.includes('total_cost') && <TableHead className="text-right">Costo Total</TableHead>}
-            {visibleColumns.includes('actions') && <TableHead className="text-center">Acciones</TableHead>}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {products.map((product, idx) => (
-            <TableRow key={product.id}>
-              <TableCell className="font-medium">{idx + 1}</TableCell>
-              {visibleColumns.includes('index') && <TableCell className="font-medium">{idx + 1}</TableCell>}
-              {visibleColumns.includes('sku') && <TableCell className="font-mono text-sm">{product.sku}</TableCell>}
-              {visibleColumns.includes('name') && (
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium capitalize">{product.name}</span>
-                    {visibleColumns.includes('link') && product.link && (
-                      <a
-                        href={product.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800"
-                        title="Ver producto en tienda"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    )}
-                  </div>
-                  {/* Mostrar tags como badges en formato Badge(name:value) debajo de la descripción */}
-                  {(() => {
-                    const description = product.description as string | undefined;
-                    const tags = parseTagsFromDescriptionBlock(description);
-                    if (!tags || tags.length === 0) return null;
-                    return (
-                      <div className="mt-2 flex flex-wrap items-center gap-1">
-                        {tags.map((tag, i) => (
-                          <Badge key={i} variant="secondary" className="text-xs">
-                            {tag.name}{tag.value ? `: ${tag.value}` : ''}
-                          </Badge>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </TableCell>
-              )}
-              {visibleColumns.includes('shop') && (
-                <TableCell>
-                  <div className="flex flex-col">
-                    <span className="font-medium">{product.shop || "N/A"}</span>
-                  </div>
-                </TableCell>
-              )}
-              {visibleColumns.includes('category') && (
-                <TableCell>
-                  {product.category ? (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">{product.category}</Badge>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">Sin categoría</span>
-                  )}
-                </TableCell>
-              )}
-              {visibleColumns.includes('amount_requested') && <TableCell className="text-center">{product.amount_requested}</TableCell>}
-              {visibleColumns.includes('amount_purchased') && (
-                <TableCell className="text-center">
-                  <span className={product.is_fully_purchased ? "font-semibold text-green-600" : ""}>
-                    {product.amount_purchased}
-                  </span>
-                  {product.pending_purchase > 0 && (
-                    <span className="ml-1 text-xs text-muted-foreground">
-                      (pendiente: {product.pending_purchase})
-                    </span>
-                  )}
-                </TableCell>
-              )}
-              {visibleColumns.includes('amount_delivered') && (
-                <TableCell className="text-center">
-                  <span className={product.is_fully_delivered ? "font-semibold text-green-600" : ""}>
-                    {product.amount_delivered}
-                  </span>
-                  {product.pending_delivery > 0 && (
-                    <span className="ml-1 text-xs text-muted-foreground">
-                      (pendiente: {product.pending_delivery})
-                    </span>
-                  )}
-                </TableCell>
-              )}
-              {visibleColumns.includes('status') && (
-                <TableCell className="text-center">
-                  <Badge variant={getStatusBadgeVariant(product.status)}>
-                    {product.status}
-                  </Badge>
-                </TableCell>
-              )}
-              {visibleColumns.includes('total_cost') && (
-                <TableCell className="text-right font-semibold">
-                  ${product.total_cost.toFixed(2)}
-                </TableCell>
-              )}
-              {visibleColumns.includes('actions') && (
-                <TableCell>
-                  <div className="flex items-center justify-center gap-2">
-                    {onEdit && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEdit(product)}
-                        title="Editar producto"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {/* Eliminar solo disponible desde el dropdown */}
+      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
 
-                    {/* Dropdown con acciones: Ver detalles, Ir a pedido */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+        <Table>
+          <TableHeader className="bg-gray-100">
+            <TableRow>
+              <TableHead className="w-12">#</TableHead>
+              {visibleColumns.includes('index') && <TableHead className="w-12">#</TableHead>}
+              {visibleColumns.includes('sku') && <TableHead>SKU</TableHead>}
+              {visibleColumns.includes('name') && <TableHead>Nombre</TableHead>}
+              {visibleColumns.includes('shop') && <TableHead>Tienda</TableHead>}
+              {visibleColumns.includes('category') && <TableHead>Categoría</TableHead>}
+              {visibleColumns.includes('amount_requested') && <TableHead className="text-center">Solicitado</TableHead>}
+              {visibleColumns.includes('amount_purchased') && <TableHead className="text-center">Comprado</TableHead>}
+              {visibleColumns.includes('amount_delivered') && <TableHead className="text-center">Entregado</TableHead>}
+              {visibleColumns.includes('status') && <TableHead className="text-center">Estado</TableHead>}
+              {visibleColumns.includes('total_cost') && <TableHead className="text-right">Costo Total</TableHead>}
+              {visibleColumns.includes('actions') && <TableHead className="text-center">Acciones</TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {products.map((product, idx) => (
+              <TableRow key={product.id}>
+                <TableCell className="font-medium">{idx + 1}</TableCell>
+                {visibleColumns.includes('index') && <TableCell className="font-medium">{idx + 1}</TableCell>}
+                {visibleColumns.includes('sku') && <TableCell className="font-mono text-sm">{product.sku}</TableCell>}
+                {visibleColumns.includes('name') && (
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium capitalize">{product.name}</span>
+                      {visibleColumns.includes('link') && product.link && (
+                        <a
+                          href={product.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800"
+                          title="Ver producto en tienda"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      )}
+                    </div>
+                    {/* Mostrar tags como badges en formato Badge(name:value) debajo de la descripción */}
+                    {(() => {
+                      const description = product.description as string | undefined;
+                      const tags = parseTagsFromDescriptionBlock(description);
+                      if (!tags || tags.length === 0) return null;
+                      return (
+                        <div className="mt-2 flex flex-wrap items-center gap-1">
+                          {tags.map((tag, i) => (
+                            <Badge key={i} variant="secondary" className="text-xs">
+                              {tag.name}{tag.value ? `: ${tag.value}` : ''}
+                            </Badge>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </TableCell>
+                )}
+                {visibleColumns.includes('shop') && (
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{product.shop || "N/A"}</span>
+                    </div>
+                  </TableCell>
+                )}
+                {visibleColumns.includes('category') && (
+                  <TableCell>
+                    {product.category ? (
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{product.category}</Badge>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">Sin categoría</span>
+                    )}
+                  </TableCell>
+                )}
+                {visibleColumns.includes('amount_requested') && <TableCell className="text-center">{product.amount_requested}</TableCell>}
+                {visibleColumns.includes('amount_purchased') && (
+                  <TableCell className="text-center">
+                    <span className={product.is_fully_purchased ? "font-semibold text-green-600" : ""}>
+                      {product.amount_purchased}
+                    </span>
+                    {product.pending_purchase > 0 && (
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        (pendiente: {product.pending_purchase})
+                      </span>
+                    )}
+                  </TableCell>
+                )}
+                {visibleColumns.includes('amount_delivered') && (
+                  <TableCell className="text-center">
+                    <span className={product.is_fully_delivered ? "font-semibold text-green-600" : ""}>
+                      {product.amount_delivered}
+                    </span>
+                    {product.pending_delivery > 0 && (
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        (pendiente: {product.pending_delivery})
+                      </span>
+                    )}
+                  </TableCell>
+                )}
+                {visibleColumns.includes('status') && (
+                  <TableCell className="text-center">
+                    <Badge variant={getStatusBadgeVariant(product.status)}>
+                      {product.status}
+                    </Badge>
+                  </TableCell>
+                )}
+                {visibleColumns.includes('total_cost') && (
+                  <TableCell className="text-right font-semibold">
+                    ${product.total_cost.toFixed(2)}
+                  </TableCell>
+                )}
+                {visibleColumns.includes('actions') && (
+                  <TableCell>
+                    <div className="flex items-center justify-center gap-2">
+                      {onEdit && (
                         <Button
                           variant="ghost"
-                          className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onViewDetails?.(product);
-                          }}
-                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          Ver detalles
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onGoToOrder?.(product);
-                          }}
-                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          Ir a pedido
-                        </DropdownMenuItem>
-
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Alias: Edit desde menú
-                            onEdit?.(product);
-                          }}
-                          className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                          size="sm"
+                          onClick={() => onEdit(product)}
+                          title="Editar producto"
                         >
                           <Edit2 className="h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
+                        </Button>
+                      )}
+                      {/* Eliminar solo disponible desde el dropdown */}
 
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!product || !product.id) {
-                              console.error('Producto sin ID válido', product);
-                              return;
-                            }
-                            setDialogState({ type: 'delete', product });
-                          }}
-                          className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </TableCell>
-              )}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      
-      {/* Resumen de totales */}
-      <div className="border-t bg-gray-50 p-4">
-        <div className="flex justify-end gap-8 text-sm">
-          <div>
-            <span className="text-muted-foreground">Total productos: </span>
-            <span className="font-semibold">{products.length}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Costo total: </span>
-            <span className="font-semibold">
-              ${products.reduce((sum, p) => sum + p.total_cost, 0).toFixed(2)}
-            </span>
+                      {/* Dropdown con acciones: Ver detalles, Ir a pedido */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onViewDetails?.(product);
+                            }}
+                            className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                          >
+                            <Link
+                              to={`/products/${product.id}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('Navigating to product details', product);
+                              }}
+                              className="inline-flex items-center gap-2"
+                              title={`Ir al producto ${product.id}`}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Ver detalles
+                            </Link>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onGoToOrder?.(product);
+                            }}
+                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Ir a pedido
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Alias: Edit desde menú
+                              onEdit?.(product);
+                            }}
+                            className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!product || !product.id) {
+                                console.error('Producto sin ID válido', product);
+                                return;
+                              }
+                              setDialogState({ type: 'delete', product });
+                            }}
+                            className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableCell>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        {/* Resumen de totales */}
+        <div className="border-t bg-gray-50 p-4">
+          <div className="flex justify-end gap-8 text-sm">
+            <div>
+              <span className="text-muted-foreground">Total productos: </span>
+              <span className="font-semibold">{products.length}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Costo total: </span>
+              <span className="font-semibold">
+                ${products.reduce((sum, p) => sum + p.total_cost, 0).toFixed(2)}
+              </span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <AlertDialog open={dialogState.type === 'delete' || isDeleting} onOpenChange={(open) => {
-      // Prevent closing while deleting
-      if (!open && isDeleting) return;
-      if (!open) handleDeleteCancel();
-    }}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
-          <AlertDialogDescription>
-            ¿Estás seguro de que deseas eliminar el producto {dialogState.product ? `#${dialogState.product.id} - ${dialogState.product.name}` : ''}? Esta acción no se puede deshacer.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleDeleteCancel} disabled={isDeleting}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700" disabled={isDeleting}>
-            {isDeleting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Eliminando...
-              </>
-            ) : (
-              'Eliminar'
-            )}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      <AlertDialog open={dialogState.type === 'delete' || isDeleting} onOpenChange={(open) => {
+        // Prevent closing while deleting
+        if (!open && isDeleting) return;
+        if (!open) handleDeleteCancel();
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas eliminar el producto {dialogState.product ? `#${dialogState.product.id} - ${dialogState.product.name}` : ''}? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel} disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700" disabled={isDeleting}>
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                'Eliminar'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

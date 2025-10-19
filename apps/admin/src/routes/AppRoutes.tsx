@@ -14,6 +14,7 @@ import NotFound from '@/pages/NotFound';
 import LoginPage from '@/pages/LoginPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Categories from '@/pages/Categories';
+import ProductDetails from '@/components/products/product-details';
 
 const AppRoutes = () => {
     return (
@@ -34,6 +35,7 @@ const AppRoutes = () => {
                 <Route path="users" element={<Users />} />
                 <Route path="shops" element={<Shops />} />
                 <Route path="products" element={<Products />} />
+                <Route path="products/:id" element={<ProductDetails />} />
                 <Route path="purchases" element={<Purchases />} />
                 <Route path="packages" element={<Packages />} />
                 <Route path="delivery" element={<Delivery />} />

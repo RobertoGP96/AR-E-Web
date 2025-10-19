@@ -18,7 +18,7 @@ export const getProducts = async (
 /**
  * Obtiene un producto por ID
  */
-export const getProductById = async (id: number) => {
+export const getProductById = async (id: string) => {
   return await apiClient.get<Product>(`/api_data/product/${id}/`);
 };
 
