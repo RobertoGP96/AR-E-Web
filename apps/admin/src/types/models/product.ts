@@ -22,6 +22,7 @@ export interface Product {
   amount_requested: number;
   amount_purchased: number;
   amount_delivered: number;
+  amount_received: number;
   
   order: number | Order;
   status: ProductStatus;
@@ -42,7 +43,6 @@ export interface Product {
   // Propiedades computadas (del backend)
   cost_per_product: number;
   amount_buyed: number;
-  amount_received: number;
   pending_purchase: number;
   pending_delivery: number;
   is_fully_purchased: boolean;
@@ -62,6 +62,7 @@ export interface CreateProductData {
   amount_requested: number;
   amount_purchased?: number;
   amount_delivered?: number;
+  amount_received?: number;
   order_id: ID;
   status?: ProductStatus;
   shop_cost: number;

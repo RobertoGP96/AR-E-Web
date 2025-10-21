@@ -254,7 +254,6 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                               to={`/products/${product.id}`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                console.log('Navigating to product details', product);
                               }}
                               className="inline-flex items-center gap-2"
                               title={`Ir al producto ${product.id}`}

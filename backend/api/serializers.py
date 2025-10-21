@@ -266,6 +266,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "amount_buyed",
             "amount_delivered",
             "amount_received",
+            "amount_purchased",
             "order",
             "status",
             "product_pictures",

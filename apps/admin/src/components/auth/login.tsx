@@ -9,7 +9,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Eye, EyeOff, LogIn, Loader2, Mail, Phone } from 'lucide-react';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { Eye, EyeOff, LogIn, Loader2, Mail, Phone, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -33,17 +34,17 @@ interface ApiError {
 // Función helper para detectar si es email o teléfono
 const detectInputType = (value: string): 'email' | 'phone' | 'unknown' => {
   const trimmedValue = value.trim();
-  
+
   // Detectar email (contiene @ y formato válido)
   if (trimmedValue.includes('@') && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
     return 'email';
   }
-  
+
   // Detectar teléfono (solo números, +, espacios, guiones, paréntesis)
   if (/^[+\d\s\-()]+$/.test(trimmedValue) && trimmedValue.replace(/[\s\-()]/g, '').length >= 8) {
     return 'phone';
   }
-  
+
   return 'unknown';
 };
 
@@ -80,10 +81,10 @@ interface LoginProps {
   className?: string;
 }
 
-export const Login: React.FC<LoginProps> = ({ 
-  onSuccess, 
+export const Login: React.FC<LoginProps> = ({
+  onSuccess,
   redirectTo = '/',
-  className 
+  className
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -135,22 +136,22 @@ export const Login: React.FC<LoginProps> = ({
       // Determinar el tipo de error y mostrar mensaje descriptivo
       let errorMessage = error;
 
-      if (error.toLowerCase().includes('credenciales') || 
-          error.toLowerCase().includes('credentials') || 
-          error.toLowerCase().includes('incorrect')) {
+      if (error.toLowerCase().includes('credenciales') ||
+        error.toLowerCase().includes('credentials') ||
+        error.toLowerCase().includes('incorrect')) {
         errorMessage = 'Credenciales incorrectas. El email/teléfono o la contraseña son incorrectos. Por favor, verifica tus datos.';
-      } else if (error.toLowerCase().includes('network') || 
-                 error.toLowerCase().includes('conexión') ||
-                 error.toLowerCase().includes('connection')) {
+      } else if (error.toLowerCase().includes('network') ||
+        error.toLowerCase().includes('conexión') ||
+        error.toLowerCase().includes('connection')) {
         errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
-      } else if (error.toLowerCase().includes('bloqueado') || 
-                 error.toLowerCase().includes('blocked') ||
-                 error.toLowerCase().includes('disabled')) {
+      } else if (error.toLowerCase().includes('bloqueado') ||
+        error.toLowerCase().includes('blocked') ||
+        error.toLowerCase().includes('disabled')) {
         errorMessage = 'Tu cuenta ha sido bloqueada. Contacta al administrador del sistema.';
       } else if (error.toLowerCase().includes('timeout')) {
         errorMessage = 'El servidor tardó demasiado en responder. Por favor, intenta nuevamente.';
-      } else if (error.toLowerCase().includes('not found') || 
-                 error.toLowerCase().includes('no existe')) {
+      } else if (error.toLowerCase().includes('not found') ||
+        error.toLowerCase().includes('no existe')) {
         errorMessage = 'No se encontró una cuenta con estas credenciales. Verifica tu información.';
       } else if (error.toLowerCase().includes('inactiv')) {
         errorMessage = 'Tu cuenta está inactiva. Por favor, activa tu cuenta para continuar.';
@@ -160,7 +161,7 @@ export const Login: React.FC<LoginProps> = ({
         duration: 5000,
         position: 'top-center',
       });
-      
+
       clearError();
     }
   }, [error, clearError]);
@@ -169,7 +170,7 @@ export const Login: React.FC<LoginProps> = ({
     try {
       const inputValue = data.emailOrPhone.trim();
       const type = detectInputType(inputValue);
-      
+
       // Validar tipo de entrada antes de enviar
       if (type === 'unknown') {
         toast.error('Por favor, ingresa un email válido (ejemplo@correo.com) o un número de teléfono válido (+53 1234 5678).', {
@@ -178,14 +179,14 @@ export const Login: React.FC<LoginProps> = ({
         });
         return;
       }
-      
+
       // Crear credenciales según el tipo detectado
       const credentials: LoginCredentials & { phone_number?: string } = type === 'email'
         ? { email: inputValue.toLowerCase(), password: data.password }
         : { email: '', phone_number: inputValue, password: data.password };
-      
+
       await login(credentials as LoginCredentials);
-      
+
       // Si llegamos aquí, el login fue exitoso
       toast.success('¡Bienvenido! Redirigiendo al panel de administración...', {
         duration: 2000,
@@ -207,10 +208,10 @@ export const Login: React.FC<LoginProps> = ({
       // el AuthContext no lo maneja, mostramos un error genérico
       if (!error) {
         let errorMessage = 'Ocurrió un error inesperado. Por favor, intenta nuevamente.';
-        
+
         const apiError = err as ApiError;
         const responseStatus = apiError?.response?.status;
-        
+
         if (responseStatus === 401) {
           errorMessage = 'Credenciales incorrectas. Verifica tu email/teléfono y contraseña.';
         } else if (responseStatus === 403) {
@@ -252,11 +253,11 @@ export const Login: React.FC<LoginProps> = ({
         <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm drop-shadow-xl">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
-                <img 
-                  src={logoSvg} 
-                  alt="Logo de la aplicación" 
-                  className="h-25 w-25 object-contain"
-                />
+              <img
+                src={logoSvg}
+                alt="Logo de la aplicación"
+                className="h-25 w-25 object-contain"
+              />
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900">
               Iniciar Sesión
@@ -265,7 +266,7 @@ export const Login: React.FC<LoginProps> = ({
               Ingresa tus credenciales para acceder al sistema de administración
             </CardDescription>
           </CardHeader>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <CardContent className="space-y-6">
@@ -276,30 +277,27 @@ export const Login: React.FC<LoginProps> = ({
                     <FormItem>
                       <FormLabel className="text-gray-700 font-medium flex items-center gap-1">
                         <Mail className="h-4 w-4" />
-                        Email o 
+                        Email o
                         <Phone className="h-4 w-4" />
                         Teléfono
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="tu@email.com o +53 1234 5678"
-                          type="text"
-                          disabled={isLoading}
-                          className="h-11 bg-white"
-                          {...field}
-                        />
+
+                        <InputGroup>
+                          <InputGroupInput disabled={isLoading} {...field} className="h-11 bg-white" placeholder="tu@email.com o +53 1234 5678" />
+                          <InputGroupAddon align="inline-end">
+                            <div className="bg-primary text-primary-foreground flex size-4 items-center justify-center rounded-full">
+                              {inputType !== 'unknown' && (
+                                <Check  />
+                              )}
+                            </div>
+                          </InputGroupAddon>
+                        </InputGroup>
                       </FormControl>
-                      <FormMessage />
-                      {inputType !== 'unknown' && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {inputType === 'email' && '✓ Email detectado'}
-                          {inputType === 'phone' && '✓ Teléfono detectado'}
-                        </p>
-                      )}
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="password"
@@ -344,7 +342,7 @@ export const Login: React.FC<LoginProps> = ({
                     </FormItem>
                   )}
                 />
-                
+
                 <div className="flex items-center justify-between">
                   <FormField
                     control={form.control}
@@ -366,7 +364,7 @@ export const Login: React.FC<LoginProps> = ({
                       </FormItem>
                     )}
                   />
-                  
+
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -407,8 +405,8 @@ export const Login: React.FC<LoginProps> = ({
               </CardFooter>
             </form>
           </Form>
-          
-          
+
+
         </Card>
       </div>
     </TooltipProvider>

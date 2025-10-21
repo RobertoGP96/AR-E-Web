@@ -106,14 +106,6 @@ export class ApiClient {
           config.headers.Authorization = `Bearer ${this.authToken}`;
         }
 
-        // Log de requests en desarrollo
-        if (import.meta.env.DEV) {
-          console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`, {
-            params: config.params,
-            data: config.data,
-          });
-        }
-
         return config;
       },
       (error) => {
