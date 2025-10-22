@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import type { Product } from '@/types/models';
-import { ProductAmountSimple } from './product-amount-simple';
 
 interface ProductAmountProps {
   product: Product;
@@ -40,10 +39,6 @@ const ProductAmount: React.FC<ProductAmountProps> = ({ product }) => {
         <AmmountSection cuantity={amount_purchased} total={amount_requested} label="Comprado" />
         <AmmountSection cuantity={amount_received} total={amount_requested} label="Recibido" />
         <AmmountSection cuantity={amount_delivered} total={amount_requested} label="Entregado" />
-
-        <div>
-          <ProductAmountSimple product={product} />
-        </div>
       </CardContent>
     </Card>
   );

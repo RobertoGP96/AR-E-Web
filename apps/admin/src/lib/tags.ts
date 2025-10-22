@@ -28,16 +28,13 @@ export type StoredTag = {
 }
 
 
-const SEP = "\n\n--TAGS--\n"
-
-
 export function parseTagsFromDescriptionBlock(description?: string): StoredTag[] {
   if (!description) return [];
   try {
     const content = description.trim();
-    const idx = content.indexOf(SEP);
+    const idx = content.indexOf("--TAGS--");
     if (idx === -1) return [];
-    let after = content.substring(idx + SEP.length).trim();
+    let after = content.substring(idx + "--TAGS--".length).trim();
     if (!after) return [];
     after = after.replace(/\r?\n/g, '').replace(/\s{2,}/g, ' ');
     const parsed = JSON.parse(after);

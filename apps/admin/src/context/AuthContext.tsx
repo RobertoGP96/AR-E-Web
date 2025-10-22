@@ -52,6 +52,7 @@ interface AuthContextType extends AuthState {
   hasPermission: (permission: string) => boolean;
   hasRole: (role: string) => boolean;
   clearError: () => void;
+  handleAuthStateChange: (isAuthenticated: boolean) => void;
 }
 
 // Función para obtener el estado inicial con datos persistidos
@@ -396,6 +397,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [state.isAuthenticated]);
 
+  /**
+   * Maneja cambios de estado de autenticación desde el apiClient
+   */
+  const handleAuthStateChange = useCallback((isAuthenticated: boolean) => {
+    if (!isAuthenticated && state.isAuthenticated) {
+      // Si el apiClient dice que no está autenticado pero el estado dice que sí,
+      // forzar logout
+      dispatch({ type: 'AUTH_LOGOUT' });
+    } else if (isAuthenticated && !state.isAuthenticated) {
+      // Si el apiClient dice que está autenticado pero el estado dice que no,
+      // intentar verificar (esto es menos común)
+      checkExistingAuth();
+    }
+  }, [state.isAuthenticated, checkExistingAuth]);
+
   // Verificar autenticación existente al montar el componente
   useEffect(() => {
     checkExistingAuth();
@@ -452,6 +468,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     hasPermission,
     hasRole,
     clearError,
+    handleAuthStateChange,
   };
 
   return (

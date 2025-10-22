@@ -576,6 +576,7 @@ class ShoppingReceipViewSet(viewsets.ModelViewSet):
     """
     Gestión de recibos de compra y productos comprados.
     Soporta filtrado por estado, cuenta y tienda, y búsqueda por fecha.
+    Permite crear recibos de compra con productos asociados en una sola operación.
     """
     queryset = ShoppingReceip.objects.all()
     serializer_class = ShoppingReceipSerializer
@@ -587,35 +588,116 @@ class ShoppingReceipViewSet(viewsets.ModelViewSet):
     ordering = ['-buy_date']
 
     @extend_schema(
-        summary="Crear recibo de compra",
-        description="Crea un recibo de compra y los productos asociados.",
-        responses={201: ShoppingReceipSerializer},
-        tags=["Recibos de compra"]
+        summary="Crear recibo de compra con productos",
+        description="""Crea un recibo de compra y opcionalmente los productos comprados asociados.
+        
+        **Campos requeridos para ShoppingReceip:**
+        - shopping_account: Nombre de la cuenta de compra
+        - shop_of_buy: Nombre de la tienda
+        
+        **Campos opcionales para ShoppingReceip:**
+        - buy_date: Fecha de compra (por defecto: fecha actual)
+        - status_of_shopping: Estado del shopping
+        
+        **Campo opcional para productos comprados:**
+        - buyed_products: Lista de productos comprados (cada producto debe tener original_product y amount_buyed)
+        
+        **Nota:** Si no se especifica buy_date en los productos, se usará automáticamente la buy_date del recibo.
+        """,
+        request=ShoppingReceipSerializer,
+        responses={
+            201: ShoppingReceipSerializer,
+            400: OpenApiTypes.OBJECT
+        },
+        tags=["Recibos de compra"],
+        examples=[
+            OpenApiExample(
+                "Crear recibo con productos",
+                value={
+                    "shopping_account": "CuentaPrincipal",
+                    "shop_of_buy": "Amazon",
+                    "buy_date": "2025-10-22T10:00:00Z",
+                    "buyed_products": [
+                        {
+                            "original_product": "uuid-del-producto",
+                            "amount_buyed": 2,
+                            "actual_cost_of_product": 25.50,
+                            "real_cost_of_product": 25.50
+                        }
+                    ]
+                }
+            )
+        ]
     )
     def create(self, request, *args, **kwargs):
-        with transaction.atomic():
-            if "shopping_account" in request.data and "shop_of_buy" in request.data:
-                serializer = ShoppingReceipSerializer(data=request.data)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
-                try:
-                    if "buyed_products" in request.data:
-                        for product in request.data["buyed_products"]:
-                            product["shoping_receip"] = serializer.data["id"]
-                            product_serializer = ProductBuyedSerializer(data=product)
-                            product_serializer.is_valid(raise_exception=True)
-                            product_serializer.save()
-                    return Response(serializer.data, status=status.HTTP_201_CREATED)
-                except Exception as e:
-                    raise ValidationError(
-                        f"Error al procesar productos: {str(e)}"
-                    ) from e
-            return Response(
-                {"message": "Faltan datos"}, status=status.HTTP_400_BAD_REQUEST
-            )
+        return super().create(request, *args, **kwargs)
 
 
 class ProductBuyedViewSet(viewsets.ModelViewSet):
+    """
+    Gestión de productos comprados.
+    Soporta filtrado por producto original y recibo de compra.
+    
+    **Campos requeridos para crear:**
+    - original_product: ID del producto original
+    - amount_buyed: Cantidad comprada
+    
+    **Campos opcionales:**
+    - shoping_receip: Recibo de compra (se asigna automáticamente si se crea desde ShoppingReceip)
+    - actual_cost_of_product, shop_discount, offer_discount, buy_date, observation, real_cost_of_product
+    
+    **Nota:** Al crear desde ShoppingReceip, buy_date se toma automáticamente del recibo si no se especifica.
+    """
+    queryset = ProductBuyed.objects.all()
+    serializer_class = ProductBuyedSerializer
+    permission_classes = [ReadOnly | AccountantPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['original_product', 'shoping_receip']
+    search_fields = ['original_product__name', 'original_product__sku']
+    ordering_fields = ['buy_date', 'created_at', 'actual_cost_of_product']
+    ordering = ['-buy_date']
+
+    @extend_schema(
+        summary="Crear producto comprado",
+        description="""Registra un producto como comprado. Actualiza automáticamente la cantidad comprada del producto original.
+        
+        **Campos requeridos:**
+        - original_product: ID del producto original
+        - amount_buyed: Cantidad comprada (debe ser positiva)
+        
+        **Campos opcionales:**
+        - shoping_receip: ID del recibo de compra
+        - actual_cost_of_product: Costo real del producto
+        - shop_discount: Descuento de la tienda
+        - offer_discount: Descuento por oferta
+        - buy_date: Fecha de compra (por defecto: fecha actual)
+        - observation: Observaciones
+        - real_cost_of_product: Costo real final
+        
+        **Nota:** La cantidad comprada se suma automáticamente al producto original.
+        """,
+        request=ProductBuyedSerializer,
+        responses={
+            201: ProductBuyedSerializer,
+            400: OpenApiTypes.OBJECT
+        },
+        tags=["Productos comprados"],
+        examples=[
+            OpenApiExample(
+                "Crear producto comprado",
+                value={
+                    "original_product": "uuid-del-producto",
+                    "amount_buyed": 3,
+                    "actual_cost_of_product": 45.00,
+                    "real_cost_of_product": 42.50,
+                    "shop_discount": 2.50
+                }
+            )
+        ]
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
     @extend_schema(
         summary="Listado de productos comprados",
         description="Obtén el historial de productos adquiridos por los agentes, con detalles de compra, descuentos y costos reales.",
@@ -624,8 +706,14 @@ class ProductBuyedViewSet(viewsets.ModelViewSet):
             OpenApiExample(
                 "Ejemplo de respuesta",
                 value=[
-                    {"id": 1, "original_product": 1, "order": 1, "actual_cost_of_product": 1200.0, "amount_buyed": 1},
-                    {"id": 2, "original_product": 2, "order": 2, "actual_cost_of_product": 25.0, "amount_buyed": 2}
+                    {
+                        "id": 1,
+                        "original_product": "uuid-producto-1",
+                        "amount_buyed": 2,
+                        "actual_cost_of_product": 25.00,
+                        "real_cost_of_product": 22.50,
+                        "buy_date": "2025-10-22T10:00:00Z"
+                    }
                 ],
                 response_only=True
             )
@@ -633,18 +721,6 @@ class ProductBuyedViewSet(viewsets.ModelViewSet):
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-    """
-    Gestión de productos comprados.
-    Soporta filtrado por orden, producto original y recibo de compra.
-    """
-    queryset = ProductBuyed.objects.all()
-    serializer_class = ProductBuyedSerializer
-    permission_classes = [ReadOnly | AccountantPermission]
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['order', 'original_product', 'shoping_receip']
-    search_fields = ['original_product__name', 'original_product__sku']
-    ordering_fields = ['buy_date', 'created_at', 'actual_cost_of_product']
-    ordering = ['-buy_date']
 
 
 class ProductReceivedViewSet(viewsets.ModelViewSet):

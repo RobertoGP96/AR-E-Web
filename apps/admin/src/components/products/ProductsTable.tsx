@@ -20,6 +20,7 @@ import { useState } from 'react';
 import { useDeleteProduct } from '@/hooks/product/useDeleteProduct';
 import { toast } from 'sonner';
 import { Link } from "react-router-dom";
+import QRLink from "./qr-link";
 
 interface ProductsTableProps {
   products: Product[];
@@ -132,6 +133,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <span className="font-medium capitalize">{product.name}</span>
+                      <QRLink link={product.link || 'https://arye-shipps.netlify.app'} />
                       {visibleColumns.includes('link') && product.link && (
                         <a
                           href={product.link}
@@ -270,8 +272,17 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                             }}
                             className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
                           >
-                            <ExternalLink className="h-4 w-4" />
-                            Ir a pedido
+                            <Link
+                              to={`/orders/${typeof product.order === 'number' ? product.order : product.order?.id}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                              className="inline-flex items-center gap-2"
+                              title={`Ir al pedido ${typeof product.order === 'number' ? product.order : product.order?.id}`}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Ir a pedido
+                            </Link>
                           </DropdownMenuItem>
 
                           <DropdownMenuSeparator />

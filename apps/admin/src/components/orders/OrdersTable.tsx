@@ -2,7 +2,8 @@ import OrderStatusBadge from './OrderStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { formatCurrency, type Order, type OrderStatus, type PayStatus } from '@/types';
-import { Edit2, ShoppingCart, Trash2, MoreHorizontal, CheckCircle, Plus, Loader2 } from 'lucide-react';
+import { Edit2, ShoppingCart, Trash2, MoreHorizontal, CheckCircle, Plus, Loader2, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import AvatarUser from '../utils/AvatarUser';
 import PayStatusBadge from '../utils/PayStatusBadge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -187,10 +188,29 @@ const OrderTable: React.FC<OrderTableProps> = ({
                         className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
                       >
                         <Plus className="h-4 w-4" />
-                        Añadir productos
+                        Añadir producto
                       </DropdownMenuItem>
 
                       <DropdownMenuSeparator />
+
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
+                      >
+                        <Link
+                          to={`/orders/${order.id}`}
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                          }}
+                          className="inline-flex items-center gap-2"
+                          title={`Ver detalles del pedido ${order.id}`}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Ver detalles
+                        </Link>
+                      </DropdownMenuItem>
 
                       <DropdownMenuItem
                         onClick={(e) => {

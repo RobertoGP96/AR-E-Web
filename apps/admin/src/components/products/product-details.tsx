@@ -134,7 +134,7 @@ const ProductDetails: React.FC = () => {
                                     </Badge>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-4 mb-6">
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-1">
                                             Creado
@@ -149,6 +149,7 @@ const ProductDetails: React.FC = () => {
                                             Actualizado
                                         </h4>
                                         <p className="text-sm text-gray-900">
+                                            
                                             {product.updated_at ? new Date(product.updated_at).toLocaleString() : 'N/A'}
                                         </p>
                                     </div>
@@ -171,8 +172,8 @@ const ProductDetails: React.FC = () => {
                                     <div className='flex flex-col gap-2'>
 
 
-                                        <div className="bg-blue-50 p-4 rounded-lg">
-                                            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                                        <div className=" p-4 rounded-lg">
+                                            <h4 className="text-sm font-medium  uppercase tracking-wide mb-2">
                                                 Precio en Tienda
                                             </h4>
                                             <p className="text-xl font-semibold ">
@@ -180,12 +181,30 @@ const ProductDetails: React.FC = () => {
                                             </p>
                                         </div>
 
-                                        <div className="bg-purple-50 p-4 rounded-lg">
+                                        <div className=" p-4 rounded-lg ">
+                                            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                                                Cantidad
+                                            </h4>
+                                            <p className="text-lg font-semibold ">
+                                               x{(product.amount_requested || 0)}
+                                            </p>
+                                        </div>
+
+                                        <div className=" p-4 rounded-lg">
                                             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
                                                 Costo de Envío de Tienda
                                             </h4>
                                             <p className="text-lg font-semibold ">
-                                                ${(product.shop_delivery_cost || 0).toFixed(2)}
+                                                +${(product.shop_delivery_cost || 0).toFixed(2)}
+                                            </p>
+                                        </div>
+                                        
+                                        <div className="p-4 rounded-lg border-2 border-dotted">
+                                            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                                                total de producto
+                                            </h4>
+                                            <p className="text-lg font-semibold text-yellow-700">
+                                                =${(product.shop_cost*product.amount_requested+product.shop_delivery_cost || 0).toFixed(2)}
                                             </p>
                                         </div>
                                     </div>
@@ -197,7 +216,7 @@ const ProductDetails: React.FC = () => {
                                                 Impuesto en Tienda
                                             </h4>
                                             <p className="text-lg font-semibold text-yellow-700">
-                                                ${(product.shop_taxes || 0).toFixed(2)}
+                                                +${(product.shop_taxes || 0).toFixed(2)}
                                             </p>
                                         </div>
 
@@ -206,7 +225,7 @@ const ProductDetails: React.FC = () => {
                                                 Impuesto Adicional
                                             </h4>
                                             <p className="text-lg font-semibold text-yellow-700">
-                                                ${(product.added_taxes || 0).toFixed(2)}
+                                                +${(product.added_taxes || 0).toFixed(2)}
                                             </p>
                                         </div>
 
@@ -215,7 +234,7 @@ const ProductDetails: React.FC = () => {
                                                 Impuesto Propio
                                             </h4>
                                             <p className="text-lg font-semibold text-yellow-700">
-                                                ${(product.own_taxes || 0).toFixed(2)}
+                                                +${(product.own_taxes || 0).toFixed(2)}
                                             </p>
                                         </div>
 
@@ -226,7 +245,7 @@ const ProductDetails: React.FC = () => {
                                                 Impuestos Totales
                                             </h4>
                                             <p className="text-lg font-semibold text-red-700">
-                                                ${((product.shop_taxes || 0) + (product.own_taxes || 0) + (product.added_taxes || 0) + (product.own_taxes || 0)).toFixed(2)}
+                                                =${((product.shop_taxes || 0) + (product.own_taxes || 0) + (product.added_taxes || 0) + (product.own_taxes || 0)).toFixed(2)}
                                             </p>
                                         </div>
 
@@ -249,6 +268,7 @@ const ProductDetails: React.FC = () => {
                     </div>
                 </CardContent>
             </Card>
+
         </div>
     );
 };

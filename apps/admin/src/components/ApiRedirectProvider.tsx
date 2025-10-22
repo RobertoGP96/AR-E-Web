@@ -7,6 +7,7 @@
 
 import { type ReactNode } from 'react';
 import { useApiRedirect } from '@/hooks/useApiRedirect';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface ApiRedirectProviderProps {
   children: ReactNode;
@@ -17,7 +18,10 @@ interface ApiRedirectProviderProps {
  * Debe estar dentro del Router para tener acceso a useNavigate
  */
 export function ApiRedirectProvider({ children }: ApiRedirectProviderProps) {
-  useApiRedirect();
+  const { handleAuthStateChange } = useAuth();
+  
+  useApiRedirect(handleAuthStateChange);
+  
   return <>{children}</>;
 }
 

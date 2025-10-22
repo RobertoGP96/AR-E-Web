@@ -29,6 +29,7 @@ export interface UseAuthReturn {
   hasPermission: (permission: string) => boolean;
   hasRole: (role: string) => boolean;
   clearError: () => void;
+  handleAuthStateChange: (isAuthenticated: boolean) => void;
 }
 
 /**

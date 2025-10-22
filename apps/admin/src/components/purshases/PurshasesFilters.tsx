@@ -1,6 +1,7 @@
 import { Filter, Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
+import { PurchaseDialog } from './purchase-dialog';
 
 interface PurshasesFiltersProps {
   searchValue?: string;
@@ -9,14 +10,15 @@ interface PurshasesFiltersProps {
   onSearchChange?: (value: string) => void;
   onCategoryChange?: (value: string) => void;
   onStatusChange?: (value: string) => void;
+  onPurchaseCreated?: () => void;
 }
 
 export default function PurshasesFilters({
   searchValue = "",
   onSearchChange,
+  onPurchaseCreated,
 }: PurshasesFiltersProps) {
   return (
-
     <div className="flex flex-col sm:flex-row gap-4">
       <div className="flex-1">
         <div className="relative">
@@ -34,12 +36,15 @@ export default function PurshasesFilters({
         <Filter className="h-5 w-5 mr-2" />
         Filtrar
       </Button>
-      <Button
-        className="flex items-center gap-2 l border-0"
-      >
-        <Plus className="h-5 w-5" />
-        Registrar Compra
-      </Button>
+      <PurchaseDialog
+        trigger={
+          <Button className="flex items-center gap-2 border-0">
+            <Plus className="h-5 w-5" />
+            Crear Compra
+          </Button>
+        }
+        onSuccess={onPurchaseCreated}
+      />
     </div>
   );
 }

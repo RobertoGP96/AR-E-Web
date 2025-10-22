@@ -456,23 +456,27 @@ class ProductBuyed(models.Model):
     original_product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="buys"
     )
-    order = models.ForeignKey(
-        Order, on_delete=models.CASCADE, related_name="buyed_products"
-    )
     actual_cost_of_product = models.FloatField(default=0)
     shop_discount = models.FloatField(default=0)
     offer_discount = models.FloatField(default=0)
     buy_date = models.DateTimeField(default=timezone.now)
     shoping_receip = models.ForeignKey(
-        ShoppingReceip, on_delete=models.CASCADE, related_name="buyed_products"
+        ShoppingReceip, on_delete=models.CASCADE, related_name="buyed_products", null=True, blank=True
     )
     amount_buyed = models.IntegerField()
     observation = models.TextField(max_length=200, null=True, blank=True)
-    real_cost_of_product = models.FloatField()
+    real_cost_of_product = models.FloatField(default=0)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = models.Manager()
+
+    def save(self, *args, **kwargs):
+        # Si es una creación nueva, incrementar amount_purchased del producto original
+        if self.pk is None:
+            self.original_product.amount_purchased += self.amount_buyed
+            self.original_product.save(update_fields=['amount_purchased'])
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.original_product.name} - Comprado: {self.amount_buyed}"

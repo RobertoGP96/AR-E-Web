@@ -4,7 +4,7 @@
 
 import type { ID, DateTime, ShoppingStatus } from './base';
 import type { BuyingAccount } from './buying-account';
-import type { ProductBuyed } from './product-buyed';
+import type { ProductBuyed, CreateProductBuyedData } from './product-buyed';
 import type { Shop } from './shop';
 
 // Modelo principal
@@ -30,6 +30,7 @@ export interface CreateShoppingReceipData {
   shop_of_buy_id: ID;
   status_of_shopping?: ShoppingStatus;
   buy_date?: DateTime;
+  buyed_products?: CreateProductBuyedData[];
 }
 
 export interface UpdateShoppingReceipData extends Partial<CreateShoppingReceipData> {

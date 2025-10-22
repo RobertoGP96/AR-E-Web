@@ -71,12 +71,19 @@ let redirectToLoginCallback: (() => void) | null = null;
 // Callback para mostrar notificaciones (se puede configurar desde fuera)
 let showNotificationCallback: ((message: string, type: 'success' | 'error' | 'info' | 'warning') => void) | null = null;
 
+// Callback para actualizar el estado de autenticación (se puede configurar desde fuera)
+let authStateChangeCallback: ((isAuthenticated: boolean) => void) | null = null;
+
 export function setRedirectToLoginCallback(callback: () => void) {
   redirectToLoginCallback = callback;
 }
 
 export function setShowNotificationCallback(callback: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void) {
   showNotificationCallback = callback;
+}
+
+export function setAuthStateChangeCallback(callback: (isAuthenticated: boolean) => void) {
+  authStateChangeCallback = callback;
 }
 
 // Clase principal del API Client
@@ -171,11 +178,20 @@ export class ApiClient {
     // Limpiar token local
     this.clearAuthToken();
     
+    // Notificar cambio de estado de autenticación
+    if (authStateChangeCallback) {
+      authStateChangeCallback(false);
+    }
+    
     // Intentar refresh del token si existe refresh token
     const refreshToken = this.getRefreshToken();
     if (refreshToken) {
       try {
         await this.refreshAuthToken();
+        // Si el refresh fue exitoso, notificar que está autenticado nuevamente
+        if (authStateChangeCallback) {
+          authStateChangeCallback(true);
+        }
         return;
       } catch (refreshError) {
         console.error('Error refreshing token:', refreshError);
@@ -302,6 +318,10 @@ export class ApiClient {
     this.authToken = token;
     try {
       localStorage.setItem('access_token', token);
+      // Notificar que el usuario está autenticado
+      if (authStateChangeCallback) {
+        authStateChangeCallback(true);
+      }
     } catch (error) {
       console.warn('Error saving auth token:', error);
     }
@@ -315,6 +335,10 @@ export class ApiClient {
     try {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      // Notificar que el usuario ya no está autenticado
+      if (authStateChangeCallback) {
+        authStateChangeCallback(false);
+      }
     } catch (error) {
       console.warn('Error clearing auth token:', error);
     }
@@ -529,6 +553,11 @@ export class ApiClient {
       localStorage.setItem('refresh_token', authData.refresh_token);
     }
 
+    // Notificar que el usuario está autenticado (ya se hace en setAuthToken)
+    // if (authStateChangeCallback) {
+    //   authStateChangeCallback(true);
+    // }
+
     return authData;
   }
 
@@ -552,6 +581,10 @@ export class ApiClient {
       console.warn('Error during logout:', error);
     } finally {
       this.clearAuthToken();
+      // Notificar que el usuario ya no está autenticado (ya se hace en clearAuthToken)
+      // if (authStateChangeCallback) {
+      //   authStateChangeCallback(false);
+      // }
     }
   }
 

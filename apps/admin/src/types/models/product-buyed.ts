@@ -2,40 +2,30 @@
  * Tipos para el modelo ProductBuyed
  */
 
-import type { ID, UUID, DateTime } from './base';
-import type { Product } from './product';
-import type { Order } from './order';
+import type { ID, DateTime } from './base';
+
 import type { ShoppingReceip } from './shopping-receip';
 
 // Modelo principal
 export interface ProductBuyed {
   id: ID;
-  original_product: Product;
-  order: Order;
-  actual_cost_of_product: number;
-  shop_discount: number;
-  offer_discount: number;
-  buy_date: DateTime;
-  shoping_receip: ShoppingReceip;
+  product_id: string;
+  actual_cost_of_product?: number;
+  shop_discount?: number;
+  offer_discount?: number;
+  buy_date?: DateTime;
+  shopping_receip: ShoppingReceip;
   amount_buyed: number;
   observation?: string;
-  real_cost_of_product: number;
+  real_cost_of_product?: number;
   created_at: DateTime;
   updated_at: DateTime;
 }
 
 // Tipos para crear/editar producto comprado
 export interface CreateProductBuyedData {
-  original_product_id: UUID; // UUID porque Product usa UUID
-  order_id: ID;
-  actual_cost_of_product: number;
-  shop_discount?: number;
-  offer_discount?: number;
-  buy_date?: DateTime;
-  shoping_receip_id: ID;
-  amount_buyed: number;
-  observation?: string;
-  real_cost_of_product: number;
+  original_product: string; // Product ID
+  amount_buyed: number; 
 }
 
 export interface UpdateProductBuyedData extends Partial<CreateProductBuyedData> {

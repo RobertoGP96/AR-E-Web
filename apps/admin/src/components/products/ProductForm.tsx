@@ -237,6 +237,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
             order_id: orderId,
             description: finalDescription,
             amount_requested: qty,
+            link: newProduct.link,
             shop_cost: unit,
             total_cost: Number(computedTotal) || 0,
             // category: enviar el nombre de la categoría (la API espera nombre)

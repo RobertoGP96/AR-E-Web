@@ -8,13 +8,13 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { setRedirectToLoginCallback, setShowNotificationCallback } from '@/lib/api-client';
+import { setRedirectToLoginCallback, setShowNotificationCallback, setAuthStateChangeCallback } from '@/lib/api-client';
 
 /**
  * Hook que configura la redirección al login y las notificaciones
  * Debe ser usado en el componente raíz de la aplicación
  */
-export function useApiRedirect() {
+export function useApiRedirect(onAuthStateChange?: (isAuthenticated: boolean) => void) {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,12 +41,18 @@ export function useApiRedirect() {
       }
     });
 
+    // Configurar callback de cambio de estado de autenticación
+    if (onAuthStateChange) {
+      setAuthStateChangeCallback(onAuthStateChange);
+    }
+
     // Cleanup: restaurar al comportamiento por defecto
     return () => {
       setRedirectToLoginCallback(null as unknown as () => void);
       setShowNotificationCallback(null as unknown as (message: string, type: 'success' | 'error' | 'info' | 'warning') => void);
+      setAuthStateChangeCallback(null as unknown as (isAuthenticated: boolean) => void);
     };
-  }, [navigate]);
+  }, [navigate, onAuthStateChange]);
 }
 
 export default useApiRedirect;

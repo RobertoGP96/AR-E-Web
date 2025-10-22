@@ -551,17 +551,11 @@ class ProductBuyedSerializer(serializers.ModelSerializer):
         write_only=True,
     )
     original_product_details = serializers.SerializerMethodField(read_only=True)
-    order = serializers.SlugRelatedField(
-        queryset=Order.objects.all(),
-        slug_field="id",
-        error_messages={
-            "does_not_exist": "El pedido {value} no existe.",
-            "invalid": "El valor proporcionado para el pedido no es válido.",
-        },
-    )
+
     shoping_receip = serializers.SlugRelatedField(
         queryset=ShoppingReceip.objects.all(),
         slug_field="id",
+        required=False,
         error_messages={
             "does_not_exist": "El recibo de compra {value} no existe.",
             "invalid": "El valor proporcionado para el recibo no es válido.",
@@ -575,7 +569,6 @@ class ProductBuyedSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "original_product",
-            "order",
             "shoping_receip",
             "actual_cost_of_product",
             "amount_buyed",
@@ -610,6 +603,7 @@ class ProductBuyedSerializer(serializers.ModelSerializer):
 class ShoppingReceipSerializer(serializers.ModelSerializer):
     """
     Serializador para recibos de compra, incluye productos comprados y cálculo de costo total.
+    Permite crear un ShoppingReceip con sus ProductBuyed asociados.
     """
     """Shopping Receip Serializer"""
 
@@ -629,7 +623,7 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
             "invalid": "El valor proporcionado para la cuenta de compra no es válido.",
         },
     )
-    buyed_products = ProductBuyedSerializer(many=True, read_only=True)
+    buyed_products = ProductBuyedSerializer(many=True)
 
     total_cost_of_shopping = serializers.SerializerMethodField(read_only=True)
 
@@ -650,6 +644,21 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
             "buyed_products",
         ]
         read_only_fields = ["id"]
+
+    def create(self, validated_data):
+        buyed_products_data = validated_data.pop('buyed_products')
+        shopping_receip = super().create(validated_data)
+        
+        # Crear los ProductBuyed asociados y asignar el shopping_receip
+        for product_data in buyed_products_data:
+            # Si no se especifica buy_date, usar la del shopping_receip
+            if 'buy_date' not in product_data or product_data['buy_date'] is None:
+                product_data['buy_date'] = shopping_receip.buy_date
+            product_buyed = ProductBuyed.objects.create(**product_data)
+            product_buyed.shoping_receip = shopping_receip
+            product_buyed.save()
+        
+        return shopping_receip
 
 
 class ProductReceivedSerializer(serializers.ModelSerializer):
