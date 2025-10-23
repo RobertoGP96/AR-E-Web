@@ -642,6 +642,7 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
             "total_cost_of_shopping",
             "buy_date",
             "buyed_products",
+            "status_of_shopping"
         ]
         read_only_fields = ["id"]
 
