@@ -176,7 +176,7 @@ def notify_product_purchased(sender, instance, created, **kwargs):
     if created:
         # Notificar al agente
         Notification.create_notification(
-            recipient=instance.order.sales_manager,
+            recipient=instance.original_product.order.sales_manager,
             notification_type=NotificationType.PRODUCT_PURCHASED,
             title='Producto comprado',
             message=f'Se compró el producto "{instance.original_product.name}" ({instance.amount_buyed} unidades).',
@@ -185,22 +185,22 @@ def notify_product_purchased(sender, instance, created, **kwargs):
             action_url=f'/products/{instance.original_product.id}',
             metadata={
                 'product_id': str(instance.original_product.id),
-                'order_id': instance.order.id,
+                'order_id': instance.original_product.order.id,
                 'amount_buyed': instance.amount_buyed
             }
         )
         
         # Notificar al cliente
         Notification.create_notification(
-            recipient=instance.order.client,
+            recipient=instance.original_product.order.client,
             notification_type=NotificationType.PRODUCT_PURCHASED,
             title='Tu producto fue comprado',
-            message=f'El producto "{instance.original_product.name}" de tu orden #{instance.order.id} ha sido comprado.',
+            message=f'El producto "{instance.original_product.name}" de tu orden #{instance.original_product.order.id} ha sido comprado.',
             priority=NotificationPriority.NORMAL,
-            action_url=f'/orders/{instance.order.id}',
+            action_url=f'/orders/{instance.original_product.order.id}',
             metadata={
                 'product_id': str(instance.original_product.id),
-                'order_id': instance.order.id
+                'order_id': instance.original_product.order.id
             }
         )
         
@@ -215,7 +215,7 @@ def notify_product_purchased(sender, instance, created, **kwargs):
             action_url=f'/products/{instance.original_product.id}',
             metadata={
                 'product_id': str(instance.original_product.id),
-                'order_id': instance.order.id
+                'order_id': instance.original_product.order.id
             }
         )
 
