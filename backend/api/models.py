@@ -358,6 +358,14 @@ class Product(models.Model):
         """Verifica si se ha entregado toda la cantidad comprada"""
         return self.amount_delivered >= self.amount_purchased
 
+    @property
+    def total_received(self):
+        return sum(pr.amount_received for pr in self.delivers.all())
+
+    @property
+    def total_delivered(self):
+        return sum(pr.amount_delivered for pr in self.delivers.all())
+
     class Meta:
         ordering = ['-created_at']
 
@@ -475,7 +483,12 @@ class ProductBuyed(models.Model):
         # Si es una creación nueva, incrementar amount_purchased del producto original
         if self.pk is None:
             self.original_product.amount_purchased += self.amount_buyed
-            self.original_product.save(update_fields=['amount_purchased'])
+            # Verificar si se ha comprado toda la cantidad solicitada
+            if self.original_product.amount_purchased >= self.original_product.amount_requested:
+                self.original_product.status = OrderStatusEnum.COMPRADO.value
+                self.original_product.save(update_fields=['amount_purchased', 'status'])
+            else:
+                self.original_product.save(update_fields=['amount_purchased'])
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -517,6 +530,16 @@ class ProductReceived(models.Model):
 
     def __str__(self):
         return f"{self.original_product.name} - Recibido: {self.amount_received}"
+
+    @property
+    def total_received(self):
+        """Total amount received across all ProductReceived instances"""
+        return sum(pr.amount_received for pr in self.delivers.all())
+
+    @property
+    def total_delivered(self):
+        """Total amount delivered across all ProductReceived instances"""
+        return sum(pr.amount_delivered for pr in self.delivers.all())
 
     class Meta:
         ordering = ['-reception_date_in_eeuu']

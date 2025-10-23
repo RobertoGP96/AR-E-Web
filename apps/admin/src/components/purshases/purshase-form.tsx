@@ -22,7 +22,6 @@ import {
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { buyingAccountService, shoppingReceipService } from '@/services/api';
-import type { CreateShoppingReceipData } from '@/types/models/shopping-receip';
 import type { BuyingAccount, CreateProductBuyedData, Product } from '@/types/models';
 import { SHOPPING_STATUSES } from '@/types/models/base';
 import SelectedProductsForPurchase from '../products/selected-products-for-purchase';
@@ -109,14 +108,24 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
   const onSubmit = async (data: CreateShoppingReceipFormData) => {
     setIsSubmitting(true);
     try {
-      const payload: Omit<CreateShoppingReceipData, 'buyed_products'> = {
-        shop_of_buy_id: data.shop_of_buy_id,
-        shopping_account_id: data.shopping_account_id,
+      // Encontrar los nombres de la cuenta y tienda seleccionadas
+      const selectedAccount = buyingAccounts.find(account => account.id === data.shopping_account_id);
+      const selectedShop = shops.find(shop => shop.id === data.shop_of_buy_id);
+
+      if (!selectedAccount || !selectedShop) {
+        toast.error('Cuenta de compra o tienda no encontrada');
+        return;
+      }
+
+      const payload = {
+        shopping_account: selectedAccount.account_name,
+        shop_of_buy: selectedShop.name,
         status_of_shopping: data.status_of_shopping,
         buy_date: data.buy_date,
-      };
+        buyed_products: selectedProducts,
+      } as const;
 
-      await shoppingReceipService.createShoppingReceipt(payload);
+      await shoppingReceipService.createShoppingReceipt(payload as Partial<unknown>);
 
       toast.success('Recibo de compra creado exitosamente');
       form.reset();

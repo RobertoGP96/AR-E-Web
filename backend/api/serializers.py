@@ -591,7 +591,7 @@ class ProductBuyedSerializer(serializers.ModelSerializer):
                 "La cantidad comprada debe ser un número positivo."
             )
         if (
-            attrs["amount_buyed"] + attrs["original_product"].amount_buyed()
+            attrs["amount_buyed"] + attrs["original_product"].amount_purchased
             > attrs["original_product"].amount_requested
         ):
             raise serializers.ValidationError(
@@ -730,7 +730,7 @@ class ProductReceivedSerializer(serializers.ModelSerializer):
                 )
             if (
                 attrs["original_product"].amount_requested
-                < attrs["amount_received"] + attrs["original_product"].amount_received()
+                < attrs["amount_received"] + attrs["original_product"].total_received
             ):
                 raise serializers.ValidationError(
                     "La cantidad recibida no puede ser mayor a la solicitada."
