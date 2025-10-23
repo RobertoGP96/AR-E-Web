@@ -5,6 +5,12 @@ class OrderStatusEnum(str, Enum):
     PROCESANDO = "Procesando"
     COMPLETADO = "Completado"
     CANCELADO = "Cancelado"
+    
+class ProductStatusEnum(str, Enum):
+    ENCARGADO = "Encargado"
+    COMPRADO = "Comprado"
+    RECIBIDO = "Recibido"
+    ENTREGADO = "Entregado"
 
 class PaymentStatusEnum(str, Enum):
     NO_PAGADO = "No pagado"

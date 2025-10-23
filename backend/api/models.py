@@ -6,7 +6,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, Group, Permission
 from django.utils.translation import gettext_lazy as _
 from api.managers import CustomUserManager
-from api.enums import OrderStatusEnum, PaymentStatusEnum, DeliveryStatusEnum
+from api.enums import OrderStatusEnum, PaymentStatusEnum, DeliveryStatusEnum, ProductStatusEnum
 
 # Importar modelos de notificaciones para que Django los reconozca
 from api.models_notifications import Notification, NotificationPreference  # noqa
@@ -316,8 +316,8 @@ class Product(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="products")
     status = models.CharField(
         max_length=100,
-        choices=[(tag.value, tag.value) for tag in OrderStatusEnum],
-        default=OrderStatusEnum.ENCARGADO.value
+        choices=[(tag.value, tag.value) for tag in ProductStatusEnum],
+        default=ProductStatusEnum.ENCARGADO.value
     )
     product_pictures = models.ManyToManyField(EvidenceImages, blank=True)
 
@@ -485,7 +485,7 @@ class ProductBuyed(models.Model):
             self.original_product.amount_purchased += self.amount_buyed
             # Verificar si se ha comprado toda la cantidad solicitada
             if self.original_product.amount_purchased >= self.original_product.amount_requested:
-                self.original_product.status = OrderStatusEnum.COMPRADO.value
+                self.original_product.status = ProductStatusEnum.COMPRADO.value
                 self.original_product.save(update_fields=['amount_purchased', 'status'])
             else:
                 self.original_product.save(update_fields=['amount_purchased'])
