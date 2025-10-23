@@ -69,6 +69,18 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, selectable = false, is
                                 </h3>
                                 <QRLink link={product.link || 'https://arye-shipps.netlify.app'} />
                             </div>
+                            {order?.client && (
+                                <div className="flex items-center gap-2">
+                                    <Avatar className="h-6 w-6">
+                                        <AvatarFallback className="text-xs bg-blue-100 text-gray-700">
+                                            {order.client.full_name.charAt(0).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm text-gray-700 font-medium">
+                                        {order.client.full_name}
+                                    </span>
+                                </div>
+                            )}
                             {
                                 product.sku && (
                                     <Badge variant="secondary" className="text-xs">
@@ -114,18 +126,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, selectable = false, is
                                 {product.status}
                             </Badge>
 
-                            {order?.client && (
-                                <div className="flex items-center gap-2">
-                                    <Avatar className="h-6 w-6">
-                                        <AvatarFallback className="text-xs bg-blue-100 text-gray-700">
-                                            {order.client.full_name.charAt(0).toUpperCase()}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-sm text-gray-700 font-medium">
-                                        {order.client.full_name}
-                                    </span>
-                                </div>
-                            )}
+
                         </div>
                     </div>
                     {/* Costo total */}

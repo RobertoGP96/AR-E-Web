@@ -20,15 +20,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-
-import { useShops } from '@/hooks/useShops';
+import { Loader2 } from 'lucide-react';
 import { buyingAccountService, shoppingReceipService } from '@/services/api';
 import type { CreateShoppingReceipData } from '@/types/models/shopping-receip';
-import type { BuyingAccount, CreateProductBuyedData, ProductBuyed } from '@/types/models';
+import type { BuyingAccount, CreateProductBuyedData, Product } from '@/types/models';
 import { SHOPPING_STATUSES } from '@/types/models/base';
 import SelectedProductsForPurchase from '../products/selected-products-for-purchase';
 import { DatePicker } from '@/components/utils/DatePicker';
 import ProductBuyedShopping from '../products/buyed/product-buyed-shopping';
+import { useShops } from '@/hooks/useShops';
 
 // Schema de validación
 const createShoppingReceipSchema = z.object({
@@ -50,6 +50,22 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<CreateProductBuyedData[]>([]);
+
+  // Función para convertir Product a CreateProductBuyedData
+  const convertProductToCreateProductBuyed = (product: Product): CreateProductBuyedData => {
+    return {
+      original_product: product.id,
+      amount_buyed: product.amount_requested || 1,
+    };
+  };
+
+  // Función para manejar la confirmación de selección de productos
+  const handleProductsConfirmed = (products: Product[]) => {
+    const newProductBuyedList = products.map(product => 
+      convertProductToCreateProductBuyed(product)
+    );
+    setSelectedProducts(prevProducts => [...prevProducts, ...newProductBuyedList]);
+  };
   const { shops, isLoading: isLoadingShops } = useShops();
 
   const form = useForm<CreateShoppingReceipFormData>({
@@ -93,7 +109,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
   const onSubmit = async (data: CreateShoppingReceipFormData) => {
     setIsSubmitting(true);
     try {
-      const payload: CreateShoppingReceipData = {
+      const payload: Omit<CreateShoppingReceipData, 'buyed_products'> = {
         shop_of_buy_id: data.shop_of_buy_id,
         shopping_account_id: data.shopping_account_id,
         status_of_shopping: data.status_of_shopping,
@@ -104,6 +120,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
 
       toast.success('Recibo de compra creado exitosamente');
       form.reset();
+      setSelectedProducts([]);
       onSuccess?.();
     } catch (error) {
       console.error('Error creating shopping receipt:', error);
@@ -162,15 +179,28 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue className='min-w-[150px] truncate' placeholder={selectedShopId ? "Selecciona una cuenta de compra" : "Selecciona una tienda primero"} />
+                      {isLoadingAccounts ? (
+                        <div className="flex items-center">
+                          <span>Cargando cuentas...</span>
+                          <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                        </div>
+                      ) : (
+                        <SelectValue className='min-w-[150px] truncate' placeholder={selectedShopId ? "Selecciona una cuenta de compra" : "Selecciona una tienda primero"} />
+                      )}
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {buyingAccounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id.toString()}>
-                        {account.account_name}
+                    {buyingAccounts.length === 0 && !isLoadingAccounts ? (
+                      <SelectItem value="no-accounts" disabled>
+                        No hay cuentas disponibles para esta tienda
                       </SelectItem>
-                    ))}
+                    ) : (
+                      buyingAccounts.map((account) => (
+                        <SelectItem key={account.id} value={account.id.toString()}>
+                          {account.account_name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -227,6 +257,39 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
           />
 
         </div>
+
+
+        <div className='w-full'>
+          <div className='w-full flex flex-row nowrap  items-center justify-between'>
+
+            <h2 className="text-lg font-medium mt-6 mb-4">Productos Seleccionados para la Compra</h2>
+            <SelectedProductsForPurchase
+              filters={{ status: 'Encargado' }}
+              orderId={123}
+              shoppingReceiptId={456}
+              selectionMode={true}
+              onProductsConfirmed={handleProductsConfirmed}
+              onProductBuyedCreated={(productBuyed) => {
+                console.log('Producto comprado creado:', productBuyed);
+              }}
+            />
+          </div>
+
+          <div className='p-4 bg-gray-300/30 rounded-sm'>
+            {selectedProducts.length === 0 ? (
+              <p className="text-gray-500">No hay productos seleccionados para la compra.</p>
+            ) : (
+              <div>
+                {selectedProducts.map((productB) => (
+                  <ProductBuyedShopping key={productB.original_product} productB={productB} />
+                ))}
+              </div>
+            )}
+
+          </div>
+
+        </div>
+
         {/* Botones */}
         <div className="flex justify-end space-x-2">
           {onCancel && (
@@ -239,33 +302,6 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
           </Button>
         </div>
       </form>
-
-      <div>
-        <h2 className="text-lg font-medium mt-6 mb-4">Productos Seleccionados para la Compra</h2>
-
-          <div>
-            {selectedProducts.length === 0 ? (
-              <p className="text-gray-500">No hay productos seleccionados para la compra.</p>
-            ) : (
-              <div>
-
-                {selectedProducts.map((productB) => (
-                  <ProductBuyedShopping key={productB.original_product} productB={productB} />
-                ))}
-            </div>
-            )}
-
-          </div>
-
-      </div>
-      <SelectedProductsForPurchase
-        filters={{ status: 'Encargado' }}
-        orderId={123}
-        shoppingReceiptId={456}
-        onProductBuyedCreated={(productBuyed) => {
-          console.log('Producto comprado creado:', productBuyed);
-        }}
-      />
     </Form>
   );
 }

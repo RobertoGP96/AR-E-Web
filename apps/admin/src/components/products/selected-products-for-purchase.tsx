@@ -1,55 +1,47 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Loader2, ShoppingCart, Search, Filter } from 'lucide-react';
+import { Loader2, ShoppingCart, Search } from 'lucide-react';
 import { useProducts } from '@/hooks/product/useProducts';
 import { useCreateProductBuyed } from '@/hooks/product/useCreateProductBuyed';
-import { useShops } from '@/hooks/useShops';
 import type { Product } from '@/types/models';
 import type { ProductFilters } from '@/types/api';
 import type { ProductBuyed } from '@/types/models/product-buyed';
-import ProductRow from './product-row';
+import ProductSummaryRow from './buyed/product-summary-row';
 
 interface SelectedProductsForPurchaseProps {
   filters: ProductFilters;
   orderId: number;
   shoppingReceiptId: number;
+  shopId?: number;
   onProductBuyedCreated?: (productBuyed: ProductBuyed) => void;
+  onProductsConfirmed?: (products: Product[]) => void;
+  selectionMode?: boolean;
 }
 
 const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = ({
   filters,
   orderId,
   shoppingReceiptId,
+  shopId,
   onProductBuyedCreated,
+  onProductsConfirmed,
+  selectionMode = false,
 }) => {
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedShop, setSelectedShop] = useState<number | undefined>(undefined);
-  const [onlyPending, setOnlyPending] = useState(true);
-
-  const { shops, isLoading: isLoadingShops } = useShops();
 
   // Update filters based on internal state
   const updatedFilters: ProductFilters = useMemo(() => ({
     ...filters,
-    shop: selectedShop,
-    status: onlyPending ? 'Encargado' : undefined,
-  }), [filters, selectedShop, onlyPending]);
+    shop: shopId,
+    status: 'Encargado',
+  }), [filters, shopId]);
 
   const { products, isLoading, error } = useProducts(updatedFilters);
   const { createProductBuyed, isCreating } = useCreateProductBuyed();
@@ -67,6 +59,13 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
         ? prev.filter(p => p.id !== product.id)
         : [...prev, product]
     );
+  };
+
+  const handleConfirmSelection = () => {
+    if (selectionMode && onProductsConfirmed && selectedProducts.length > 0) {
+      onProductsConfirmed(selectedProducts);
+      setSelectedProducts([]); // Limpiar selección después de confirmar
+    }
   };
 
   const handleCreateProductBuyed = async () => {
@@ -125,13 +124,10 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
       <PopoverTrigger asChild>
         <Button variant="outline" className="flex items-center gap-2">
           <ShoppingCart className="h-4 w-4" />
-          Seleccionar Productos para Compra
-          {selectedProducts.length > 0 && (
-            <Badge variant="secondary">{selectedProducts.length}</Badge>
-          )}
+          Seleccionar Producto
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-96 max-h-96 overflow-y-auto">
+      <PopoverContent className="w-full min-w-[600px] max-h-[80vh] overflow-y-auto">
         <div className="space-y-4">
           {/* Filtros */}
           <div className="space-y-2">
@@ -144,46 +140,6 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
                 className="flex-1"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              <Select
-                value={selectedShop?.toString()}
-                onValueChange={(value) => setSelectedShop(value ? Number(value) : undefined)}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Seleccionar tienda" />
-                </SelectTrigger>
-                <SelectContent>
-                  {isLoadingShops ? (
-                    <SelectItem value="" disabled>
-                      <div className="flex items-center">
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Cargando tiendas...
-                      </div>
-                    </SelectItem>
-                  ) : (
-                    <>
-                      <SelectItem value="">Todas las tiendas</SelectItem>
-                      {shops.map((shop) => (
-                        <SelectItem key={shop.id} value={shop.id.toString()}>
-                          {shop.name}
-                        </SelectItem>
-                      ))}
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="only-pending"
-                checked={onlyPending}
-                onCheckedChange={(checked) => setOnlyPending(!!checked)}
-              />
-              <label htmlFor="only-pending" className="text-sm">
-                Solo productos no comprados completamente
-              </label>
-            </div>
           </div>
 
           {/* Lista de productos */}
@@ -194,23 +150,34 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
               </div>
             ) : (
               filteredProducts.map((product) => (
-                <ProductRow
+                <ProductSummaryRow
                   key={product.id}
                   product={product}
                   selectable={true}
-                  isSelected={selectedProducts.some(p => p.id === product.id)}
+                  isSelected={selectionMode ? false : selectedProducts.some(p => p.id === product.id)}
                   onSelect={handleSelectProduct}
                 />
               ))
             )}
           </div>
 
-          {/* Botón de crear */}
-          {selectedProducts.length > 0 && (
+          {/* Botón de crear/confirmar */}
+          {selectionMode ? (
+            <div className="flex justify-end pt-4 border-t">
+              <Button
+                onClick={handleConfirmSelection}
+                disabled={selectedProducts.length === 0}
+                className="flex items-center gap-2"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Agregar a Compra ({selectedProducts.length})
+              </Button>
+            </div>
+          ) : (
             <div className="flex justify-end pt-4 border-t">
               <Button
                 onClick={handleCreateProductBuyed}
-                disabled={isCreating}
+                disabled={isCreating || selectedProducts.length === 0}
                 className="flex items-center gap-2"
               >
                 {isCreating ? (

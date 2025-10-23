@@ -580,7 +580,7 @@ class ShoppingReceipViewSet(viewsets.ModelViewSet):
     """
     queryset = ShoppingReceip.objects.all()
     serializer_class = ShoppingReceipSerializer
-    permission_classes = [ReadOnly | BuyerPermission]
+    permission_classes = [ReadOnly | BuyerPermission | AdminPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['status_of_shopping', 'shopping_account', 'shop_of_buy']
     search_fields = ['shopping_account__account_name', 'shop_of_buy__name']
