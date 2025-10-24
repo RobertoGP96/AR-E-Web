@@ -16,7 +16,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import Categories from '@/pages/Categories';
 import ProductDetails from '@/components/products/product-details';
 import OrderDetails from '@/components/orders/order-details';
-import { PurchaseForm } from '@/components/purshases';
+import { PurchaseDetails } from '@/components/purshases';
 
 const AppRoutes = () => {
     return (
@@ -42,7 +42,7 @@ const AppRoutes = () => {
                 <Route path="products/:id" element={<ProductDetails />} />
                 
                 <Route path="purchases" element={<Purchases />} />
-                <Route path="purchases/:id" element={<PurchaseForm />} />
+                <Route path="purchases/:id" element={<PurchaseDetails />} />
 
                 <Route path="packages" element={<Packages />} />
                 

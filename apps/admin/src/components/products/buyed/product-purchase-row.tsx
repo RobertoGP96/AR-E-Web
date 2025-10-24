@@ -1,49 +1,27 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Store, Tag, Package, Box, Truck } from 'lucide-react';
+import { Store, Tag, Package, Box, Truck, ShoppingBag } from 'lucide-react';
 import { parseTagsFromDescriptionBlock } from '@/lib/tags';
-import type { CreateProductBuyedData } from '@/types/models/product-buyed';
+import type { ProductBuyed } from '@/types/models/product-buyed';
 import QRLink from '../qr-link';
-import { useProduct } from '@/hooks/product/useProduct';
-import { ButtonGroup } from '@/components/ui/button-group';
-import { Button } from '@/components/ui/button';
 
 interface ProductBuyedShoppingProps {
-    productB: CreateProductBuyedData;
+    product: ProductBuyed;
 }
 
-const ProductBuyedShopping: React.FC<ProductBuyedShoppingProps> = ({ productB }) => {
-    const { product } = useProduct(productB.original_product)
-    const [productBuyed, setProductBuyed] = useState<Partial<CreateProductBuyedData>>(() => ({
-        product_id: product?.id,
-        amount_buyed: product?.amount_requested || 1,
-    }));
-
-
-    const tags = parseTagsFromDescriptionBlock(product?.description);
-
-    const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = parseInt(e.target.value, 10);
-        if (!isNaN(value) && value >= 0) {
-            setProductBuyed(prev => ({
-                ...prev,
-                amount_buyed: value,
-                updated_at: new Date().toISOString(),
-            }));
-        }
-    };
+const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({ product }) => {
+    const tags = parseTagsFromDescriptionBlock(product.original_product_details.description);
 
     return (
         <Card className="py-1 w-full transition-all duration-200 hover:shadow-md">
             <CardContent className="p-4">
                 <div className="flex items-center space-x-4">
                     {/* Imagen del producto */}
-                    {product?.image_url ? (
+                    {product.original_product_details.image_url ? (
                         <img
-                            src={product?.image_url}
-                            alt={product?.name}
+                            src={product.original_product_details.image_url}
+                            alt={product.original_product_details.name}
                             className="w-16 h-16 object-contain rounded-lg border"
                         />
                     ) : (
@@ -57,13 +35,13 @@ const ProductBuyedShopping: React.FC<ProductBuyedShoppingProps> = ({ productB })
                         <div className="flex items-center justify-between mb-2">
                             <div className='flex flex-row items-center justify-center gap-3'>
                                 <h3 className="text-lg font-semibold text-gray-900 truncate capitalize">
-                                    {product?.name}
+                                    {product.original_product_details.name}
                                 </h3>
-                                <QRLink link={product?.link || 'https://arye-shipps.netlify.app'} />
+                                <QRLink link={product.original_product_details.link || 'https://arye-shipps.netlify.app'} />
                             </div>
-                            {product?.sku && (
+                            {product.original_product_details.sku && (
                                 <Badge variant="secondary" className="text-xs">
-                                    SKU: {product.sku}
+                                    SKU: {product.original_product_details.sku}
                                 </Badge>
                             )}
                         </div>
@@ -83,62 +61,47 @@ const ProductBuyedShopping: React.FC<ProductBuyedShoppingProps> = ({ productB })
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
                             <div className="flex items-center gap-1">
                                 <Store className="h-4 w-4" />
-                                {product?.shop}
+                                {product.original_product_details.shop}
                             </div>
 
-                            {product?.category && (
+                            {product.original_product_details.category && (
                                 <div className="flex items-center gap-1">
                                     <Tag className="h-4 w-4" />
-                                    {product?.category}
+                                    {product.original_product_details.category}
                                 </div>
                             )}
 
-                            {product?.amount_requested && (
+                            {product.original_product_details.amount_requested && (
                                 <div className="flex items-center gap-1">
                                     <Box className="h-4 w-4" />
-                                    {product.amount_requested}
+                                    {product.original_product_details.amount_requested}
+                                </div>
+                            )}
+
+                            {product.amount_buyed && (
+                                <div className="flex items-center gap-1">
+                                    <ShoppingBag className="h-4 w-4" />
+                                    {product.amount_buyed}
                                 </div>
                             )}
 
                             <Badge variant="outline" className="text-xs">
-                                {product?.status}
+                                {product.original_product_details.status}
                             </Badge>
                         </div>
                     </div>
 
                     {/* Cantidad y Costo total */}
                     <div className="flex flex-col items-end space-y-3">
-                        <div className='flex flex-row gap-1 justify-center items-center'>
-
-                            <label htmlFor={`quantity-${product?.id}`} className="text-sm font-medium">
-                                Cantidad:
-                            </label>
-                            <ButtonGroup>
-                                <Button type='button' disabled={productBuyed.amount_buyed === 1} variant="outline" onClick={()=>setProductBuyed({...productBuyed,
-                                    amount_buyed: productBuyed.amount_buyed as number-1
-                                })}>-</Button>
-                                <Input
-                                    id={`quantity-${product?.id}`}
-                                    type="number"
-                                    min="0"
-                                    value={productBuyed.amount_buyed ?? 1}
-                                    onChange={handleQuantityChange}
-                                    className="w-20"
-                                />
-                                <Button type='button' variant="outline" onClick={()=>setProductBuyed({...productBuyed,
-                                    amount_buyed: productBuyed.amount_buyed as number+1
-                                })}>+</Button>
-                            </ButtonGroup>
-                        </div>
                         {/* Costos */}
-                        <div className=" flex flex-row justify-center items-center gap-2 ">
+                        <div className=" flex flex-col justify-end items-center gap-2 ">
                             <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
                                 <Truck className="h-4 w-4" />
-                                <span>Envío: ${(product?.shop_delivery_cost || 0).toFixed(2)}</span>
+                                <span>Envío: ${(product.original_product_details.shop_delivery_cost || 0).toFixed(2)}</span>
                             </div>
                             <div className="flex items-center gap-1 text-lg font-semibold text-green-700">
                                 <Store className="h-4 w-4" />
-                                <span>${(product?.shop_cost || 0).toFixed(2)}</span>
+                                <span>${(product.original_product_details.shop_cost || 0).toFixed(2)}</span>
                             </div>
 
                         </div>
@@ -149,4 +112,4 @@ const ProductBuyedShopping: React.FC<ProductBuyedShoppingProps> = ({ productB })
     );
 };
 
-export default ProductBuyedShopping;
+export default ProductPurchaseRow;

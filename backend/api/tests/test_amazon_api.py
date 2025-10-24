@@ -8,7 +8,7 @@ import django
 from pathlib import Path
 
 # Configurar Django
-sys.path.append(str(Path(__file__).parent))
+sys.path.append(str(Path(__file__).parent.parent.parent))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
@@ -147,7 +147,7 @@ def test_url_validation():
 if __name__ == "__main__":
     test_url_validation()
     test_amazon_serializers()
-    # test_amazon_scraper()  # Comentado para evitar hacer scraping real en la prueba
+    test_amazon_scraper()  # Descomentado para probar scraping real
     
     print("\n=== RESUMEN ===")
     print("🔧 Para probar el scraping real, descomenta la línea test_amazon_scraper()")

@@ -6,7 +6,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, Group, Permission
 from django.utils.translation import gettext_lazy as _
 from api.managers import CustomUserManager
-from api.enums import OrderStatusEnum, PaymentStatusEnum, DeliveryStatusEnum, ProductStatusEnum
+from api.enums import OrderStatusEnum, PackageStatusEnum, PaymentStatusEnum, DeliveryStatusEnum, ProductStatusEnum
 
 # Importar modelos de notificaciones para que Django los reconozca
 from api.models_notifications import Notification, NotificationPreference  # noqa
@@ -415,6 +415,7 @@ class DeliverReceip(models.Model):
     deliver_picture = models.ManyToManyField(EvidenceImages, blank=True)
     weight_cost = models.FloatField(default=0)
     manager_profit = models.FloatField(default=0)
+    
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -440,8 +441,8 @@ class Package(models.Model):
     number_of_tracking = models.CharField(max_length=100, unique=True)
     status_of_processing = models.CharField(
         max_length=100,
-        choices=[(tag.value, tag.value) for tag in OrderStatusEnum],
-        default=OrderStatusEnum.ENCARGADO.value
+        choices=[(tag.value, tag.value) for tag in PackageStatusEnum],
+        default=PackageStatusEnum.ENVIADO.value
     )
     package_picture = models.ManyToManyField(EvidenceImages, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
@@ -499,30 +500,23 @@ class ProductBuyed(models.Model):
         verbose_name = "Producto Comprado"
         verbose_name_plural = "Productos Comprados"
 
+
 class ProductReceived(models.Model):
     """Received Products"""
 
     original_product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, related_name="delivers"
+        Product, on_delete=models.CASCADE, related_name="receiveds"
     )
-    order = models.ForeignKey(
-        Order, on_delete=models.CASCADE, related_name="recieved_products"
-    )
-    reception_date_in_eeuu = models.DateField(default=timezone.now)
-    reception_date_in_cuba = models.DateField(null=True, blank=True)
-    package_where_was_send = models.ForeignKey(
-        Package, on_delete=models.CASCADE, related_name="contained_products"
-    )
-    deliver_receip = models.ForeignKey(
-        DeliverReceip,
+    package = models.ForeignKey(
+        Package,
         on_delete=models.CASCADE,
-        related_name="delivered_products",
+        related_name="package_products",
         null=True,
         blank=True,
     )
-    amount_received = models.IntegerField()
-    amount_delivered = models.IntegerField(default=0)
+    amount_received = models.IntegerField(default=1)
     observation = models.TextField(max_length=200, null=True, blank=True)
+    
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -533,15 +527,49 @@ class ProductReceived(models.Model):
 
     @property
     def total_received(self):
-        """Total amount received across all ProductReceived instances"""
-        return sum(pr.amount_received for pr in self.delivers.all())
+        """Total amount received across all ProductReceived instances for this product"""
+        return sum(pr.amount_received for pr in self.original_product.receiveds.all())
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Producto Recibido"
+        verbose_name_plural = "Productos Recibidos"
+
+
+class ProductDelivery(models.Model):
+    """Received Products"""
+
+    original_product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="delivers"
+    )
+    
+    reception= models.DateField(null=True, blank=True)    
+    
+    deliver_receip = models.ForeignKey(
+        DeliverReceip,
+        on_delete=models.CASCADE,
+        related_name="delivered_products",
+        null=True,
+        blank=True,
+    )
+    
+    amount_delivered = models.IntegerField(default=0)
+        
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
+
+    def __str__(self):
+        return f"{self.original_product.name} - Recibido: {self.amount_delivered}"
+
 
     @property
     def total_delivered(self):
-        """Total amount delivered across all ProductReceived instances"""
-        return sum(pr.amount_delivered for pr in self.delivers.all())
+        """Total amount delivered across all ProductDelivery instances for this product"""
+        return sum(pd.amount_delivered for pd in self.original_product.delivers.all())
 
     class Meta:
-        ordering = ['-reception_date_in_eeuu']
-        verbose_name = "Producto Recibido"
-        verbose_name_plural = "Productos Recibidos"
+        ordering = ['-created_at']
+        verbose_name = "Producto Entregado"
+        verbose_name_plural = "Productos Entregados"

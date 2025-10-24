@@ -9,6 +9,7 @@ from typing import Dict, Optional, List
 from urllib.parse import urlparse, parse_qs
 import time
 import random
+import os
 
 
 class AmazonScraper:
@@ -16,15 +17,46 @@ class AmazonScraper:
     
     def __init__(self):
         self.session = requests.Session()
+        
+        # Lista de User-Agents para rotar
+        self.user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        ]
+        
+        # Lista de proxies (puedes añadir más o usar variables de entorno)
+        # Para configurar proxies, establece la variable de entorno AMAZON_SCRAPER_PROXIES
+        # Ejemplo: AMAZON_SCRAPER_PROXIES=http://proxy1:port,http://proxy2:port
+        self.proxies = []
+        proxy_env = os.getenv('AMAZON_SCRAPER_PROXIES', '')
+        if proxy_env:
+            self.proxies = proxy_env.split(',')
+        
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.5',
             'Accept-Encoding': 'gzip, deflate',
             'Connection': 'keep-alive',
             'Upgrade-Insecure-Requests': '1',
         }
+        
+        # Establecer User-Agent inicial
+        self._rotate_user_agent()
         self.session.headers.update(self.headers)
+
+    def _rotate_user_agent(self):
+        """Rota el User-Agent para evitar detección"""
+        self.headers['User-Agent'] = random.choice(self.user_agents)
+        self.session.headers.update({'User-Agent': self.headers['User-Agent']})
+
+    def _get_proxy(self):
+        """Obtiene un proxy aleatorio si hay disponibles"""
+        if self.proxies:
+            return {'http': random.choice(self.proxies), 'https': random.choice(self.proxies)}
+        return None
 
     def extract_asin_from_url(self, url: str) -> Optional[str]:
         """Extrae el ASIN de una URL de Amazon"""
@@ -141,39 +173,70 @@ class AmazonScraper:
 
     def scrape_product(self, url: str) -> Dict:
         """Scrape principal para obtener datos del producto o carrito"""
-        try:
-            # Añadir delay aleatorio para evitar detección
-            time.sleep(random.uniform(1, 3))
-            
-            # Realizar request
-            response = self.session.get(url, timeout=10)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            # Verificar si la página es válida
-            if 'robot check' in response.text.lower() or soup.select_one('.a-alert-error'):
+        
+        # Validar URL antes de proceder
+        if not self.validate_amazon_url(url):
+            return {
+                'success': False,
+                'error': 'URL de Amazon inválida o no soportada'
+            }
+        
+        max_retries = 3
+        
+        # Limpiar la URL antes de procesar
+        clean_url = self.clean_amazon_url(url)
+        
+        for attempt in range(max_retries):
+            try:
+                # Rotar User-Agent antes de cada intento
+                self._rotate_user_agent()
+                
+                # Añadir delay aleatorio mayor para evitar detección
+                delay = random.uniform(2, 5) + (attempt * 2)  # Delay aumenta con cada reintento
+                time.sleep(delay)
+                
+                # Obtener proxy
+                proxy = self._get_proxy()
+                
+                # Realizar request con proxy si disponible
+                response = self.session.get(clean_url, timeout=15, proxies=proxy)
+                response.raise_for_status()
+                
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Verificar si la página es válida
+                if 'robot check' in response.text.lower() or soup.select_one('.a-alert-error'):
+                    if attempt < max_retries - 1:
+                        continue  # Reintentar
+                    return {
+                        'success': False,
+                        'error': 'Página bloqueada por Amazon o página no encontrada'
+                    }
+                
+                # Verificar si es una URL de carrito
+                if self.is_cart_url(clean_url):
+                    return self.scrape_cart(clean_url, soup)
+                else:
+                    return self.scrape_single_product(clean_url, soup)
+                    
+            except requests.RequestException as e:
+                if attempt < max_retries - 1:
+                    continue  # Reintentar
                 return {
                     'success': False,
-                    'error': 'Página bloqueada por Amazon o página no encontrada'
+                    'error': f'Error de conexión después de {max_retries} intentos: {str(e)}'
                 }
-            
-            # Verificar si es una URL de carrito
-            if self.is_cart_url(url):
-                return self.scrape_cart(url, soup)
-            else:
-                return self.scrape_single_product(url, soup)
-                
-        except requests.RequestException as e:
-            return {
-                'success': False,
-                'error': f'Error de conexión: {str(e)}'
-            }
-        except Exception as e:
-            return {
-                'success': False,
-                'error': f'Error inesperado: {str(e)}'
-            }
+            except Exception as e:
+                return {
+                    'success': False,
+                    'error': f'Error inesperado: {str(e)}'
+                }
+        
+        # Si llega aquí, todos los intentos fallaron
+        return {
+            'success': False,
+            'error': 'No se pudo conectar después de múltiples intentos'
+        }
 
     def scrape_cart(self, url: str, soup: BeautifulSoup) -> Dict:
         """Scrape específico para carritos de Amazon"""
@@ -300,12 +363,66 @@ class AmazonScraper:
                 'error': f'Error procesando producto: {str(e)}'
             }
 
+    def clean_amazon_url(self, url: str) -> str:
+        """Limpia la URL de Amazon removiendo parámetros de tracking innecesarios"""
+        try:
+            from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
+            
+            parsed = urlparse(url)
+            
+            # Mantener solo parámetros esenciales
+            query_params = parse_qs(parsed.query)
+            essential_params = {}
+            
+            # Mantener parámetros importantes para productos
+            if 'dp' in parsed.path or 'gp/product' in parsed.path:
+                # Para productos, mantener algunos parámetros básicos
+                essential_keys = ['tag', 'linkCode', 'camp', 'creative', 'creativeASIN']
+                for key in essential_keys:
+                    if key in query_params:
+                        essential_params[key] = query_params[key]
+            
+            # Reconstruir query string
+            if essential_params:
+                query_string = urlencode(essential_params, doseq=True)
+            else:
+                query_string = ''
+            
+            # Reconstruir URL limpia
+            clean_url = urlunparse((
+                parsed.scheme,
+                parsed.netloc,
+                parsed.path,
+                parsed.params,
+                query_string,
+                parsed.fragment
+            ))
+            
+            return clean_url
+            
+        except Exception:
+            return url
+
     def validate_amazon_url(self, url: str) -> bool:
-        """Valida si la URL es de Amazon"""
+        """Valida si la URL es de Amazon y parece válida"""
         try:
             parsed = urlparse(url)
             amazon_domains = ['amazon.com', 'amazon.es', 'amazon.co.uk', 'amazon.de', 'amazon.fr', 'amazon.it']
-            return any(domain in parsed.netloc for domain in amazon_domains)
+            
+            # Verificar dominio
+            if not any(domain in parsed.netloc for domain in amazon_domains):
+                return False
+            
+            # Verificar que tenga un path válido (productos o carritos)
+            if not parsed.path or parsed.path == '/':
+                return False
+                
+            # Verificar que no sea una URL de búsqueda general
+            if '/s/' in parsed.path and 'field-keywords' in parsed.query:
+                return False
+                
+            return True
+            
         except Exception:
             return False
 
@@ -438,8 +555,11 @@ class AmazonScraper:
                 
                 product_data['image'] = image_url
                 
-                # Generar URL del producto
-                product_data['url'] = f"https://amazon.com/dp/{asin}"
+                # Generar URL del producto usando el dominio correcto
+                if asin:
+                    product_data['url'] = f"https://www.amazon.com/dp/{asin}"
+                else:
+                    product_data['url'] = ""
                 
                 products.append(product_data)
                 

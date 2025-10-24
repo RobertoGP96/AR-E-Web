@@ -36,6 +36,7 @@ from api.permissions.permissions import (
     LogisticalPermission,
 )
 from api.serializers import (
+    ProductDeliverySerializer,
     ShoppingReceipSerializer,
     UserSerializer,
     UserProfileSerializer,
@@ -61,6 +62,7 @@ from api.models import (
     Product,
     ShoppingReceip,
     ProductReceived,
+    ProductDelivery,
     Package,
     DeliverReceip,
     EvidenceImages,
@@ -732,10 +734,10 @@ class ProductReceivedViewSet(viewsets.ModelViewSet):
     serializer_class = ProductReceivedSerializer
     permission_classes = [ReadOnly | LogisticalPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['order', 'original_product', 'package_where_was_send', 'deliver_receip']
-    search_fields = ['original_product__name', 'original_product__sku', 'package_where_was_send__number_of_tracking']
-    ordering_fields = ['reception_date_in_eeuu', 'reception_date_in_cuba', 'created_at']
-    ordering = ['-reception_date_in_eeuu']
+    filterset_fields = ['original_product', 'package']
+    search_fields = ['original_product__name', 'original_product__sku', 'package__number_of_tracking']
+    ordering_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
 
     @extend_schema(
         summary="Registrar productos recibidos",
@@ -747,12 +749,12 @@ class ProductReceivedViewSet(viewsets.ModelViewSet):
         with transaction.atomic():
             try:
                 if "contained_products" in request.data and (
-                    "package_where_was_send" in request.data
+                    "package" in request.data
                 ):
                     contained_products = request.data["contained_products"]
                     for product in contained_products:
-                        product["package_where_was_send"] = request.data[
-                            "package_where_was_send"
+                        product["package"] = request.data[
+                            "package"
                         ]
                         product_serializer = ProductReceivedSerializer(data=product)
                         product_serializer.is_valid(raise_exception=True)
@@ -776,13 +778,13 @@ class ProductReceivedViewSet(viewsets.ModelViewSet):
             try:
                 if "delivered_products" in request.data and (
                     "deliver_receip" in request.data
-                    and not "package_where_was_send" in request.data
                 ):
                     delivered_products = request.data["delivered_products"]
                     for product in delivered_products:
 
                         instance = ProductReceived.objects.get(id=product["id"])
-                        product["deliver_receip"] = request.data["deliver_receip"]
+                        # Note: ProductReceived doesn't have deliver_receip field
+                        # This might need to be moved to ProductDeliveryViewSet
                         product_serializer = ProductReceivedSerializer(
                             instance, data=product, partial=True
                         )
@@ -790,12 +792,81 @@ class ProductReceivedViewSet(viewsets.ModelViewSet):
                         product_serializer.save()
                         print(product_serializer.data)
                     return Response(
-                        {"Message": "Product Creation success"},
-                        status=status.HTTP_201_CREATED,
+                        {"Message": "Product Update success"},
+                        status=status.HTTP_200_OK,
                     )
                 raise ValidationError("Argumentos incompletos o incorrectos")
             except Exception as e:
                 raise ValidationError(f"Error al procesar productos: {str(e)}") from e
+
+
+
+class ProductDeliveryViewSet(viewsets.ModelViewSet):
+    """
+    Gestión de productos entregados.
+    Soporta filtrado por orden, producto y recibo de entrega.
+    """
+    queryset = ProductDelivery.objects.all()
+    serializer_class = ProductDeliverySerializer
+    permission_classes = [ReadOnly | LogisticalPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['original_product', 'deliver_receip']
+    search_fields = ['original_product__name', 'original_product__sku', 'deliver_receip__id']
+    ordering_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+
+    @extend_schema(
+        summary="Registrar productos entregados",
+        description="Crea registros de productos entregados y los asocia a un recibo de entrega.",
+        responses={201: ProductDeliverySerializer},
+        tags=["Productos entregados"]
+    )
+    def create(self, request, *args, **kwargs):
+        with transaction.atomic():
+            try:
+                if "delivered_products" in request.data and (
+                    "deliver_receip" in request.data
+                ):
+                    delivered_products = request.data["delivered_products"]
+                    for product in delivered_products:
+                        product["deliver_receip"] = request.data["deliver_receip"]
+                        product_serializer = ProductDeliverySerializer(data=product)
+                        product_serializer.is_valid(raise_exception=True)
+                        product_serializer.save()
+                return Response(
+                    {"Message": "Product Delivery Creation success"},
+                    status=status.HTTP_201_CREATED,
+                )
+            except Exception as e:
+                raise ValidationError(f"Error al procesar entregas: {str(e)}") from e
+
+    @extend_schema(
+        summary="Actualizar entregas",
+        description="Actualiza registros de productos entregados.",
+        responses={200: ProductDeliverySerializer},
+        tags=["Productos entregados"]
+    )
+    @action(detail=False, methods=["patch"], permission_classes=[IsAuthenticated])
+    def update_deliveries(self, request):
+        with transaction.atomic():
+            try:
+                if "delivered_products" in request.data:
+                    delivered_products = request.data["delivered_products"]
+                    for product in delivered_products:
+                        instance = ProductDelivery.objects.get(id=product["id"])
+                        product_serializer = ProductDeliverySerializer(
+                            instance, data=product, partial=True
+                        )
+                        product_serializer.is_valid(raise_exception=True)
+                        product_serializer.save()
+                    return Response(
+                        {"Message": "Product Delivery Update success"},
+                        status=status.HTTP_200_OK,
+                    )
+                raise ValidationError("Argumentos incompletos")
+            except Exception as e:
+                raise ValidationError(f"Error al actualizar entregas: {str(e)}") from e
+
 
 
 class PackageViewSet(viewsets.ModelViewSet):

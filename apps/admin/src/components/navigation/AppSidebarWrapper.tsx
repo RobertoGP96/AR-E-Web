@@ -1,6 +1,7 @@
 import { AsideNav } from './AsideNav';
 import { useLocation} from 'react-router-dom';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
+import { BreadcrumbNavigation } from './BreadcrumbNavigation';
 
 interface AppSidebarWrapperProps {
   children: React.ReactNode;
@@ -35,6 +36,7 @@ export function AppSidebarWrapper({ children }: AppSidebarWrapperProps) {
         <header className="flex h-20 shrink-0 items-center gap-4 px-6 bg-background/95 backdrop-blur-sm shadow-sm border-0 w-full border-b border-border">
           {/* Título de la página */}
           <div className="flex items-center min-w-0 flex-1">
+            <BreadcrumbNavigation />
             <div className="min-w-0 flex-1">
               <h2 className="text-xl font-bold text-gray-800 truncate">
                 {navigation.find(item => isActive(item.href))?.name || 'Dashboard'}

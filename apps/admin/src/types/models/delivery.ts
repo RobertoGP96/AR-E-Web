@@ -5,7 +5,7 @@
 import type { ID, DateTime, DeliveryStatus } from './base';
 import type { Order } from './order';
 import type { EvidenceImage } from './evidence';
-import type { ProductReceived } from './product-received';
+import type { ProductDelivery } from './product-delivery';
 
 // Modelo principal
 export interface DeliverReceip {
@@ -22,7 +22,7 @@ export interface DeliverReceip {
   
   // Propiedades computadas
   total_cost_of_deliver: number;
-  delivered_products?: ProductReceived[];
+  delivered_products?: ProductDelivery[]; // Cambiado a ProductDelivery
   
   // Timestamps
   created_at: DateTime;

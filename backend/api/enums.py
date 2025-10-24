@@ -22,3 +22,8 @@ class DeliveryStatusEnum(str, Enum):
     EN_TRANSITO = "En transito"
     ENTREGADO = "Entregado"
     FALLIDA = "Fallida"
+
+class PackageStatusEnum(str, Enum):
+    ENVIADO = "Enviado"
+    RECIBIDO = "Recibido"
+    PROCESADO = "Procesado"

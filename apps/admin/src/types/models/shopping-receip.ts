@@ -3,16 +3,15 @@
  */
 
 import type { ID, DateTime, ShoppingStatus } from './base';
-import type { BuyingAccount } from './buying-account';
 import type { ProductBuyed, CreateProductBuyedData } from './product-buyed';
-import type { Shop } from './shop';
+
 
 // Modelo principal
 export interface ShoppingReceip {
   id: ID;
-  shopping_account: BuyingAccount;
-  shop_of_buy: Shop;
-  status_of_shopping: ShoppingStatus;
+  shopping_account: string;
+  shop_of_buy: string;
+  status_of_shopping: string;
   buy_date: DateTime;
   
   // Propiedades computadas
@@ -31,6 +30,7 @@ export interface CreateShoppingReceipData {
   status_of_shopping?: ShoppingStatus;
   buy_date?: DateTime;
   buyed_products?: CreateProductBuyedData[];
+  total_cost_of_shopping: number;
 }
 
 export interface UpdateShoppingReceipData extends Partial<CreateShoppingReceipData> {

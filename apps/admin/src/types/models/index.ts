@@ -113,6 +113,13 @@ export type {
   UpdateProductReceivedData
 } from './product-received';
 
+// Modelo de Producto entregado
+export type {
+  ProductDelivery,
+  CreateProductDeliveryData,
+  UpdateProductDeliveryData
+} from './product-delivery';
+
 // Estadísticas del dashboard
 export type {
   DashboardStats

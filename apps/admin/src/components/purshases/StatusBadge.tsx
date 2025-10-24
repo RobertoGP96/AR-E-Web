@@ -1,5 +1,5 @@
 import React from "react";
-import { XCircle, CheckCircle,PackageCheck, HelpCircle, Circle } from "lucide-react";
+import { XCircle, CheckCircle, HelpCircle, Circle } from "lucide-react";
 
 interface StatusBadgeProps {
     status: string;
@@ -17,15 +17,10 @@ const statusConfig: Record<string, { color: string; label: string; icon: React.R
         label: "Pagado",
         icon: <CheckCircle className="inline-block mr-1 h-4 w-4" />,
     },
-    "Procesando": {
+    "Parcial": {
         color: "bg-yellow-400 text-black",
-        label: "Procesando",
+        label: "Parcial",
         icon: <Circle className="inline-block mr-1 h-4 w-4" />,
-    },
-    "Entregado": {
-        color: "bg-blue-500 text-white",
-        label: "Entregado",
-        icon: <PackageCheck className="inline-block mr-1 h-4 w-4" />,
     },
 };
 

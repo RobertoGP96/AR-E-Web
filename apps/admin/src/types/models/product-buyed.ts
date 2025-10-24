@@ -3,6 +3,7 @@
  */
 
 import type { ID, DateTime } from './base';
+import type { Product } from './product';
 
 import type { ShoppingReceip } from './shopping-receip';
 
@@ -20,6 +21,7 @@ export interface ProductBuyed {
   real_cost_of_product?: number;
   created_at: DateTime;
   updated_at: DateTime;
+  original_product_details: Product;
 }
 
 // Tipos para crear/editar producto comprado

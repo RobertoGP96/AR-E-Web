@@ -11,6 +11,7 @@ from api.models import (
     Package,
     ProductBuyed,
     ProductReceived,
+    ProductDelivery,
     Order,
     EvidenceImages,
     Category,
@@ -661,12 +662,30 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
         
         return shopping_receip
 
+    def update(self, instance, validated_data):
+        buyed_products_data = validated_data.pop('buyed_products', [])
+        shopping_receip = super().update(instance, validated_data)
+        
+        # Eliminar los ProductBuyed existentes
+        shopping_receip.buyed_products.all().delete()
+        
+        # Crear los nuevos ProductBuyed asociados
+        for product_data in buyed_products_data:
+            # Si no se especifica buy_date, usar la del shopping_receip
+            if 'buy_date' not in product_data or product_data['buy_date'] is None:
+                product_data['buy_date'] = shopping_receip.buy_date
+            product_buyed = ProductBuyed.objects.create(**product_data)
+            product_buyed.shoping_receip = shopping_receip
+            product_buyed.save()
+        
+        return shopping_receip
+
 
 class ProductReceivedSerializer(serializers.ModelSerializer):
     """
-    Serializador para productos recibidos y entregados por logística, con validaciones de cantidad y detalles del producto.
+    Serializador para productos recibidos por logística, con validaciones de cantidad y detalles del producto.
     """
-    """Product delivered and received by the logistical"""
+    """Product received by the logistical"""
 
     original_product = serializers.SlugRelatedField(
         queryset=Product.objects.all(),
@@ -680,15 +699,8 @@ class ProductReceivedSerializer(serializers.ModelSerializer):
     original_product_detail = ProductSerializer(
         source="original_product", read_only=True
     )
-    order = serializers.SlugRelatedField(
-        queryset=Order.objects.all(),
-        slug_field="id",
-        error_messages={
-            "does_not_exist": "El pedido {value} no existe.",
-            "invalid": "El valor proporcionado para el pedido no es válido.",
-        },
-    )
-    package_where_was_send = serializers.SlugRelatedField(
+    
+    package = serializers.SlugRelatedField(
         queryset=Package.objects.all(),
         slug_field="id",
         error_messages={
@@ -696,15 +708,7 @@ class ProductReceivedSerializer(serializers.ModelSerializer):
             "invalid": "El valor proporcionado para el paquete no es válido.",
         },
     )
-    deliver_receip = serializers.SlugRelatedField(
-        queryset=DeliverReceip.objects.all(),
-        slug_field="id",
-        error_messages={
-            "does_not_exist": "El recibo de entrega {value} no existe.",
-            "invalid": "El valor proporcionado para el recibo de entrega no es válido.",
-        },
-        required=False,
-    )
+    
 
     class Meta:
         model = ProductReceived
@@ -712,14 +716,11 @@ class ProductReceivedSerializer(serializers.ModelSerializer):
             "id",
             "original_product",
             "original_product_detail",
-            "order",
-            "reception_date_in_eeuu",
-            "reception_date_in_cuba",
-            "package_where_was_send",
-            "deliver_receip",
+            "package",
             "amount_received",
-            "amount_delivered",
             "observation",
+            "created_at",
+            "updated_at"
         ]
         read_only_fields = ["id"]
 
@@ -736,22 +737,66 @@ class ProductReceivedSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "La cantidad recibida no puede ser mayor a la solicitada."
                 )
-        if attrs.get("amount_delivered") and self.instance:
-            print(self.instance.original_product)
+        return attrs
+    
+    
+    
+class ProductDeliverySerializer(serializers.ModelSerializer):
+    """
+    Serializador para productos entregados con validaciones de cantidad y detalles del producto.
+    """
+    """Product delivered and received by the logistical"""
+
+    original_product = serializers.SlugRelatedField(
+        queryset=Product.objects.all(),
+        slug_field="id",
+        error_messages={
+            "does_not_exist": "El producto {value} no existe.",
+            "invalid": "El valor proporcionado para el producto no es válido.",
+        },
+        write_only=True,
+    )
+    original_product_detail = ProductSerializer(
+        source="original_product", read_only=True
+    )
+   
+    deliver_receip = serializers.SlugRelatedField(
+        queryset=DeliverReceip.objects.all(),
+        slug_field="id",
+        error_messages={
+            "does_not_exist": "El recibo de entrega {value} no existe.",
+            "invalid": "El valor proporcionado para el recibo de entrega no es válido.",
+        },
+        required=False,
+    )
+
+    class Meta:
+        model = ProductDelivery
+        fields = [
+            "id",
+            "original_product",
+            "original_product_detail",
+            "deliver_receip",
+            "amount_delivered",
+            "reception",
+            "created_at",
+            "updated_at"
+        ]
+        read_only_fields = ["id"]
+
+    def validate(self, attrs):
+        if attrs.get("amount_delivered") and attrs.get("original_product"):
             if attrs["amount_delivered"] <= 0:
                 raise serializers.ValidationError(
-                    f"La cantidad entregada debe ser un número positivo en el producto {self.instance.original_product.id}."
+                    "La cantidad entregada debe ser un número positivo."
                 )
-            print(attrs["amount_delivered"])
-            if (
-                self.instance.amount_received
-                < attrs["amount_delivered"]
-                + self.instance.original_product.amount_delivered()
-            ):
+            total_received = sum(pr.amount_received for pr in attrs["original_product"].receiveds.all())
+            if total_received < attrs["amount_delivered"] + attrs["original_product"].amount_delivered:
                 raise serializers.ValidationError(
-                    f"La cantidad entregada no puede ser mayor a la recibida en el producto {self.instance.original_product.id}."
+                    "La cantidad entregada no puede ser mayor a la recibida."
                 )
         return attrs
+    #-----------------------------------------------------------------------------------
 
 
 class DeliverReceipSerializer(serializers.ModelSerializer):
@@ -820,7 +865,7 @@ class PackageSerializer(serializers.ModelSerializer):
             "invalid": "El valor proporcionado para el pedido no es válido.",
         },
     )
-    contained_products = ProductReceivedSerializer(many=True, read_only=True)
+    contained_products = ProductReceivedSerializer(many=True)
 
     class Meta:
         model = Package
@@ -835,6 +880,13 @@ class PackageSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def create(self, validated_data):
+        contained_products_data = validated_data.pop('contained_products')
+        package = Package.objects.create(**validated_data)
+        for product_data in contained_products_data:
+            ProductReceived.objects.create(package=package, **product_data)
+        return package
 
 
 # Serializers para Amazon Scraping

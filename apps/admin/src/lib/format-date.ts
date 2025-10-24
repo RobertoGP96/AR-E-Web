@@ -28,3 +28,13 @@ export const formatDateTime = (date: string | Date): string => {
     minute: '2-digit'
   });
 };
+
+
+export const formatDayMonth = (date: string | Date): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(dateObj.getTime())) return '';
+  return dateObj.toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: 'long'
+  });
+};

@@ -23,7 +23,7 @@ import {
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { buyingAccountService, shoppingReceipService } from '@/services/api';
-import type { BuyingAccount, CreateProductBuyedData, Product } from '@/types/models';
+import type { BuyingAccount, CreateProductBuyedData, Product, ShoppingReceip } from '@/types/models';
 import { SHOPPING_STATUSES } from '@/types/models/base';
 import SelectedProductsForPurchase from '../products/selected-products-for-purchase';
 import { DatePicker } from '@/components/utils/DatePicker';
@@ -31,7 +31,7 @@ import ProductBuyedShopping from '../products/buyed/product-buyed-shopping';
 import { useShops } from '@/hooks/useShops';
 
 // Schema de validación
-const createShoppingReceipSchema = z.object({
+const editShoppingReceipSchema = z.object({
   shop_of_buy_id: z.number().min(1, 'Debes seleccionar una tienda'),
   shopping_account_id: z.number().min(1, 'Debes seleccionar una cuenta de compra').optional(),
   status_of_shopping: z.enum(['No pagado', 'Pagado', 'Parcial']).optional(),
@@ -39,18 +39,20 @@ const createShoppingReceipSchema = z.object({
   total_cost_of_shopping: z.number().optional(),
 });
 
-type CreateShoppingReceipFormData = z.infer<typeof createShoppingReceipSchema>;
+type EditShoppingReceipFormData = z.infer<typeof editShoppingReceipSchema>;
 
-interface PurchaseFormProps {
+interface EditPurchaseFormProps {
+  receipt: ShoppingReceip;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
+export function EditPurchaseForm({ receipt, onSuccess, onCancel }: EditPurchaseFormProps) {
   const [buyingAccounts, setBuyingAccounts] = useState<BuyingAccount[]>([]);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<CreateProductBuyedData[]>([]);
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
   // Función para convertir Product a CreateProductBuyedData
   const convertProductToCreateProductBuyed = (product: Product): CreateProductBuyedData => {
@@ -67,10 +69,11 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
     );
     setSelectedProducts(prevProducts => [...prevProducts, ...newProductBuyedList]);
   };
+
   const { shops, isLoading: isLoadingShops } = useShops();
 
-  const form = useForm<CreateShoppingReceipFormData>({
-    resolver: zodResolver(createShoppingReceipSchema),
+  const form = useForm<EditShoppingReceipFormData>({
+    resolver: zodResolver(editShoppingReceipSchema),
     defaultValues: {
       shop_of_buy_id: undefined,
       shopping_account_id: undefined,
@@ -79,6 +82,41 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
       total_cost_of_shopping: undefined,
     },
   });
+
+  // Cargar cuentas iniciales para el receipt
+  useEffect(() => {
+    if (receipt && shops.length > 0 && !initialDataLoaded) {
+      const shop = shops.find(s => s.name === receipt.shop_of_buy.name);
+      if (shop) {
+        loadBuyingAccounts(shop.id).then(() => {
+          setInitialDataLoaded(true);
+        });
+      }
+    }
+  }, [receipt, shops, initialDataLoaded]);
+
+  // Resetear form cuando las cuentas iniciales estén cargadas
+  useEffect(() => {
+    if (receipt && initialDataLoaded && buyingAccounts.length > 0) {
+      const shop = shops.find(s => s.name === receipt.shop_of_buy.name);
+      const account = buyingAccounts.find(a => a.account_name === receipt.shopping_account.account_name);
+      form.reset({
+        shop_of_buy_id: shop?.id,
+        shopping_account_id: account?.id,
+        status_of_shopping: receipt.status_of_shopping as 'No pagado' | 'Pagado' | 'Parcial',
+        buy_date: receipt.buy_date,
+        total_cost_of_shopping: receipt.total_cost_of_shopping,
+      });
+
+      // Prellenar productos existentes
+      if (receipt.buyed_products) {
+        setSelectedProducts(receipt.buyed_products.map(pb => ({
+          original_product: pb.product_id,
+          amount_buyed: pb.amount_buyed,
+        })));
+      }
+    }
+  }, [receipt, shops, buyingAccounts, form, initialDataLoaded]);
 
   // Cargar cuentas de compra cuando se selecciona una tienda
   const selectedShopId = form.watch('shop_of_buy_id');
@@ -109,7 +147,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
     }
   };
 
-  const onSubmit = async (data: CreateShoppingReceipFormData) => {
+  const onSubmit = async (data: EditShoppingReceipFormData) => {
     setIsSubmitting(true);
     try {
       // Encontrar los nombres de la cuenta y tienda seleccionadas
@@ -128,17 +166,15 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
         buy_date: data.buy_date,
         total_cost_of_shopping: data.total_cost_of_shopping,
         buyed_products: selectedProducts,
-      } as const;
+      };
 
-      await shoppingReceipService.createShoppingReceipt(payload as Partial<unknown>);
+      await shoppingReceipService.updateShoppingReceipt(receipt.id, payload as Partial<unknown>);
 
-      toast.success('Recibo de compra creado exitosamente');
-      form.reset();
-      setSelectedProducts([]);
+      toast.success('Recibo de compra actualizado exitosamente');
       onSuccess?.();
     } catch (error) {
-      console.error('Error creating shopping receipt:', error);
-      toast.error('Error al crear el recibo de compra');
+      console.error('Error updating shopping receipt:', error);
+      toast.error('Error al actualizar el recibo de compra');
     } finally {
       setIsSubmitting(false);
     }
@@ -235,7 +271,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
             name="status_of_shopping"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Estado de Compra (Opcional)</FormLabel>
+                <FormLabel>Estado de Compra</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   value={field.value}
@@ -266,7 +302,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
               <FormItem>
                 <FormControl>
                   <DatePicker
-                    label="Fecha de Compra (Opcional)"
+                    label="Fecha de Compra"
                     placeholder="Selecciona la fecha"
                     value={field.value ? new Date(field.value) : undefined}
                     onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : undefined)}
@@ -280,7 +316,26 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
         </div>
 
 
-
+        {/* Costo total de la compra */}
+        <FormField
+          control={form.control}
+          name="total_cost_of_shopping"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Costo Total de la Compra</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ingresa el costo total"
+                  value={field.value || ''}
+                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className='w-full'>
           <div className='w-full flex flex-row nowrap  items-center justify-between'>
@@ -290,7 +345,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
               <SelectedProductsForPurchase
                 filters={{ status: 'Encargado' }}
                 orderId={123}
-                shoppingReceiptId={456}
+                shoppingReceiptId={receipt.id}
                 selectionMode={true}
                 onProductsConfirmed={handleProductsConfirmed}
                 onProductBuyedCreated={(productBuyed) => {
@@ -315,31 +370,6 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
 
         </div>
 
-
-        {/* Costo total de la compra */}
-        <div className="">
-          <FormField
-            control={form.control}
-            name="total_cost_of_shopping"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Costo Total:</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    placeholder="Ingresa el costo total"
-                    value={field.value || ''}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
         {/* Botones */}
         <div className="flex justify-end space-x-2">
           {onCancel && (
@@ -348,7 +378,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
             </Button>
           )}
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Creando...' : 'Crear Recibo de Compra'}
+            {isSubmitting ? 'Actualizando...' : 'Actualizar Recibo de Compra'}
           </Button>
         </div>
       </form>
