@@ -17,7 +17,7 @@ export interface BuyingAccount {
 // Tipos para crear/editar buying account
 export interface CreateBuyingAccountData {
   account_name: string;
-  shop_id?: ID;
+  shop_id?: string;
 }
 
 export interface UpdateBuyingAccountData extends Partial<CreateBuyingAccountData> {
@@ -27,5 +27,5 @@ export interface UpdateBuyingAccountData extends Partial<CreateBuyingAccountData
 // Filtros para buying accounts
 export interface BuyingAccountFilters {
   account_name?: string;
-  shop_id?: ID;
+  shop_id?: string;
 }

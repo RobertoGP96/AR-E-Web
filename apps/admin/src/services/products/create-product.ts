@@ -4,7 +4,7 @@
 
 import { apiClient } from '../../lib/api-client';
 import type { Product } from '../../types';
-import type { CreateProductData as ModelCreateProductData } from '@/types/models/product';
+import type { CreateProductData, CreateProductData as ModelCreateProductData } from '@/types/models/product';
 
 /**
  * Usamos el tipo canónico `CreateProductData` del modelo, pero el formulario
@@ -12,22 +12,7 @@ import type { CreateProductData as ModelCreateProductData } from '@/types/models
  * servicio acepta ambos: preferimos `shop_id` si está presente, si no, se
  * permite `shop_name` y lo mapeamos a `shop` en el payload.
  */
-export type CreateProductData = Omit<ModelCreateProductData, 'shop_id' | 'sku'> & {
-  // hacer sku opcional para payloads creados por la UI
-  sku?: string;
-  // Mantener link y nombre opcionales usados por UI
-  link?: string;
-  // shop_id opcional: permitimos enviar shop_id o shop_name (compatibilidad)
-  shop_id?: number;
-  shop_name?: string;
-  // category puede ser nombre (string) o null según lo que espere la API
-  category: string;
-  product_pictures?: string[];
-};
 
-/**
- * Crea un nuevo producto
- */
 export const createProduct = async (productData: CreateProductData): Promise<Product> => {
   const { shop_id, shop_name, order_id, ...data } = productData as unknown as Partial<ModelCreateProductData> & { shop_name?: string };
 

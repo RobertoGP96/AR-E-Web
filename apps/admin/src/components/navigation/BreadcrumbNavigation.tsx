@@ -36,7 +36,7 @@ export function BreadcrumbNavigation() {
 
   // Construir los breadcrumbs
   const breadcrumbs = [
-    { name: 'Dashboard', href: '/' },
+    { name: 'Dashboard', href: '/', },
   ];
 
   let currentPath = '';
@@ -61,7 +61,7 @@ export function BreadcrumbNavigation() {
   return (
     <div className="mb-2">
       <Breadcrumb>
-        <BreadcrumbList>
+        <BreadcrumbList className='text-xl'>
           {breadcrumbs.map((crumb, index) => (
             <div key={crumb.href} className="flex items-center">
               {index > 0 && <BreadcrumbSeparator />}

@@ -50,15 +50,19 @@ export interface CreateProductData {
   sku: string;
   name: string;
   link?: string;
-  shop_id?: ID;
+  shop_id?: string;
+
   description?: string;
-  observation?: string;
+  
   category?: string;
+  
   amount_requested?: number;
   amount_purchased?: number;
   amount_delivered?: number;
+  
   order_id: ID;
   status?: ProductStatus;
+  
   shop_cost?: number;
   shop_delivery_cost?: number;
   shop_taxes?: number;

@@ -105,8 +105,8 @@ export interface OrderFilters {
 
 export interface ProductFilters extends BaseFilters {
   status?: string;
-  shop_id?: number;
-  order_id?: number;
+  shop_id?: string;
+  order_id?: string;
   category?: string;
   price_min?: number;
   price_max?: number;

@@ -52,6 +52,7 @@ from api.serializers import (
     CategorySerializer,
     AmazonScrapingRequestSerializer,
     AmazonScrapingResponseSerializer,
+    EvidenceImagesSerializer,
 )
 from api.models import (
     Order,
@@ -527,6 +528,7 @@ class CommonInformationViewSet(viewsets.ModelViewSet):
         return CommonInformation.get_instance()
 
 
+@extend_schema(tags=["Categorías"])
 class CategoryViewSet(viewsets.ModelViewSet):
     """
     Gestión de categorías de productos.
@@ -570,7 +572,8 @@ class ProductViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['status', 'shop', 'order', 'category']
     search_fields = ['name', 'sku', 'description', 'link']
-    ordering_fields = ['created_at', 'name', 'shop_cost', 'total_cost']
+    ordering_fields = ['created_at', 'name', 'shop_cost', 'total_cost'
+]
     ordering = ['-created_at']
 
 
@@ -984,6 +987,91 @@ class ImageUploadApiView(APIView):
             return Response(
                 {"destroy result": destroy_result}, status=status.HTTP_200_OK
             )
+
+
+class EvidenceImagesViewSet(viewsets.ModelViewSet):
+    """
+    Gestión de imágenes de evidencia.
+    Soporta filtrado por public_id y búsqueda por URL.
+    """
+    queryset = EvidenceImages.objects.all()
+    serializer_class = EvidenceImagesSerializer
+    permission_classes = [ReadOnly | AdminPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['public_id']
+    search_fields = ['image_url', 'public_id']
+    ordering_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+
+    @extend_schema(
+        summary="Listado de imágenes de evidencia",
+        description="Obtén todas las imágenes de evidencia almacenadas en el sistema.",
+        tags=["Imágenes de evidencia"],
+        examples=[
+            OpenApiExample(
+                "Ejemplo de respuesta",
+                value=[
+                    {
+                        "id": 1,
+                        "image_url": "https://cloudinary.com/image.jpg",
+                        "public_id": "evidence/image123",
+                        "created_at": "2025-10-22T10:00:00Z"
+                    }
+                ],
+                response_only=True
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Crear imagen de evidencia",
+        description="Registra una nueva imagen de evidencia en el sistema.",
+        request=EvidenceImagesSerializer,
+        responses={201: EvidenceImagesSerializer},
+        tags=["Imágenes de evidencia"]
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Obtener imagen de evidencia",
+        description="Obtén detalles de una imagen de evidencia específica.",
+        responses={200: EvidenceImagesSerializer},
+        tags=["Imágenes de evidencia"]
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Actualizar imagen de evidencia",
+        description="Actualiza la información de una imagen de evidencia.",
+        request=EvidenceImagesSerializer,
+        responses={200: EvidenceImagesSerializer},
+        tags=["Imágenes de evidencia"]
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Actualizar parcialmente imagen de evidencia",
+        description="Actualiza parcialmente la información de una imagen de evidencia.",
+        request=EvidenceImagesSerializer,
+        responses={200: EvidenceImagesSerializer},
+        tags=["Imágenes de evidencia"]
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Eliminar imagen de evidencia",
+        description="Elimina una imagen de evidencia del sistema.",
+        responses={204: None},
+        tags=["Imágenes de evidencia"]
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
 
 
 # Vista para Amazon Scraping

@@ -13,8 +13,8 @@ router.register(r'notifications', NotificationViewSet, basename='notification')
 router.register(r'notification-preferences', NotificationPreferenceViewSet, basename='notification-preference')
 
 urlpatterns = [
-    # SSE stream endpoint
-    path('api_data/notifications/stream/', notification_sse_view, name='notification-stream'),
+    # SSE stream endpoint (se añade el prefijo principal al incluir este módulo en `api_urls.py`)
+    path('notifications/stream/', notification_sse_view, name='notification-stream'),
     # Router URLs
     *router.urls,
 ]

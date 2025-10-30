@@ -51,20 +51,19 @@ export interface Product {
 
 // Tipos para crear/editar producto
 export interface CreateProductData {
-  sku: string;
   name: string;
   link?: string;
   image_url?: string;
-  shop_id: ID;
+  sku?: string;
+  shop_id?: string;
   description?: string;
-  observation?: string;
-  category?: ID | null;
+  category?: string;
   amount_requested: number;
-  amount_purchased?: number;
-  amount_delivered?: number;
-  amount_received?: number;
-  order_id: ID;
+  order_id?: ID;
+  
   status?: ProductStatus;
+  //PRICE
+  
   shop_cost: number;
   shop_delivery_cost?: number;
   shop_taxes?: number;
@@ -80,8 +79,8 @@ export interface UpdateProductData extends Partial<CreateProductData> {
 // Filtros para productos
 export interface ProductFilters {
   status?: ProductStatus;
-  shop_id?: ID;
+  shop_id?: string;
   order_id?: ID;
-  category?: ID;
+  category?: string;
   name?: string;
 }

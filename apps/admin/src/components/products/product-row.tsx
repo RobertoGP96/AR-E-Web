@@ -2,12 +2,10 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Store, Tag, DollarSign, Package, Box } from 'lucide-react';
+import { Store, Tag, DollarSign, Package, Box, Truck, ShoppingBag } from 'lucide-react';
 import { parseTagsFromDescriptionBlock } from '@/lib/tags';
 import type { Product } from '@/types/models';
 import QRLink from './qr-link';
-import { useOrder } from '@/hooks/order/useOrder';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 
 interface ProductRowProps {
@@ -19,8 +17,6 @@ interface ProductRowProps {
 
 const ProductRow: React.FC<ProductRowProps> = ({ product, selectable = false, isSelected = false, onSelect }) => {
     const tags = parseTagsFromDescriptionBlock(product.description);
-
-    const { order } = useOrder(product.order as number);
 
     const handleRowClick = (e: React.MouseEvent) => {
         // Evitar que el click se propague si se hizo en el checkbox
@@ -69,18 +65,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, selectable = false, is
                                 </h3>
                                 <QRLink link={product.link || 'https://arye-shipps.netlify.app'} />
                             </div>
-                            {order?.client && (
-                                <div className="flex items-center gap-2">
-                                    <Avatar className="h-6 w-6">
-                                        <AvatarFallback className="text-xs bg-blue-100 text-gray-700">
-                                            {order.client.full_name.charAt(0).toUpperCase()}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-sm text-gray-700 font-medium">
-                                        {order.client.full_name}
-                                    </span>
-                                </div>
-                            )}
+
                             {
                                 product.sku && (
                                     <Badge variant="secondary" className="text-xs">
@@ -115,12 +100,20 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, selectable = false, is
                                 </div>
                             )}
 
-                            {product.amount_requested && (
-                                <div className="flex items-center gap-1">
-                                    <Box className="h-4 w-4" />
-                                    {product.amount_requested}
-                                </div>
-                            )}
+                            <div className="flex items-center gap-1">
+                                <Box className="h-4 w-4" />
+                                {product.amount_requested}
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                                <ShoppingBag className="h-4 w-4" />
+                                {product.amount_purchased}
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                                <Truck className="h-4 w-4" />
+                                {product.amount_received}
+                            </div>
 
                             <Badge variant="outline" className="text-xs">
                                 {product.status}

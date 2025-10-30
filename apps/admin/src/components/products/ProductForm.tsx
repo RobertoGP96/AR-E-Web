@@ -3,7 +3,6 @@ import { serializeTagsToDescription, type StoredTag } from '@/lib/tags'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useState, useEffect } from 'react'
-import type { CreateProductData } from '@/services/products/create-product'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useShops } from '@/hooks/shop/useShops'
 import { useCategories } from '@/hooks/category/useCategory'
@@ -11,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import type { CreateProductData } from "@/types/models"
 
 type tag = {
     icon: React.ComponentType,
@@ -21,7 +21,7 @@ type tag = {
 interface ProductFormProps {
     onSubmit: (product: CreateProductData) => void
     orderId?: number
-    initialValues?: Partial<FormState>
+    initialValues?: Partial<CreateProductData>
 }
 
 // Función para extraer el nombre de la tienda del URL
@@ -29,66 +29,50 @@ const extractShopName = (url: string): string => {
     try {
         const urlObj = new URL(url)
         const hostname = urlObj.hostname.toLowerCase()
-        
+
         // Remover 'www.' si existe
         const cleanHostname = hostname.replace(/^www\./, '')
-        
+
         // Mapeo de dominios conocidos a nombres de tienda
         const shopMappings: Record<string, string> = {
             'amazon.com': 'Amazon',
-            'amazon.es': 'Amazon España',
-            'amazon.co.uk': 'Amazon Reino Unido',
             'ebay.com': 'eBay',
             'ebay.es': 'eBay España',
             'aliexpress.com': 'AliExpress',
-            'mercadolibre.com': 'MercadoLibre',
-            'mercadolibre.com.mx': 'MercadoLibre México',
             'shopify.com': 'Shopify',
             'etsy.com': 'Etsy',
             'walmart.com': 'Walmart',
             'target.com': 'Target',
             'bestbuy.com': 'Best Buy',
-            'zalando.com': 'Zalando',
             'zara.com': 'Zara',
             'hm.com': 'H&M',
             'nike.com': 'Nike',
             'adidas.com': 'Adidas'
         }
-        
+
         // Buscar coincidencia exacta
         if (shopMappings[cleanHostname]) {
             return shopMappings[cleanHostname]
         }
-        
+
         // Buscar coincidencias parciales para subdominios
         for (const [domain, shopName] of Object.entries(shopMappings)) {
             if (cleanHostname.includes(domain)) {
                 return shopName
             }
         }
-        
+
+        console.log("Extract-Link")
         // Si no encuentra coincidencia, capitalizar el dominio principal
         const domainParts = cleanHostname.split('.')
         const mainDomain = domainParts[0]
         return mainDomain.charAt(0).toUpperCase() + mainDomain.slice(1)
-        
+
     } catch {
         return ''
     }
 }
 
-type FormState = {
-    name: string
-    link: string
-    shop: string
-    description: string
-    amount_requested: number
-    shop_cost: number
-    total_cost: number
-    category_id?: number | undefined
-    category?: string
-    tax?: number
-}
 
 const TAGS_SEPARATOR = "\n\n--TAGS--\n"
 
@@ -111,43 +95,45 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
 
     const initialParsed = parseDescriptionForTags(initialValues?.description)
 
-    const [newProduct, setNewProduct] = useState<FormState>({
+    const [newProduct, setNewProduct] = useState<CreateProductData>({
         name: initialValues?.name || '',
         link: initialValues?.link || '',
-        shop: initialValues?.shop || '',
+        shop_id: initialValues?.shop_id || '',
         description: initialParsed.descPlain || '',
         amount_requested: initialValues?.amount_requested ?? 1,
         shop_cost: initialValues?.shop_cost ?? 0,
         total_cost: initialValues?.total_cost ?? 0,
-    category_id: initialValues?.category_id ?? undefined,
-    category: initialValues?.category ?? '',
-        tax: initialValues?.tax ?? 0,
+        category: initialValues?.category ?? undefined,
+        added_taxes: initialValues?.added_taxes ?? 0,
+        shop_taxes: initialValues?.shop_taxes,
+
+
     });
     const [tags, setTags] = useState<tag[]>(initialParsed.parsedTags || [])
     const [newtag, setNewTag] = useState<tag>({
         icon: Tag,
-        name:"",
-        value:""
+        name: "",
+        value: ""
     })
     const [isPopoverOpen, setIsPopoverOpen] = useState(false)
 
     // Efecto para extraer automáticamente el nombre de la tienda cuando cambia el link
     useEffect(() => {
-        if (newProduct.link.trim()) {
+        if (newProduct.link?.trim()) {
             const shopName = extractShopName(newProduct.link)
-            if (shopName && shopName !== newProduct.shop) {
-                setNewProduct(prev => ({ ...prev, shop: shopName }))
+            if (shopName && shopName !== newProduct.shop_id) {
+                setNewProduct(prev => ({ ...prev, shop_id: shopName }))
             }
         }
-    }, [newProduct.link, newProduct.shop])
+    }, [newProduct.link, newProduct.shop_id])
 
     // Cuando se detecta un shop por link, intentar normalizar con las shops de la BD
-    const { shops: availableShops } = useShops()
+    const { shops: availableShops, error: shopsError } = useShops()
     useEffect(() => {
-        if (!newProduct.shop || !availableShops || availableShops.length === 0) return
+        if (!newProduct.shop_id || !availableShops || availableShops.length === 0) return
 
         // Buscar coincidencia por nombre (case-insensitive) o por link que incluya el hostname
-        const detected = newProduct.shop.toLowerCase()
+        const detected = newProduct.shop_id.toLowerCase()
 
         // Primero buscar por nombre exacto/insensible a mayúsculas
         let matched = availableShops.find(s => s.name && s.name.toLowerCase() === detected)
@@ -155,7 +141,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
         // Si no hay match por nombre, intentar buscar por hostname dentro del link de la shop
         if (!matched) {
             try {
-                const urlObj = new URL(newProduct.link)
+                const urlObj = new URL(newProduct.link as string)
                 const hostname = urlObj.hostname.replace(/^www\./, '').toLowerCase()
                 matched = availableShops.find(s => s.link && s.link.toLowerCase().includes(hostname))
             } catch {
@@ -165,27 +151,27 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
 
         // Si encontramos una tienda en la BD, normalizar el campo shop con su name
         if (matched) {
-            if (matched.name && matched.name !== newProduct.shop) {
-                setNewProduct(prev => ({ ...prev, shop: matched!.name }))
+            if (matched.name && matched.name !== newProduct.shop_id) {
+                setNewProduct(prev => ({ ...prev, shop_id: matched!.name, shop_taxes: matched!.tax_rate }))
             }
             // almacenar id en un campo temporal del estado (no persistir en backend form state)
             setMatchedShopId(matched.id)
         }
-    }, [newProduct.shop, newProduct.link, availableShops])
+    }, [newProduct.shop_id, newProduct.link, availableShops])
 
     // Id de la tienda detectada en la BD (si existe)
     const [matchedShopId, setMatchedShopId] = useState<number | undefined>(undefined)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        
+
         // Validación básica
         if (!newProduct.name.trim()) {
             alert('El nombre es un campo obligatorio')
             return
         }
-        
-        if (!newProduct.link.trim()) {
+
+        if (!newProduct.link?.trim()) {
             alert('El link es un campo obligatorio')
             return
         }
@@ -195,6 +181,12 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
             new URL(newProduct.link)
         } catch {
             alert('Por favor, introduce un link válido')
+            return
+        }
+
+        // Validar longitud máxima del link
+        if (newProduct.link.length > 200) {
+            alert('El link no puede tener más de 200 caracteres')
             return
         }
 
@@ -224,16 +216,16 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
 
         const qty = Number(newProduct.amount_requested) || 1
         const unit = Number(newProduct.shop_cost) || 0
-        const taxPct = Number(newProduct.tax) || 0
+        const taxPct = Number(newProduct.added_taxes) || 0
         const computedTotal = qty * unit * (1 + taxPct / 100)
 
-    const productToSubmit = {
+        const productToSubmit = {
             // Asegurar que se envía el nombre del producto
             name: newProduct.name,
             // Enviar shop_name como nombre (lo que espera la API). Si tenemos
             // matchedShopId pero no queremos usar ID, buscamos el nombre en
             // availableShops.
-            shop_name: (matchedShopId ? (availableShops.find(s => s.id === matchedShopId)?.name) : newProduct.shop) || extractShopName(newProduct.link) || 'Unknown',
+            shop_name: (matchedShopId ? (availableShops.find(s => s.id === matchedShopId)?.name) : newProduct.shop_id) || extractShopName(newProduct.link) || 'Unknown',
             order_id: orderId,
             description: finalDescription,
             amount_requested: qty,
@@ -244,10 +236,10 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
             category: newProduct.category ?? '',
             shop_taxes: taxPct,
             product_pictures: []
-    } as unknown as CreateProductData
+        } as unknown as CreateProductData
 
         onSubmit(productToSubmit)
-        
+
         // Limpiar el formulario
         handleCancel()
     }
@@ -260,14 +252,16 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
         setNewProduct({
             name: '',
             link: '',
-            shop: '',
+            shop_id: '',
             description: '',
             amount_requested: 1,
             shop_cost: 0,
             total_cost: 0,
-            category_id: undefined,
-            category: '',
-            tax: 0,
+            category: undefined,
+            added_taxes: 0,
+            shop_taxes: 0,
+            own_taxes: 0,
+            shop_delivery_cost: 0,
         })
         // Restore to initial parsed tags if editing, otherwise clear
         setTags(initialParsed.parsedTags || [])
@@ -296,7 +290,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
 
     return (
         <Card className="w-full max-w-2xl mx-auto shadow-none border-0 bg-transparent">
-           
+
             <CardContent className="border-0">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Nombre del producto */}
@@ -307,10 +301,10 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                             </div>
                             Nombre del producto *
                         </label>
-                        <Input 
-                            id="name" 
-                            placeholder="Introduce el nombre del producto" 
-                            value={newProduct.name} 
+                        <Input
+                            id="name"
+                            placeholder="Introduce el nombre del producto"
+                            value={newProduct.name}
                             onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                             className="transition-all duration-200 focus:ring-2 focus:ring-primary/30 focus:border-primary border-muted-foreground/20 hover:border-muted-foreground/40"
                         />
@@ -324,17 +318,21 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                             </div>
                             Link del producto *
                         </label>
-                        <Input 
-                            id="link" 
+                        <Input
+                            id="link"
                             type="url"
-                            placeholder="https://ejemplo.com/producto" 
-                            value={newProduct.link} 
+                            placeholder="https://ejemplo.com/producto"
+                            value={newProduct.link}
                             onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
                             className="transition-all duration-200 focus:ring-2 focus:ring-primary/30 focus:border-primary border-muted-foreground/20 hover:border-muted-foreground/40"
+                            maxLength={200}
                         />
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <CircleAlert className="h-3 w-3 text-gray-500" />
                             La tienda se detectará automáticamente del link
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            Máximo 200 caracteres ({newProduct.link?.length || 0}/200)
                         </p>
                     </div>
 
@@ -347,21 +345,21 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                             Tienda
                         </label>
                         <div className="relative">
-                            <Input 
-                                id="shop" 
-                                placeholder="Esperando detección automática..." 
-                                value={newProduct.shop} 
+                            <Input
+                                id="shop"
+                                placeholder="Esperando detección automática..."
+                                value={newProduct.shop_id}
                                 readOnly
                                 className="bg-muted/30 border-muted-foreground/20 text-muted-foreground cursor-not-allowed pr-10"
                             />
-                            {newProduct.shop ? (
+                            {newProduct.shop_id ? (
                                 <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
                             ) : newProduct.link ? (
                                 <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
                             ) : null}
                         </div>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            {newProduct.shop ? (
+                            {newProduct.shop_id ? (
                                 <>
                                     <CheckCircle className="h-3 w-3 text-emerald-500" />
                                     Tienda detectada automáticamente
@@ -375,6 +373,12 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                                 "Introduce un link para detectar la tienda"
                             )}
                         </p>
+                        {shopsError && (
+                            <p className="text-xs text-red-500 flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                Error al cargar tiendas: {shopsError.message}
+                            </p>
+                        )}
                     </div>
 
                     {/* Categoría */}
@@ -399,22 +403,6 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                                 ))}
                             </SelectContent>
                         </Select>
-                    </div>
-
-                    {/* Cantidad, Costo y impuesto */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-3">
-                            <label htmlFor="amount_requested" className="text-sm font-semibold text-foreground/90">Cantidad encargada</label>
-                            <Input id="amount_requested" type="number" min={1} step="1" value={newProduct.amount_requested} onChange={(e) => setNewProduct({ ...newProduct, amount_requested: Number(e.target.value) })} />
-                        </div>
-                        <div className="space-y-3">
-                            <label htmlFor="shop_cost" className="text-sm font-semibold text-foreground/90">Precio (unidad)</label>
-                            <Input id="shop_cost" type="number" step="0.01" value={newProduct.shop_cost} onChange={(e) => setNewProduct({ ...newProduct, shop_cost: Number(e.target.value) })} />
-                        </div>
-                        <div className="space-y-3">
-                            <label htmlFor="tax" className="text-sm font-semibold text-foreground/90">Impuesto (%)</label>
-                            <Input id="tax" type="number" step="0.01" value={newProduct.tax} onChange={(e) => setNewProduct({ ...newProduct, tax: Number(e.target.value) })} />
-                        </div>
                     </div>
 
                     {/* Sistema de Tags */}
@@ -442,25 +430,25 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                                         <div className="space-y-3">
                                             <div>
                                                 <label className="text-xs font-medium text-muted-foreground">Nombre</label>
-                                                <Input 
-                                                    value={newtag.name} 
-                                                    onChange={(e) => setNewTag({...newtag, name: e.target.value})} 
+                                                <Input
+                                                    value={newtag.name}
+                                                    onChange={(e) => setNewTag({ ...newtag, name: e.target.value })}
                                                     placeholder="Ej: Color, Talla, Marca"
                                                     className="h-8 mt-1 border-muted-foreground/20 focus:border-primary"
                                                 />
                                             </div>
                                             <div>
                                                 <label className="text-xs font-medium text-muted-foreground">Valor</label>
-                                                <Input 
-                                                    value={newtag.value} 
-                                                    onChange={(e) => setNewTag({...newtag, value: e.target.value})} 
+                                                <Input
+                                                    value={newtag.value}
+                                                    onChange={(e) => setNewTag({ ...newtag, value: e.target.value })}
                                                     placeholder="Ej: Rojo, XL, Nike"
                                                     className="h-8 mt-1 border-muted-foreground/20 focus:border-primary"
                                                 />
                                             </div>
-                                            <Button 
-                                                onClick={handleAddTag} 
-                                                size="sm" 
+                                            <Button
+                                                onClick={handleAddTag}
+                                                size="sm"
                                                 className="w-full h-9 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all duration-200"
                                                 disabled={!newtag.name.trim() || !newtag.value.trim()}
                                             >
@@ -503,13 +491,48 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                     </div>
 
                     <Separator className="bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent" />
+                    {/* Cantidad, Costo y impuesto */}
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-4">
+                            <label htmlFor="amount_requested" className="text-sm font-semibold text-foreground/90">Cantidad encargada</label>
+                            <Input id="amount_requested" type="number" min={1} step="1" value={newProduct.amount_requested} onChange={(e) => setNewProduct({ ...newProduct, amount_requested: Number(e.target.value) })} />
+                        </div>
+                        <div className="space-y-3">
+                            <label htmlFor="shop_cost" className="text-sm font-semibold text-foreground/90">Precio (unidad)</label>
+                            <Input id="shop_cost" type="number" step="0.01" value={newProduct.shop_cost} onChange={(e) => setNewProduct({ ...newProduct, shop_cost: Number(e.target.value) })} />
+                        </div>
+                        <div className="space-y-3">
+                            <label htmlFor="delivery" className="text-sm font-semibold text-foreground/90">Envío de tienda:</label>
+                            <Input id="tax" type="number" step="0.01" value={newProduct.shop_delivery_cost} onChange={(e) => setNewProduct({ ...newProduct, shop_delivery_cost: Number(e.target.value) })} />
+                        </div>
+                        <div className="space-y-3">
+                            <label htmlFor="add_taxes" className="text-sm font-semibold text-foreground/90">Impuesto de la tienda (%)</label>
+                            <Input id="tax" type="number" step="0.01" value={newProduct.shop_taxes} onChange={(e) => setNewProduct({ ...newProduct, shop_taxes: Number(e.target.value) })} />
+                        </div>
+                        <div className="space-y-3">
+                            <label htmlFor="add_taxes" className="text-sm font-semibold text-foreground/90">Impuesto de Envío:</label>
+                            <Input id="tax" type="number" step="0.01" value={newProduct.added_taxes} onChange={(e) => setNewProduct({ ...newProduct, added_taxes: Number(e.target.value) })} />
+                        </div>
+                        <div className="space-y-3">
+                            <label htmlFor="add_taxes" className="text-sm font-semibold text-foreground/90">Impuesto Agregado:</label>
+                            <Input id="tax" type="number" step="0.01" value={newProduct.own_taxes} onChange={(e) => setNewProduct({ ...newProduct, own_taxes: Number(e.target.value) })} />
+                        </div>
+
+                    </div>
+
+
+
 
                     {/* Resumen de total calculado */}
                     {(() => {
                         const qty = Number(newProduct.amount_requested) || 0
-                        const unit = Number(newProduct.shop_cost) || 0
-                        const taxPct = Number(newProduct.tax) || 0
-                        const totalCalc = qty * unit * (1 + taxPct / 100)
+                        const price = Number(newProduct.shop_cost) || 0
+                        const shopTax = Number(newProduct.shop_taxes) || 0
+                        const deliv = Number(newProduct.shop_delivery_cost) || 0
+                        const addTax = Number(newProduct.added_taxes) || 0
+                        const ownTax = Number(newProduct.own_taxes) || 0
+
+                        const totalCalc = price + (qty * price)*0.07 + deliv + (price + (qty * price)*0.07+deliv)*shopTax + ownTax+ addTax;
                         return (
                             <div className="flex items-center justify-between">
                                 <div className="text-sm text-muted-foreground">Valor total (incl. impuesto)</div>
@@ -520,11 +543,11 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
 
                     {/* Botones de acción */}
                     <div className="flex justify-end gap-4 pt-2">
-                        
-                        <Button 
+
+                        <Button
                             type="submit"
                             className="min-w-[140px] h-10 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={!newProduct.name.trim() || !newProduct.link.trim()}
+                            disabled={!newProduct.name.trim() || !newProduct.link?.trim()}
                         >
                             <Save className="h-4 w-4 mr-2" />
                             Añadir producto

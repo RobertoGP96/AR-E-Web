@@ -99,25 +99,6 @@ paths:
                 $ref: '#/components/schemas/User'
           description: ''
   /arye_system/api_data/user/{id}/:
-    delete:
-      operationId: arye_system_api_data_user_destroy
-      description: |-
-        Gestión de usuarios: registro, consulta, actualización y eliminación.
-        Soporta filtrado por rol, estado activo, estado verificado y búsqueda por texto.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Usuario.
-        required: true
-      tags:
-      - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     get:
       operationId: arye_system_api_data_user_retrieve
       description: |-
@@ -132,40 +113,6 @@ paths:
         required: true
       tags:
       - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: ''
-    patch:
-      operationId: arye_system_api_data_user_partial_update
-      description: |-
-        Gestión de usuarios: registro, consulta, actualización y eliminación.
-        Soporta filtrado por rol, estado activo, estado verificado y búsqueda por texto.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Usuario.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedUserRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedUserRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedUserRequest'
       security:
       - jwtAuth: []
       responses:
@@ -210,6 +157,59 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: ''
+    patch:
+      operationId: arye_system_api_data_user_partial_update
+      description: |-
+        Gestión de usuarios: registro, consulta, actualización y eliminación.
+        Soporta filtrado por rol, estado activo, estado verificado y búsqueda por texto.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Usuario.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_user_destroy
+      description: |-
+        Gestión de usuarios: registro, consulta, actualización y eliminación.
+        Soporta filtrado por rol, estado activo, estado verificado y búsqueda por texto.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Usuario.
+        required: true
+      tags:
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /arye_system/api_data/order/:
     get:
       operationId: arye_system_api_data_order_list
@@ -310,27 +310,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Order'
           description: ''
-  /arye_system/api_data/order/{id}/:
-    delete:
-      operationId: arye_system_api_data_order_destroy
-      description: |-
-        Gestión de órdenes: creación, consulta, actualización y eliminación de órdenes.
-        Soporta filtrado por estado, estado de pago, cliente, agente y fechas.
-        Los administradores y agentes tienen acceso completo (crear, ver, editar, eliminar).
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this order.
-        required: true
+  /arye_system/api_data/order/my-orders/:
+    get:
+      operationId: arye_system_api_data_order_my_orders_retrieve
+      description: Retorna las órdenes pertenecientes al usuario autenticado (client).
+      summary: Mis órdenes
       tags:
-      - arye_system
+      - Órdenes
       security:
       - jwtAuth: []
       responses:
-        '204':
-          description: No response body
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /arye_system/api_data/order/{id}/:
     get:
       operationId: arye_system_api_data_order_retrieve
       description: |-
@@ -346,41 +342,6 @@ paths:
         required: true
       tags:
       - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
-          description: ''
-    patch:
-      operationId: arye_system_api_data_order_partial_update
-      description: |-
-        Gestión de órdenes: creación, consulta, actualización y eliminación de órdenes.
-        Soporta filtrado por estado, estado de pago, cliente, agente y fechas.
-        Los administradores y agentes tienen acceso completo (crear, ver, editar, eliminar).
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this order.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedOrderRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedOrderRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedOrderRequest'
       security:
       - jwtAuth: []
       responses:
@@ -426,6 +387,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/Order'
           description: ''
+    patch:
+      operationId: arye_system_api_data_order_partial_update
+      description: |-
+        Gestión de órdenes: creación, consulta, actualización y eliminación de órdenes.
+        Soporta filtrado por estado, estado de pago, cliente, agente y fechas.
+        Los administradores y agentes tienen acceso completo (crear, ver, editar, eliminar).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this order.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_order_destroy
+      description: |-
+        Gestión de órdenes: creación, consulta, actualización y eliminación de órdenes.
+        Soporta filtrado por estado, estado de pago, cliente, agente y fechas.
+        Los administradores y agentes tienen acceso completo (crear, ver, editar, eliminar).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this order.
+        required: true
+      tags:
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /arye_system/api_data/shop/:
     get:
       operationId: arye_system_api_data_shop_list
@@ -508,21 +524,6 @@ paths:
                 $ref: '#/components/schemas/Shop'
           description: ''
   /arye_system/api_data/shop/{name}/:
-    delete:
-      operationId: arye_system_api_data_shop_destroy
-      parameters:
-      - in: path
-        name: name
-        schema:
-          type: string
-        required: true
-      tags:
-      - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     get:
       operationId: arye_system_api_data_shop_retrieve
       description: Obtén la información detallada de una tienda específica por su
@@ -552,36 +553,6 @@ paths:
                     buying_accounts:
                     - Cuenta Amazon
                   summary: Ejemplo de respuesta
-          description: ''
-    patch:
-      operationId: arye_system_api_data_shop_partial_update
-      parameters:
-      - in: path
-        name: name
-        schema:
-          type: string
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedShopRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedShopRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedShopRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Shop'
           description: ''
     put:
       operationId: arye_system_api_data_shop_update
@@ -614,6 +585,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/Shop'
           description: ''
+    patch:
+      operationId: arye_system_api_data_shop_partial_update
+      parameters:
+      - in: path
+        name: name
+        schema:
+          type: string
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedShopRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedShopRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedShopRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shop'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_shop_destroy
+      parameters:
+      - in: path
+        name: name
+        schema:
+          type: string
+        required: true
+      tags:
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /arye_system/api_data/buying_account/:
     get:
       operationId: arye_system_api_data_buying_account_list
@@ -692,22 +708,6 @@ paths:
                 $ref: '#/components/schemas/BuyingAccounts'
           description: ''
   /arye_system/api_data/buying_account/{id}/:
-    delete:
-      operationId: arye_system_api_data_buying_account_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Cuenta de Compra.
-        required: true
-      tags:
-      - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     get:
       operationId: arye_system_api_data_buying_account_retrieve
       parameters:
@@ -719,37 +719,6 @@ paths:
         required: true
       tags:
       - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BuyingAccounts'
-          description: ''
-    patch:
-      operationId: arye_system_api_data_buying_account_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Cuenta de Compra.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
       security:
       - jwtAuth: []
       responses:
@@ -791,6 +760,53 @@ paths:
               schema:
                 $ref: '#/components/schemas/BuyingAccounts'
           description: ''
+    patch:
+      operationId: arye_system_api_data_buying_account_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Cuenta de Compra.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBuyingAccountsRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuyingAccounts'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_buying_account_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Cuenta de Compra.
+        required: true
+      tags:
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /arye_system/api_data/common_information/:
     get:
       operationId: arye_system_api_data_common_information_list
@@ -851,23 +867,6 @@ paths:
                 $ref: '#/components/schemas/CommonInformation'
           description: ''
   /arye_system/api_data/common_information/{id}/:
-    delete:
-      operationId: arye_system_api_data_common_information_destroy
-      description: Información común del sistema.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Información Común.
-        required: true
-      tags:
-      - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     get:
       operationId: arye_system_api_data_common_information_retrieve
       description: Información común del sistema.
@@ -880,38 +879,6 @@ paths:
         required: true
       tags:
       - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CommonInformation'
-          description: ''
-    patch:
-      operationId: arye_system_api_data_common_information_partial_update
-      description: Información común del sistema.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Información Común.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedCommonInformationRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedCommonInformationRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedCommonInformationRequest'
       security:
       - jwtAuth: []
       responses:
@@ -953,6 +920,55 @@ paths:
               schema:
                 $ref: '#/components/schemas/CommonInformation'
           description: ''
+    patch:
+      operationId: arye_system_api_data_common_information_partial_update
+      description: Información común del sistema.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Información Común.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCommonInformationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCommonInformationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCommonInformationRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonInformation'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_common_information_destroy
+      description: Información común del sistema.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Información Común.
+        required: true
+      tags:
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /arye_system/api_data/product/:
     get:
       operationId: arye_system_api_data_product_list
@@ -995,15 +1011,15 @@ paths:
         schema:
           type: string
           enum:
-          - Cancelado
-          - Completado
+          - Comprado
           - Encargado
-          - Procesando
+          - Entregado
+          - Recibido
         description: |-
           * `Encargado` - Encargado
-          * `Procesando` - Procesando
-          * `Completado` - Completado
-          * `Cancelado` - Cancelado
+          * `Comprado` - Comprado
+          * `Recibido` - Recibido
+          * `Entregado` - Entregado
       tags:
       - Productos
       security:
@@ -1061,23 +1077,6 @@ paths:
                 $ref: '#/components/schemas/Product'
           description: ''
   /arye_system/api_data/product/{id}/:
-    delete:
-      operationId: arye_system_api_data_product_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this product.
-        required: true
-      tags:
-      - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     get:
       operationId: arye_system_api_data_product_retrieve
       parameters:
@@ -1090,38 +1089,6 @@ paths:
         required: true
       tags:
       - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Product'
-          description: ''
-    patch:
-      operationId: arye_system_api_data_product_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this product.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedProductRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedProductRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedProductRequest'
       security:
       - jwtAuth: []
       responses:
@@ -1164,12 +1131,62 @@ paths:
               schema:
                 $ref: '#/components/schemas/Product'
           description: ''
+    patch:
+      operationId: arye_system_api_data_product_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this product.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_product_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this product.
+        required: true
+      tags:
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /arye_system/api_data/shopping_reciep/:
     get:
       operationId: arye_system_api_data_shopping_reciep_list
       description: |-
         Gestión de recibos de compra y productos comprados.
         Soporta filtrado por estado, cuenta y tienda, y búsqueda por fecha.
+        Permite crear recibos de compra con productos asociados en una sola operación.
       parameters:
       - name: ordering
         required: false
@@ -1222,8 +1239,17 @@ paths:
           description: ''
     post:
       operationId: arye_system_api_data_shopping_reciep_create
-      description: Crea un recibo de compra y los productos asociados.
-      summary: Crear recibo de compra
+      description: "Crea un recibo de compra y opcionalmente los productos comprados\
+        \ asociados.\n        \n        **Campos requeridos para ShoppingReceip:**\n\
+        \        - shopping_account: Nombre de la cuenta de compra\n        - shop_of_buy:\
+        \ Nombre de la tienda\n        \n        **Campos opcionales para ShoppingReceip:**\n\
+        \        - buy_date: Fecha de compra (por defecto: fecha actual)\n       \
+        \ - status_of_shopping: Estado del shopping\n        \n        **Campo opcional\
+        \ para productos comprados:**\n        - buyed_products: Lista de productos\
+        \ comprados (cada producto debe tener original_product y amount_buyed)\n \
+        \       \n        **Nota:** Si no se especifica buy_date en los productos,\
+        \ se usará automáticamente la buy_date del recibo.\n        "
+      summary: Crear recibo de compra con productos
       tags:
       - Recibos de compra
       requestBody:
@@ -1231,6 +1257,18 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ShoppingReceipRequest'
+            examples:
+              CrearReciboConProductos:
+                value:
+                  shopping_account: CuentaPrincipal
+                  shop_of_buy: Amazon
+                  buy_date: '2025-10-22T10:00:00Z'
+                  buyed_products:
+                  - original_product: uuid-del-producto
+                    amount_buyed: 2
+                    actual_cost_of_product: 25.5
+                    real_cost_of_product: 25.5
+                summary: Crear recibo con productos
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ShoppingReceipRequest'
@@ -1246,32 +1284,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShoppingReceip'
+              examples:
+                CrearReciboConProductos:
+                  value:
+                    shopping_account: CuentaPrincipal
+                    shop_of_buy: Amazon
+                    buy_date: '2025-10-22T10:00:00Z'
+                    buyed_products:
+                    - original_product: uuid-del-producto
+                      amount_buyed: 2
+                      actual_cost_of_product: 25.5
+                      real_cost_of_product: 25.5
+                  summary: Crear recibo con productos
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /arye_system/api_data/shopping_reciep/{id}/:
-    delete:
-      operationId: arye_system_api_data_shopping_reciep_destroy
-      description: |-
-        Gestión de recibos de compra y productos comprados.
-        Soporta filtrado por estado, cuenta y tienda, y búsqueda por fecha.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Recibo de Compra.
-        required: true
-      tags:
-      - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     get:
       operationId: arye_system_api_data_shopping_reciep_retrieve
       description: |-
         Gestión de recibos de compra y productos comprados.
         Soporta filtrado por estado, cuenta y tienda, y búsqueda por fecha.
+        Permite crear recibos de compra con productos asociados en una sola operación.
       parameters:
       - in: path
         name: id
@@ -1281,40 +1320,6 @@ paths:
         required: true
       tags:
       - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ShoppingReceip'
-          description: ''
-    patch:
-      operationId: arye_system_api_data_shopping_reciep_partial_update
-      description: |-
-        Gestión de recibos de compra y productos comprados.
-        Soporta filtrado por estado, cuenta y tienda, y búsqueda por fecha.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Recibo de Compra.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
       security:
       - jwtAuth: []
       responses:
@@ -1329,6 +1334,7 @@ paths:
       description: |-
         Gestión de recibos de compra y productos comprados.
         Soporta filtrado por estado, cuenta y tienda, y búsqueda por fecha.
+        Permite crear recibos de compra con productos asociados en una sola operación.
       parameters:
       - in: path
         name: id
@@ -1359,6 +1365,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/ShoppingReceip'
           description: ''
+    patch:
+      operationId: arye_system_api_data_shopping_reciep_partial_update
+      description: |-
+        Gestión de recibos de compra y productos comprados.
+        Soporta filtrado por estado, cuenta y tienda, y búsqueda por fecha.
+        Permite crear recibos de compra con productos asociados en una sola operación.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Recibo de Compra.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedShoppingReceipRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingReceip'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_shopping_reciep_destroy
+      description: |-
+        Gestión de recibos de compra y productos comprados.
+        Soporta filtrado por estado, cuenta y tienda, y búsqueda por fecha.
+        Permite crear recibos de compra con productos asociados en una sola operación.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Recibo de Compra.
+        required: true
+      tags:
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /arye_system/api_data/buyed_product/:
     get:
       operationId: arye_system_api_data_buyed_product_list
@@ -1366,10 +1427,6 @@ paths:
         detalles de compra, descuentos y costos reales.
       summary: Listado de productos comprados
       parameters:
-      - in: query
-        name: order
-        schema:
-          type: integer
       - name: ordering
         required: false
         in: query
@@ -1415,26 +1472,43 @@ paths:
                     previous: http://api.example.org/accounts/?page=2
                     results:
                     - - id: 1
-                        original_product: 1
-                        order: 1
-                        actual_cost_of_product: 1200.0
-                        amount_buyed: 1
-                      - id: 2
-                        original_product: 2
-                        order: 2
-                        actual_cost_of_product: 25.0
+                        original_product: uuid-producto-1
                         amount_buyed: 2
+                        actual_cost_of_product: 25.0
+                        real_cost_of_product: 22.5
+                        buy_date: '2025-10-22T10:00:00Z'
                   summary: Ejemplo de respuesta
           description: ''
     post:
       operationId: arye_system_api_data_buyed_product_create
+      description: "Registra un producto como comprado. Actualiza automáticamente\
+        \ la cantidad comprada del producto original.\n        \n        **Campos\
+        \ requeridos:**\n        - original_product: ID del producto original\n  \
+        \      - amount_buyed: Cantidad comprada (debe ser positiva)\n        \n \
+        \       **Campos opcionales:**\n        - shoping_receip: ID del recibo de\
+        \ compra\n        - actual_cost_of_product: Costo real del producto\n    \
+        \    - shop_discount: Descuento de la tienda\n        - offer_discount: Descuento\
+        \ por oferta\n        - buy_date: Fecha de compra (por defecto: fecha actual)\n\
+        \        - observation: Observaciones\n        - real_cost_of_product: Costo\
+        \ real final\n        \n        **Nota:** La cantidad comprada se suma automáticamente\
+        \ al producto original.\n        "
+      summary: Crear producto comprado
       tags:
-      - arye_system
+      - Productos comprados
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ProductBuyedRequest'
+            examples:
+              CrearProductoComprado:
+                value:
+                  original_product: uuid-del-producto
+                  amount_buyed: 3
+                  actual_cost_of_product: 45.0
+                  real_cost_of_product: 42.5
+                  shop_discount: 2.5
+                summary: Crear producto comprado
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ProductBuyedRequest'
@@ -1450,10 +1524,161 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductBuyed'
+              examples:
+                CrearProductoComprado:
+                  value:
+                    original_product: uuid-del-producto
+                    amount_buyed: 3
+                    actual_cost_of_product: 45.0
+                    real_cost_of_product: 42.5
+                    shop_discount: 2.5
+                  summary: Crear producto comprado
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /arye_system/api_data/buyed_product/{id}/:
+    get:
+      operationId: arye_system_api_data_buyed_product_retrieve
+      description: |-
+        Gestión de productos comprados.
+        Soporta filtrado por producto original y recibo de compra.
+
+        **Campos requeridos para crear:**
+        - original_product: ID del producto original
+        - amount_buyed: Cantidad comprada
+
+        **Campos opcionales:**
+        - shoping_receip: Recibo de compra (se asigna automáticamente si se crea desde ShoppingReceip)
+        - actual_cost_of_product, shop_discount, offer_discount, buy_date, observation, real_cost_of_product
+
+        **Nota:** Al crear desde ShoppingReceip, buy_date se toma automáticamente del recibo si no se especifica.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Producto Comprado.
+        required: true
+      tags:
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductBuyed'
+          description: ''
+    put:
+      operationId: arye_system_api_data_buyed_product_update
+      description: |-
+        Gestión de productos comprados.
+        Soporta filtrado por producto original y recibo de compra.
+
+        **Campos requeridos para crear:**
+        - original_product: ID del producto original
+        - amount_buyed: Cantidad comprada
+
+        **Campos opcionales:**
+        - shoping_receip: Recibo de compra (se asigna automáticamente si se crea desde ShoppingReceip)
+        - actual_cost_of_product, shop_discount, offer_discount, buy_date, observation, real_cost_of_product
+
+        **Nota:** Al crear desde ShoppingReceip, buy_date se toma automáticamente del recibo si no se especifica.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Producto Comprado.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductBuyedRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductBuyedRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductBuyedRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductBuyed'
+          description: ''
+    patch:
+      operationId: arye_system_api_data_buyed_product_partial_update
+      description: |-
+        Gestión de productos comprados.
+        Soporta filtrado por producto original y recibo de compra.
+
+        **Campos requeridos para crear:**
+        - original_product: ID del producto original
+        - amount_buyed: Cantidad comprada
+
+        **Campos opcionales:**
+        - shoping_receip: Recibo de compra (se asigna automáticamente si se crea desde ShoppingReceip)
+        - actual_cost_of_product, shop_discount, offer_discount, buy_date, observation, real_cost_of_product
+
+        **Nota:** Al crear desde ShoppingReceip, buy_date se toma automáticamente del recibo si no se especifica.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Producto Comprado.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductBuyedRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductBuyedRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductBuyedRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductBuyed'
+          description: ''
     delete:
       operationId: arye_system_api_data_buyed_product_destroy
+      description: |-
+        Gestión de productos comprados.
+        Soporta filtrado por producto original y recibo de compra.
+
+        **Campos requeridos para crear:**
+        - original_product: ID del producto original
+        - amount_buyed: Cantidad comprada
+
+        **Campos opcionales:**
+        - shoping_receip: Recibo de compra (se asigna automáticamente si se crea desde ShoppingReceip)
+        - actual_cost_of_product, shop_discount, offer_discount, buy_date, observation, real_cost_of_product
+
+        **Nota:** Al crear desde ShoppingReceip, buy_date se toma automáticamente del recibo si no se especifica.
       parameters:
       - in: path
         name: id
@@ -1468,89 +1693,6 @@ paths:
       responses:
         '204':
           description: No response body
-    get:
-      operationId: arye_system_api_data_buyed_product_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Producto Comprado.
-        required: true
-      tags:
-      - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductBuyed'
-          description: ''
-    patch:
-      operationId: arye_system_api_data_buyed_product_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Producto Comprado.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedProductBuyedRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedProductBuyedRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedProductBuyedRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductBuyed'
-          description: ''
-    put:
-      operationId: arye_system_api_data_buyed_product_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Producto Comprado.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProductBuyedRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ProductBuyedRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ProductBuyedRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductBuyed'
-          description: ''
   /arye_system/api_data/deliver_reciep/:
     get:
       operationId: arye_system_api_data_deliver_reciep_list
@@ -1647,22 +1789,6 @@ paths:
                 $ref: '#/components/schemas/DeliverReceip'
           description: ''
   /arye_system/api_data/deliver_reciep/{id}/:
-    delete:
-      operationId: arye_system_api_data_deliver_reciep_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Recibo de Entrega.
-        required: true
-      tags:
-      - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     get:
       operationId: arye_system_api_data_deliver_reciep_retrieve
       parameters:
@@ -1674,37 +1800,6 @@ paths:
         required: true
       tags:
       - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeliverReceip'
-          description: ''
-    patch:
-      operationId: arye_system_api_data_deliver_reciep_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Recibo de Entrega.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
       security:
       - jwtAuth: []
       responses:
@@ -1746,6 +1841,53 @@ paths:
               schema:
                 $ref: '#/components/schemas/DeliverReceip'
           description: ''
+    patch:
+      operationId: arye_system_api_data_deliver_reciep_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Recibo de Entrega.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDeliverReceipRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliverReceip'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_deliver_reciep_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Recibo de Entrega.
+        required: true
+      tags:
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /arye_system/api_data/product_received/:
     get:
       operationId: arye_system_api_data_product_received_list
@@ -1753,14 +1895,6 @@ paths:
         Gestión de productos recibidos y entrega de productos.
         Soporta filtrado por orden, producto, paquete y recibo de entrega.
       parameters:
-      - in: query
-        name: deliver_receip
-        schema:
-          type: integer
-      - in: query
-        name: order
-        schema:
-          type: integer
       - name: ordering
         required: false
         in: query
@@ -1773,7 +1907,7 @@ paths:
           type: string
           format: uuid
       - in: query
-        name: package_where_was_send
+        name: package
         schema:
           type: integer
       - name: page
@@ -1854,25 +1988,6 @@ paths:
                 $ref: '#/components/schemas/ProductReceived'
           description: ''
   /arye_system/api_data/product_received/{id}/:
-    delete:
-      operationId: arye_system_api_data_product_received_destroy
-      description: |-
-        Gestión de productos recibidos y entrega de productos.
-        Soporta filtrado por orden, producto, paquete y recibo de entrega.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Producto Recibido.
-        required: true
-      tags:
-      - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     get:
       operationId: arye_system_api_data_product_received_retrieve
       description: |-
@@ -1887,40 +2002,6 @@ paths:
         required: true
       tags:
       - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductReceived'
-          description: ''
-    patch:
-      operationId: arye_system_api_data_product_received_partial_update
-      description: |-
-        Gestión de productos recibidos y entrega de productos.
-        Soporta filtrado por orden, producto, paquete y recibo de entrega.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Producto Recibido.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedProductReceivedRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedProductReceivedRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedProductReceivedRequest'
       security:
       - jwtAuth: []
       responses:
@@ -1965,6 +2046,59 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProductReceived'
           description: ''
+    patch:
+      operationId: arye_system_api_data_product_received_partial_update
+      description: |-
+        Gestión de productos recibidos y entrega de productos.
+        Soporta filtrado por orden, producto, paquete y recibo de entrega.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Producto Recibido.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductReceivedRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductReceivedRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductReceivedRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductReceived'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_product_received_destroy
+      description: |-
+        Gestión de productos recibidos y entrega de productos.
+        Soporta filtrado por orden, producto, paquete y recibo de entrega.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Producto Recibido.
+        required: true
+      tags:
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /arye_system/api_data/package/:
     get:
       operationId: arye_system_api_data_package_list
@@ -1999,15 +2133,13 @@ paths:
         schema:
           type: string
           enum:
-          - Cancelado
-          - Completado
-          - Encargado
-          - Procesando
+          - Enviado
+          - Procesado
+          - Recibido
         description: |-
-          * `Encargado` - Encargado
-          * `Procesando` - Procesando
-          * `Completado` - Completado
-          * `Cancelado` - Cancelado
+          * `Enviado` - Enviado
+          * `Recibido` - Recibido
+          * `Procesado` - Procesado
       tags:
       - Paquetes
       security:
@@ -2061,22 +2193,6 @@ paths:
                 $ref: '#/components/schemas/Package'
           description: ''
   /arye_system/api_data/package/{id}/:
-    delete:
-      operationId: arye_system_api_data_package_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Paquete.
-        required: true
-      tags:
-      - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     get:
       operationId: arye_system_api_data_package_retrieve
       parameters:
@@ -2088,37 +2204,6 @@ paths:
         required: true
       tags:
       - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Package'
-          description: ''
-    patch:
-      operationId: arye_system_api_data_package_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Paquete.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedPackageRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedPackageRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedPackageRequest'
       security:
       - jwtAuth: []
       responses:
@@ -2160,19 +2245,75 @@ paths:
               schema:
                 $ref: '#/components/schemas/Package'
           description: ''
-  /arye_system/api_data/category/:
-    get:
-      operationId: arye_system_api_data_category_list
-      description: |-
-        Gestión de categorías de productos.
-        Soporta filtrado por nombre y búsqueda.
+    patch:
+      operationId: arye_system_api_data_package_partial_update
       parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Paquete.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPackageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPackageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPackageRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_package_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Paquete.
+        required: true
+      tags:
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /arye_system/api_data/product_delivery/:
+    get:
+      operationId: arye_system_api_data_product_delivery_list
+      description: |-
+        Gestión de productos entregados.
+        Soporta filtrado por orden, producto y recibo de entrega.
+      parameters:
+      - in: query
+        name: deliver_receip
+        schema:
+          type: integer
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
+      - in: query
+        name: original_product
+        schema:
+          type: string
+          format: uuid
       - name: page
         required: false
         in: query
@@ -2194,26 +2335,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedCategoryList'
+                $ref: '#/components/schemas/PaginatedProductDeliveryList'
           description: ''
     post:
-      operationId: arye_system_api_data_category_create
-      description: |-
-        Gestión de categorías de productos.
-        Soporta filtrado por nombre y búsqueda.
+      operationId: arye_system_api_data_product_delivery_create
+      description: Crea registros de productos entregados y los asocia a un recibo
+        de entrega.
+      summary: Registrar productos entregados
       tags:
-      - arye_system
+      - Productos entregados
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CategoryRequest'
+              $ref: '#/components/schemas/ProductDeliveryRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/CategoryRequest'
+              $ref: '#/components/schemas/ProductDeliveryRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CategoryRequest'
+              $ref: '#/components/schemas/ProductDeliveryRequest'
         required: true
       security:
       - jwtAuth: []
@@ -2222,20 +2363,139 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Category'
+                $ref: '#/components/schemas/ProductDelivery'
           description: ''
-  /arye_system/api_data/category/{id}/:
-    delete:
-      operationId: arye_system_api_data_category_destroy
+  /arye_system/api_data/product_delivery/update_deliveries/:
+    patch:
+      operationId: arye_system_api_data_product_delivery_update_deliveries_partial_update
+      description: Actualiza registros de productos entregados.
+      summary: Actualizar entregas
+      tags:
+      - Productos entregados
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductDeliveryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductDeliveryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductDeliveryRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDelivery'
+          description: ''
+  /arye_system/api_data/product_delivery/{id}/:
+    get:
+      operationId: arye_system_api_data_product_delivery_retrieve
       description: |-
-        Gestión de categorías de productos.
-        Soporta filtrado por nombre y búsqueda.
+        Gestión de productos entregados.
+        Soporta filtrado por orden, producto y recibo de entrega.
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Categoría.
+        description: A unique integer value identifying this Producto Entregado.
+        required: true
+      tags:
+      - arye_system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDelivery'
+          description: ''
+    put:
+      operationId: arye_system_api_data_product_delivery_update
+      description: |-
+        Gestión de productos entregados.
+        Soporta filtrado por orden, producto y recibo de entrega.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Producto Entregado.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductDeliveryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductDeliveryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductDeliveryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDelivery'
+          description: ''
+    patch:
+      operationId: arye_system_api_data_product_delivery_partial_update
+      description: |-
+        Gestión de productos entregados.
+        Soporta filtrado por orden, producto y recibo de entrega.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Producto Entregado.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductDeliveryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductDeliveryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductDeliveryRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDelivery'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_product_delivery_destroy
+      description: |-
+        Gestión de productos entregados.
+        Soporta filtrado por orden, producto y recibo de entrega.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Producto Entregado.
         required: true
       tags:
       - arye_system
@@ -2244,20 +2504,36 @@ paths:
       responses:
         '204':
           description: No response body
+  /arye_system/api_data/evidence_images/:
     get:
-      operationId: arye_system_api_data_category_retrieve
-      description: |-
-        Gestión de categorías de productos.
-        Soporta filtrado por nombre y búsqueda.
+      operationId: arye_system_api_data_evidence_images_list
+      description: Obtén todas las imágenes de evidencia almacenadas en el sistema.
+      summary: Listado de imágenes de evidencia
       parameters:
-      - in: path
-        name: id
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
         schema:
           type: integer
-        description: A unique integer value identifying this Categoría.
-        required: true
+      - in: query
+        name: public_id
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
       tags:
-      - arye_system
+      - Imágenes de evidencia
       security:
       - jwtAuth: []
       responses:
@@ -2265,33 +2541,61 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Category'
+                $ref: '#/components/schemas/PaginatedEvidenceImagesList'
+              examples:
+                EjemploDeRespuesta:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - - id: 1
+                        image_url: https://cloudinary.com/image.jpg
+                        public_id: evidence/image123
+                        created_at: '2025-10-22T10:00:00Z'
+                  summary: Ejemplo de respuesta
           description: ''
-    patch:
-      operationId: arye_system_api_data_category_partial_update
-      description: |-
-        Gestión de categorías de productos.
-        Soporta filtrado por nombre y búsqueda.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Categoría.
-        required: true
+    post:
+      operationId: arye_system_api_data_evidence_images_create
+      description: Registra una nueva imagen de evidencia en el sistema.
+      summary: Crear imagen de evidencia
       tags:
-      - arye_system
+      - Imágenes de evidencia
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedCategoryRequest'
+              $ref: '#/components/schemas/EvidenceImagesRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedCategoryRequest'
+              $ref: '#/components/schemas/EvidenceImagesRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedCategoryRequest'
+              $ref: '#/components/schemas/EvidenceImagesRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceImages'
+          description: ''
+  /arye_system/api_data/evidence_images/{id}/:
+    get:
+      operationId: arye_system_api_data_evidence_images_retrieve
+      description: Obtén detalles de una imagen de evidencia específica.
+      summary: Obtener imagen de evidencia
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Evidence Image.
+        required: true
+      tags:
+      - Imágenes de evidencia
       security:
       - jwtAuth: []
       responses:
@@ -2299,33 +2603,32 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Category'
+                $ref: '#/components/schemas/EvidenceImages'
           description: ''
     put:
-      operationId: arye_system_api_data_category_update
-      description: |-
-        Gestión de categorías de productos.
-        Soporta filtrado por nombre y búsqueda.
+      operationId: arye_system_api_data_evidence_images_update
+      description: Actualiza la información de una imagen de evidencia.
+      summary: Actualizar imagen de evidencia
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Categoría.
+        description: A unique integer value identifying this Evidence Image.
         required: true
       tags:
-      - arye_system
+      - Imágenes de evidencia
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CategoryRequest'
+              $ref: '#/components/schemas/EvidenceImagesRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/CategoryRequest'
+              $ref: '#/components/schemas/EvidenceImagesRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CategoryRequest'
+              $ref: '#/components/schemas/EvidenceImagesRequest'
         required: true
       security:
       - jwtAuth: []
@@ -2334,8 +2637,59 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Category'
+                $ref: '#/components/schemas/EvidenceImages'
           description: ''
+    patch:
+      operationId: arye_system_api_data_evidence_images_partial_update
+      description: Actualiza parcialmente la información de una imagen de evidencia.
+      summary: Actualizar parcialmente imagen de evidencia
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Evidence Image.
+        required: true
+      tags:
+      - Imágenes de evidencia
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEvidenceImagesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEvidenceImagesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEvidenceImagesRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceImages'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_evidence_images_destroy
+      description: Elimina una imagen de evidencia del sistema.
+      summary: Eliminar imagen de evidencia
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Evidence Image.
+        required: true
+      tags:
+      - Imágenes de evidencia
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /arye_system/user/:
     get:
       operationId: arye_system_user_retrieve
@@ -2678,9 +3032,9 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /arye_system/notifications/:
+  /arye_system/api_data/notifications/:
     get:
-      operationId: arye_system_notifications_list
+      operationId: arye_system_api_data_notifications_list
       description: Obtiene todas las notificaciones del usuario autenticado, ordenadas
         por fecha de creación (más recientes primero).
       summary: Listar notificaciones del usuario
@@ -2787,7 +3141,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedNotificationList'
           description: ''
     post:
-      operationId: arye_system_notifications_create
+      operationId: arye_system_api_data_notifications_create
       description: |-
         ViewSet para gestionar notificaciones del usuario autenticado.
 
@@ -2819,9 +3173,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Notification'
           description: ''
-  /arye_system/notifications/clear_all/:
+  /arye_system/api_data/notifications/clear_all/:
     delete:
-      operationId: arye_system_notifications_clear_all_destroy
+      operationId: arye_system_api_data_notifications_clear_all_destroy
       description: Elimina todas las notificaciones del usuario (tanto leídas como
         no leídas).
       summary: Eliminar todas las notificaciones
@@ -2837,9 +3191,9 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /arye_system/notifications/clear_read/:
+  /arye_system/api_data/notifications/clear_read/:
     delete:
-      operationId: arye_system_notifications_clear_read_destroy
+      operationId: arye_system_api_data_notifications_clear_read_destroy
       description: Elimina todas las notificaciones que ya han sido leídas por el
         usuario.
       summary: Eliminar notificaciones leídas
@@ -2855,9 +3209,9 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /arye_system/notifications/groups/{group_id}/expand/:
+  /arye_system/api_data/notifications/groups/{group_id}/expand/:
     get:
-      operationId: arye_system_notifications_groups_expand_list
+      operationId: arye_system_api_data_notifications_groups_expand_list
       description: Obtiene todas las notificaciones individuales de un grupo.
       summary: Expandir grupo de notificaciones
       parameters:
@@ -2968,9 +3322,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedNotificationList'
           description: ''
-  /arye_system/notifications/grouped/:
+  /arye_system/api_data/notifications/grouped/:
     get:
-      operationId: arye_system_notifications_grouped_retrieve
+      operationId: arye_system_api_data_notifications_grouped_retrieve
       description: Obtiene notificaciones con agrupación inteligente aplicada. Agrupa
         notificaciones similares para reducir el ruido.
       summary: Obtener notificaciones agrupadas
@@ -2985,9 +3339,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/GroupedNotifications'
           description: ''
-  /arye_system/notifications/mark_all_as_read/:
+  /arye_system/api_data/notifications/mark_all_as_read/:
     post:
-      operationId: arye_system_notifications_mark_all_as_read_create
+      operationId: arye_system_api_data_notifications_mark_all_as_read_create
       description: Marca múltiples notificaciones como leídas. Si no se proporcionan
         IDs, marca todas las notificaciones del usuario como leídas.
       summary: Marcar múltiples notificaciones como leídas
@@ -3025,9 +3379,9 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /arye_system/notifications/groups/{group_id}/mark-read/:
+  /arye_system/api_data/notifications/groups/{group_id}/mark-read/:
     post:
-      operationId: arye_system_notifications_groups_mark_read_create
+      operationId: arye_system_api_data_notifications_groups_mark_read_create
       description: Marca un grupo completo y todas sus notificaciones como leídas.
       summary: Marcar grupo como leído
       parameters:
@@ -3060,9 +3414,9 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /arye_system/notifications/stats/:
+  /arye_system/api_data/notifications/stats/:
     get:
-      operationId: arye_system_notifications_stats_retrieve
+      operationId: arye_system_api_data_notifications_stats_retrieve
       description: 'Obtiene estadísticas detalladas de las notificaciones del usuario:
         total, no leídas, por tipo y por prioridad.'
       summary: Obtener estadísticas de notificaciones
@@ -3091,9 +3445,9 @@ paths:
                       low: 5
                   summary: Ejemplo de estadísticas
           description: ''
-  /arye_system/notifications/throttle_stats/:
+  /arye_system/api_data/notifications/throttle_stats/:
     get:
-      operationId: arye_system_notifications_throttle_stats_retrieve
+      operationId: arye_system_api_data_notifications_throttle_stats_retrieve
       description: Obtiene información sobre los límites de tasa de notificaciones
         del usuario y cuántas ha recibido en la última hora.
       summary: Obtener estadísticas de throttling
@@ -3109,9 +3463,9 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /arye_system/notifications/unread/:
+  /arye_system/api_data/notifications/unread/:
     get:
-      operationId: arye_system_notifications_unread_list
+      operationId: arye_system_api_data_notifications_unread_list
       description: Obtiene solo las notificaciones que no han sido leídas por el usuario.
       summary: Obtener notificaciones no leídas
       parameters:
@@ -3216,9 +3570,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedNotificationList'
           description: ''
-  /arye_system/notifications/unread_count/:
+  /arye_system/api_data/notifications/unread_count/:
     get:
-      operationId: arye_system_notifications_unread_count_retrieve
+      operationId: arye_system_api_data_notifications_unread_count_retrieve
       description: Obtiene el número total de notificaciones no leídas del usuario.
       summary: Obtener conteo de notificaciones no leídas
       tags:
@@ -3238,27 +3592,9 @@ paths:
                     unread_count: 5
                   summary: Respuesta de conteo
           description: ''
-  /arye_system/notifications/{id}/:
-    delete:
-      operationId: arye_system_notifications_destroy
-      description: Elimina una notificación específica.
-      summary: Eliminar notificación
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Notificación.
-        required: true
-      tags:
-      - Notificaciones
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
+  /arye_system/api_data/notifications/{id}/:
     get:
-      operationId: arye_system_notifications_retrieve
+      operationId: arye_system_api_data_notifications_retrieve
       description: Obtiene el detalle de una notificación específica.
       summary: Obtener detalle de notificación
       parameters:
@@ -3279,48 +3615,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Notification'
           description: ''
-    patch:
-      operationId: arye_system_notifications_partial_update
-      description: |-
-        ViewSet para gestionar notificaciones del usuario autenticado.
-
-        Funcionalidades:
-        - Listar notificaciones (filtradas por usuario autenticado)
-        - Marcar notificaciones como leídas/no leídas
-        - Eliminar notificaciones
-        - Obtener estadísticas de notificaciones
-        - Filtrar por tipo, prioridad, leídas/no leídas
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Notificación.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedNotificationRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedNotificationRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedNotificationRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Notification'
-          description: ''
     put:
-      operationId: arye_system_notifications_update
+      operationId: arye_system_api_data_notifications_update
       description: |-
         ViewSet para gestionar notificaciones del usuario autenticado.
 
@@ -3359,9 +3655,67 @@ paths:
               schema:
                 $ref: '#/components/schemas/Notification'
           description: ''
-  /arye_system/notifications/{id}/mark_as_read/:
+    patch:
+      operationId: arye_system_api_data_notifications_partial_update
+      description: |-
+        ViewSet para gestionar notificaciones del usuario autenticado.
+
+        Funcionalidades:
+        - Listar notificaciones (filtradas por usuario autenticado)
+        - Marcar notificaciones como leídas/no leídas
+        - Eliminar notificaciones
+        - Obtener estadísticas de notificaciones
+        - Filtrar por tipo, prioridad, leídas/no leídas
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Notificación.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+    delete:
+      operationId: arye_system_api_data_notifications_destroy
+      description: Elimina una notificación específica.
+      summary: Eliminar notificación
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Notificación.
+        required: true
+      tags:
+      - Notificaciones
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /arye_system/api_data/notifications/{id}/mark_as_read/:
     post:
-      operationId: arye_system_notifications_mark_as_read_create
+      operationId: arye_system_api_data_notifications_mark_as_read_create
       description: Marca una notificación específica como leída.
       summary: Marcar notificación como leída
       parameters:
@@ -3393,9 +3747,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Notification'
           description: ''
-  /arye_system/notifications/{id}/mark_as_unread/:
+  /arye_system/api_data/notifications/{id}/mark_as_unread/:
     post:
-      operationId: arye_system_notifications_mark_as_unread_create
+      operationId: arye_system_api_data_notifications_mark_as_unread_create
       description: Marca una notificación específica como no leída.
       summary: Marcar notificación como no leída
       parameters:
@@ -3427,9 +3781,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Notification'
           description: ''
-  /arye_system/notification-preferences/:
+  /arye_system/api_data/notification-preferences/:
     get:
-      operationId: arye_system_notification_preferences_list
+      operationId: arye_system_api_data_notification_preferences_list
       description: Obtiene las preferencias de notificación del usuario autenticado.
         Si no existen, las crea con valores por defecto.
       summary: Obtener preferencias de notificación
@@ -3464,7 +3818,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedNotificationPreferenceList'
           description: ''
     post:
-      operationId: arye_system_notification_preferences_create
+      operationId: arye_system_api_data_notification_preferences_create
       description: |-
         ViewSet para gestionar las preferencias de notificación del usuario.
 
@@ -3495,9 +3849,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotificationPreference'
           description: ''
-  /arye_system/notification-preferences/notification_types/:
+  /arye_system/api_data/notification-preferences/notification_types/:
     get:
-      operationId: arye_system_notification_preferences_notification_types_retrieve
+      operationId: arye_system_api_data_notification_preferences_notification_types_retrieve
       description: Obtiene la lista de todos los tipos de notificación disponibles
         en el sistema.
       summary: Obtener tipos de notificación disponibles
@@ -3513,9 +3867,9 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /arye_system/notification-preferences/reset_to_defaults/:
+  /arye_system/api_data/notification-preferences/reset_to_defaults/:
     post:
-      operationId: arye_system_notification_preferences_reset_to_defaults_create
+      operationId: arye_system_api_data_notification_preferences_reset_to_defaults_create
       description: Restablece todas las preferencias de notificación del usuario a
         los valores por defecto del sistema.
       summary: Restablecer preferencias a valores por defecto
@@ -3541,9 +3895,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotificationPreference'
           description: ''
-  /arye_system/notification-preferences/update_preferences/:
+  /arye_system/api_data/notification-preferences/update_preferences/:
+    put:
+      operationId: arye_system_api_data_notification_preferences_update_preferences_update
+      description: Actualiza las preferencias de notificación del usuario.
+      summary: Actualizar preferencias de notificación
+      tags:
+      - Preferencias de Notificación
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationPreferenceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/NotificationPreferenceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NotificationPreferenceRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreference'
+          description: ''
     patch:
-      operationId: arye_system_notification_preferences_update_preferences_partial_update
+      operationId: arye_system_api_data_notification_preferences_update_preferences_partial_update
       description: Actualiza las preferencias de notificación del usuario.
       summary: Actualizar preferencias de notificación
       tags:
@@ -3559,6 +3939,35 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PatchedNotificationPreferenceRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreference'
+          description: ''
+  /arye_system/api_data/notification-preferences/{id}/:
+    get:
+      operationId: arye_system_api_data_notification_preferences_retrieve
+      description: |-
+        ViewSet para gestionar las preferencias de notificación del usuario.
+
+        Permite al usuario configurar:
+        - Tipos de notificaciones que desea recibir
+        - Activar/desactivar notificaciones por email
+        - Activar/desactivar notificaciones push
+        - Configurar frecuencia de resumen de notificaciones
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Preferencia de notificación.
+        required: true
+      tags:
+      - arye_system
       security:
       - jwtAuth: []
       responses:
@@ -3569,11 +3978,24 @@ paths:
                 $ref: '#/components/schemas/NotificationPreference'
           description: ''
     put:
-      operationId: arye_system_notification_preferences_update_preferences_update
-      description: Actualiza las preferencias de notificación del usuario.
-      summary: Actualizar preferencias de notificación
+      operationId: arye_system_api_data_notification_preferences_update
+      description: |-
+        ViewSet para gestionar las preferencias de notificación del usuario.
+
+        Permite al usuario configurar:
+        - Tipos de notificaciones que desea recibir
+        - Activar/desactivar notificaciones por email
+        - Activar/desactivar notificaciones push
+        - Configurar frecuencia de resumen de notificaciones
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Preferencia de notificación.
+        required: true
       tags:
-      - Preferencias de Notificación
+      - arye_system
       requestBody:
         content:
           application/json:
@@ -3594,9 +4016,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotificationPreference'
           description: ''
-  /arye_system/notification-preferences/{id}/:
+    patch:
+      operationId: arye_system_api_data_notification_preferences_partial_update
+      description: |-
+        ViewSet para gestionar las preferencias de notificación del usuario.
+
+        Permite al usuario configurar:
+        - Tipos de notificaciones que desea recibir
+        - Activar/desactivar notificaciones por email
+        - Activar/desactivar notificaciones push
+        - Configurar frecuencia de resumen de notificaciones
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Preferencia de notificación.
+        required: true
+      tags:
+      - arye_system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationPreferenceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationPreferenceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationPreferenceRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreference'
+          description: ''
     delete:
-      operationId: arye_system_notification_preferences_destroy
+      operationId: arye_system_api_data_notification_preferences_destroy
       description: |-
         ViewSet para gestionar las preferencias de notificación del usuario.
 
@@ -3619,112 +4079,6 @@ paths:
       responses:
         '204':
           description: No response body
-    get:
-      operationId: arye_system_notification_preferences_retrieve
-      description: |-
-        ViewSet para gestionar las preferencias de notificación del usuario.
-
-        Permite al usuario configurar:
-        - Tipos de notificaciones que desea recibir
-        - Activar/desactivar notificaciones por email
-        - Activar/desactivar notificaciones push
-        - Configurar frecuencia de resumen de notificaciones
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Preferencia de notificación.
-        required: true
-      tags:
-      - arye_system
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotificationPreference'
-          description: ''
-    patch:
-      operationId: arye_system_notification_preferences_partial_update
-      description: |-
-        ViewSet para gestionar las preferencias de notificación del usuario.
-
-        Permite al usuario configurar:
-        - Tipos de notificaciones que desea recibir
-        - Activar/desactivar notificaciones por email
-        - Activar/desactivar notificaciones push
-        - Configurar frecuencia de resumen de notificaciones
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Preferencia de notificación.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedNotificationPreferenceRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedNotificationPreferenceRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedNotificationPreferenceRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotificationPreference'
-          description: ''
-    put:
-      operationId: arye_system_notification_preferences_update
-      description: |-
-        ViewSet para gestionar las preferencias de notificación del usuario.
-
-        Permite al usuario configurar:
-        - Tipos de notificaciones que desea recibir
-        - Activar/desactivar notificaciones por email
-        - Activar/desactivar notificaciones push
-        - Configurar frecuencia de resumen de notificaciones
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Preferencia de notificación.
-        required: true
-      tags:
-      - arye_system
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NotificationPreferenceRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/NotificationPreferenceRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/NotificationPreferenceRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotificationPreference'
-          description: ''
 components:
   schemas:
     AmazonScrapingRequestRequest:
@@ -3810,49 +4164,6 @@ components:
       required:
       - account_name
       - shop
-    Category:
-      type: object
-      description: Serializador para categorías de productos con costo de envío por
-        libra.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          maxLength: 100
-        shipping_cost_per_pound:
-          type: number
-          format: double
-          description: Costo de envío por libra para esta categoría
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - created_at
-      - id
-      - name
-      - updated_at
-    CategoryRequest:
-      type: object
-      description: Serializador para categorías de productos con costo de envío por
-        libra.
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        shipping_cost_per_pound:
-          type: number
-          format: double
-          description: Costo de envío por libra para esta categoría
-      required:
-      - name
     CommonInformation:
       type: object
       description: Serializador para información común administrada por el admin.
@@ -3981,6 +4292,57 @@ components:
       required:
       - password
       - phone_number
+    EvidenceImages:
+      type: object
+      description: Serializador para imágenes de evidencia.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        public_id:
+          type: string
+          nullable: true
+          maxLength: 200
+        image_url:
+          type: string
+          format: uri
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - image_url
+      - updated_at
+    EvidenceImagesRequest:
+      type: object
+      description: Serializador para imágenes de evidencia.
+      properties:
+        public_id:
+          type: string
+          nullable: true
+          maxLength: 200
+        image_url:
+          type: string
+          format: uri
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+          maxLength: 255
+      required:
+      - image_url
     GroupedNotifications:
       type: object
       description: Serializador para notificaciones agrupadas + individuales.
@@ -4326,17 +4688,27 @@ components:
           type: integer
           readOnly: true
         client:
-          type: integer
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
         sales_manager:
-          type: integer
-          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
         status:
-          $ref: '#/components/schemas/Status233Enum'
+          $ref: '#/components/schemas/OrderStatusEnum'
         pay_status:
           $ref: '#/components/schemas/PayStatusEnum'
         observations:
           type: string
           nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
         total_cost:
           type: number
           format: double
@@ -4360,27 +4732,46 @@ components:
       - id
       - products
       - received_value_of_client
+      - sales_manager
       - total_cost
+      - updated_at
     OrderRequest:
       type: object
       description: |-
         Serializador para órdenes. Incluye validaciones de agente y campos calculados relacionados con pagos y productos.
         Acepta ID para cliente y agente.
       properties:
-        client:
+        client_id:
           type: integer
-        sales_manager:
+          writeOnly: true
+        sales_manager_id:
           type: integer
+          writeOnly: true
           nullable: true
         status:
-          $ref: '#/components/schemas/Status233Enum'
+          $ref: '#/components/schemas/OrderStatusEnum'
         pay_status:
           $ref: '#/components/schemas/PayStatusEnum'
         observations:
           type: string
           nullable: true
+        created_at:
+          type: string
+          format: date-time
       required:
-      - client
+      - client_id
+    OrderStatusEnum:
+      enum:
+      - Encargado
+      - Procesando
+      - Completado
+      - Cancelado
+      type: string
+      description: |-
+        * `Encargado` - Encargado
+        * `Procesando` - Procesando
+        * `Completado` - Completado
+        * `Cancelado` - Cancelado
     Package:
       type: object
       description: Serializador para paquetes, muestra productos contenidos y fotos
@@ -4406,7 +4797,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProductReceived'
-          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -4444,8 +4834,13 @@ components:
             type: string
             format: uri
             minLength: 1
+        contained_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductReceivedRequest'
       required:
       - agency_name
+      - contained_products
       - number_of_tracking
       - package_picture
     PaginatedBuyingAccountsList:
@@ -4471,29 +4866,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BuyingAccounts'
-    PaginatedCategoryList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/Category'
     PaginatedCommonInformationList:
       type: object
       required:
@@ -4540,6 +4912,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DeliverReceip'
+    PaginatedEvidenceImagesList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceImages'
     PaginatedNotificationList:
       type: object
       required:
@@ -4655,6 +5050,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProductBuyed'
+    PaginatedProductDeliveryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductDelivery'
     PaginatedProductList:
       type: object
       required:
@@ -4796,19 +5214,6 @@ components:
         shop:
           type: string
           minLength: 1
-    PatchedCategoryRequest:
-      type: object
-      description: Serializador para categorías de productos con costo de envío por
-        libra.
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        shipping_cost_per_pound:
-          type: number
-          format: double
-          description: Costo de envío por libra para esta categoría
     PatchedCommonInformationRequest:
       type: object
       description: Serializador para información común administrada por el admin.
@@ -4840,6 +5245,23 @@ components:
           format: double
         status:
           $ref: '#/components/schemas/DeliverReceipStatusEnum'
+    PatchedEvidenceImagesRequest:
+      type: object
+      description: Serializador para imágenes de evidencia.
+      properties:
+        public_id:
+          type: string
+          nullable: true
+          maxLength: 200
+        image_url:
+          type: string
+          format: uri
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+          maxLength: 255
     PatchedNotificationPreferenceRequest:
       type: object
       description: Serializador para preferencias de notificación.
@@ -4870,18 +5292,23 @@ components:
         Serializador para órdenes. Incluye validaciones de agente y campos calculados relacionados con pagos y productos.
         Acepta ID para cliente y agente.
       properties:
-        client:
+        client_id:
           type: integer
-        sales_manager:
+          writeOnly: true
+        sales_manager_id:
           type: integer
+          writeOnly: true
           nullable: true
         status:
-          $ref: '#/components/schemas/Status233Enum'
+          $ref: '#/components/schemas/OrderStatusEnum'
         pay_status:
           $ref: '#/components/schemas/PayStatusEnum'
         observations:
           type: string
           nullable: true
+        created_at:
+          type: string
+          format: date-time
     PatchedPackageRequest:
       type: object
       description: Serializador para paquetes, muestra productos contenidos y fotos
@@ -4903,6 +5330,10 @@ components:
             type: string
             format: uri
             minLength: 1
+        contained_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductReceivedRequest'
     PatchedProductBuyedRequest:
       type: object
       description: Serializador para productos comprados por el agente, con validaciones
@@ -4912,8 +5343,6 @@ components:
           type: string
           format: uuid
           writeOnly: true
-        order:
-          type: integer
         shoping_receip:
           type: integer
         actual_cost_of_product:
@@ -4939,33 +5368,40 @@ components:
         real_cost_of_product:
           type: number
           format: double
-    PatchedProductReceivedRequest:
+    PatchedProductDeliveryRequest:
       type: object
-      description: Serializador para productos recibidos y entregados por logística,
-        con validaciones de cantidad y detalles del producto.
+      description: Serializador para productos entregados con validaciones de cantidad
+        y detalles del producto.
       properties:
         original_product:
           type: string
           format: uuid
           writeOnly: true
-        order:
-          type: integer
-        reception_date_in_eeuu:
-          type: string
-          format: date
-        reception_date_in_cuba:
-          type: string
-          format: date
-          nullable: true
-        package_where_was_send:
-          type: integer
         deliver_receip:
           type: integer
-        amount_received:
+        amount_delivered:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
-        amount_delivered:
+        reception:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    PatchedProductReceivedRequest:
+      type: object
+      description: Serializador para productos recibidos por logística, con validaciones
+        de cantidad y detalles del producto.
+      properties:
+        original_product:
+          type: string
+          format: uuid
+          writeOnly: true
+        package:
+          type: integer
+        amount_received:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
@@ -4973,6 +5409,9 @@ components:
           type: string
           nullable: true
           maxLength: 200
+        created_at:
+          type: string
+          format: date-time
     PatchedProductRequest:
       type: object
       description: Serializador para productos. Proporciona información detallada,
@@ -4980,7 +5419,7 @@ components:
       properties:
         sku:
           type: string
-          minLength: 1
+          nullable: true
           maxLength: 100
         name:
           type: string
@@ -4991,18 +5430,21 @@ components:
           format: uri
           nullable: true
           maxLength: 200
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
         shop:
           type: string
           minLength: 1
         description:
           type: string
           nullable: true
-          minLength: 1
           maxLength: 200
         observation:
           type: string
           nullable: true
-          minLength: 1
           maxLength: 200
         category:
           type: string
@@ -5012,6 +5454,11 @@ components:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
+        amount_purchased:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Cantidad total de productos comprados
         order:
           type: integer
         product_pictures:
@@ -5054,10 +5501,15 @@ components:
           maxLength: 200
         is_active:
           type: boolean
+        tax_rate:
+          type: number
+          format: double
+          description: Tasa de impuestos para esta tienda
     PatchedShoppingReceipRequest:
       type: object
-      description: Serializador para recibos de compra, incluye productos comprados
-        y cálculo de costo total.
+      description: |-
+        Serializador para recibos de compra, incluye productos comprados y cálculo de costo total.
+        Permite crear un ShoppingReceip con sus ProductBuyed asociados.
       properties:
         shopping_account:
           type: string
@@ -5068,6 +5520,12 @@ components:
         buy_date:
           type: string
           format: date-time
+        buyed_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductBuyedRequest'
+        status_of_shopping:
+          $ref: '#/components/schemas/StatusOfShoppingEnum'
     PatchedUserProfileRequest:
       type: object
       description: |-
@@ -5159,11 +5617,17 @@ components:
           readOnly: true
         sku:
           type: string
+          nullable: true
           maxLength: 100
         name:
           type: string
           maxLength: 100
         link:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        image_url:
           type: string
           format: uri
           nullable: true
@@ -5194,6 +5658,11 @@ components:
         amount_received:
           type: integer
           readOnly: true
+        amount_purchased:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Cantidad total de productos comprados
         order:
           type: integer
         status:
@@ -5226,21 +5695,30 @@ components:
           type: number
           format: double
           readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
       required:
       - amount_buyed
       - amount_delivered
       - amount_received
       - amount_requested
       - cost_per_product
+      - created_at
       - id
       - name
       - order
       - product_pictures
       - shop
       - shop_cost
-      - sku
       - status
       - total_cost
+      - updated_at
     ProductBuyed:
       type: object
       description: Serializador para productos comprados por el agente, con validaciones
@@ -5249,8 +5727,6 @@ components:
         id:
           type: integer
           readOnly: true
-        order:
-          type: integer
         shoping_receip:
           type: integer
         actual_cost_of_product:
@@ -5283,10 +5759,7 @@ components:
       required:
       - amount_buyed
       - id
-      - order
       - original_product_details
-      - real_cost_of_product
-      - shoping_receip
     ProductBuyedRequest:
       type: object
       description: Serializador para productos comprados por el agente, con validaciones
@@ -5296,8 +5769,6 @@ components:
           type: string
           format: uuid
           writeOnly: true
-        order:
-          type: integer
         shoping_receip:
           type: integer
         actual_cost_of_product:
@@ -5325,14 +5796,11 @@ components:
           format: double
       required:
       - amount_buyed
-      - order
       - original_product
-      - real_cost_of_product
-      - shoping_receip
-    ProductReceived:
+    ProductDelivery:
       type: object
-      description: Serializador para productos recibidos y entregados por logística,
-        con validaciones de cantidad y detalles del producto.
+      description: Serializador para productos entregados con validaciones de cantidad
+        y detalles del producto.
       properties:
         id:
           type: integer
@@ -5341,64 +5809,66 @@ components:
           allOf:
           - $ref: '#/components/schemas/Product'
           readOnly: true
-        order:
-          type: integer
-        reception_date_in_eeuu:
-          type: string
-          format: date
-        reception_date_in_cuba:
-          type: string
-          format: date
-          nullable: true
-        package_where_was_send:
-          type: integer
         deliver_receip:
           type: integer
-        amount_received:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
         amount_delivered:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
-        observation:
+        reception:
           type: string
+          format: date
           nullable: true
-          maxLength: 200
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
       required:
-      - amount_received
       - id
-      - order
       - original_product_detail
-      - package_where_was_send
-    ProductReceivedRequest:
+      - updated_at
+    ProductDeliveryRequest:
       type: object
-      description: Serializador para productos recibidos y entregados por logística,
-        con validaciones de cantidad y detalles del producto.
+      description: Serializador para productos entregados con validaciones de cantidad
+        y detalles del producto.
       properties:
         original_product:
           type: string
           format: uuid
           writeOnly: true
-        order:
-          type: integer
-        reception_date_in_eeuu:
-          type: string
-          format: date
-        reception_date_in_cuba:
-          type: string
-          format: date
-          nullable: true
-        package_where_was_send:
-          type: integer
         deliver_receip:
           type: integer
-        amount_received:
+        amount_delivered:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
-        amount_delivered:
+        reception:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - original_product
+    ProductReceived:
+      type: object
+      description: Serializador para productos recibidos por logística, con validaciones
+        de cantidad y detalles del producto.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        original_product_detail:
+          allOf:
+          - $ref: '#/components/schemas/Product'
+          readOnly: true
+        package:
+          type: integer
+        amount_received:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
@@ -5406,11 +5876,43 @@ components:
           type: string
           nullable: true
           maxLength: 200
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
       required:
-      - amount_received
-      - order
+      - id
+      - original_product_detail
+      - package
+      - updated_at
+    ProductReceivedRequest:
+      type: object
+      description: Serializador para productos recibidos por logística, con validaciones
+        de cantidad y detalles del producto.
+      properties:
+        original_product:
+          type: string
+          format: uuid
+          writeOnly: true
+        package:
+          type: integer
+        amount_received:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        observation:
+          type: string
+          nullable: true
+          maxLength: 200
+        created_at:
+          type: string
+          format: date-time
+      required:
       - original_product
-      - package_where_was_send
+      - package
     ProductRequest:
       type: object
       description: Serializador para productos. Proporciona información detallada,
@@ -5418,7 +5920,7 @@ components:
       properties:
         sku:
           type: string
-          minLength: 1
+          nullable: true
           maxLength: 100
         name:
           type: string
@@ -5429,18 +5931,21 @@ components:
           format: uri
           nullable: true
           maxLength: 200
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
         shop:
           type: string
           minLength: 1
         description:
           type: string
           nullable: true
-          minLength: 1
           maxLength: 200
         observation:
           type: string
           nullable: true
-          minLength: 1
           maxLength: 200
         category:
           type: string
@@ -5450,6 +5955,11 @@ components:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
+        amount_purchased:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Cantidad total de productos comprados
         order:
           type: integer
         product_pictures:
@@ -5483,7 +5993,6 @@ components:
       - product_pictures
       - shop
       - shop_cost
-      - sku
       - total_cost
     RoleEnum:
       enum:
@@ -5522,6 +6031,10 @@ components:
           maxLength: 200
         is_active:
           type: boolean
+        tax_rate:
+          type: number
+          format: double
+          description: Tasa de impuestos para esta tienda
         created_at:
           type: string
           format: date-time
@@ -5558,13 +6071,18 @@ components:
           maxLength: 200
         is_active:
           type: boolean
+        tax_rate:
+          type: number
+          format: double
+          description: Tasa de impuestos para esta tienda
       required:
       - link
       - name
     ShoppingReceip:
       type: object
-      description: Serializador para recibos de compra, incluye productos comprados
-        y cálculo de costo total.
+      description: |-
+        Serializador para recibos de compra, incluye productos comprados y cálculo de costo total.
+        Permite crear un ShoppingReceip con sus ProductBuyed asociados.
       properties:
         id:
           type: integer
@@ -5584,7 +6102,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProductBuyed'
-          readOnly: true
+        status_of_shopping:
+          $ref: '#/components/schemas/StatusOfShoppingEnum'
       required:
       - buyed_products
       - id
@@ -5593,8 +6112,9 @@ components:
       - total_cost_of_shopping
     ShoppingReceipRequest:
       type: object
-      description: Serializador para recibos de compra, incluye productos comprados
-        y cálculo de costo total.
+      description: |-
+        Serializador para recibos de compra, incluye productos comprados y cálculo de costo total.
+        Permite crear un ShoppingReceip con sus ProductBuyed asociados.
       properties:
         shopping_account:
           type: string
@@ -5605,33 +6125,36 @@ components:
         buy_date:
           type: string
           format: date-time
+        buyed_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductBuyedRequest'
+        status_of_shopping:
+          $ref: '#/components/schemas/StatusOfShoppingEnum'
       required:
+      - buyed_products
       - shop_of_buy
       - shopping_account
-    Status233Enum:
-      enum:
-      - Encargado
-      - Procesando
-      - Completado
-      - Cancelado
-      type: string
-      description: |-
-        * `Encargado` - Encargado
-        * `Procesando` - Procesando
-        * `Completado` - Completado
-        * `Cancelado` - Cancelado
     StatusOfProcessingEnum:
       enum:
-      - Encargado
-      - Procesando
-      - Completado
-      - Cancelado
+      - Enviado
+      - Recibido
+      - Procesado
       type: string
       description: |-
-        * `Encargado` - Encargado
-        * `Procesando` - Procesando
-        * `Completado` - Completado
-        * `Cancelado` - Cancelado
+        * `Enviado` - Enviado
+        * `Recibido` - Recibido
+        * `Procesado` - Procesado
+    StatusOfShoppingEnum:
+      enum:
+      - No pagado
+      - Pagado
+      - Parcial
+      type: string
+      description: |-
+        * `No pagado` - No pagado
+        * `Pagado` - Pagado
+        * `Parcial` - Parcial
     TokenRefresh:
       type: object
       properties:

@@ -10,7 +10,8 @@ import {
   Store,
   ShoppingBag,
   Truck,
-  Tag
+  Tag,
+  ReceiptIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import logoSvg from '@/assets/logo/logo.svg';
@@ -73,7 +74,11 @@ const navigation = [
     href: '/delivery',
     icon: Truck
   },
-  
+  {
+    name: 'Reportes',
+    href: '/report',
+    icon: ReceiptIcon
+  },
   
 ];
 

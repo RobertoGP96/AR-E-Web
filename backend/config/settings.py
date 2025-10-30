@@ -80,30 +80,30 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # Production database configuration (Neon PostgreSQL)
-DATABASE_URL = config('DATABASE_URL', default='')
+DATABASE_URL = config('DATABASE_URL')
 
-if DATABASE_URL:
+#if DATABASE_URL:
     # Use Neon PostgreSQL in production
-    import dj_database_url
-    DATABASES = {
-        'default': dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
-    # Add SSL configuration for Neon
-    DATABASES['default']['OPTIONS'] = {
-        'sslmode': 'require',
-    }
-else:
+#    import dj_database_url
+#    DATABASES = {
+#        'default': dj_database_url.parse(
+#            DATABASE_URL,
+#            conn_max_age=600,
+#            conn_health_checks=True,
+#        )
+#    }
+#    # Add SSL configuration for Neon
+#    DATABASES['default']['OPTIONS'] = {
+#        'sslmode': 'require',
+#    }
+#else:
     # Use SQLite3 for local development
-    DATABASES = {
+DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
-    }
+}
 
 
 # Password validation

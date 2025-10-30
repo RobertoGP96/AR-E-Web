@@ -1,5 +1,4 @@
 import { AsideNav } from './AsideNav';
-import { useLocation} from 'react-router-dom';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 import { BreadcrumbNavigation } from './BreadcrumbNavigation';
 
@@ -7,23 +6,8 @@ interface AppSidebarWrapperProps {
   children: React.ReactNode;
 }
 
-const navigation = [
-  { name: 'Dashboard', href: '/' },
-  { name: 'Usuarios', href: '/users' },
-  { name: 'Tiendas', href: '/shops' },
-  { name: 'Productos', href: '/products' },
-  { name: 'Compras', href: '/purchases' },
-  { name: 'Paquetes', href: '/packages' },
-  { name: 'Entrega', href: '/delivery' },
-  { name: 'Órdenes', href: '/orders' },
-  { name: 'Configuración', href: '/settings' },
-  { name: 'Mi Perfil', href: '/profile' },
-];
 
 export function AppSidebarWrapper({ children }: AppSidebarWrapperProps) {
-  const location = useLocation();
-
-  const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
@@ -37,17 +21,7 @@ export function AppSidebarWrapper({ children }: AppSidebarWrapperProps) {
           {/* Título de la página */}
           <div className="flex items-center min-w-0 flex-1">
             <BreadcrumbNavigation />
-            <div className="min-w-0 flex-1">
-              <h2 className="text-xl font-bold text-gray-800 truncate">
-                {navigation.find(item => isActive(item.href))?.name || 'Dashboard'}
-              </h2>
-              <p className="text-sm text-gray-600 hidden sm:block">
-                Gestiona tu panel de administración
-              </p>
-            </div>
           </div>
-
-          
 
           {/* Acciones del header */}
           <div className="flex items-center space-x-3 flex-shrink-0">

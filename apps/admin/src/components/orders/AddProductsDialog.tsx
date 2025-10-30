@@ -46,7 +46,7 @@ export default function AddProductsDialog({ order = null, open, onOpenChange }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px]">
+      <DialogContent className="sm:max-w-[800px] max-h-3/4 overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Añadir producto al pedido {order ? `#${order.id}` : ''}</DialogTitle>
         </DialogHeader>
