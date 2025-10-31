@@ -76,7 +76,7 @@ const navigation = [
   },
   {
     name: 'Reportes',
-    href: '/report',
+    href: '/reports',
     icon: ReceiptIcon
   },
   

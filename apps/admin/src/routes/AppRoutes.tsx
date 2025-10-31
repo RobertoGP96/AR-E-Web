@@ -18,6 +18,7 @@ import ProductDetails from '@/components/products/product-details';
 import OrderDetails from '@/components/orders/order-details';
 import { PurchaseDetails } from '@/components/packages/purshases';
 import AddProductsToPackagePage from '@/components/packages/AddProductsToPackagePage';
+import Reports from '@/pages/Reports';
 
 const AppRoutes = () => {
     return (
@@ -51,6 +52,7 @@ const AppRoutes = () => {
                 <Route path="delivery" element={<Delivery />} />
                 
                 <Route path="orders" element={<Orders />} />
+                <Route path="reports" element={<Reports />} />
                 <Route path="orders/:id" element={<OrderDetails />} />
                 
                 <Route path="profile" element={<Profile />} />
