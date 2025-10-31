@@ -1,4 +1,4 @@
-import { Bell, Check, Clock, AlertCircle, Package, Truck, ShoppingCart } from 'lucide-react';
+import { Bell, Check, AlertCircle, Package, Truck, ShoppingCart, Loader2 } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -6,95 +6,60 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'warning' | 'success' | 'error';
-  timestamp: Date;
-  read: boolean;
-  icon?: React.ComponentType<{ className?: string }>;
-}
-
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'Nueva orden recibida',
-    message: 'Orden #ORD-001 por $450,000 necesita procesamiento',
-    type: 'info',
-    timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 minutos atrás
-    read: false,
-    icon: ShoppingCart
-  },
-  {
-    id: '2',
-    title: 'Paquete entregado',
-    message: 'El paquete #PKG-001234 ha sido entregado exitosamente',
-    type: 'success',
-    timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutos atrás
-    read: false,
-    icon: Package
-  },
-  {
-    id: '3',
-    title: 'Retraso en entrega',
-    message: 'La ruta Norte #001 tiene un retraso de 45 minutos',
-    type: 'warning',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 horas atrás
-    read: true,
-    icon: Truck
-  },
-  {
-    id: '4',
-    title: 'Problema con pago',
-    message: 'Error en el procesamiento de pago para orden #ORD-045',
-    type: 'error',
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 horas atrás
-    read: true,
-    icon: AlertCircle
-  },
-  {
-    id: '5',
-    title: 'Nueva tienda registrada',
-    message: 'Tienda "Mercado Central" se ha registrado exitosamente',
-    type: 'success',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 día atrás
-    read: true
-  }
-];
+import type { Notification } from '@/types/models';
+import { useNotificationActions } from '@/hooks/notifications/use-notification-actions';
+import { useNotificationSSE } from '@/hooks/notifications/use-notification-sse';
+import { useNotifications } from '@/hooks/notifications/use-notifications';
 
 export function NotificationsPopover() {
-  const unreadCount = mockNotifications.filter(n => !n.read).length;
+  // Usar hooks de notificaciones
+  const { notifications, unreadCount, isLoading } = useNotifications({
+    filters: { page: 1, per_page: 10 }
+  });
+  const actions = useNotificationActions();
+
+  // SSE para notificaciones en tiempo real
+  const { isConnected } = useNotificationSSE();
+
+  // Usar datos del backend directamente
+  const displayNotifications = notifications || [];
+  const displayUnreadCount = unreadCount || 0;
 
   const getNotificationIcon = (notification: Notification) => {
-    if (notification.icon) {
-      const Icon = notification.icon;
-      return <Icon className="h-4 w-4" />;
-    }
-
-    switch (notification.type) {
-      case 'error':
+    // Mapear tipos de notificación a iconos
+    switch (notification.notification_type) {
+      case 'order_created':
+      case 'order_status_changed':
+      case 'order_assigned':
+        return <ShoppingCart className="h-4 w-4" />;
+      case 'package_shipped':
+      case 'package_in_transit':
+      case 'package_delivered':
+        return <Package className="h-4 w-4" />;
+      case 'package_delayed':
+        return <Truck className="h-4 w-4" />;
+      case 'payment_overdue':
         return <AlertCircle className="h-4 w-4" />;
-      case 'warning':
-        return <Clock className="h-4 w-4" />;
-      case 'success':
+      case 'user_registered':
         return <Check className="h-4 w-4" />;
       default:
         return <Bell className="h-4 w-4" />;
     }
   };
 
-  const getNotificationColors = (type: string) => {
-    switch (type) {
-      case 'error':
+  const getNotificationColors = (notificationType: string) => {
+    // Mapear prioridades a colores
+    switch (notificationType) {
+      case 'urgent':
         return 'text-red-600 bg-gradient-to-br from-red-50 to-red-100 border border-red-200/50';
-      case 'warning':
-        return 'text-yellow-600 bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200/50';
-      case 'success':
-        return 'text-green-600 bg-gradient-to-br from-green-50 to-green-100 border border-green-200/50';
-      default:
+      case 'high':
+        return 'text-orange-600 bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200/50';
+      case 'normal':
         return 'text-blue-600 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200/50';
+      default:
+        return 'text-gray-600 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200/50';
     }
   };
 
@@ -114,6 +79,10 @@ export function NotificationsPopover() {
     }
   };
 
+  const handleMarkAllAsRead = () => {
+    actions.markAllAsRead.mutate();
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -122,13 +91,17 @@ export function NotificationsPopover() {
           className="p-3 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-200 relative group"
         >
           <Bell className="h-5 w-5 transition-transform group-hover:scale-110" />
-          {unreadCount > 0 && (
+          {displayUnreadCount > 0 && (
             <>
               <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full ring-2 ring-white flex items-center justify-center">
-                <span className="text-xs font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                <span className="text-xs font-bold text-white">{displayUnreadCount > 9 ? '9+' : displayUnreadCount}</span>
               </span>
               <span className="absolute -top-1 -right-1 h-5 w-5 bg-orange-500 rounded-full animate-ping opacity-75"></span>
             </>
+          )}
+          {/* Indicador de conexión SSE */}
+          {isConnected && (
+            <span className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full ring-2 ring-white"></span>
           )}
         </button>
       </PopoverTrigger>
@@ -138,69 +111,96 @@ export function NotificationsPopover() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-xl">Notificaciones</h3>
-              <p className="text-orange-100 text-sm mt-1">Mantente al día con las últimas actualizaciones</p>
+              <p className="text-orange-100 text-sm mt-1">
+                {isConnected ? 'Conectado en tiempo real' : 'Mantente al día con las últimas actualizaciones'}
+              </p>
             </div>
-            {unreadCount > 0 && (
+            {displayUnreadCount > 0 && (
               <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
-                <span className="text-sm font-semibold">{unreadCount} nuevas</span>
+                <span className="text-sm font-semibold">{displayUnreadCount} nuevas</span>
               </div>
             )}
           </div>
         </div>
-        
+
         <ScrollArea className="h-96">
-          <div className="p-2">
-            {mockNotifications.map((notification, index) => (
-              <div key={notification.id}>
-                <div className={`group relative flex gap-4 p-4 hover:bg-gradient-to-r hover:from-orange-50/50 hover:to-amber-50/50 rounded-xl transition-all duration-200 cursor-pointer border-l-4 ${
-                  !notification.read 
-                    ? 'border-l-orange-500 bg-gradient-to-r from-orange-50/30 to-amber-50/20' 
-                    : 'border-l-transparent hover:border-l-gray-200'
-                }`}>
-                  <div className={`flex-shrink-0 p-3 rounded-xl shadow-sm transition-all duration-200 group-hover:shadow-md ${getNotificationColors(notification.type)}`}>
-                    {getNotificationIcon(notification)}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm font-semibold text-gray-900 leading-tight ${
-                        !notification.read ? 'text-gray-900' : 'text-gray-700'
-                      }`}>
-                        {notification.title}
-                      </p>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-xs text-gray-400 font-medium">
-                          {formatTimestamp(notification.timestamp)}
-                        </span>
-                        {!notification.read && (
-                          <div className="h-2.5 w-2.5 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full shadow-sm"></div>
-                        )}
-                      </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+              <span className="ml-2 text-sm text-gray-500">Cargando notificaciones...</span>
+            </div>
+          ) : displayNotifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-8 text-center">
+              <Bell className="h-12 w-12 text-gray-300 mb-4" />
+              <h4 className="text-sm font-medium text-gray-900 mb-2">No hay notificaciones</h4>
+              <p className="text-sm text-gray-500">Cuando tengas nuevas notificaciones, aparecerán aquí.</p>
+            </div>
+          ) : (
+            <div className="p-2">
+              {displayNotifications.map((notification: Notification, index: number) => (
+                <div key={notification.id}>
+                  <div className={`group relative flex gap-4 p-4 hover:bg-gradient-to-r hover:from-orange-50/50 hover:to-amber-50/50 rounded-xl transition-all duration-200 cursor-pointer border-l-4 ${
+                    !notification.is_read
+                      ? 'border-l-orange-500 bg-gradient-to-r from-orange-50/30 to-amber-50/20'
+                      : 'border-l-transparent hover:border-l-gray-200'
+                  }`}>
+                    <div className={`flex-shrink-0 p-3 rounded-xl shadow-sm transition-all duration-200 group-hover:shadow-md ${getNotificationColors(notification.priority)}`}>
+                      {getNotificationIcon(notification)}
                     </div>
-                    <p className="text-sm text-gray-600 mt-2 leading-relaxed line-clamp-2">
-                      {notification.message}
-                    </p>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`text-sm font-semibold text-gray-900 leading-tight ${
+                          !notification.is_read ? 'text-gray-900' : 'text-gray-700'
+                        }`}>
+                          {notification.title}
+                        </p>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs text-gray-400 font-medium">
+                            {formatTimestamp(new Date(notification.created_at))}
+                          </span>
+                          {!notification.is_read && (
+                            <div className="h-2.5 w-2.5 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full shadow-sm"></div>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2 leading-relaxed line-clamp-2">
+                        {notification.message}
+                      </p>
+                    </div>
                   </div>
+                  {index < displayNotifications.length - 1 && (
+                    <div className="mx-4">
+                      <Separator className="bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+                    </div>
+                  )}
                 </div>
-                {index < mockNotifications.length - 1 && (
-                  <div className="mx-4">
-                    <Separator className="bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </ScrollArea>
-        
+
         {/* Footer con acciones */}
         <div className="bg-gray-50/80 backdrop-blur-sm border-t border-gray-100 p-4">
           <div className="flex gap-3">
-            <button className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]">
-              Marcar todas como leídas
-            </button>
-            <button className="flex-1 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-4 rounded-xl border border-gray-200 transition-all duration-200 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]">
+            {displayUnreadCount > 0 && (
+              <Button
+                onClick={handleMarkAllAsRead}
+                disabled={actions.markAllAsRead.isPending}
+                className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {actions.markAllAsRead.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                Marcar todas como leídas
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              className={`${displayUnreadCount > 0 ? 'flex-1' : 'w-full'} bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-4 rounded-xl border border-gray-200 transition-all duration-200 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]`}
+            >
               Ver todas
-            </button>
+            </Button>
           </div>
         </div>
       </PopoverContent>

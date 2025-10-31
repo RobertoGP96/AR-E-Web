@@ -21,7 +21,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import type { Product } from '@/types';
 
@@ -47,7 +46,7 @@ export default function AddProductsToPackageDialog({
 
   // Estado del formulario
   const [productEntries, setProductEntries] = useState<ProductEntry[]>([
-    { id: '1', original_product: 0, amount_received: 1, observation: '' }
+    { id: '1', original_product: 0, amount_received: 1 }
   ]);
 
   // Función para agregar una nueva entrada de producto
@@ -56,8 +55,7 @@ export default function AddProductsToPackageDialog({
     setProductEntries(prev => [...prev, {
       id: newId,
       original_product: 0,
-      amount_received: 1,
-      observation: ''
+      amount_received: 1
     }]);
   };
 
@@ -100,8 +98,7 @@ export default function AddProductsToPackageDialog({
       // Preparar los datos para enviar (sin el campo id)
       const productsToSend: AddProductsToPackageData[] = productEntries.map(entry => ({
         original_product: entry.original_product,
-        amount_received: entry.amount_received,
-        observation: entry.observation
+        amount_received: entry.amount_received
       }));
 
       await addProductsMutation.mutateAsync({
@@ -112,7 +109,7 @@ export default function AddProductsToPackageDialog({
       toast.success(`Se agregaron ${productEntries.length} productos al paquete exitosamente`);
 
       // Resetear formulario y cerrar diálogo
-      setProductEntries([{ id: '1', original_product: 0, amount_received: 1, observation: '' }]);
+      setProductEntries([{ id: '1', original_product: 0, amount_received: 1 }]);
       onOpenChange(false);
     } catch (error) {
       console.error('Error adding products to package:', error);
@@ -196,20 +193,6 @@ export default function AddProductsToPackageDialog({
                       className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
                     />
                   </div>
-                </div>
-
-                {/* Observación */}
-                <div className="grid gap-2">
-                  <Label htmlFor={`observation-${entry.id}`}>Observación</Label>
-                  <Textarea
-                    id={`observation-${entry.id}`}
-                    placeholder="Observación opcional..."
-                    value={entry.observation}
-                    onChange={(e) =>
-                      updateProductEntry(entry.id, 'observation', e.target.value)
-                    }
-                    className="min-h-[60px] border-gray-200 focus:border-orange-300 focus:ring-orange-200"
-                  />
                 </div>
               </div>
             ))}

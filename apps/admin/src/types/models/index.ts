@@ -124,3 +124,30 @@ export type {
 export type {
   DashboardStats
 } from './dashboard';
+
+// Sistema de notificaciones
+export type {
+  Notification,
+  NotificationType,
+  NotificationPriority,
+  CreateNotificationData,
+  UpdateNotificationData,
+  NotificationFilters,
+  NotificationStats,
+  NotificationPreference,
+  UpdateNotificationPreferenceData,
+  NotificationGroup,
+  GroupedNotificationsResponse,
+  MarkAsReadData,
+  UnreadCountResponse,
+  NotificationSSEEvent,
+  SSEState,
+  SSEConfig
+} from './notification';
+
+export {
+  NOTIFICATION_TYPE_LABELS,
+  NOTIFICATION_PRIORITY_LABELS,
+  notificationTypeUtils,
+  notificationPriorityUtils
+} from './notification';

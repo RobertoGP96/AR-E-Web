@@ -2,110 +2,108 @@
 import DeliveryStatusBadge from './DeliveryStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import type { CustomUser, DeliverReceip, DeliveryStatus, Order } from '@/types';
-import { Camera, Clock, Edit2, Trash2, Weight } from 'lucide-react';
+import type { DeliverReceip, DeliveryStatus } from '@/types';
+import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Truck, RotateCcw, Weight } from 'lucide-react';
 import { formatDate } from '@/lib/format-date';
+import { Link } from 'react-router-dom';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useState } from 'react';
+import { useDeleteDelivery } from '@/hooks/delivery/useDeleteDelivery';
+import { useUpdateDeliveryStatus } from '@/hooks/delivery/useUpdateDelivery';
+import { toast } from 'sonner';
 import AvatarUser from '../utils/AvatarUser';
 
+interface DeliveryTableProps {
+  deliveries: DeliverReceip[];
+  isLoading?: boolean;
+  onEdit?: (delivery: DeliverReceip) => void;
+  onDelete?: (delivery: DeliverReceip) => void;
+  onCapture?: (delivery: DeliverReceip) => void;
+}
 
+const DeliveryTable: React.FC<DeliveryTableProps> = ({ 
+  deliveries, 
+  isLoading = false,
+  onEdit,
+  onDelete,
+  onCapture,
+}) => {
+  const [dialogState, setDialogState] = useState<{ type: 'delete' | null; delivery: DeliverReceip | null }>({ type: null, delivery: null });
 
+  const deleteDeliveryMutation = useDeleteDelivery();
+  const [isDeleting, setIsDeleting] = useState(false);
 
-// Datos de ejemplo
-const mockUser: CustomUser = {
-  id: 1,
-  email: "cliente@demo.com",
-  name: "Juan",
-  last_name: "Pérez",
-  full_name: "Juan Pérez",
-  home_address: "Calle Falsa 123",
-  phone_number: "5353844409",
-  role: "client",
-  agent_profit: 0,
-  is_staff: false,
-  is_active: true,
-  is_verified: true,
-  date_joined: "2023-01-01T10:00:00Z",
-  sent_verification_email: true
-};
+  const updateStatusMutation = useUpdateDeliveryStatus();
 
-const mockManager: CustomUser = {
-  id: 2,
-  email: "manager@demo.com",
-  name: "Ana",
-  last_name: "García",
-  full_name: "Ana García",
-  home_address: "Av. Principal 456",
-  phone_number: "+51-555-5678",
-  role: "admin",
-  agent_profit: 0,
-  is_staff: true,
-  is_active: true,
-  is_verified: true,
-  date_joined: "2023-01-02T11:00:00Z",
-  sent_verification_email: true
-};
+  const handleDeleteConfirm = async () => {
+    if (!dialogState.delivery) return;
 
-const mockOrder = (id: number): Order => ({
-  id,
-  client: mockUser,
-  sales_manager: mockManager,
-  status: "Encargado",
-  pay_status: "Pagado",
-  total_cost: 100.0 + id,
-  products: [],
-  delivery_receipts: [],
-  received_value_of_client: 50.0,
-  extra_payments: 0,
-  total_products_requested: 5,
-  total_products_purchased: 0,
-  total_products_delivered: 0,
-  created_at: "2023-10-01T10:00:00Z",
-  updated_at: "2023-10-01T10:00:00Z"
-});
+    setIsDeleting(true);
+    try {
+      if (onDelete) {
+        await onDelete(dialogState.delivery);
+      } else {
+        await deleteDeliveryMutation.mutateAsync(dialogState.delivery.id);
+        toast.success(`Delivery #${dialogState.delivery.id} eliminado`);
+      }
+    } catch (err) {
+      console.error('Error al eliminar delivery:', err);
+      toast.error('Error al eliminar el delivery');
+    } finally {
+      setIsDeleting(false);
+      setDialogState({ type: null, delivery: null });
+    }
+  };
 
-const mockDelivery: DeliverReceip[] = [
-  {
-    id: 1,
-    order: mockOrder(101),
-    weight: 2.5,
-    status: "Pendiente",
-    deliver_date: "2023-10-05T15:00:00Z",
-    deliver_picture: [],
-    weight_cost: 5.0,
-    manager_profit: 2.0,
-    total_cost_of_deliver: 15.99,
-    created_at: "2023-10-05T10:00:00Z",
-    updated_at: "2023-10-05T10:00:00Z"
-  },
-  {
-    id: 2,
-    order: mockOrder(102),
-    weight: 1.2,
-    status: "En transito",
-    deliver_date: "2023-10-06T16:00:00Z",
-    deliver_picture: [],
-    weight_cost: 3.0,
-    manager_profit: 1.5,
-    total_cost_of_deliver: 10.50,
-    created_at: "2023-10-06T10:00:00Z",
-    updated_at: "2023-10-06T10:00:00Z"
-  },
-  {
-    id: 3,
-    order: mockOrder(103),
-    weight: 3.0,
-    status: "Entregado",
-    deliver_date: "2023-10-07T17:00:00Z",
-    deliver_picture: [],
-    weight_cost: 6.0,
-    manager_profit: 3.0,
-    total_cost_of_deliver: 20.00,
-    created_at: "2023-10-07T10:00:00Z",
-    updated_at: "2023-10-07T10:00:00Z"
+  const handleDeleteCancel = () => setDialogState({ type: null, delivery: null });
+
+  const handleStatusChange = async (delivery: DeliverReceip) => {
+    let newStatus: string | null = null;
+    if (delivery.status === 'Pendiente') {
+      newStatus = 'En transito';
+    } else if (delivery.status === 'En transito') {
+      newStatus = 'Entregado';
+    }
+
+    if (!newStatus) {
+      toast.error('No se puede cambiar el estado de este delivery');
+      return;
+    }
+
+    try {
+      await updateStatusMutation.mutateAsync({ id: delivery.id, status: newStatus });
+      toast.success(`Estado del delivery #${delivery.id} cambiado a ${newStatus}`);
+    } catch (err) {
+      console.error('Error al cambiar estado del delivery:', err);
+      toast.error('Error al cambiar el estado del delivery');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
+        </div>
+      </div>
+    );
   }
-];
 
-const DeliveryTable: React.FC = () => {
+  if (!deliveries || deliveries.length === 0) {
+    return (
+      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+        <div className="flex flex-col items-center justify-center h-64 text-center p-4">
+          <Truck className="h-16 w-16 text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">No hay deliveries</h3>
+          <p className="text-sm text-gray-500">
+            Comienza creando un nuevo delivery usando el botón "Agregar Delivery"
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
       <Table>
@@ -123,7 +121,7 @@ const DeliveryTable: React.FC = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {mockDelivery.map((delivery, index) => (
+          {deliveries.map((delivery, index) => (
             <TableRow key={delivery.id}>
               <TableCell>{index + 1}</TableCell>
               <TableCell>
@@ -164,23 +162,135 @@ const DeliveryTable: React.FC = () => {
               </TableCell>
               <TableCell>
                 <div className='flex flex-row gap-2'>
-                  <Button className=' text-gray-600 cursor-pointer bg-gray-200'>
+                  <Button 
+                    className=' text-gray-600 cursor-pointer bg-gray-200'
+                    onClick={() => onCapture?.(delivery)}
+                  >
                     <Camera className='h-5 w-5' />
                   </Button>
                 </div>
               </TableCell>
               <TableCell>
-                <Button variant="secondary" className="mr-2">
-                  <Edit2 className="h-5 w-5" />
-                </Button>
-                <Button variant="secondary">
-                  <Trash2 className="h-5 w-5" />
-                </Button>
+                <div className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit?.(delivery);
+                        }}
+                        className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                        Editar
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCapture?.(delivery);
+                        }}
+                        className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                      >
+                        <Camera className="h-4 w-4" />
+                        Capturar
+                      </DropdownMenuItem>
+
+                      {(delivery.status === 'Pendiente' || delivery.status === 'En transito') && (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStatusChange(delivery);
+                          }}
+                          className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          Cambiar Estado
+                        </DropdownMenuItem>
+                      )}
+
+                      <DropdownMenuSeparator />
+
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
+                      >
+                        <Link
+                          to={`/deliveries/${delivery.id}`}
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                          }}
+                          className="inline-flex items-center gap-2"
+                          title={`Ver detalles del delivery ${delivery.id}`}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Ver detalles
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+
+                          if (!delivery || !delivery.id) {
+                            console.error('Error: Delivery sin ID válido', delivery);
+                            return;
+                          }
+
+                          setDialogState({ type: 'delete', delivery });
+                        }}
+                        className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      {/* Diálogo de confirmación para eliminar delivery */}
+      <AlertDialog open={dialogState.type === 'delete' || isDeleting} onOpenChange={(open) => {
+        // Prevent closing while deleting
+        if (!open && isDeleting) return;
+        if (!open) handleDeleteCancel();
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar delivery?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas eliminar el delivery {dialogState.delivery ? `#${dialogState.delivery.id}` : ''}? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel} disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700" disabled={isDeleting}>
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                'Eliminar'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

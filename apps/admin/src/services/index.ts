@@ -24,6 +24,9 @@ export * from './shops';
 // Servicios de paquetes
 export * from './packages';
 
+// Servicios de deliveries
+export * from './delivery';
+
 // Servicios de analytics y reportes
 export * from './analytics';
 
