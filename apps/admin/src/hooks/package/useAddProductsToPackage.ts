@@ -8,7 +8,6 @@ import { apiClient } from '@/lib/api-client';
 export interface AddProductsToPackageData {
   original_product: number;
   amount_received: number;
-  observation?: string;
 }
 
 /**

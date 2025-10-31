@@ -1,6 +1,4 @@
-import { ShoppingBag, Package } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { ShoppingBag } from 'lucide-react';
 
 interface PurshasesHeaderProps {
   title?: string;
@@ -24,12 +22,6 @@ export default function PurshasesHeader({
         </p>
       </div>
       
-      <Button asChild>
-        <Link to="/packages" className="flex items-center gap-2">
-          <Package className="h-4 w-4" />
-          Ver Paquetes
-        </Link>
-      </Button>
     </div>
   );
 }

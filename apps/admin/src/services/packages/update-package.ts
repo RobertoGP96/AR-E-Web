@@ -10,7 +10,7 @@ export interface UpdatePackageData {
   weight?: number;
   dimensions?: string;
   tracking_number?: string;
-  status?: string;
+  status_of_processing?: string;
 }
 
 /**
@@ -24,7 +24,7 @@ export const updatePackage = async (id: number, packageData: UpdatePackageData):
  * Actualiza el estado de un paquete
  */
 export const updatePackageStatus = async (id: number, status: string): Promise<Package> => {
-  return await apiClient.patch<Package>(`/api_data/package/${id}/`, { status });
+  return await apiClient.patch<Package>(`/api_data/package/${id}/`, { status_of_processing: status });
 };
 
 /**

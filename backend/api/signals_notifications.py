@@ -297,11 +297,11 @@ def notify_package_status_changed(sender, instance, **kwargs):
             
             if old_instance.status_of_processing != instance.status_of_processing:
                 # Obtener todos los productos en este paquete
-                products_in_package = instance.contained_products.all()
+                products_in_package = instance.package_products.all()
                 
                 # Notificar a los clientes de los productos en el paquete
                 for product_received in products_in_package:
-                    client = product_received.order.client
+                    client = product_received.original_product.order.client
                     
                     if instance.status_of_processing == 'Completado':
                         notification_type = NotificationType.PACKAGE_DELIVERED

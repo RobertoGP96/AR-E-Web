@@ -14,7 +14,7 @@ export type PayStatus = "No pagado" | "Pagado" | "Parcial";
 export type ProductStatus = "Encargado" | "Procesando" | "Completado" | "Cancelado"; // Usa los mismos estados que Order
 export type ShoppingStatus = "No pagado" | "Pagado" | "Parcial"; // Usa los mismos estados que Payment
 export type DeliveryStatus = "Pendiente" | "En transito" | "Entregado" | "Fallida";
-export type PackageStatus = "Encargado" | "Procesando" | "Completado" | "Cancelado"; // Usa los mismos estados que Order
+export type PackageStatus = "Enviado" | "Recibido" | "Procesado";
 
 // Constantes para los valores
 export const ORDER_STATUSES = {
@@ -51,10 +51,9 @@ export const DELIVERY_STATUSES = {
 } as const;
 
 export const PACKAGE_STATUSES = {
-  ENCARGADO: "Encargado",
-  PROCESANDO: "Procesando",
-  COMPLETADO: "Completado",
-  CANCELADO: "Cancelado"
+  ENVIADO: "Enviado",
+  RECIBIDO: "Recibido",
+  PROCESADO: "Procesado"
 } as const;
 
 // Tipos de roles de usuario (incluye 'user' y 'admin' que faltaban)

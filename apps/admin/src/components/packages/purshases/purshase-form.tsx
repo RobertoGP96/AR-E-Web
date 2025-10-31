@@ -25,9 +25,9 @@ import { Loader2 } from 'lucide-react';
 import { buyingAccountService, shoppingReceipService } from '@/services/api';
 import type { BuyingAccount, CreateProductBuyedData, Product } from '@/types/models';
 import { SHOPPING_STATUSES } from '@/types/models/base';
-import SelectedProductsForPurchase from '../products/selected-products-for-purchase';
+import SelectedProductsForPurchase from '../../products/selected-products-for-purchase';
 import { DatePicker } from '@/components/utils/DatePicker';
-import ProductBuyedShopping from '../products/buyed/product-buyed-shopping';
+import ProductBuyedShopping from '../../products/buyed/product-buyed-shopping';
 import { useShops } from '@/hooks/useShops';
 
 // Schema de validación

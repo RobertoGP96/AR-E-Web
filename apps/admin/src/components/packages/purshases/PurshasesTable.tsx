@@ -9,7 +9,7 @@ import {
     TableCell,
     TableHead,
 } from "@/components/ui/table";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import { Box, Edit2, Trash2, ShoppingBag, Loader2, MoreHorizontal, CheckCircle, ExternalLink, CalendarIcon } from "lucide-react";
 import { useShoppingReceipts } from "@/hooks/shopping-receipts/useShoppingReceipts";
 import { useState } from 'react';

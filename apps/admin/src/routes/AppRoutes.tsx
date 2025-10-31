@@ -16,7 +16,8 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import Categories from '@/pages/Categories';
 import ProductDetails from '@/components/products/product-details';
 import OrderDetails from '@/components/orders/order-details';
-import { PurchaseDetails } from '@/components/purshases';
+import { PurchaseDetails } from '@/components/packages/purshases';
+import AddProductsToPackagePage from '@/components/packages/AddProductsToPackagePage';
 
 const AppRoutes = () => {
     return (
@@ -45,6 +46,7 @@ const AppRoutes = () => {
                 <Route path="purchases/:id" element={<PurchaseDetails />} />
 
                 <Route path="packages" element={<Packages />} />
+                <Route path="packages/:id/add-products" element={<AddProductsToPackagePage />} />
                 
                 <Route path="delivery" element={<Delivery />} />
                 

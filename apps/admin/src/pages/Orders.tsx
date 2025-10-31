@@ -101,7 +101,7 @@ const Orders = () => {
   const handleAddProductsConfirm = async (order: Order, products: CreateProductData[]) => {
     try {
       await addProductsMutation.mutateAsync({ orderId: order.id, products });
-      toast.success(`Se añadieron ${products.length} producto(s) al pedido #${order.id}`);
+      toast.success(`Se añadió ${products.length} producto(s) al pedido #${order.id}`);
     } catch (err) {
       console.error('Error añadiendo productos:', err);
       toast.error('Error al añadir productos');

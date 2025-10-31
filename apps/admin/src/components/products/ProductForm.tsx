@@ -151,16 +151,20 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
 
         // Si encontramos una tienda en la BD, normalizar el campo shop con su name
         if (matched) {
+            setIsShopInDatabase(true);
             if (matched.name && matched.name !== newProduct.shop_id) {
                 setNewProduct(prev => ({ ...prev, shop_id: matched!.name, shop_taxes: matched!.tax_rate }))
             }
             // almacenar id en un campo temporal del estado (no persistir en backend form state)
             setMatchedShopId(matched.id)
+        } else if (newProduct.shop_id) {
+            setIsShopInDatabase(false);
         }
     }, [newProduct.shop_id, newProduct.link, availableShops])
 
     // Id de la tienda detectada en la BD (si existe)
     const [matchedShopId, setMatchedShopId] = useState<number | undefined>(undefined)
+    const [isShopInDatabase, setIsShopInDatabase] = useState<boolean | undefined>(undefined)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -216,8 +220,9 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
 
         const qty = Number(newProduct.amount_requested) || 1
         const unit = Number(newProduct.shop_cost) || 0
-        const taxPct = Number(newProduct.added_taxes) || 0
-        const computedTotal = qty * unit * (1 + taxPct / 100)
+        const shopTaxPct = Number(newProduct.shop_taxes) || 0
+        const addTaxPct = Number(newProduct.added_taxes) || 0
+        const computedTotal = qty * unit * (1 + shopTaxPct / 100) * (1 + addTaxPct / 100)
 
         const productToSubmit = {
             // Asegurar que se envía el nombre del producto
@@ -234,7 +239,8 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
             total_cost: Number(computedTotal) || 0,
             // category: enviar el nombre de la categoría (la API espera nombre)
             category: newProduct.category ?? '',
-            shop_taxes: taxPct,
+            shop_taxes: shopTaxPct,
+            added_taxes: addTaxPct,
             product_pictures: []
         } as unknown as CreateProductData
 
@@ -270,6 +276,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
             name: "",
             value: ""
         })
+        setIsShopInDatabase(undefined)
     }
 
     const handleAddTag = () => {
@@ -289,7 +296,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
     }
 
     return (
-        <Card className="w-full max-w-2xl mx-auto shadow-none border-0 bg-transparent">
+        <Card className="w-full max-w-2xl mx-auto shadow-none border-0 bg-transparent ">
 
             <CardContent className="border-0">
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -353,17 +360,36 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                                 className="bg-muted/30 border-muted-foreground/20 text-muted-foreground cursor-not-allowed pr-10"
                             />
                             {newProduct.shop_id ? (
-                                <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                                isShopInDatabase ? (
+                                    <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                                ) : isShopInDatabase === false ? (
+                                    <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
+                                ) : (
+                                    <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                                )
                             ) : newProduct.link ? (
                                 <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
                             ) : null}
                         </div>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                             {newProduct.shop_id ? (
-                                <>
-                                    <CheckCircle className="h-3 w-3 text-emerald-500" />
-                                    Tienda detectada automáticamente
-                                </>
+                                isShopInDatabase ? (
+                                    <>
+                                        <CheckCircle className="h-3 w-3 text-emerald-500" />
+                                        Tienda detectada y registrada
+                                    </>
+                                ) : isShopInDatabase === false ? (
+                                    <>
+                                        <AlertCircle className="h-3 w-3 text-amber-500" />
+                                        Tienda detectada pero no registrada
+                                        <Badge variant="outline" className="ml-2 text-amber-600 border-amber-600">Advertencia</Badge>
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle className="h-3 w-3 text-emerald-500" />
+                                        Tienda detectada automáticamente
+                                    </>
+                                )
                             ) : newProduct.link ? (
                                 <>
                                     <AlertCircle className="h-3 w-3 text-amber-500" />
@@ -527,12 +553,13 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                     {(() => {
                         const qty = Number(newProduct.amount_requested) || 0
                         const price = Number(newProduct.shop_cost) || 0
-                        const shopTax = Number(newProduct.shop_taxes) || 0
+                        const shopTax = (Number(newProduct.shop_taxes) || 0) / 100
                         const deliv = Number(newProduct.shop_delivery_cost) || 0
-                        const addTax = Number(newProduct.added_taxes) || 0
+                        const addTax = (Number(newProduct.added_taxes) || 0) / 100
                         const ownTax = Number(newProduct.own_taxes) || 0
 
-                        const totalCalc = price + (qty * price)*0.07 + deliv + (price + (qty * price)*0.07+deliv)*shopTax + ownTax+ addTax;
+                        const subtotal = qty * price
+                        const totalCalc = (subtotal + deliv) * (1 + shopTax) * (1 + addTax) + ownTax
                         return (
                             <div className="flex items-center justify-between">
                                 <div className="text-sm text-muted-foreground">Valor total (incl. impuesto)</div>

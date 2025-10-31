@@ -6,7 +6,7 @@ import { useShoppingReceipt } from '@/hooks/shopping-receipts';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from './StatusBadge';
 import { formatDate } from '@/lib/format-date';
-import ProductPurchaseRow from '../products/buyed/product-purchase-row';
+import ProductPurchaseRow from '../../products/buyed/product-purchase-row';
 
 const PurchaseDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();

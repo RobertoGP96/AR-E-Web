@@ -1,5 +1,5 @@
 import React from "react";
-import { Truck, LoaderIcon, CheckCircle2, XCircle } from "lucide-react";
+import { Truck, LoaderIcon, CheckCircle2 } from "lucide-react";
 import type { PackageStatus } from "@/types";
 
 interface Props {
@@ -7,30 +7,25 @@ interface Props {
 }
 
 const statusConfig: Record<PackageStatus, { color: string; label: string; icon: React.ElementType }> = {
-  "Encargado": {
+  "Enviado": {
     color: "bg-blue-100 text-blue-800 border-blue-300",
-    label: "Encargado",
+    label: "Enviado",
     icon: Truck
   },
-  "Procesando": {
+  "Recibido": {
     color: "bg-yellow-100 text-yellow-800 border-yellow-300",
-    label: "Procesando",
+    label: "Recibido",
     icon: LoaderIcon
   },
-  "Completado": {
+  "Procesado": {
     color: "bg-green-100 text-green-800 border-green-300",
-    label: "Completado",
+    label: "Procesado",
     icon: CheckCircle2
-  },
-  "Cancelado": {
-    color: "bg-red-100 text-red-800 border-red-300",
-    label: "Cancelado",
-    icon: XCircle
   }
 };
 
 const PackageStatusBadge: React.FC<Props> = ({ status }) => {
-  const config = statusConfig[status] || statusConfig["Encargado"];
+  const config = statusConfig[status] || statusConfig["Enviado"];
   const Icon = config.icon;
   return (
     <span

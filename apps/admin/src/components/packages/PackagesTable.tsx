@@ -3,15 +3,15 @@ import PackageStatusBadge from './PackageStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import type { Package as PackageType } from '@/types';
-import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Package } from 'lucide-react';
+import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Package, RotateCcw } from 'lucide-react';
 import { formatDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useState } from 'react';
 import { useDeletePackage } from '@/hooks/package/useDeletePackage';
+import { useUpdatePackageStatus } from '@/hooks/package';
 import { toast } from 'sonner';
-import AddProductsToPackageDialog from './AddProductsToPackageDialog';
 
 interface PackagesTableProps {
   packages: PackageType[];
@@ -29,11 +29,11 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   onCapture,
 }) => {
   const [dialogState, setDialogState] = useState<{ type: 'delete' | null; pkg: PackageType | null }>({ type: null, pkg: null });
-  const [addProductsDialogOpen, setAddProductsDialogOpen] = useState(false);
-  const [selectedPackageForProducts, setSelectedPackageForProducts] = useState<PackageType | null>(null);
 
   const deletePackageMutation = useDeletePackage();
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const updateStatusMutation = useUpdatePackageStatus();
 
   const handleDeleteConfirm = async () => {
     if (!dialogState.pkg) return;
@@ -56,6 +56,28 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   };
 
   const handleDeleteCancel = () => setDialogState({ type: null, pkg: null });
+
+  const handleStatusChange = async (pkg: PackageType) => {
+    let newStatus: string | null = null;
+    if (pkg.status_of_processing === 'Enviado') {
+      newStatus = 'Recibido';
+    } else if (pkg.status_of_processing === 'Recibido') {
+      newStatus = 'Procesado';
+    }
+
+    if (!newStatus) {
+      toast.error('No se puede cambiar el estado de este paquete');
+      return;
+    }
+
+    try {
+      await updateStatusMutation.mutateAsync({ id: pkg.id, status: newStatus });
+      toast.success(`Estado del paquete #${pkg.agency_name} cambiado a ${newStatus}`);
+    } catch (err) {
+      console.error('Error al cambiar estado del paquete:', err);
+      toast.error('Error al cambiar el estado del paquete');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -164,14 +186,34 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedPackageForProducts(pkg);
-                          setAddProductsDialogOpen(true);
                         }}
                         className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
                       >
-                        <Package className="h-4 w-4" />
-                        Agregar Productos
+                        <Link
+                          to={`/packages/${pkg.id}/add-products`}
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                          }}
+                          className="inline-flex items-center gap-2"
+                          title={`Agregar productos al paquete ${pkg.agency_name}`}
+                        >
+                          <Package className="h-4 w-4" />
+                          Agregar Productos
+                        </Link>
                       </DropdownMenuItem>
+
+                      {(pkg.status_of_processing === 'Enviado' || pkg.status_of_processing === 'Recibido') && (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStatusChange(pkg);
+                          }}
+                          className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          Cambiar Estado
+                        </DropdownMenuItem>
+                      )}
 
                       <DropdownMenuSeparator />
 
@@ -246,14 +288,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Diálogo para agregar productos al paquete */}
-      <AddProductsToPackageDialog
-        open={addProductsDialogOpen}
-        onOpenChange={setAddProductsDialogOpen}
-        packageId={selectedPackageForProducts?.id || 0}
-        packageName={selectedPackageForProducts?.agency_name}
-      />
     </div>
   );
 }
