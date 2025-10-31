@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
 import type { ProductFilters as ApiProductFilters } from '@/types/api';
 import type { VisibleColumn } from '@/components/products/ProductsColumnsSelector';
+import { CompactMetricsSummary } from '@/components/metrics';
 
 export default function Products() {
   // Estados para filtros (usados por el nuevo ProductFilters popover)
@@ -45,6 +46,10 @@ export default function Products() {
   return (
     <div className="space-y-6">
       <ProductsHeader />
+      
+      {/* Métricas compactas de productos */}
+      <CompactMetricsSummary type="products" />
+      
       {/* Barra de búsqueda y control de columnas (popover) */}
       <ProductFilters
         filters={productFilters}

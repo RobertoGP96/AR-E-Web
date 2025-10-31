@@ -21,6 +21,7 @@ from rest_framework.decorators import api_view, action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import F, Sum
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
@@ -1419,3 +1420,88 @@ class CurrentUserView(APIView):
             'error': 'Datos inválidos',
             'details': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+from django.utils import timezone
+from datetime import timedelta
+
+
+class DashboardMetricsView(APIView):
+    permission_classes = [AdminPermission]
+
+    @extend_schema(
+        summary="Obtener métricas del dashboard",
+        description="Devuelve métricas agregadas para el panel de administración",
+        responses={200: serializers.Serializer},
+        tags=["Dashboard"]
+    )
+    def get(self, request):
+        now = timezone.now()
+        today = now.date()
+        week_ago = today - timedelta(days=7)
+        month_ago = today - timedelta(days=30)
+        last_month_start = (month_ago.replace(day=1) - timedelta(days=1)).replace(day=1)
+        last_month_end = month_ago.replace(day=1) - timedelta(days=1)
+
+        # Usuarios
+        users_total = User.objects.count()
+        users_active = User.objects.filter(is_active=True).count()
+        users_verified = User.objects.filter(is_verified=True).count()
+        users_agents = User.objects.filter(role='agent').count()
+
+        # Productos
+        products_total = Product.objects.count()
+        products_in_stock = Product.objects.filter(amount_purchased__gt=0).count()
+        products_out_of_stock = Product.objects.filter(amount_purchased=0).count()
+        products_pending_delivery = Product.objects.filter(amount_delivered__lt=F('amount_purchased')).count()
+
+        # Órdenes
+        orders_total = Order.objects.count()
+        orders_pending = Order.objects.filter(status__in=['ENCARGADO', 'COMPRADO']).count()
+        orders_completed = Order.objects.filter(status='ENTREGADO').count()
+        orders_today = Order.objects.filter(created_at__date=today).count()
+        orders_this_week = Order.objects.filter(created_at__date__gte=week_ago).count()
+        orders_this_month = Order.objects.filter(created_at__date__gte=month_ago).count()
+
+        # Revenue - asumiendo de órdenes con pay_status 'PAGADO'
+        revenue_total = Order.objects.filter(pay_status='PAGADO').aggregate(total=Sum('products__total_cost'))['total'] or 0
+        revenue_today = Order.objects.filter(pay_status='PAGADO', created_at__date=today).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        revenue_this_week = Order.objects.filter(pay_status='PAGADO', created_at__date__gte=week_ago).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        revenue_this_month = Order.objects.filter(pay_status='PAGADO', created_at__date__gte=month_ago).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        revenue_last_month = Order.objects.filter(pay_status='PAGADO', created_at__date__range=(last_month_start, last_month_end)).aggregate(total=Sum('products__total_cost'))['total'] or 0
+
+        metrics = {
+            'users': {
+                'total': users_total,
+                'active': users_active,
+                'verified': users_verified,
+                'agents': users_agents
+            },
+            'products': {
+                'total': products_total,
+                'in_stock': products_in_stock,
+                'out_of_stock': products_out_of_stock,
+                'pending_delivery': products_pending_delivery
+            },
+            'orders': {
+                'total': orders_total,
+                'pending': orders_pending,
+                'completed': orders_completed,
+                'today': orders_today,
+                'this_week': orders_this_week,
+                'this_month': orders_this_month
+            },
+            'revenue': {
+                'total': revenue_total,
+                'today': revenue_today,
+                'this_week': revenue_this_week,
+                'this_month': revenue_this_month,
+                'last_month': revenue_last_month
+            }
+        }
+
+        return Response({
+            'success': True,
+            'data': metrics,
+            'message': 'Métricas del dashboard obtenidas exitosamente'
+        })

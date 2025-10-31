@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useOrders } from '../hooks/order/useOrders';
-import { OrdersHeader, OrdersStats, OrdersFilters, OrdersTable, AddProductsDialog } from '@/components/orders';
+import { OrdersHeader, OrdersFilters, OrdersTable, AddProductsDialog } from '@/components/orders';
 import type { CreateProductData, Order } from '@/types';
 import { toast } from 'sonner';
 import { useDeleteOrder } from '@/hooks/order/useDeleteOrder';
 import { useMarkOrderAsPaid } from '@/hooks/order/useMarkOrderAsPaid';
 import { useAddProductsToOrder } from '@/hooks/order/useAddProductsToOrder';
+import { CompactMetricsSummary } from '@/components/metrics';
 
 const Orders = () => {
   const [searchValue, setSearchValue] = useState("");
@@ -42,21 +43,6 @@ const Orders = () => {
 
     return filtered;
   }, [orders, searchValue, statusFilter]);
-
-  // Calcular estadísticas
-  const stats = useMemo(() => {
-    const ordersArray = orders || [];
-    const totalRevenue = ordersArray.reduce((sum: number, order: Order) => sum + (order.total_cost || 0), 0);
-    const completedOrders = ordersArray.filter((order: Order) => order.status === 'Completado').length;
-    const pendingOrders = ordersArray.filter((order: Order) => order.status === 'Encargado').length;
-
-    return {
-      total: ordersArray.length,
-      completed: completedOrders,
-      pending: pendingOrders,
-      totalRevenue: totalRevenue
-    };
-  }, [orders]);
 
   // Manejar edición de orden
 
@@ -121,7 +107,11 @@ const Orders = () => {
     <div className='space-y-6'>
       <OrdersHeader />
       
-      <OrdersStats stats={stats} />
+      {/* Métricas compactas de órdenes */}
+      <CompactMetricsSummary type="orders" />
+      
+      {/* Métricas compactas de ingresos */}
+      <CompactMetricsSummary type="revenue" />
 
       <OrdersFilters
         searchTerm={searchValue}

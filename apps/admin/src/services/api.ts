@@ -523,7 +523,7 @@ export const dashboardService = {
   /**
    * Obtener métricas del dashboard
    */
-  getDashboardStats: async (): Promise<DashboardMetrics> => {
+  getDashboardStats: async (): Promise<ApiResponse<DashboardMetrics>> => {
     return apiClient.get('/api_data/dashboard/stats/');
   },
 

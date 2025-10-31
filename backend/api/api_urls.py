@@ -38,6 +38,7 @@ urlpatterns = [
     path("security/", views.Protection.as_view(), name="posting_management"),
     path("amazon/scrape/", views.AmazonScrapingView.as_view(), name="amazon_scraping"),
     path("admin/create/", views.CreateAdminUserView.as_view(), name="create_admin_user"),
+    path("api_data/dashboard/stats/", views.DashboardMetricsView.as_view(), name="dashboard_stats"),
     # URLs de notificaciones (incluidas bajo el mismo prefijo `api_data/`)
     path("api_data/", include("api.urls_notifications")),
 ]

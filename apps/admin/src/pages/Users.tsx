@@ -6,6 +6,7 @@ import type { UserRole, CustomUser } from '@/types/models/user';
 import type { CreateUserData, UpdateUserData } from '@/types/models/user';
 import type { UserFilterState } from '@/components/filters/user-filters';
 import { toast } from 'sonner';
+import { CompactMetricsSummary } from '@/components/metrics';
 
 const Users = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -145,6 +146,10 @@ const Users = () => {
   return (
     <div className="space-y-6">
       <UsersHeader />
+      
+      {/* Métricas compactas de usuarios */}
+      <CompactMetricsSummary type="users" />
+      
       <UsersFilters 
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
