@@ -34,6 +34,7 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
     agency_name: '',
     number_of_tracking: '',
     status_of_processing: 'Enviado',
+    arrival_date: '',
   });
 
   // Funciones para obtener estilos según el estado
@@ -49,13 +50,9 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.agency_name.trim()) {
-      toast.error('Por favor ingresa el nombre de la agencia');
-      return;
-    }
-
-    if (!formData.number_of_tracking.trim()) {
-      toast.error('Por favor ingresa el número de tracking');
+    // Validación básica - requerir todos los campos
+    if (!formData.agency_name.trim() || !formData.number_of_tracking.trim() || !formData.arrival_date) {
+      toast.error('Por favor completa todos los campos obligatorios');
       return;
     }
 
@@ -64,6 +61,7 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
         agency_name: formData.agency_name.trim(),
         number_of_tracking: formData.number_of_tracking.trim(),
         status_of_processing: formData.status_of_processing,
+        arrival_date: formData.arrival_date,
       });
 
       toast.success('Paquete creado exitosamente');
@@ -73,6 +71,7 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
         agency_name: '',
         number_of_tracking: '',
         status_of_processing: 'Enviado',
+        arrival_date: '',
       });
       onOpenChange(false);
     } catch (error) {
@@ -87,7 +86,7 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
         <DialogHeader>
           <DialogTitle>Crear Nuevo Paquete</DialogTitle>
           <DialogDescription>
-            Complete los datos del paquete. Los campos marcados con * son obligatorios.
+            Complete todos los datos del paquete. Todos los campos son obligatorios.
           </DialogDescription>
         </DialogHeader>
 
@@ -120,6 +119,22 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
                 value={formData.number_of_tracking}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, number_of_tracking: e.target.value }))
+                }
+                className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+              />
+            </div>
+
+            {/* Fecha de Llegada */}
+            <div className="grid gap-2">
+              <Label htmlFor="arrival_date">
+                Fecha de Llegada <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="arrival_date"
+                type="date"
+                value={formData.arrival_date}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, arrival_date: e.target.value }))
                 }
                 className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
               />

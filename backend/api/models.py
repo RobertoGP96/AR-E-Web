@@ -444,6 +444,7 @@ class Package(models.Model):
         choices=[(tag.value, tag.value) for tag in PackageStatusEnum],
         default=PackageStatusEnum.ENVIADO.value
     )
+    arrival_date = models.DateField(default=timezone.now, help_text="Fecha de llegada del paquete")
     package_picture = models.ManyToManyField(EvidenceImages, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

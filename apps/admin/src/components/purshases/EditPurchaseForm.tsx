@@ -86,7 +86,7 @@ export function EditPurchaseForm({ receipt, onSuccess, onCancel }: EditPurchaseF
   // Cargar cuentas iniciales para el receipt
   useEffect(() => {
     if (receipt && shops.length > 0 && !initialDataLoaded) {
-      const shop = shops.find(s => s.name === receipt.shop_of_buy.name);
+      const shop = shops.find(s => s.name === receipt.shop_of_buy);
       if (shop) {
         loadBuyingAccounts(shop.id).then(() => {
           setInitialDataLoaded(true);
@@ -98,8 +98,8 @@ export function EditPurchaseForm({ receipt, onSuccess, onCancel }: EditPurchaseF
   // Resetear form cuando las cuentas iniciales estén cargadas
   useEffect(() => {
     if (receipt && initialDataLoaded && buyingAccounts.length > 0) {
-      const shop = shops.find(s => s.name === receipt.shop_of_buy.name);
-      const account = buyingAccounts.find(a => a.account_name === receipt.shopping_account.account_name);
+      const shop = shops.find(s => s.name === receipt.shop_of_buy);
+      const account = buyingAccounts.find(a => a.account_name === receipt.shopping_account);
       form.reset({
         shop_of_buy_id: shop?.id,
         shopping_account_id: account?.id,

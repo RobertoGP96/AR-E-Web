@@ -4,7 +4,7 @@
 
 import { apiClient } from '../../lib/api-client';
 import type { Product } from '../../types';
-import type { CreateProductData, CreateProductData as ModelCreateProductData } from '@/types/models/product';
+import type { CreateProductData } from '@/types/models/product';
 
 /**
  * Usamos el tipo canónico `CreateProductData` del modelo, pero el formulario
@@ -14,15 +14,15 @@ import type { CreateProductData, CreateProductData as ModelCreateProductData } f
  */
 
 export const createProduct = async (productData: CreateProductData): Promise<Product> => {
-  const { shop_id, shop_name, order_id, ...data } = productData as unknown as Partial<ModelCreateProductData> & { shop_name?: string };
+  const { shop_id, shop_name, order_id, ...data } = productData as unknown as Partial<CreateProductData> & { shop_name?: string };
 
   // Construir payload como objeto genérico (la API acepta campos específicos)
   const payload: Record<string, unknown> = {
-    ...(data as Partial<ModelCreateProductData>),
+    ...(data as Partial<CreateProductData>),
     order: order_id as number | undefined,
   };
 
-  const shopTaxes = (data as Partial<ModelCreateProductData>).shop_taxes;
+  const shopTaxes = (data as Partial<CreateProductData>).shop_taxes;
   if (typeof shopTaxes !== 'undefined') payload.shop_taxes = shopTaxes;
 
   // La API en el backend devuelve errores esperando nombres (shop, category).
@@ -40,8 +40,8 @@ export const createProduct = async (productData: CreateProductData): Promise<Pro
   // category como nombre; si data.category es un number, no lo convertimos
   // aquí (no tenemos mapa de id->name en este servicio). El formulario
   // se encargará de enviar nombre cuando corresponda.
-  if (typeof (data as Partial<ModelCreateProductData>).category !== 'undefined') {
-    payload.category = (data as Partial<ModelCreateProductData>).category;
+  if (typeof (data as Partial<CreateProductData>).category !== 'undefined') {
+    payload.category = (data as Partial<CreateProductData>).category;
   }
 
   return await apiClient.post<Product>('/api_data/product/', payload as unknown as object);

@@ -896,12 +896,111 @@ class PackageViewSet(viewsets.ModelViewSet):
     """
     queryset = Package.objects.all()
     serializer_class = PackageSerializer
-    permission_classes = [ReadOnly | LogisticalPermission]
+    permission_classes = [ReadOnly | LogisticalPermission | AdminPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['status_of_processing', 'agency_name']
     search_fields = ['number_of_tracking', 'agency_name']
     ordering_fields = ['created_at', 'agency_name']
     ordering = ['-created_at']
+
+    @extend_schema(
+        summary="Agregar productos recibidos a un paquete",
+        description="Permite agregar una lista de productos recibidos a un paquete específico.",
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {
+                    "products": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "original_product": {"type": "integer", "description": "ID del producto"},
+                                "amount_received": {"type": "integer", "description": "Cantidad recibida"},
+                                "observation": {"type": "string", "description": "Observación opcional"}
+                            },
+                            "required": ["original_product", "amount_received"]
+                        }
+                    }
+                },
+                "required": ["products"]
+            }
+        },
+        responses={
+            201: {
+                "type": "object",
+                "properties": {
+                    "message": {"type": "string"},
+                    "added_products": {"type": "integer"}
+                }
+            },
+            400: {"type": "object", "properties": {"error": {"type": "string"}}}
+        },
+        tags=["Paquetes"]
+    )
+    @action(detail=True, methods=['post'], permission_classes=[LogisticalPermission | AdminPermission])
+    def add_products(self, request, pk=None):
+        """
+        Agregar productos recibidos a un paquete específico.
+        """
+        try:
+            package = self.get_object()
+            products_data = request.data.get('products', [])
+
+            if not products_data:
+                return Response(
+                    {'error': 'Se requiere una lista de productos'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            added_count = 0
+            with transaction.atomic():
+                for product_data in products_data:
+                    # Validar datos requeridos
+                    original_product_id = product_data.get('original_product')
+                    amount_received = product_data.get('amount_received')
+
+                    if not original_product_id or not amount_received:
+                        raise ValidationError(
+                            f'Faltan datos requeridos para el producto: original_product y amount_received son obligatorios'
+                        )
+
+                    # Crear el producto recibido
+                    product_received_data = {
+                        'original_product': original_product_id,
+                        'package': package.id,
+                        'amount_received': amount_received,
+                        'observation': product_data.get('observation', '')
+                    }
+
+                    serializer = ProductReceivedSerializer(data=product_received_data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+                    added_count += 1
+
+            return Response(
+                {
+                    'message': f'Se agregaron {added_count} productos al paquete exitosamente',
+                    'added_products': added_count
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except Package.DoesNotExist:
+            return Response(
+                {'error': 'Paquete no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except ValidationError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error inesperado: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class DeliverReceipViewSet(viewsets.ModelViewSet):

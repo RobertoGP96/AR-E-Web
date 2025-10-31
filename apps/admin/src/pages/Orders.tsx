@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useOrders } from '../hooks/order/useOrders';
 import { OrdersHeader, OrdersStats, OrdersFilters, OrdersTable, AddProductsDialog } from '@/components/orders';
-import type { Order } from '@/types';
+import type { CreateProductData, Order } from '@/types';
 import { toast } from 'sonner';
-import type { CreateProductData } from '@/services/products/create-product';
 import { useDeleteOrder } from '@/hooks/order/useDeleteOrder';
 import { useMarkOrderAsPaid } from '@/hooks/order/useMarkOrderAsPaid';
 import { useAddProductsToOrder } from '@/hooks/order/useAddProductsToOrder';

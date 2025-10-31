@@ -884,12 +884,13 @@ class PackageSerializer(serializers.ModelSerializer):
         queryset=EvidenceImages.objects.all(),
         many=True,
         slug_field="image_url",
+        required=False,
         error_messages={
             "does_not_exist": "El pedido {value} no existe.",
             "invalid": "El valor proporcionado para el pedido no es válido.",
         },
     )
-    contained_products = ProductReceivedSerializer(many=True)
+    contained_products = ProductReceivedSerializer(many=True, required=False)
 
     class Meta:
         model = Package
@@ -899,6 +900,7 @@ class PackageSerializer(serializers.ModelSerializer):
             "agency_name",
             "status_of_processing",
             "package_picture",
+            "arrival_date",
             "contained_products",
             "created_at",
             "updated_at",
@@ -906,8 +908,16 @@ class PackageSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def create(self, validated_data):
-        contained_products_data = validated_data.pop('contained_products')
+        package_picture_data = validated_data.pop('package_picture', [])
+        contained_products_data = validated_data.pop('contained_products', [])
         package = Package.objects.create(**validated_data)
+        
+        # Asignar imágenes si se proporcionaron
+        if package_picture_data:
+            images = EvidenceImages.objects.filter(image_url__in=package_picture_data)
+            package.package_picture.set(images)
+        
+        # Crear productos contenidos si se proporcionaron
         for product_data in contained_products_data:
             ProductReceived.objects.create(package=package, **product_data)
         return package

@@ -20,7 +20,6 @@ export interface ProductReceived {
 // Tipos para crear/editar producto recibido
 export interface CreateProductReceivedData {
   original_product_id: UUID; // UUID porque Product usa UUID
-  package_id?: ID; // Nullable
   amount_received: number;
   observation?: string;
 }

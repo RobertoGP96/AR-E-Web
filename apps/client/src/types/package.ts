@@ -11,6 +11,7 @@ export interface Package {
   agency_name: string;
   number_of_tracking: string;
   status_of_processing: PackageStatus;
+  arrival_date: string;
   package_picture: EvidenceImage[];
   created_at: DateTime;
   updated_at: DateTime;
@@ -20,7 +21,8 @@ export interface Package {
 export interface CreatePackageData {
   agency_name: string;
   number_of_tracking: string;
-  status_of_processing?: PackageStatus;
+  status_of_processing: PackageStatus;
+  arrival_date: string;
 }
 
 export interface UpdatePackageData extends Partial<CreatePackageData> {

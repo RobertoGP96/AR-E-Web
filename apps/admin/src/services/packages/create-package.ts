@@ -8,7 +8,8 @@ import type { Package } from '../../types';
 export interface CreatePackageData {
   agency_name: string;
   number_of_tracking: string;
-  status_of_processing?: string;
+  status_of_processing: string;
+  arrival_date: string;
 }
 
 /**

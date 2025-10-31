@@ -12,6 +12,7 @@ export interface Package {
   agency_name: string;
   number_of_tracking: string;
   status_of_processing: PackageStatus;
+  arrival_date: string;
   package_picture: EvidenceImage[];
   contained_products?: ProductReceived[]; // Productos contenidos en el paquete
   created_at: string;
@@ -22,7 +23,8 @@ export interface Package {
 export interface CreatePackageData {
   agency_name: string;
   number_of_tracking: string;
-  status_of_processing?: PackageStatus;
+  status_of_processing: PackageStatus;
+  arrival_date: string;
 }
 
 export interface UpdatePackageData extends Partial<CreatePackageData> {

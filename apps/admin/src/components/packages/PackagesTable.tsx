@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useState } from 'react';
 import { useDeletePackage } from '@/hooks/package/useDeletePackage';
 import { toast } from 'sonner';
+import AddProductsToPackageDialog from './AddProductsToPackageDialog';
 
 interface PackagesTableProps {
   packages: PackageType[];
@@ -28,6 +29,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   onCapture,
 }) => {
   const [dialogState, setDialogState] = useState<{ type: 'delete' | null; pkg: PackageType | null }>({ type: null, pkg: null });
+  const [addProductsDialogOpen, setAddProductsDialogOpen] = useState(false);
+  const [selectedPackageForProducts, setSelectedPackageForProducts] = useState<PackageType | null>(null);
 
   const deletePackageMutation = useDeletePackage();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -107,7 +110,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
               <TableCell>
                 <div className='flex flex-row items-center text-gray-500'>
                   <Clock className="mr-2 inline h-4 w-4" />
-                  {formatDate(pkg.created_at)}
+                  {formatDate(pkg.arrival_date)}
                 </div>
               </TableCell>
               <TableCell>
@@ -156,6 +159,18 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                       >
                         <Camera className="h-4 w-4" />
                         Capturar
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPackageForProducts(pkg);
+                          setAddProductsDialogOpen(true);
+                        }}
+                        className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                      >
+                        <Package className="h-4 w-4" />
+                        Agregar Productos
                       </DropdownMenuItem>
 
                       <DropdownMenuSeparator />
@@ -231,6 +246,14 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Diálogo para agregar productos al paquete */}
+      <AddProductsToPackageDialog
+        open={addProductsDialogOpen}
+        onOpenChange={setAddProductsDialogOpen}
+        packageId={selectedPackageForProducts?.id || 0}
+        packageName={selectedPackageForProducts?.agency_name}
+      />
     </div>
   );
 }
