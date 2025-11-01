@@ -41,7 +41,7 @@ export const getUnreadNotifications = async (
  * Obtiene el conteo de notificaciones no leídas
  */
 export const getUnreadCount = async (): Promise<UnreadCountResponse> => {
-  return await apiClient.get<UnreadCountResponse>('/api_data/notifications/unread-count/');
+  return await apiClient.get<UnreadCountResponse>('/api_data/notifications/unread_count/');
 };
 
 /**

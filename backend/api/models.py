@@ -401,7 +401,7 @@ class ShoppingReceip(models.Model):
 
 class DeliverReceip(models.Model):
     """Receipt given periodically to user every time they get products"""
-
+    
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="delivery_receipts"
     )

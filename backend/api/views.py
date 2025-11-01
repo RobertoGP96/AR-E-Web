@@ -1028,7 +1028,7 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
     """
     queryset = DeliverReceip.objects.all()
     serializer_class = DeliverReceipSerializer
-    permission_classes = [ReadOnly | LogisticalPermission]
+    permission_classes = [ReadOnly | LogisticalPermission | AdminPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['order', 'status']
     search_fields = ['order__client__name', 'order__client__last_name']
@@ -1504,4 +1504,133 @@ class DashboardMetricsView(APIView):
             'success': True,
             'data': metrics,
             'message': 'Métricas del dashboard obtenidas exitosamente'
+        })
+
+
+class ProfitReportsView(APIView):
+    permission_classes = [AdminPermission]
+
+    @extend_schema(
+        summary="Obtener reportes de ganancias",
+        description="Devuelve reportes de ganancias mensuales del sistema y por agente",
+        responses={200: serializers.Serializer},
+        tags=["Reports"]
+    )
+    def get(self, request):
+        # Obtener el rango de fechas (últimos 12 meses)
+        now = timezone.now()
+        current_date = now.date()
+        
+        # Calcular ganancias mensuales para los últimos 12 meses
+        monthly_reports = []
+        for i in range(11, -1, -1):  # De 11 meses atrás hasta el mes actual
+            # Calcular el primer y último día del mes
+            if i == 0:
+                month_start = current_date.replace(day=1)
+                month_end = current_date
+            else:
+                target_date = current_date - timedelta(days=30 * i)
+                month_start = target_date.replace(day=1)
+                # Calcular el último día del mes
+                if month_start.month == 12:
+                    month_end = month_start.replace(year=month_start.year + 1, month=1, day=1) - timedelta(days=1)
+                else:
+                    month_end = month_start.replace(month=month_start.month + 1, day=1) - timedelta(days=1)
+            
+            # Calcular ingresos del mes (sum de total_cost de productos en órdenes pagadas)
+            revenue = Order.objects.filter(
+                pay_status='PAGADO',
+                created_at__date__gte=month_start,
+                created_at__date__lte=month_end
+            ).aggregate(total=Sum('products__total_cost'))['total'] or 0
+            
+            # Calcular costos reales del mes (sum de real_cost_of_product de productos comprados)
+            costs = ProductBuyed.objects.filter(
+                buy_date__gte=month_start,
+                buy_date__lte=month_end
+            ).aggregate(total=Sum('real_cost_of_product'))['total'] or 0
+            
+            # Calcular ganancias de agentes del mes (sum de manager_profit de entregas)
+            agent_profits = DeliverReceip.objects.filter(
+                deliver_date__gte=month_start,
+                deliver_date__lte=month_end
+            ).aggregate(total=Sum('manager_profit'))['total'] or 0
+            
+            # Ganancia proyectada del sistema = ingresos - costos - ganancias de agentes
+            system_profit = revenue - costs - agent_profits
+            
+            monthly_reports.append({
+                'month': month_start.strftime('%B %Y'),
+                'month_short': month_start.strftime('%b'),
+                'revenue': float(revenue),
+                'costs': float(costs),
+                'agent_profits': float(agent_profits),
+                'system_profit': float(system_profit),
+                'projected_profit': float(system_profit)  # Para compatibilidad con el frontend
+            })
+        
+        # Calcular ganancias por agente (totales)
+        agents = User.objects.filter(role='agent', is_active=True)
+        agent_reports = []
+        
+        for agent in agents:
+            # Total de ganancias del agente
+            total_profit = DeliverReceip.objects.filter(
+                order__sales_manager=agent
+            ).aggregate(total=Sum('manager_profit'))['total'] or 0
+            
+            # Ganancias del mes actual
+            month_start = current_date.replace(day=1)
+            current_month_profit = DeliverReceip.objects.filter(
+                order__sales_manager=agent,
+                deliver_date__gte=month_start,
+                deliver_date__lte=current_date
+            ).aggregate(total=Sum('manager_profit'))['total'] or 0
+            
+            # Número de clientes asignados
+            clients_count = User.objects.filter(assigned_agent=agent, role='client').count()
+            
+            # Número de órdenes gestionadas
+            orders_count = Order.objects.filter(sales_manager=agent).count()
+            
+            # Órdenes completadas
+            orders_completed = Order.objects.filter(
+                sales_manager=agent,
+                status='ENTREGADO'
+            ).count()
+            
+            agent_reports.append({
+                'agent_id': agent.id,
+                'agent_name': agent.full_name,
+                'agent_phone': agent.phone_number,
+                'total_profit': float(total_profit),
+                'current_month_profit': float(current_month_profit),
+                'clients_count': clients_count,
+                'orders_count': orders_count,
+                'orders_completed': orders_completed
+            })
+        
+        # Ordenar agentes por ganancia total (mayor a menor)
+        agent_reports.sort(key=lambda x: x['total_profit'], reverse=True)
+        
+        # Calcular totales generales
+        total_revenue = sum(report['revenue'] for report in monthly_reports)
+        total_costs = sum(report['costs'] for report in monthly_reports)
+        total_agent_profits = sum(report['agent_profits'] for report in monthly_reports)
+        total_system_profit = sum(report['system_profit'] for report in monthly_reports)
+        
+        return Response({
+            'success': True,
+            'data': {
+                'monthly_reports': monthly_reports,
+                'agent_reports': agent_reports,
+                'summary': {
+                    'total_revenue': float(total_revenue),
+                    'total_costs': float(total_costs),
+                    'total_agent_profits': float(total_agent_profits),
+                    'total_system_profit': float(total_system_profit),
+                    'profit_margin': float((total_system_profit / total_revenue * 100) if total_revenue > 0 else 0)
+                }
+            },
+            'message': 'Reportes de ganancias obtenidos exitosamente'
         })

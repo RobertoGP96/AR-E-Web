@@ -39,6 +39,7 @@ urlpatterns = [
     path("amazon/scrape/", views.AmazonScrapingView.as_view(), name="amazon_scraping"),
     path("admin/create/", views.CreateAdminUserView.as_view(), name="create_admin_user"),
     path("api_data/dashboard/stats/", views.DashboardMetricsView.as_view(), name="dashboard_stats"),
+    path("api_data/reports/profits/", views.ProfitReportsView.as_view(), name="profit_reports"),
     # URLs de notificaciones (incluidas bajo el mismo prefijo `api_data/`)
     path("api_data/", include("api.urls_notifications")),
 ]

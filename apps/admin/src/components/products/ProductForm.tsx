@@ -98,7 +98,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
     const [newProduct, setNewProduct] = useState<CreateProductData>({
         name: initialValues?.name || '',
         link: initialValues?.link || '',
-        shop_id: initialValues?.shop_id || '',
+        shop: initialValues?.shop || '',
         description: initialParsed.descPlain || '',
         amount_requested: initialValues?.amount_requested ?? 1,
         shop_cost: initialValues?.shop_cost ?? 0,
@@ -121,19 +121,19 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
     useEffect(() => {
         if (newProduct.link?.trim()) {
             const shopName = extractShopName(newProduct.link)
-            if (shopName && shopName !== newProduct.shop_id) {
-                setNewProduct(prev => ({ ...prev, shop_id: shopName }))
+            if (shopName && shopName !== newProduct.shop) {
+                setNewProduct(prev => ({ ...prev, shop: shopName }))
             }
         }
-    }, [newProduct.link, newProduct.shop_id])
+    }, [newProduct.link, newProduct.shop])
 
     // Cuando se detecta un shop por link, intentar normalizar con las shops de la BD
     const { shops: availableShops, error: shopsError } = useShops()
     useEffect(() => {
-        if (!newProduct.shop_id || !availableShops || availableShops.length === 0) return
+        if (!newProduct.shop || !availableShops || availableShops.length === 0) return
 
         // Buscar coincidencia por nombre (case-insensitive) o por link que incluya el hostname
-        const detected = newProduct.shop_id.toLowerCase()
+        const detected = newProduct.shop.toLowerCase()
 
         // Primero buscar por nombre exacto/insensible a mayúsculas
         let matched = availableShops.find(s => s.name && s.name.toLowerCase() === detected)
@@ -152,15 +152,15 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
         // Si encontramos una tienda en la BD, normalizar el campo shop con su name
         if (matched) {
             setIsShopInDatabase(true);
-            if (matched.name && matched.name !== newProduct.shop_id) {
-                setNewProduct(prev => ({ ...prev, shop_id: matched!.name, shop_taxes: matched!.tax_rate }))
+            if (matched.name && matched.name !== newProduct.shop) {
+                setNewProduct(prev => ({ ...prev, shop: matched!.name, shop_taxes: matched!.tax_rate }))
             }
             // almacenar id en un campo temporal del estado (no persistir en backend form state)
             setMatchedShopId(matched.id)
-        } else if (newProduct.shop_id) {
+        } else if (newProduct.shop) {
             setIsShopInDatabase(false);
         }
-    }, [newProduct.shop_id, newProduct.link, availableShops])
+    }, [newProduct.shop, newProduct.link, availableShops])
 
     // Id de la tienda detectada en la BD (si existe)
     const [matchedShopId, setMatchedShopId] = useState<number | undefined>(undefined)
@@ -227,11 +227,9 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
         const productToSubmit = {
             // Asegurar que se envía el nombre del producto
             name: newProduct.name,
-            // Enviar shop_name como nombre (lo que espera la API). Si tenemos
-            // matchedShopId pero no queremos usar ID, buscamos el nombre en
-            // availableShops.
-            shop_name: (matchedShopId ? (availableShops.find(s => s.id === matchedShopId)?.name) : newProduct.shop_id) || extractShopName(newProduct.link) || 'Unknown',
-            order_id: orderId,
+            // Enviar shop como nombre (lo que espera la API según el serializer que usa slug_field="name")
+            shop: (matchedShopId ? (availableShops.find(s => s.id === matchedShopId)?.name) : newProduct.shop) || extractShopName(newProduct.link) || 'Unknown',
+            order: orderId,
             description: finalDescription,
             amount_requested: qty,
             link: newProduct.link,
@@ -258,7 +256,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
         setNewProduct({
             name: '',
             link: '',
-            shop_id: '',
+            shop: '',
             description: '',
             amount_requested: 1,
             shop_cost: 0,
@@ -355,11 +353,11 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                             <Input
                                 id="shop"
                                 placeholder="Esperando detección automática..."
-                                value={newProduct.shop_id}
+                                value={newProduct.shop}
                                 readOnly
                                 className="bg-muted/30 border-muted-foreground/20 text-muted-foreground cursor-not-allowed pr-10"
                             />
-                            {newProduct.shop_id ? (
+                            {newProduct.shop ? (
                                 isShopInDatabase ? (
                                     <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
                                 ) : isShopInDatabase === false ? (
@@ -372,7 +370,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                             ) : null}
                         </div>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            {newProduct.shop_id ? (
+                            {newProduct.shop ? (
                                 isShopInDatabase ? (
                                     <>
                                         <CheckCircle className="h-3 w-3 text-emerald-500" />

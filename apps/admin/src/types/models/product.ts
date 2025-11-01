@@ -55,7 +55,7 @@ export interface CreateProductData {
   link?: string;
   image_url?: string;
   sku?: string;
-  shop_id?: string;
+  shop?: string;
   description?: string;
   category?: string;
   amount_requested: number;
