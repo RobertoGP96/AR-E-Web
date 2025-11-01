@@ -10,7 +10,7 @@ import type { ProductDelivery } from './product-delivery';
 // Modelo principal
 export interface DeliverReceip {
   id: ID;
-  order: Order;
+  order?: Order | null; // Ahora es opcional
   weight: number;
   status: DeliveryStatus;
   deliver_date: DateTime;
@@ -31,12 +31,13 @@ export interface DeliverReceip {
 
 // Tipos para crear/editar recibo de entrega
 export interface CreateDeliverReceipData {
-  order_id: ID;
+  order?: ID | null; // Ahora es opcional
   weight: number;
   status?: DeliveryStatus;
   deliver_date?: DateTime;
   weight_cost?: number;
   manager_profit?: number;
+  deliver_picture?: string[]; // URLs de las imágenes de evidencia (opcional)
 }
 
 export interface UpdateDeliverReceipData extends Partial<CreateDeliverReceipData> {

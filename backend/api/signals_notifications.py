@@ -341,37 +341,39 @@ def notify_delivery_created(sender, instance, created, **kwargs):
     """
     Notificar cuando se crea un recibo de entrega.
     """
-    if created:
+    if created and instance.order:  # Solo notificar si hay una orden asociada
         # Notificar al cliente
-        Notification.create_notification(
-            recipient=instance.order.client,
-            notification_type=NotificationType.PRODUCT_DELIVERED,
-            title='¡Entrega registrada!',
-            message=f'Se ha registrado una entrega para tu orden #{instance.order.id}.',
-            priority=NotificationPriority.HIGH,
-            related_object=instance,
-            action_url=f'/orders/{instance.order.id}',
-            metadata={
-                'order_id': instance.order.id,
-                'delivery_id': instance.id,
-                'weight': instance.weight
-            }
-        )
+        if instance.order.client:
+            Notification.create_notification(
+                recipient=instance.order.client,
+                notification_type=NotificationType.PRODUCT_DELIVERED,
+                title='¡Entrega registrada!',
+                message=f'Se ha registrado una entrega para tu orden #{instance.order.id}.',
+                priority=NotificationPriority.HIGH,
+                related_object=instance,
+                action_url=f'/orders/{instance.order.id}',
+                metadata={
+                    'order_id': instance.order.id,
+                    'delivery_id': instance.id,
+                    'weight': instance.weight
+                }
+            )
         
         # Notificar al agente
-        Notification.create_notification(
-            recipient=instance.order.sales_manager,
-            notification_type=NotificationType.PRODUCT_DELIVERED,
-            title='Entrega completada',
-            message=f'Se completó la entrega de la orden #{instance.order.id} al cliente {instance.order.client.full_name}.',
-            priority=NotificationPriority.NORMAL,
-            related_object=instance,
-            action_url=f'/orders/{instance.order.id}',
-            metadata={
-                'order_id': instance.order.id,
-                'delivery_id': instance.id
-            }
-        )
+        if instance.order.sales_manager:
+            Notification.create_notification(
+                recipient=instance.order.sales_manager,
+                notification_type=NotificationType.PRODUCT_DELIVERED,
+                title='Entrega completada',
+                message=f'Se completó la entrega de la orden #{instance.order.id} al cliente {instance.order.client.full_name if instance.order.client else "sin especificar"}.',
+                priority=NotificationPriority.NORMAL,
+                related_object=instance,
+                action_url=f'/orders/{instance.order.id}',
+                metadata={
+                    'order_id': instance.order.id,
+                    'delivery_id': instance.id
+                }
+            )
 
 
 # ============================================================================

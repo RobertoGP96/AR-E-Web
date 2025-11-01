@@ -1031,9 +1031,17 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
     permission_classes = [ReadOnly | LogisticalPermission | AdminPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['order', 'status']
-    search_fields = ['order__client__name', 'order__client__last_name']
+    search_fields = ['order__client__name', 'order__client__last_name', 'id']
     ordering_fields = ['deliver_date', 'created_at', 'weight']
     ordering = ['-deliver_date']
+    
+    def get_queryset(self):
+        """
+        Personaliza el queryset para manejar correctamente deliveries sin orden.
+        """
+        queryset = super().get_queryset()
+        # Usar select_related con precaución ya que order puede ser null
+        return queryset.select_related('order', 'order__client', 'order__sales_manager')
 
 
 class ImageUploadApiView(APIView):

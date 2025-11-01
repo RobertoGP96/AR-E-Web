@@ -832,6 +832,8 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
     order = serializers.SlugRelatedField(
         queryset=Order.objects.all(),
         slug_field="id",
+        required=False,
+        allow_null=True,
         error_messages={
             "does_not_exist": "El pedido {value} no existe.",
             "invalid": "El valor proporcionado para el pedido no es válido.",
@@ -841,9 +843,11 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
         queryset=EvidenceImages.objects.all(),
         many=True,
         slug_field="image_url",
+        required=False,
+        allow_empty=True,
         error_messages={
-            "does_not_exist": "El pedido {value} no existe.",
-            "invalid": "El valor proporcionado para el pedido no es válido.",
+            "does_not_exist": "La imagen {value} no existe.",
+            "invalid": "El valor proporcionado para la imagen no es válido.",
         },
     )
     delivered_products = ProductReceivedSerializer(many=True, read_only=True)
@@ -860,9 +864,13 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
             "delivered_products",
             "weight",
             "status",
+            "weight_cost",
+            "manager_profit",
             "total_cost_of_deliver",
+            "created_at",
+            "updated_at",
         ]
-        read_only_fields = ["id"]
+        read_only_fields = ["id", "created_at", "updated_at"]
 
     @extend_schema_field(float)
     def get_total_cost_of_deliver(self, obj):

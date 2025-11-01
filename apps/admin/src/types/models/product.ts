@@ -55,11 +55,11 @@ export interface CreateProductData {
   link?: string;
   image_url?: string;
   sku?: string;
-  shop?: string;
+  shop?: string; // Nombre de la tienda (slug_field="name")
   description?: string;
-  category?: string;
+  category?: string; // Nombre de la categoría (slug_field="name")
   amount_requested: number;
-  order_id?: ID;
+  order?: ID; // ID del pedido (slug_field="id")
   
   status?: ProductStatus;
   //PRICE

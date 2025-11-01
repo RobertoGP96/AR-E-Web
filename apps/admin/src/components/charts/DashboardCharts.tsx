@@ -4,80 +4,126 @@ import {
   Pie,
   Cell,
   Label,
-  ResponsiveContainer,
-  Tooltip,
   LineChart,
   Line,
   XAxis,
   YAxis,
-  CartesianGrid
+  CartesianGrid,
+  BarChart,
+  Bar
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { TrendingUp } from 'lucide-react';
+import { 
+  ChartContainer, 
+  ChartTooltip, 
+  ChartTooltipContent,
+  type ChartConfig 
+} from '@/components/ui/chart';
+import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
 import { useUserMetrics, useProductMetrics, useOrderMetrics, useRevenueMetrics } from '@/hooks/useDashboardMetrics';
+import { cn } from '@/lib/utils';
 
-// Colores para los gráficos
+// Configuración de colores para los gráficos
 const COLORS = {
-  primary: '#3b82f6',
-  secondary: '#10b981',
-  accent: '#f59e0b',
-  danger: '#ef4444',
-  muted: '#6b7280',
-  success: '#22c55e',
-  warning: '#eab308',
-  info: '#06b6d4'
+  primary: 'hsl(221, 83%, 53%)',
+  secondary: 'hsl(142, 76%, 36%)',
+  accent: 'hsl(25, 95%, 53%)',
+  danger: 'hsl(0, 84%, 60%)',
+  muted: 'hsl(215, 16%, 47%)',
+  success: 'hsl(142, 71%, 45%)',
+  warning: 'hsl(48, 96%, 53%)',
+  info: 'hsl(199, 89%, 48%)',
+  purple: 'hsl(271, 91%, 65%)',
+  emerald: 'hsl(160, 84%, 39%)',
+  blue: 'hsl(217, 91%, 60%)',
+  orange: 'hsl(24, 94%, 50%)'
 };
 
 /**
- * Gráfico de donut para métricas de usuarios
+ * Gráfico de donut mejorado para métricas de usuarios
  */
 export const UserMetricsBarChart = () => {
   const { userMetrics, isLoading } = useUserMetrics();
 
-  const data = React.useMemo(() => [
-    { name: "Total", value: userMetrics?.total || 0, color: COLORS.primary },
-    { name: "Activos", value: userMetrics?.active || 0, color: COLORS.success },
-    { name: "Verificados", value: userMetrics?.verified || 0, color: COLORS.secondary },
-    { name: "Agentes", value: userMetrics?.agents || 0, color: COLORS.accent },
+  const chartData = React.useMemo(() => [
+    { category: "total", usuarios: userMetrics?.total || 0, fill: COLORS.blue },
+    { category: "activos", usuarios: userMetrics?.active || 0, fill: COLORS.success },
+    { category: "verificados", usuarios: userMetrics?.verified || 0, fill: COLORS.emerald },
+    { category: "agentes", usuarios: userMetrics?.agents || 0, fill: COLORS.orange },
   ], [userMetrics])
 
+  const chartConfig = {
+    usuarios: {
+      label: "Usuarios",
+    },
+    total: {
+      label: "Total",
+      color: COLORS.blue,
+    },
+    activos: {
+      label: "Activos",
+      color: COLORS.success,
+    },
+    verificados: {
+      label: "Verificados",
+      color: COLORS.emerald,
+    },
+    agentes: {
+      label: "Agentes",
+      color: COLORS.orange,
+    },
+  } satisfies ChartConfig
+
   const totalUsers = React.useMemo(() => {
-    return data.reduce((acc, curr) => acc + curr.value, 0)
-  }, [data])
+    return chartData.reduce((acc, curr) => acc + curr.usuarios, 0)
+  }, [chartData])
 
   if (isLoading || !userMetrics) {
     return (
-      <Card className="flex flex-col">
+      <Card className="flex flex-col border-2 shadow-sm">
         <CardHeader className="items-center pb-0">
-          <CardTitle>Métricas de Usuarios</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-blue-500" />
+            Métricas de Usuarios
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 pb-0">
-          <div className="mx-auto aspect-square max-h-[250px] bg-gray-100 rounded animate-pulse" />
+          <div className="mx-auto aspect-square max-h-[280px] bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg animate-pulse" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Métricas de Usuarios</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Activity className="h-5 w-5 text-blue-500" />
+          Métricas de Usuarios
+        </CardTitle>
         <CardDescription>Distribución de usuarios por estado</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
-        <ResponsiveContainer width="100%" height={250}>
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto aspect-square max-h-[280px]"
+        >
           <PieChart>
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent hideLabel />}
+            />
             <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={5}
-              dataKey="value"
+              data={chartData}
+              dataKey="usuarios"
+              nameKey="category"
+              innerRadius={70}
+              outerRadius={110}
+              strokeWidth={5}
+              paddingAngle={2}
             >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}
               <Label
                 content={({ viewBox }) => {
@@ -92,14 +138,14 @@ export const UserMetricsBarChart = () => {
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
+                          className="fill-foreground text-4xl font-bold"
                         >
                           {totalUsers.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
+                          y={(viewBox.cy || 0) + 28}
+                          className="fill-muted-foreground text-sm"
                         >
                           Usuarios
                         </tspan>
@@ -109,19 +155,15 @@ export const UserMetricsBarChart = () => {
                 }}
               />
             </Pie>
-            <Tooltip
-              formatter={(value) => [value.toLocaleString(), 'Usuarios']}
-              labelStyle={{ color: '#000' }}
-            />
           </PieChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 leading-none font-medium">
+      <CardFooter className="flex-col gap-2 text-sm pt-4">
+        <div className="flex items-center gap-2 leading-none font-medium text-emerald-600">
           <TrendingUp className="h-4 w-4" />
           Total de usuarios registrados
         </div>
-        <div className="text-muted-foreground leading-none">
+        <div className="text-muted-foreground leading-none text-center">
           Métricas actualizadas en tiempo real
         </div>
       </CardFooter>
@@ -130,139 +172,255 @@ export const UserMetricsBarChart = () => {
 };
 
 /**
- * Gráfico circular para distribución de productos
+ * Gráfico de barras mejorado para distribución de productos
  */
 export const ProductMetricsPieChart = () => {
   const { productMetrics, isLoading } = useProductMetrics();
 
+  const chartData = React.useMemo(() => [
+    { status: "enStock", productos: productMetrics?.in_stock || 0, fill: COLORS.success },
+    { status: "sinStock", productos: productMetrics?.out_of_stock || 0, fill: COLORS.danger },
+    { status: "pendientes", productos: productMetrics?.pending_delivery || 0, fill: COLORS.warning }
+  ], [productMetrics]);
+
+  const chartConfig = {
+    productos: {
+      label: "Productos",
+    },
+    enStock: {
+      label: "En Stock",
+      color: COLORS.success,
+    },
+    sinStock: {
+      label: "Sin Stock",
+      color: COLORS.danger,
+    },
+    pendientes: {
+      label: "Pendientes",
+      color: COLORS.warning,
+    },
+  } satisfies ChartConfig
+
   if (isLoading || !productMetrics) {
     return (
-      <Card>
+      <Card className="border-2 shadow-sm">
         <CardHeader>
-          <CardTitle>Distribución de Productos</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-emerald-500" />
+            Distribución de Productos
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 bg-gray-100 rounded animate-pulse" />
+          <div className="h-[300px] bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg animate-pulse" />
         </CardContent>
       </Card>
     );
   }
 
-  const data = [
-    { name: 'En Stock', value: productMetrics.in_stock, color: COLORS.success },
-    { name: 'Sin Stock', value: productMetrics.out_of_stock, color: COLORS.danger },
-    { name: 'Pendientes', value: productMetrics.pending_delivery, color: COLORS.warning }
-  ];
-
   return (
-    <Card>
+    <Card className="border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
       <CardHeader>
-        <CardTitle>Distribución de Productos</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Activity className="h-5 w-5 text-emerald-500" />
+          Distribución de Productos
+        </CardTitle>
+        <CardDescription>Estado del inventario actual</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, percent }) => `${name} ${((percent as number) * 100).toFixed(0)}%`}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip formatter={(value) => [value.toLocaleString(), 'Cantidad']} />
-          </PieChart>
-        </ResponsiveContainer>
+        <ChartContainer config={chartConfig} className="h-[300px]">
+          <BarChart data={chartData} accessibilityLayer>
+            <CartesianGrid vertical={false} strokeDasharray="3 3" />
+            <XAxis
+              dataKey="status"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+              tickFormatter={(value) => chartConfig[value as keyof typeof chartConfig]?.label as string}
+            />
+            <YAxis />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar dataKey="productos" radius={8} />
+          </BarChart>
+        </ChartContainer>
       </CardContent>
+      <CardFooter className="flex-col items-start gap-2 text-sm">
+        <div className="flex gap-2 font-medium leading-none text-emerald-600">
+          <TrendingUp className="h-4 w-4" />
+          Inventario actualizado
+        </div>
+        <div className="text-muted-foreground">
+          Total: {(chartData.reduce((acc, curr) => acc + curr.productos, 0)).toLocaleString()} productos
+        </div>
+      </CardFooter>
     </Card>
   );
 };
 
 /**
- * Gráfico de líneas para tendencias de ingresos
+ * Gráfico de líneas mejorado para tendencias de ingresos
  */
 export const RevenueMetricsLineChart = () => {
   const { revenueMetrics, isLoading } = useRevenueMetrics();
 
+  const chartData = React.useMemo(() => [
+    { period: "mesPasado", ingresos: revenueMetrics?.last_month || 0 },
+    { period: "esteMes", ingresos: revenueMetrics?.this_month || 0 },
+    { period: "estaSemana", ingresos: revenueMetrics?.this_week || 0 },
+    { period: "hoy", ingresos: revenueMetrics?.today || 0 }
+  ], [revenueMetrics]);
+
+  const chartConfig = {
+    ingresos: {
+      label: "Ingresos",
+      color: COLORS.purple,
+    },
+  } satisfies ChartConfig
+
   if (isLoading || !revenueMetrics) {
     return (
-      <Card>
+      <Card className="border-2 shadow-sm">
         <CardHeader>
-          <CardTitle>Tendencia de Ingresos</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-purple-500" />
+            Tendencia de Ingresos
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 bg-gray-100 rounded animate-pulse" />
+          <div className="h-[300px] bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg animate-pulse" />
         </CardContent>
       </Card>
     );
   }
 
-  const data = [
-    { name: 'Mes Pasado', value: revenueMetrics.last_month },
-    { name: 'Este Mes', value: revenueMetrics.this_month },
-    { name: 'Esta Semana', value: revenueMetrics.this_week },
-    { name: 'Hoy', value: revenueMetrics.today }
-  ];
+  const totalRevenue = chartData.reduce((acc, curr) => acc + curr.ingresos, 0);
+  const avgRevenue = totalRevenue / chartData.length;
+  const trend = revenueMetrics.this_month > revenueMetrics.last_month;
 
   return (
-    <Card>
+    <Card className="border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
       <CardHeader>
-        <CardTitle>Tendencia de Ingresos</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-purple-500" />
+          Tendencia de Ingresos
+        </CardTitle>
+        <CardDescription>Comparativa de ingresos por período</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis tickFormatter={(value: number) => `$${value.toLocaleString()}`} />
-            <Tooltip
-              formatter={(value) => [`$${value.toLocaleString()}`, 'Ingresos']}
-              labelStyle={{ color: '#000' }}
+        <ChartContainer config={chartConfig} className="h-[300px]">
+          <LineChart
+            data={chartData}
+            margin={{
+              left: 12,
+              right: 12,
+              top: 12,
+              bottom: 12
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis
+              dataKey="period"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={(value) => {
+                const labels: Record<string, string> = {
+                  mesPasado: 'Mes Pasado',
+                  esteMes: 'Este Mes',
+                  estaSemana: 'Esta Semana',
+                  hoy: 'Hoy'
+                };
+                return labels[value] || value;
+              }}
+            />
+            <YAxis 
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={(value: number) => `$${value.toLocaleString()}`}
+            />
+            <ChartTooltip 
+              content={<ChartTooltipContent 
+                formatter={(value) => [`$${value.toLocaleString()}`, 'Ingresos']}
+              />} 
             />
             <Line
               type="monotone"
-              dataKey="value"
-              stroke={COLORS.primary}
+              dataKey="ingresos"
+              stroke={COLORS.purple}
               strokeWidth={3}
-              dot={{ fill: COLORS.primary, strokeWidth: 2, r: 6 }}
+              dot={{
+                fill: COLORS.purple,
+                strokeWidth: 2,
+                r: 5,
+              }}
+              activeDot={{
+                r: 7,
+              }}
             />
           </LineChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </CardContent>
+      <CardFooter className="flex-col items-start gap-2 text-sm">
+        <div className={cn(
+          "flex gap-2 font-medium leading-none",
+          trend ? "text-emerald-600" : "text-rose-600"
+        )}>
+          {trend ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+          {trend ? "Crecimiento positivo" : "Tendencia a la baja"}
+        </div>
+        <div className="text-muted-foreground">
+          Promedio: ${avgRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+        </div>
+      </CardFooter>
     </Card>
   );
 };
 
 /**
- * Gráfico de donut para estados de órdenes
+ * Gráfico de donut mejorado para estados de órdenes
  */
 export const OrderStatusComparisonChart = () => {
   const { orderMetrics, isLoading, error } = useOrderMetrics();
 
-  const data = React.useMemo(() => [
-    { name: "Completadas", value: orderMetrics?.completed || 0, color: COLORS.success },
-    { name: "Pendientes", value: orderMetrics?.pending || 0, color: COLORS.warning },
-    { name: "Total", value: orderMetrics?.total || 0, color: COLORS.primary },
+  const chartData = React.useMemo(() => [
+    { status: "completadas", ordenes: orderMetrics?.completed || 0, fill: COLORS.success },
+    { status: "pendientes", ordenes: orderMetrics?.pending || 0, fill: COLORS.warning },
+    { status: "total", ordenes: orderMetrics?.total || 0, fill: COLORS.blue },
   ], [orderMetrics])
 
+  const chartConfig = {
+    ordenes: {
+      label: "Órdenes",
+    },
+    completadas: {
+      label: "Completadas",
+      color: COLORS.success,
+    },
+    pendientes: {
+      label: "Pendientes",
+      color: COLORS.warning,
+    },
+    total: {
+      label: "Total",
+      color: COLORS.blue,
+    },
+  } satisfies ChartConfig
+
   const totalOrders = React.useMemo(() => {
-    return data.reduce((acc, curr) => acc + curr.value, 0)
-  }, [data])
+    return chartData.reduce((acc, curr) => acc + curr.ordenes, 0)
+  }, [chartData])
 
   if (isLoading || !orderMetrics) {
     return (
-      <Card className="flex flex-col">
+      <Card className="flex flex-col border-2 shadow-sm">
         <CardHeader className="items-center pb-0">
-          <CardTitle>Estados de Órdenes</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-orange-500" />
+            Estados de Órdenes
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 pb-0">
-          <div className="mx-auto aspect-square max-h-[250px] bg-gray-100 rounded animate-pulse" />
+          <div className="mx-auto aspect-square max-h-[280px] bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg animate-pulse" />
         </CardContent>
       </Card>
     );
@@ -270,9 +428,12 @@ export const OrderStatusComparisonChart = () => {
 
   if (error) {
     return (
-      <Card className="flex flex-col">
+      <Card className="flex flex-col border-2 shadow-sm">
         <CardHeader className="items-center pb-0">
-          <CardTitle>Estados de Órdenes</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-orange-500" />
+            Estados de Órdenes
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 pb-0">
           <div className="flex items-center justify-center h-64 text-gray-500">
@@ -287,13 +448,16 @@ export const OrderStatusComparisonChart = () => {
   }
 
   // Ensure we have valid data to display
-  const hasValidData = data.some(item => item.value > 0);
+  const hasValidData = chartData.some(item => item.ordenes > 0);
 
   if (!hasValidData) {
     return (
-      <Card className="flex flex-col">
+      <Card className="flex flex-col border-2 shadow-sm">
         <CardHeader className="items-center pb-0">
-          <CardTitle>Estados de Órdenes</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-orange-500" />
+            Estados de Órdenes
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 pb-0">
           <div className="flex items-center justify-center h-64 text-gray-500">
@@ -308,25 +472,35 @@ export const OrderStatusComparisonChart = () => {
   }
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Estados de Órdenes</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Activity className="h-5 w-5 text-orange-500" />
+          Estados de Órdenes
+        </CardTitle>
         <CardDescription>Distribución de órdenes por estado</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
-        <ResponsiveContainer width="100%" height={250}>
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto aspect-square max-h-[280px]"
+        >
           <PieChart>
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent hideLabel />}
+            />
             <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={5}
-              dataKey="value"
+              data={chartData}
+              dataKey="ordenes"
+              nameKey="status"
+              innerRadius={70}
+              outerRadius={110}
+              strokeWidth={5}
+              paddingAngle={2}
             >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}
               <Label
                 content={({ viewBox }) => {
@@ -341,14 +515,14 @@ export const OrderStatusComparisonChart = () => {
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
+                          className="fill-foreground text-4xl font-bold"
                         >
                           {totalOrders.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
+                          y={(viewBox.cy || 0) + 28}
+                          className="fill-muted-foreground text-sm"
                         >
                           Órdenes
                         </tspan>
@@ -358,19 +532,15 @@ export const OrderStatusComparisonChart = () => {
                 }}
               />
             </Pie>
-            <Tooltip
-              formatter={(value) => [value.toLocaleString(), 'Órdenes']}
-              labelStyle={{ color: '#000' }}
-            />
           </PieChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 leading-none font-medium">
+      <CardFooter className="flex-col gap-2 text-sm pt-4">
+        <div className="flex items-center gap-2 leading-none font-medium text-emerald-600">
           <TrendingUp className="h-4 w-4" />
           Órdenes procesadas este mes
         </div>
-        <div className="text-muted-foreground leading-none">
+        <div className="text-muted-foreground leading-none text-center">
           Métricas actualizadas en tiempo real
         </div>
       </CardFooter>

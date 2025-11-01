@@ -125,17 +125,21 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
             <TableRow key={delivery.id}>
               <TableCell>{index + 1}</TableCell>
               <TableCell>
-                <div className='flex flex-row items-center'>
-                  <span className='rounded-full bg-gray-200 px-2  py-1 text-xs font-medium'>
-                    {"#" + delivery.order.id}
-                  </span>
-                </div>
+                {delivery.order ? (
+                  <div className='flex flex-row items-center'>
+                    <span className='rounded-full bg-gray-200 px-2  py-1 text-xs font-medium'>
+                      {"#" + delivery.order.id}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-gray-400 text-sm italic">Sin orden</span>
+                )}
               </TableCell>
               <TableCell>
-                {delivery.order.client ? (
+                {delivery.order?.client ? (
                   <AvatarUser user={delivery.order.client} />
                 ) : (
-                  <span className="text-gray-400">Sin cliente</span>
+                  <span className="text-gray-400 text-sm italic">Sin cliente</span>
                 )}
               </TableCell>
               <TableCell>

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, Legend } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -101,55 +101,71 @@ export default function Reports() {
 
       {/* Resumen de Ganancias */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-2 border-blue-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Ingresos Totales
+            </CardTitle>
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-sm">
+              <DollarSign className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${reports.summary.total_revenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Últimos 12 meses</p>
+            <div className="text-3xl font-bold tracking-tight">${reports.summary.total_revenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-2">Últimos 12 meses</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-2 border-emerald-100 hover:border-emerald-200 hover:shadow-lg transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ganancia del Sistema</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Ganancia del Sistema
+            </CardTitle>
+            <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow-sm">
+              <TrendingUp className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-3xl font-bold text-emerald-600 tracking-tight">
               ${reports.summary.total_system_profit.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-2">
               Margen: {reports.summary.profit_margin.toFixed(1)}%
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-2 border-purple-100 hover:border-purple-200 hover:shadow-lg transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ganancias de Agentes</CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Ganancias de Agentes
+            </CardTitle>
+            <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-sm">
+              <Users className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-3xl font-bold text-purple-600 tracking-tight">
               ${reports.summary.total_agent_profits.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">{reports.agent_reports.length} agentes activos</p>
+            <p className="text-xs text-muted-foreground mt-2">{reports.agent_reports.length} agentes activos</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-2 border-rose-100 hover:border-rose-200 hover:shadow-lg transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Costos Totales</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Costos Totales
+            </CardTitle>
+            <div className="p-2 bg-gradient-to-br from-rose-500 to-rose-600 rounded-lg shadow-sm">
+              <TrendingDown className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-3xl font-bold text-rose-600 tracking-tight">
               ${reports.summary.total_costs.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">Productos comprados</p>
+            <p className="text-xs text-muted-foreground mt-2">Productos comprados</p>
           </CardContent>
         </Card>
       </div>
@@ -161,14 +177,17 @@ export default function Reports() {
         </TabsList>
 
         <TabsContent value="monthly" className="space-y-4">
-          <Card>
+          <Card className="border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
             <CardHeader>
-              <CardTitle>Ganancias Mensuales</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-emerald-500" />
+                Ganancias Mensuales
+              </CardTitle>
               <CardDescription>
                 Evolución de ingresos, costos y ganancias en los últimos 12 meses
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <ChartContainer
                 config={{
                   revenue: {
@@ -184,50 +203,70 @@ export default function Reports() {
                     color: 'hsl(var(--chart-3))',
                   },
                 }}
-                className="h-[400px]"
+                className="h-[400px] w-full"
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={reports.monthly_reports}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month_short" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="var(--color-revenue)" 
-                      strokeWidth={2}
-                      name="Ingresos"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="system_profit" 
-                      stroke="var(--color-system_profit)" 
-                      strokeWidth={2}
-                      name="Ganancia Sistema"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="agent_profits" 
-                      stroke="var(--color-agent_profits)" 
-                      strokeWidth={2}
-                      name="Ganancia Agentes"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <LineChart data={reports.monthly_reports} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis 
+                    dataKey="month_short" 
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                  />
+                  <YAxis 
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px' }}
+                    iconType="line"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="var(--color-revenue)" 
+                    strokeWidth={3}
+                    name="Ingresos"
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="system_profit" 
+                    stroke="var(--color-system_profit)" 
+                    strokeWidth={3}
+                    name="Ganancia Sistema"
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="agent_profits" 
+                    stroke="var(--color-agent_profits)" 
+                    strokeWidth={3}
+                    name="Ganancia Agentes"
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
               </ChartContainer>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
             <CardHeader>
-              <CardTitle>Comparación Mensual de Ganancias</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-blue-500" />
+                Comparación Mensual de Ganancias
+              </CardTitle>
               <CardDescription>
                 Ganancias del sistema vs ganancias de agentes por mes
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <ChartContainer
                 config={{
                   system_profit: {
@@ -239,19 +278,39 @@ export default function Reports() {
                     color: 'hsl(var(--chart-2))',
                   },
                 }}
-                className="h-[300px]"
+                className="h-[350px] w-full"
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={reports.monthly_reports}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month_short" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend />
-                    <Bar dataKey="system_profit" fill="var(--color-system_profit)" name="Ganancia Sistema" />
-                    <Bar dataKey="agent_profits" fill="var(--color-agent_profits)" name="Ganancia Agentes" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart data={reports.monthly_reports} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis 
+                    dataKey="month_short" 
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                  />
+                  <YAxis 
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px' }}
+                  />
+                  <Bar 
+                    dataKey="system_profit" 
+                    fill="var(--color-system_profit)" 
+                    name="Ganancia Sistema" 
+                    radius={[8, 8, 0, 0]}
+                  />
+                  <Bar 
+                    dataKey="agent_profits" 
+                    fill="var(--color-agent_profits)" 
+                    name="Ganancia Agentes"
+                    radius={[8, 8, 0, 0]}
+                  />
+                </BarChart>
               </ChartContainer>
             </CardContent>
           </Card>
@@ -263,7 +322,7 @@ export default function Reports() {
                 Datos tabulares de ingresos, costos y ganancias por mes
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -304,7 +363,7 @@ export default function Reports() {
                 Desempeño y ganancias de cada agente
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -356,14 +415,17 @@ export default function Reports() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
             <CardHeader>
-              <CardTitle>Ganancias por Agente</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-purple-500" />
+                Ganancias por Agente
+              </CardTitle>
               <CardDescription>
                 Comparación visual de ganancias totales entre agentes
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <ChartContainer
                 config={{
                   total_profit: {
@@ -371,17 +433,37 @@ export default function Reports() {
                     color: 'hsl(var(--chart-1))',
                   },
                 }}
-                className="h-[300px]"
+                className="h-[400px] w-full"
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={reports.agent_reports}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="agent_name" angle={-45} textAnchor="end" height={100} />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="total_profit" fill="var(--color-total_profit)" name="Ganancia Total" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart 
+                  data={reports.agent_reports}
+                  margin={{ top: 10, right: 30, left: 20, bottom: 80 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis 
+                    dataKey="agent_name" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={100}
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={10}
+                    interval={0}
+                  />
+                  <YAxis 
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar 
+                    dataKey="total_profit" 
+                    fill="var(--color-total_profit)" 
+                    name="Ganancia Total"
+                    radius={[8, 8, 0, 0]}
+                  />
+                </BarChart>
               </ChartContainer>
             </CardContent>
           </Card>

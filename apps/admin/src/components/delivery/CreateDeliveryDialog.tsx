@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useCreateDelivery } from '@/hooks/delivery/useCreateDelivery';
 import { toast } from 'sonner';
+import type { CreateDeliverReceipData } from '@/types/models/delivery';
+import type { DeliveryStatus } from '@/types/models/base';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Truck, Package, Clock } from 'lucide-react';
+import { useOrders } from '@/hooks/order/useOrders';
 
 interface CreateDeliveryDialogProps {
   open: boolean;
@@ -31,8 +34,15 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
   const { orders, isLoading: ordersLoading } = useOrders();
 
   // Estado del formulario
-  const [formData, setFormData] = useState({
-    order_id: '',
+  const [formData, setFormData] = useState<{
+    order_id: string;
+    weight: string;
+    status: DeliveryStatus;
+    deliver_date: string;
+    weight_cost: string;
+    manager_profit: string;
+  }>({
+    order_id: '', // Ahora opcional
     weight: '',
     status: 'Pendiente',
     deliver_date: '',
@@ -54,9 +64,9 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validación básica - requerir campos obligatorios
-    if (!formData.order_id || !formData.weight.trim()) {
-      toast.error('Por favor completa todos los campos obligatorios');
+    // Validación básica - ahora el peso es el único campo obligatorio
+    if (!formData.weight.trim()) {
+      toast.error('Por favor ingresa el peso del delivery');
       return;
     }
 
@@ -67,16 +77,16 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
     }
 
     try {
-      const deliveryData = {
-        order_id: parseInt(formData.order_id),
+      const deliveryData: Partial<CreateDeliverReceipData> = {
         weight,
-        status: formData.status as any,
+        status: formData.status,
+        ...(formData.order_id && { order: parseInt(formData.order_id) }),
         ...(formData.deliver_date && { deliver_date: formData.deliver_date }),
         ...(formData.weight_cost && { weight_cost: parseFloat(formData.weight_cost) }),
         ...(formData.manager_profit && { manager_profit: parseFloat(formData.manager_profit) }),
       };
 
-      await createDeliveryMutation.mutateAsync(deliveryData);
+      await createDeliveryMutation.mutateAsync(deliveryData as CreateDeliverReceipData);
 
       toast.success('Delivery creado exitosamente');
 
@@ -102,7 +112,7 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
         <DialogHeader>
           <DialogTitle>Crear Nuevo Delivery</DialogTitle>
           <DialogDescription>
-            Complete todos los datos del delivery. Los campos marcados con * son obligatorios.
+            Complete los datos del delivery. Solo el peso es obligatorio.
           </DialogDescription>
         </DialogHeader>
 
@@ -111,7 +121,7 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
             {/* Orden */}
             <div className="grid gap-2">
               <Label htmlFor="order_id">
-                Orden <span className="text-red-500">*</span>
+                Orden (Opcional)
               </Label>
               <Select
                 value={formData.order_id}
@@ -179,7 +189,7 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
               <Select
                 value={formData.status}
                 onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, status: value }))
+                  setFormData((prev) => ({ ...prev, status: value as DeliveryStatus }))
                 }
               >
                 <SelectTrigger

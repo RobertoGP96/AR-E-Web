@@ -403,7 +403,8 @@ class DeliverReceip(models.Model):
     """Receipt given periodically to user every time they get products"""
     
     order = models.ForeignKey(
-        Order, on_delete=models.CASCADE, related_name="delivery_receipts"
+        Order, on_delete=models.SET_NULL, related_name="delivery_receipts",
+        null=True, blank=True
     )
     weight = models.FloatField()
     status = models.CharField(
@@ -422,7 +423,8 @@ class DeliverReceip(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return f"Entrega - Orden #{self.order.pk} - {self.deliver_date.strftime('%Y-%m-%d')}"
+        order_info = f"Orden #{self.order.pk}" if self.order else "Sin orden"
+        return f"Entrega - {order_info} - {self.deliver_date.strftime('%Y-%m-%d')}"
 
     def total_cost_of_deliver(self):
         """Calculate total cost of delivery"""
