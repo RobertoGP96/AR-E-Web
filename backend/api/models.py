@@ -156,21 +156,37 @@ class Order(models.Model):
     def __str__(self):
         return f"Pedido #{self.pk} - {self.client.full_name}"
 
+    def update_status_based_on_delivery(self):
+        """
+        Actualiza el estado de la orden a COMPLETADO solo cuando todos los productos 
+        hayan sido completamente entregados (amount_delivered == amount_purchased para todos)
+        """
+        if self.status == OrderStatusEnum.CANCELADO.value:
+            return  # No cambiar órdenes canceladas
+            
+        if self.is_fully_delivered:
+            # Todos los productos están entregados, marcar como completado
+            if self.status != OrderStatusEnum.COMPLETADO.value:
+                self.status = OrderStatusEnum.COMPLETADO.value
+                self.save(update_fields=['status', 'updated_at'])
+
     def total_cost(self):
         """Total cost of order"""
         return sum(product.total_cost for product in self.products.all())
 
-    def received_products(self):
-        """Total products received"""
-        return list(self.delivery_receipts.all())
+    # NOTA: Los siguientes métodos fueron deshabilitados porque DeliverReceip ya no tiene 
+    # relación directa con Order, solo con el cliente
+    # def received_products(self):
+    #     """Total products received"""
+    #     return list(self.delivery_receipts.all())
 
-    def received_value_of_client(self):
-        """Total value of objects received by client"""
-        return sum(receipt.total_cost_of_deliver() for receipt in self.delivery_receipts.all())
+    # def received_value_of_client(self):
+    #     """Total value of objects received by client"""
+    #     return sum(receipt.total_cost_of_deliver() for receipt in self.delivery_receipts.all())
 
-    def extra_payments(self):
-        """Extra payment in case of excedent or missing"""
-        return self.received_value_of_client() - self.total_cost()
+    # def extra_payments(self):
+    #     """Extra payment in case of excedent or missing"""
+    #     return self.received_value_of_client() - self.total_cost()
 
     @property
     def total_products_requested(self):
@@ -186,6 +202,41 @@ class Order(models.Model):
     def total_products_delivered(self):
         """Total de productos entregados en la orden"""
         return sum(product.amount_delivered for product in self.products.all())
+
+    @property
+    def has_pending_delivery(self):
+        """Verifica si la orden tiene productos pendientes de entregar"""
+        for product in self.products.all():
+            if product.pending_delivery > 0:
+                return True
+        return False
+
+    @property
+    def is_fully_delivered(self):
+        """Verifica si todos los productos de la orden han sido completamente entregados"""
+        # Solo si hay productos comprados y todos están entregados
+        if self.total_products_purchased == 0:
+            return False
+        return not self.has_pending_delivery
+
+    @property
+    def available_for_delivery(self):
+        """
+        Verifica si la orden está disponible para crear un delivery.
+        Una orden está disponible si:
+        - NO está cancelada
+        - NO está completada (todos los productos entregados)
+        - Tiene productos comprados pendientes de entregar
+        """
+        if self.status == OrderStatusEnum.CANCELADO.value:
+            return False
+        
+        # Si ya está marcada como completado, no está disponible
+        if self.status == OrderStatusEnum.COMPLETADO.value:
+            return False
+            
+        # Debe tener productos pendientes de entregar
+        return self.has_pending_delivery
 
     class Meta:
         ordering = ['-created_at']
@@ -402,9 +453,18 @@ class ShoppingReceip(models.Model):
 class DeliverReceip(models.Model):
     """Receipt given periodically to user every time they get products"""
     
-    order = models.ForeignKey(
-        Order, on_delete=models.SET_NULL, related_name="delivery_receipts",
-        null=True, blank=True
+    client = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name="deliveries",
+        limit_choices_to={'role': 'client'},
+        help_text='Cliente al que pertenece el delivery'
+    )
+    category = models.ForeignKey(
+        'Category', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name="deliveries",
+        help_text='Categoría principal de los productos en este delivery'
     )
     weight = models.FloatField()
     status = models.CharField(
@@ -423,8 +483,15 @@ class DeliverReceip(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        order_info = f"Orden #{self.order.pk}" if self.order else "Sin orden"
-        return f"Entrega - {order_info} - {self.deliver_date.strftime('%Y-%m-%d')}"
+        client_info = f"Cliente: {self.client.full_name}"
+        category_info = f" - {self.category.name}" if self.category else ""
+        return f"Entrega - {client_info}{category_info} - {self.deliver_date.strftime('%Y-%m-%d')}"
+
+    def calculate_shipping_cost(self):
+        """Calculate shipping cost based on weight and category"""
+        if self.category and self.category.shipping_cost_per_pound:
+            return self.weight * float(self.category.shipping_cost_per_pound)
+        return self.weight_cost  # Fallback to manual weight_cost
 
     def total_cost_of_deliver(self):
         """Calculate total cost of delivery"""
@@ -566,6 +633,56 @@ class ProductDelivery(models.Model):
     def __str__(self):
         return f"{self.original_product.name} - Recibido: {self.amount_delivered}"
 
+    def save(self, *args, **kwargs):
+        """
+        Al guardar un ProductDelivery, actualiza el amount_delivered del producto original
+        y luego verifica si la orden debe cambiar a COMPLETADO
+        """
+        super().save(*args, **kwargs)
+        
+        # Actualizar el amount_delivered del producto original
+        self.update_product_delivered_amount()
+        
+        # Verificar si la orden debe cambiar a COMPLETADO
+        if self.original_product.order:
+            self.original_product.order.update_status_based_on_delivery()
+    
+    def delete(self, *args, **kwargs):
+        """
+        Al eliminar un ProductDelivery, actualiza el amount_delivered del producto original
+        """
+        product = self.original_product
+        order = product.order if product else None
+        
+        super().delete(*args, **kwargs)
+        
+        # Actualizar el amount_delivered del producto
+        if product:
+            product.amount_delivered = sum(
+                pd.amount_delivered 
+                for pd in product.delivers.all()
+            )
+            product.save(update_fields=['amount_delivered'])
+            
+            # La orden podría volver a estar disponible para delivery
+            if order:
+                # Si ya no está completamente entregada, cambiar de COMPLETADO a PROCESANDO
+                if not order.is_fully_delivered and order.status == OrderStatusEnum.COMPLETADO.value:
+                    order.status = OrderStatusEnum.PROCESANDO.value
+                    order.save(update_fields=['status', 'updated_at'])
+    
+    def update_product_delivered_amount(self):
+        """
+        Recalcula y actualiza el amount_delivered del producto original
+        basado en todos sus ProductDelivery
+        """
+        if self.original_product:
+            total = sum(
+                pd.amount_delivered 
+                for pd in self.original_product.delivers.all()
+            )
+            self.original_product.amount_delivered = total
+            self.original_product.save(update_fields=['amount_delivered'])
 
     @property
     def total_delivered(self):

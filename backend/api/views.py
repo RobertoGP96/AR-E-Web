@@ -185,6 +185,7 @@ class EmailOrPhoneTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter
 
 @extend_schema(
     summary="Login con email o número de teléfono",
@@ -375,7 +376,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     """
     # Seleccionar related users para que el serializer anidado los incluya
     # en la misma respuesta (evita N+1 queries)
-    queryset = Order.objects.all().select_related('client', 'sales_manager').prefetch_related("delivery_receipts", "products")
+    queryset = Order.objects.all().select_related('client', 'sales_manager').prefetch_related("products")
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated, (AgentPermission | AdminPermission | ClientOrderViewPermission)]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -414,6 +415,62 @@ class OrderViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Órdenes disponibles para delivery por cliente",
+        description="Retorna las órdenes de un cliente específico que tienen productos pendientes de entregar y no están canceladas ni completadas.",
+        parameters=[
+            OpenApiParameter(
+                name='client_id',
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description='ID del cliente para filtrar las órdenes',
+                required=True
+            )
+        ],
+        responses={200: OrderSerializer(many=True)},
+        tags=["Órdenes"]
+    )
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated], url_path="available-for-delivery")
+    def available_for_delivery(self, request):
+        """
+        Devuelve las órdenes disponibles para crear un delivery.
+        Una orden está disponible si:
+        - Pertenece al cliente especificado
+        - NO está cancelada
+        - NO está completada
+        - Tiene productos con cantidad pendiente de entregar (amount_purchased > amount_delivered)
+        """
+        client_id = request.query_params.get('client_id')
+        
+        if not client_id:
+            return Response(
+                {"error": "El parámetro 'client_id' es requerido"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Filtrar órdenes del cliente que no están canceladas ni completadas
+            queryset = self.get_queryset().filter(
+                client_id=client_id
+            ).exclude(
+                status__in=[OrderStatusEnum.CANCELADO.value, OrderStatusEnum.COMPLETADO.value]
+            )
+            
+            # Filtrar solo las que tienen productos pendientes de entregar
+            available_orders = []
+            for order in queryset:
+                if order.available_for_delivery:
+                    available_orders.append(order)
+            
+            serializer = self.get_serializer(available_orders, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     # @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
 
@@ -1013,8 +1070,8 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
             OpenApiExample(
                 "Ejemplo de respuesta",
                 value=[
-                    {"id": 1, "order": 1, "deliver_date": "2025-08-21", "status": "Entregado"},
-                    {"id": 2, "order": 2, "deliver_date": "2025-08-20", "status": "Pendiente"}
+                    {"id": 1, "client": 1, "deliver_date": "2025-08-21", "status": "entregado"},
+                    {"id": 2, "client": 2, "deliver_date": "2025-08-20", "status": "pendiente"}
                 ],
                 response_only=True
             )
@@ -1024,24 +1081,24 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
     """
     Gestión de recibos de entrega.
-    Soporta filtrado por orden y estado, y búsqueda por fecha.
+    Soporta filtrado por cliente y estado, y búsqueda por nombre de cliente.
     """
     queryset = DeliverReceip.objects.all()
     serializer_class = DeliverReceipSerializer
     permission_classes = [ReadOnly | LogisticalPermission | AdminPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['order', 'status']
-    search_fields = ['order__client__name', 'order__client__last_name', 'id']
+    filterset_fields = ['client', 'status', 'category']
+    search_fields = ['client__full_name', 'client__phone_number', 'id']
     ordering_fields = ['deliver_date', 'created_at', 'weight']
     ordering = ['-deliver_date']
     
     def get_queryset(self):
         """
-        Personaliza el queryset para manejar correctamente deliveries sin orden.
+        Personaliza el queryset para obtener datos relacionados del cliente.
         """
         queryset = super().get_queryset()
-        # Usar select_related con precaución ya que order puede ser null
-        return queryset.select_related('order', 'order__client', 'order__sales_manager')
+        # Obtener datos del cliente, su agente asignado y la categoría
+        return queryset.select_related('client', 'client__assigned_agent', 'category')
 
 
 class ImageUploadApiView(APIView):
@@ -1553,16 +1610,25 @@ class ProfitReportsView(APIView):
             ).aggregate(total=Sum('products__total_cost'))['total'] or 0
             
             # Calcular costos reales del mes (sum de real_cost_of_product de productos comprados)
-            costs = ProductBuyed.objects.filter(
+            product_costs = ProductBuyed.objects.filter(
                 buy_date__gte=month_start,
                 buy_date__lte=month_end
             ).aggregate(total=Sum('real_cost_of_product'))['total'] or 0
+            
+            # Calcular costos de entrega del mes (sum de weight_cost de deliveries)
+            delivery_costs = DeliverReceip.objects.filter(
+                deliver_date__gte=month_start,
+                deliver_date__lte=month_end
+            ).aggregate(total=Sum('weight_cost'))['total'] or 0
             
             # Calcular ganancias de agentes del mes (sum de manager_profit de entregas)
             agent_profits = DeliverReceip.objects.filter(
                 deliver_date__gte=month_start,
                 deliver_date__lte=month_end
             ).aggregate(total=Sum('manager_profit'))['total'] or 0
+            
+            # Total de costos = costos de productos + costos de entrega
+            costs = product_costs + delivery_costs
             
             # Ganancia proyectada del sistema = ingresos - costos - ganancias de agentes
             system_profit = revenue - costs - agent_profits
@@ -1572,6 +1638,8 @@ class ProfitReportsView(APIView):
                 'month_short': month_start.strftime('%b'),
                 'revenue': float(revenue),
                 'costs': float(costs),
+                'product_costs': float(product_costs),
+                'delivery_costs': float(delivery_costs),
                 'agent_profits': float(agent_profits),
                 'system_profit': float(system_profit),
                 'projected_profit': float(system_profit)  # Para compatibilidad con el frontend
@@ -1582,21 +1650,34 @@ class ProfitReportsView(APIView):
         agent_reports = []
         
         for agent in agents:
-            # Total de ganancias del agente
+            # Total de ganancias del agente (basado en deliveries de sus clientes asignados)
             total_profit = DeliverReceip.objects.filter(
-                order__sales_manager=agent
+                client__assigned_agent=agent
             ).aggregate(total=Sum('manager_profit'))['total'] or 0
             
             # Ganancias del mes actual
             month_start = current_date.replace(day=1)
             current_month_profit = DeliverReceip.objects.filter(
-                order__sales_manager=agent,
+                client__assigned_agent=agent,
                 deliver_date__gte=month_start,
                 deliver_date__lte=current_date
             ).aggregate(total=Sum('manager_profit'))['total'] or 0
             
             # Número de clientes asignados
-            clients_count = User.objects.filter(assigned_agent=agent, role='client').count()
+            # Cuenta clientes únicos que tienen órdenes con este agente como sales_manager
+            # o que tienen el agente explícitamente asignado
+            clients_with_assigned_agent = User.objects.filter(
+                assigned_agent=agent, 
+                role='client'
+            ).values_list('id', flat=True)
+            
+            clients_with_orders = Order.objects.filter(
+                sales_manager=agent
+            ).values_list('client_id', flat=True).distinct()
+            
+            # Combinar ambos conjuntos y eliminar duplicados
+            all_client_ids = set(clients_with_assigned_agent) | set(clients_with_orders)
+            clients_count = len(all_client_ids)
             
             # Número de órdenes gestionadas
             orders_count = Order.objects.filter(sales_manager=agent).count()
@@ -1624,6 +1705,8 @@ class ProfitReportsView(APIView):
         # Calcular totales generales
         total_revenue = sum(report['revenue'] for report in monthly_reports)
         total_costs = sum(report['costs'] for report in monthly_reports)
+        total_product_costs = sum(report['product_costs'] for report in monthly_reports)
+        total_delivery_costs = sum(report['delivery_costs'] for report in monthly_reports)
         total_agent_profits = sum(report['agent_profits'] for report in monthly_reports)
         total_system_profit = sum(report['system_profit'] for report in monthly_reports)
         
@@ -1635,6 +1718,8 @@ class ProfitReportsView(APIView):
                 'summary': {
                     'total_revenue': float(total_revenue),
                     'total_costs': float(total_costs),
+                    'total_product_costs': float(total_product_costs),
+                    'total_delivery_costs': float(total_delivery_costs),
                     'total_agent_profits': float(total_agent_profits),
                     'total_system_profit': float(total_system_profit),
                     'profit_margin': float((total_system_profit / total_revenue * 100) if total_revenue > 0 else 0)

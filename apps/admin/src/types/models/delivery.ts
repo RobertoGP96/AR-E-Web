@@ -3,14 +3,16 @@
  */
 
 import type { ID, DateTime, DeliveryStatus } from './base';
-import type { Order } from './order';
+import type { CustomUser } from './user';
 import type { EvidenceImage } from './evidence';
 import type { ProductDelivery } from './product-delivery';
+import type { Category } from './category';
 
 // Modelo principal
 export interface DeliverReceip {
   id: ID;
-  order?: Order | null; // Ahora es opcional
+  client: CustomUser; // Cliente REQUERIDO (ya no es opcional)
+  category?: Category; // Categoría de productos en el delivery (opcional)
   weight: number;
   status: DeliveryStatus;
   deliver_date: DateTime;
@@ -22,7 +24,8 @@ export interface DeliverReceip {
   
   // Propiedades computadas
   total_cost_of_deliver: number;
-  delivered_products?: ProductDelivery[]; // Cambiado a ProductDelivery
+  calculated_shipping_cost?: number; // Costo calculado basado en categoría
+  delivered_products?: ProductDelivery[];
   
   // Timestamps
   created_at: DateTime;
@@ -31,7 +34,8 @@ export interface DeliverReceip {
 
 // Tipos para crear/editar recibo de entrega
 export interface CreateDeliverReceipData {
-  order?: ID | null; // Ahora es opcional
+  client_id: ID; // ID del cliente REQUERIDO
+  category_id?: ID; // ID de la categoría (opcional)
   weight: number;
   status?: DeliveryStatus;
   deliver_date?: DateTime;

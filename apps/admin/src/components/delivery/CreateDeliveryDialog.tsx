@@ -21,8 +21,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Truck, Package, Clock } from 'lucide-react';
-import { useOrders } from '@/hooks/order/useOrders';
+import { Loader2, Truck, Package, Clock, User, Tag } from 'lucide-react';
+import { useOrdersAvailableForDelivery } from '@/hooks/order';
+import { useUsers } from '@/hooks/user';
+import { useCategories } from '@/hooks/category/useCategory';
 
 interface CreateDeliveryDialogProps {
   open: boolean;
@@ -31,10 +33,15 @@ interface CreateDeliveryDialogProps {
 
 export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliveryDialogProps) {
   const createDeliveryMutation = useCreateDelivery();
-  const { orders, isLoading: ordersLoading } = useOrders();
+  const { data: usersData, isLoading: usersLoading } = useUsers({ role: 'client' });
+  const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
+  const clients = usersData?.results || [];
+  const categories = categoriesData?.results || [];
 
   // Estado del formulario
   const [formData, setFormData] = useState<{
+    client_id: string;
+    category_id: string;
     order_id: string;
     weight: string;
     status: DeliveryStatus;
@@ -42,13 +49,20 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
     weight_cost: string;
     manager_profit: string;
   }>({
-    order_id: '', // Ahora opcional
+    client_id: '',
+    category_id: '',
+    order_id: '',
     weight: '',
     status: 'Pendiente',
     deliver_date: '',
     weight_cost: '',
     manager_profit: '',
   });
+
+  // Obtener órdenes disponibles para el cliente seleccionado
+  const { data: availableOrders = [], isLoading: ordersLoading } = useOrdersAvailableForDelivery(
+    formData.client_id ? parseInt(formData.client_id) : null
+  );
 
   // Funciones para obtener estilos según el estado
   const getDeliveryStatusStyles = (status: string) => {
@@ -64,7 +78,12 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validación básica - ahora el peso es el único campo obligatorio
+    // Validación - cliente y peso son obligatorios
+    if (!formData.client_id.trim()) {
+      toast.error('Por favor selecciona un cliente');
+      return;
+    }
+
     if (!formData.weight.trim()) {
       toast.error('Por favor ingresa el peso del delivery');
       return;
@@ -77,21 +96,24 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
     }
 
     try {
-      const deliveryData: Partial<CreateDeliverReceipData> = {
+      const deliveryData: CreateDeliverReceipData = {
+        client_id: parseInt(formData.client_id),
         weight,
         status: formData.status,
-        ...(formData.order_id && { order: parseInt(formData.order_id) }),
+        ...(formData.category_id && { category_id: parseInt(formData.category_id) }),
         ...(formData.deliver_date && { deliver_date: formData.deliver_date }),
         ...(formData.weight_cost && { weight_cost: parseFloat(formData.weight_cost) }),
         ...(formData.manager_profit && { manager_profit: parseFloat(formData.manager_profit) }),
       };
 
-      await createDeliveryMutation.mutateAsync(deliveryData as CreateDeliverReceipData);
+      await createDeliveryMutation.mutateAsync(deliveryData);
 
       toast.success('Delivery creado exitosamente');
 
       // Resetear formulario y cerrar diálogo
       setFormData({
+        client_id: '',
+        category_id: '',
         order_id: '',
         weight: '',
         status: 'Pendiente',
@@ -112,42 +134,130 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
         <DialogHeader>
           <DialogTitle>Crear Nuevo Delivery</DialogTitle>
           <DialogDescription>
-            Complete los datos del delivery. Solo el peso es obligatorio.
+            Selecciona un cliente para ver sus órdenes disponibles con productos pendientes de entrega.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            {/* Orden */}
+            {/* Cliente */}
             <div className="grid gap-2">
-              <Label htmlFor="order_id">
-                Orden (Opcional)
+              <Label htmlFor="client_id">
+                Cliente <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={formData.order_id}
+                value={formData.client_id}
                 onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, order_id: value }))
+                  setFormData((prev) => ({ ...prev, client_id: value, order_id: '' })) // Limpiar orden al cambiar cliente
                 }
-                disabled={ordersLoading}
+                disabled={usersLoading}
               >
                 <SelectTrigger
-                  id="order_id"
+                  id="client_id"
                   className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
                 >
-                  <SelectValue placeholder="Selecciona una orden" />
+                  <SelectValue placeholder="Selecciona un cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  {orders.map((order) => (
-                    <SelectItem key={order.id} value={order.id.toString()}>
+                  {clients.map((user) => (
+                    <SelectItem key={user.id} value={user.id.toString()}>
                       <div className="flex items-center gap-2">
-                        <Package size={16} />
-                        <span>#{order.id} - {order.client?.full_name || 'Sin cliente'}</span>
+                        <User size={16} />
+                        <span>{user.full_name || `${user.name} ${user.last_name}`}</span>
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Categoría */}
+            <div className="grid gap-2">
+              <Label htmlFor="category_id">
+                Categoría (Opcional)
+              </Label>
+              <Select
+                value={formData.category_id}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, category_id: value }))
+                }
+                disabled={categoriesLoading}
+              >
+                <SelectTrigger
+                  id="category_id"
+                  className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+                >
+                  <SelectValue placeholder="Selecciona una categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        <Tag size={16} />
+                        <span>{category.name}</span>
+                        <span className="text-xs text-gray-500 ml-auto">
+                          ${category.shipping_cost_per_pound}/lb
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {formData.category_id && (
+                <p className="text-xs text-gray-500">
+                  El costo de envío se calculará automáticamente: peso × $
+                  {categories.find(c => c.id.toString() === formData.category_id)?.shipping_cost_per_pound || 0}/lb
+                </p>
+              )}
+            </div>
+
+            {/* Orden - Solo se muestra si hay cliente seleccionado */}
+            {formData.client_id && (
+              <div className="grid gap-2">
+                <Label htmlFor="order_id">
+                  Orden Disponible (Opcional)
+                  {ordersLoading && <span className="text-xs text-gray-500 ml-2">Cargando...</span>}
+                </Label>
+                <Select
+                  value={formData.order_id}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, order_id: value }))
+                  }
+                  disabled={ordersLoading || availableOrders.length === 0}
+                >
+                  <SelectTrigger
+                    id="order_id"
+                    className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+                  >
+                    <SelectValue 
+                      placeholder={
+                        availableOrders.length === 0 
+                          ? "No hay órdenes disponibles" 
+                          : "Selecciona una orden"
+                      } 
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableOrders.map((order) => (
+                      <SelectItem key={order.id} value={order.id.toString()}>
+                        <div className="flex items-center gap-2">
+                          <Package size={16} />
+                          <span>
+                            Orden #{order.id} - {order.status}
+                            {order.products && ` (${order.products.length} productos)`}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!ordersLoading && availableOrders.length === 0 && (
+                  <p className="text-xs text-gray-500">
+                    Este cliente no tiene órdenes con productos pendientes de entrega.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Peso */}
             <div className="grid gap-2">

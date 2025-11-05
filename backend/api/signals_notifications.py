@@ -228,36 +228,40 @@ def notify_product_received(sender, instance, created, **kwargs):
     - Notifica al cliente
     - Notifica a los logísticos para preparar entrega
     """
-    if created:
-        # Notificar al agente
-        Notification.create_notification(
-            recipient=instance.order.sales_manager,
-            notification_type=NotificationType.PRODUCT_RECEIVED,
-            title='Producto recibido en almacén',
-            message=f'Se recibió el producto "{instance.original_product.name}" ({instance.amount_received} unidades).',
-            priority=NotificationPriority.HIGH,
-            related_object=instance,
-            action_url=f'/products/{instance.original_product.id}',
-            metadata={
-                'product_id': str(instance.original_product.id),
-                'order_id': instance.order.id,
-                'package_id': instance.package_where_was_send.id
-            }
-        )
+    if created and instance.original_product:
+        order = instance.original_product.order
+        
+        # Notificar al agente (sales_manager de la orden)
+        if order and order.sales_manager:
+            Notification.create_notification(
+                recipient=order.sales_manager,
+                notification_type=NotificationType.PRODUCT_RECEIVED,
+                title='Producto recibido en almacén',
+                message=f'Se recibió el producto "{instance.original_product.name}" ({instance.amount_received} unidades).',
+                priority=NotificationPriority.HIGH,
+                related_object=instance,
+                action_url=f'/products/{instance.original_product.id}',
+                metadata={
+                    'product_id': str(instance.original_product.id),
+                    'order_id': order.id,
+                    'package_id': instance.package.id if instance.package else None
+                }
+            )
         
         # Notificar al cliente
-        Notification.create_notification(
-            recipient=instance.order.client,
-            notification_type=NotificationType.PRODUCT_RECEIVED,
-            title='¡Tu producto llegó!',
-            message=f'El producto "{instance.original_product.name}" de tu orden #{instance.order.id} fue recibido y está listo para entrega.',
-            priority=NotificationPriority.HIGH,
-            action_url=f'/orders/{instance.order.id}',
-            metadata={
-                'product_id': str(instance.original_product.id),
-                'order_id': instance.order.id
-            }
-        )
+        if order and order.client:
+            Notification.create_notification(
+                recipient=order.client,
+                notification_type=NotificationType.PRODUCT_RECEIVED,
+                title='¡Tu producto llegó!',
+                message=f'El producto "{instance.original_product.name}" de tu orden #{order.id} fue recibido y está listo para entrega.',
+                priority=NotificationPriority.HIGH,
+                action_url=f'/orders/{order.id}',
+                metadata={
+                    'product_id': str(instance.original_product.id),
+                    'order_id': order.id
+                }
+            )
 
 
 # ============================================================================
@@ -341,37 +345,38 @@ def notify_delivery_created(sender, instance, created, **kwargs):
     """
     Notificar cuando se crea un recibo de entrega.
     """
-    if created and instance.order:  # Solo notificar si hay una orden asociada
+    if created and instance.client:  # Solo notificar si hay un cliente asociado
         # Notificar al cliente
-        if instance.order.client:
-            Notification.create_notification(
-                recipient=instance.order.client,
-                notification_type=NotificationType.PRODUCT_DELIVERED,
-                title='¡Entrega registrada!',
-                message=f'Se ha registrado una entrega para tu orden #{instance.order.id}.',
-                priority=NotificationPriority.HIGH,
-                related_object=instance,
-                action_url=f'/orders/{instance.order.id}',
-                metadata={
-                    'order_id': instance.order.id,
-                    'delivery_id': instance.id,
-                    'weight': instance.weight
-                }
-            )
+        Notification.create_notification(
+            recipient=instance.client,
+            notification_type=NotificationType.PRODUCT_DELIVERED,
+            title='¡Entrega registrada!',
+            message=f'Se ha registrado una entrega de {instance.weight:.2f} lb. Costo: ${instance.total_cost_of_deliver():.2f}',
+            priority=NotificationPriority.HIGH,
+            related_object=instance,
+            action_url=f'/deliveries/{instance.id}',
+            metadata={
+                'delivery_id': instance.id,
+                'weight': instance.weight,
+                'weight_cost': float(instance.weight_cost),
+                'manager_profit': float(instance.manager_profit)
+            }
+        )
         
-        # Notificar al agente
-        if instance.order.sales_manager:
+        # Notificar al agente asignado del cliente (si tiene)
+        if instance.client.assigned_agent:
             Notification.create_notification(
-                recipient=instance.order.sales_manager,
+                recipient=instance.client.assigned_agent,
                 notification_type=NotificationType.PRODUCT_DELIVERED,
                 title='Entrega completada',
-                message=f'Se completó la entrega de la orden #{instance.order.id} al cliente {instance.order.client.full_name if instance.order.client else "sin especificar"}.',
+                message=f'Se completó la entrega para tu cliente {instance.client.full_name}. Ganancia: ${instance.manager_profit:.2f}',
                 priority=NotificationPriority.NORMAL,
                 related_object=instance,
-                action_url=f'/orders/{instance.order.id}',
+                action_url=f'/deliveries/{instance.id}',
                 metadata={
-                    'order_id': instance.order.id,
-                    'delivery_id': instance.id
+                    'client_id': instance.client.id,
+                    'delivery_id': instance.id,
+                    'manager_profit': float(instance.manager_profit)
                 }
             )
 

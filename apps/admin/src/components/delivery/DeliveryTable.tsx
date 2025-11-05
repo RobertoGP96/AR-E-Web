@@ -1,10 +1,9 @@
-
 import DeliveryStatusBadge from './DeliveryStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import type { DeliverReceip, DeliveryStatus } from '@/types';
 import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Truck, RotateCcw, Weight } from 'lucide-react';
-import { formatDate } from '@/lib/format-date';
+import { formatDeliveryDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -37,7 +36,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
   const updateStatusMutation = useUpdateDeliveryStatus();
 
   const handleDeleteConfirm = async () => {
-    if (!dialogState.delivery) return;
+    if (!dialogState.delivery || !dialogState.delivery.id) return;
 
     setIsDeleting(true);
     try {
@@ -59,6 +58,11 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
   const handleDeleteCancel = () => setDialogState({ type: null, delivery: null });
 
   const handleStatusChange = async (delivery: DeliverReceip) => {
+    if (!delivery || !delivery.id) {
+      toast.error('Delivery inválido');
+      return;
+    }
+
     let newStatus: string | null = null;
     if (delivery.status === 'Pendiente') {
       newStatus = 'En transito';
@@ -110,8 +114,8 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
         <TableHeader className="bg-gray-100 ">
           <TableRow>
             <TableHead>#</TableHead>
-            <TableHead>Pedido</TableHead>
             <TableHead>Cliente</TableHead>
+            <TableHead>Categoría</TableHead>
             <TableHead>Peso</TableHead>
             <TableHead>Costo</TableHead>
             <TableHead>Llegada</TableHead>
@@ -125,44 +129,45 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
             <TableRow key={delivery.id}>
               <TableCell>{index + 1}</TableCell>
               <TableCell>
-                {delivery.order ? (
-                  <div className='flex flex-row items-center'>
-                    <span className='rounded-full bg-gray-200 px-2  py-1 text-xs font-medium'>
-                      {"#" + delivery.order.id}
-                    </span>
-                  </div>
+                {delivery.client && typeof delivery.client === 'object' ? (
+                  <AvatarUser user={delivery.client} />
                 ) : (
-                  <span className="text-gray-400 text-sm italic">Sin orden</span>
+                  <span className="text-gray-400 text-sm italic">Sin cliente</span>
                 )}
               </TableCell>
               <TableCell>
-                {delivery.order?.client ? (
-                  <AvatarUser user={delivery.order.client} />
+                {delivery.category ? (
+                  <div className="flex flex-col">
+                    <span className="font-medium text-sm">{delivery.category.name}</span>
+                    <span className="text-xs text-gray-500">
+                      ${delivery.category.shipping_cost_per_pound}/lb
+                    </span>
+                  </div>
                 ) : (
-                  <span className="text-gray-400 text-sm italic">Sin cliente</span>
+                  <span className="text-gray-400 text-sm italic">Sin categoría</span>
                 )}
               </TableCell>
               <TableCell>
                 <div className='flex flex-row items-center text-gray-500'>
                   <Weight className="mr-2 inline h-4 w-4" />
                   <span>
-                    {delivery.weight + " Lb"}
+                    {(delivery.weight || 0) + " Lb"}
                   </span>
                 </div>
               </TableCell>
               <TableCell>
                 <div>
-                  {"$ " + delivery.total_cost_of_deliver.toFixed(2)}
+                  {"$ " + (delivery.total_cost_of_deliver || 0).toFixed(2)}
                 </div>
               </TableCell>
               <TableCell>
                 <div className='flex flex-row items-center text-gray-500'>
                   <Clock className="mr-2 inline h-4 w-4" />
-                  {formatDate(delivery.deliver_date)}
+                  {delivery.deliver_date ? formatDeliveryDate(delivery.deliver_date) : 'N/A'}
                 </div>
               </TableCell>
               <TableCell>
-                <DeliveryStatusBadge status={delivery.status as DeliveryStatus} />
+                <DeliveryStatusBadge status={(delivery.status || 'Pendiente') as DeliveryStatus} />
               </TableCell>
               <TableCell>
                 <div className='flex flex-row gap-2'>

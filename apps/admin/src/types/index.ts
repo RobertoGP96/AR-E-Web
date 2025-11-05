@@ -32,6 +32,7 @@ export type {
   Package,
   ProductBuyed,
   ProductReceived,
+  ProductDelivery,
   
   // Tipos para crear/editar
   CreateUserData,
@@ -56,6 +57,8 @@ export type {
   UpdateProductBuyedData,
   CreateProductReceivedData,
   UpdateProductReceivedData,
+  CreateProductDeliveryData,
+  UpdateProductDeliveryData,
   
   // Filtros
   OrderFilters,

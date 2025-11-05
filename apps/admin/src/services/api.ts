@@ -490,28 +490,28 @@ export const deliveryReceipService = {
    * Obtener recibos de entrega
    */
   getDeliveryReceipts: async (filters?: BaseFilters): Promise<PaginatedApiResponse<DeliverReceip>> => {
-    return apiClient.getPaginated('/api_data/deliver_reciep/', filters as BaseFilters);
+    return apiClient.getPaginated('/api_data/delivery_receips/', filters as BaseFilters);
   },
 
   /**
    * Crear recibo de entrega
    */
   createDeliveryReceipt: async (data: Partial<DeliverReceip>): Promise<ApiResponse<DeliverReceip>> => {
-    return apiClient.post('/api_data/deliver_reciep/', data);
+    return apiClient.post('/api_data/delivery_receips/', data);
   },
 
   /**
    * Actualizar recibo de entrega
    */
   updateDeliveryReceipt: async (id: number, data: Partial<DeliverReceip>): Promise<ApiResponse<DeliverReceip>> => {
-    return apiClient.patch(`/api_data/deliver_reciep/${id}/`, data);
+    return apiClient.patch(`/api_data/delivery_receips/${id}/`, data);
   },
 
   /**
    * Eliminar recibo de entrega
    */
   deleteDeliveryReceipt: async (id: number): Promise<ApiResponse<void>> => {
-    return apiClient.delete(`/api_data/deliver_reciep/${id}/`);
+    return apiClient.delete(`/api_data/delivery_receips/${id}/`);
   },
 };
 

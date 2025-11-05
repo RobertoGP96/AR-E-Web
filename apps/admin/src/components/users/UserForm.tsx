@@ -110,13 +110,13 @@ export const UserForm: React.FC<UserFormProps> = ({
     }
     if (user) {
       return {
-        email: user.email,
+        email: user.email || '',
         name: user.name,
         last_name: user.last_name,
-        home_address: user.home_address,
+        home_address: user.home_address || '',
         phone_number: user.phone_number,
         role: user.role,
-        agent_profit: user.agent_profit,
+        agent_profit: user.agent_profit || 0,
         assigned_agent: user.assigned_agent || undefined,
       };
     }
@@ -774,14 +774,21 @@ export const UserForm: React.FC<UserFormProps> = ({
                     control={control}
                     render={({ field }) => (
                       <Select
-                        value={field.value?.toString() || ''}
-                        onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
+                        value={field.value ? field.value.toString() : 'none'}
+                        onValueChange={(value) => {
+                          if (value === 'none') {
+                            field.onChange(undefined);
+                          } else {
+                            field.onChange(parseInt(value));
+                          }
+                        }}
                         disabled={loading}
                       >
                         <SelectTrigger className="h-10">
                           <SelectValue placeholder="Seleccionar agente" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="none">Sin agente asignado</SelectItem>
                           {agentsData?.results?.map((agent) => (
                             <SelectItem key={agent.id} value={agent.id.toString()}>
                               {agent.name} {agent.last_name}

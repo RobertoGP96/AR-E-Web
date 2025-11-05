@@ -44,6 +44,7 @@ class UserSerializer(serializers.ModelSerializer):
             "phone_number",
             "role",
             "agent_profit",
+            "assigned_agent",
             "is_staff",
             "is_active",
             "is_verified",
@@ -145,6 +146,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "phone_number",
             "role",
             "agent_profit",
+            "assigned_agent",
             "is_staff",
             "is_active",
             "is_verified",
@@ -829,16 +831,38 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
     """
     """Deliver Receip Serializer"""
 
-    order = serializers.SlugRelatedField(
-        queryset=Order.objects.all(),
-        slug_field="id",
+    # Para escritura (POST/PUT/PATCH) - solo ID (REQUERIDO)
+    client_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.filter(role='client'),
+        source='client',
+        write_only=True,
+        required=True,  # Campo requerido
+        error_messages={
+            "required": "El cliente es obligatorio para crear un delivery.",
+            "does_not_exist": "El cliente {value} no existe.",
+            "invalid": "El valor proporcionado para el cliente no es válido.",
+        },
+    )
+    
+    # Para lectura (GET) - objeto completo
+    client = UserSerializer(read_only=True)
+    
+    # Categoría para escritura (opcional)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(),
+        source='category',
+        write_only=True,
         required=False,
         allow_null=True,
         error_messages={
-            "does_not_exist": "El pedido {value} no existe.",
-            "invalid": "El valor proporcionado para el pedido no es válido.",
+            "does_not_exist": "La categoría {value} no existe.",
+            "invalid": "El valor proporcionado para la categoría no es válido.",
         },
     )
+    
+    # Categoría para lectura
+    category = CategorySerializer(read_only=True)
+    
     deliver_picture = serializers.SlugRelatedField(
         queryset=EvidenceImages.objects.all(),
         many=True,
@@ -850,15 +874,19 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
             "invalid": "El valor proporcionado para la imagen no es válido.",
         },
     )
-    delivered_products = ProductReceivedSerializer(many=True, read_only=True)
+    delivered_products = ProductDeliverySerializer(many=True, read_only=True)
 
     total_cost_of_deliver = serializers.SerializerMethodField(read_only=True)
+    calculated_shipping_cost = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = DeliverReceip
         fields = [
             "id",
-            "order",
+            "client_id",  # Para escritura (requerido)
+            "client",     # Para lectura
+            "category_id",  # Para escritura (opcional)
+            "category",     # Para lectura
             "deliver_date",
             "deliver_picture",
             "delivered_products",
@@ -867,6 +895,7 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
             "weight_cost",
             "manager_profit",
             "total_cost_of_deliver",
+            "calculated_shipping_cost",
             "created_at",
             "updated_at",
         ]
@@ -879,6 +908,13 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
         # Ejemplo: suma de peso * costo por libra + ganancia del manager
         if hasattr(obj, 'weight_cost') and hasattr(obj, 'manager_profit'):
             return (obj.weight or 0) * (obj.weight_cost or 0) + (obj.manager_profit or 0)
+        return 0.0
+    
+    @extend_schema_field(float)
+    def get_calculated_shipping_cost(self, obj):
+        """Calcula el costo de envío basado en peso y categoría"""
+        if hasattr(obj, 'calculate_shipping_cost'):
+            return obj.calculate_shipping_cost()
         return 0.0
 
 

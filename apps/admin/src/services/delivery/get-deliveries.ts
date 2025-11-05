@@ -12,14 +12,14 @@ import type { DeliverReceip } from '../../types';
 export const getDeliveries = async (
   filters?: BaseFilters
 ): Promise<PaginatedApiResponse<DeliverReceip>> => {
-  return await apiClient.getPaginated<DeliverReceip>('/api_data/deliver_reciep/', filters);
+  return await apiClient.getPaginated<DeliverReceip>('/api_data/delivery_receips/', filters);
 };
 
 /**
  * Obtiene un delivery por ID
  */
 export const getDeliveryById = async (id: number) => {
-  return await apiClient.get<DeliverReceip>(`/api_data/deliver_reciep/${id}/`);
+  return await apiClient.get<DeliverReceip>(`/api_data/delivery_receips/${id}/`);
 };
 
 /**
@@ -27,7 +27,7 @@ export const getDeliveryById = async (id: number) => {
  */
 export const getDeliveriesByStatus = async (status: string, filters?: BaseFilters) => {
   const statusFilters = { ...filters, status };
-  return await apiClient.getPaginated<DeliverReceip>('/api_data/deliver_reciep/', statusFilters);
+  return await apiClient.getPaginated<DeliverReceip>('/api_data/delivery_receips/', statusFilters);
 };
 
 /**
@@ -35,7 +35,7 @@ export const getDeliveriesByStatus = async (status: string, filters?: BaseFilter
  */
 export const getDeliveriesByOrder = async (orderId: number, filters?: BaseFilters) => {
   const orderFilters = { ...filters, order_id: orderId };
-  return await apiClient.getPaginated<DeliverReceip>('/api_data/deliver_reciep/', orderFilters);
+  return await apiClient.getPaginated<DeliverReceip>('/api_data/delivery_receips/', orderFilters);
 };
 
 /**
@@ -43,5 +43,5 @@ export const getDeliveriesByOrder = async (orderId: number, filters?: BaseFilter
  */
 export const searchDeliveries = async (searchTerm: string, filters?: BaseFilters) => {
   const searchFilters = { ...filters, search: searchTerm };
-  return await apiClient.getPaginated<DeliverReceip>('/api_data/deliver_reciep/', searchFilters);
+  return await apiClient.getPaginated<DeliverReceip>('/api_data/delivery_receips/', searchFilters);
 };

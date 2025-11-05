@@ -80,41 +80,47 @@ export const MetricsSummaryCards = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
       {summaryCards.map((card) => {
         const Icon = card.icon;
         return (
           <Card 
             key={card.title} 
             className={cn(
-              "relative overflow-hidden transition-all duration-300 hover:shadow-xl border-2 group",
+              "relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 group cursor-pointer",
               card.bgGradient,
               card.borderColor,
               card.hoverColor
             )}
           >
             {/* Efecto de brillo en hover */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             
-            <CardContent className="p-6 relative z-10">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+            {/* Decorative corner accent */}
+            <div className={cn(
+              "absolute top-0 right-0 w-24 h-24 opacity-10 transform translate-x-8 -translate-y-8 rounded-full blur-2xl transition-all duration-300 group-hover:scale-150",
+              card.iconBg
+            )} />
+            
+            <CardContent className="p-5 md:p-6 relative z-10">
+              <div className="flex items-start justify-between mb-3 md:mb-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 md:mb-2 truncate">
                     {card.title}
                   </p>
-                  <p className="text-3xl font-bold tracking-tight text-foreground">
+                  <p className="text-2xl md:text-3xl font-bold tracking-tight text-foreground truncate">
                     {card.value}
                   </p>
                 </div>
                 <div className={cn(
-                  "p-3 rounded-xl shadow-lg transform group-hover:scale-110 transition-transform duration-300",
+                  "p-2.5 md:p-3 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 flex-shrink-0",
                   card.iconBg
                 )}>
-                  <Icon className="w-6 h-6 text-white" />
+                  <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge
                   variant="secondary"
                   className={cn(
@@ -129,7 +135,7 @@ export const MetricsSummaryCards = () => {
                   )}
                   {card.change}
                 </Badge>
-                <span className="text-xs text-muted-foreground">vs mes anterior</span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">vs mes anterior</span>
               </div>
             </CardContent>
           </Card>

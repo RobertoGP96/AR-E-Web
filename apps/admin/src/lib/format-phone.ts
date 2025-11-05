@@ -1,4 +1,9 @@
-export function formatPhone(phone: string): string {
+export function formatPhone(phone: string | undefined | null): string {
+  // Validar que phone exista y no sea vacío
+  if (!phone || typeof phone !== 'string') {
+    return '';
+  }
+  
   // Elimina todos los caracteres que no sean dígitos
   const cleaned = phone.replace(/\D/g, "");
 

@@ -7,6 +7,7 @@ import Products from '@/pages/Products';
 import Purchases from '@/pages/Purchases';
 import Packages from '@/pages/Packages';
 import Delivery from '@/pages/Delivery';
+import DeliveryDetail from '@/pages/DeliveryDetail';
 import Orders from '@/pages/Orders';
 import Settings from '@/pages/Settings';
 import Profile from '@/pages/Profile';
@@ -50,6 +51,7 @@ const AppRoutes = () => {
                 <Route path="packages/:id/add-products" element={<AddProductsToPackagePage />} />
                 
                 <Route path="delivery" element={<Delivery />} />
+                <Route path="deliveries/:id" element={<DeliveryDetail />} />
                 
                 <Route path="orders" element={<Orders />} />
                 <Route path="reports" element={<Reports />} />

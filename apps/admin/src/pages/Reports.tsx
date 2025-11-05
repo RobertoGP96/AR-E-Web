@@ -14,6 +14,8 @@ interface MonthlyReport {
   month_short: string;
   revenue: number;
   costs: number;
+  product_costs: number;
+  delivery_costs: number;
   agent_profits: number;
   system_profit: number;
   projected_profit: number;
@@ -36,6 +38,8 @@ interface ProfitReportsData {
   summary: {
     total_revenue: number;
     total_costs: number;
+    total_product_costs: number;
+    total_delivery_costs: number;
     total_agent_profits: number;
     total_system_profit: number;
     profit_margin: number;
@@ -100,7 +104,7 @@ export default function Reports() {
       </div>
 
       {/* Resumen de Ganancias */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
         <Card className="border-2 border-blue-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -165,7 +169,26 @@ export default function Reports() {
             <div className="text-3xl font-bold text-rose-600 tracking-tight">
               ${reports.summary.total_costs.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Productos comprados</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Productos: ${reports.summary.total_product_costs.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-orange-100 hover:border-orange-200 hover:shadow-lg transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Costos de Entrega
+            </CardTitle>
+            <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-sm">
+              <TrendingDown className="h-5 w-5 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-orange-600 tracking-tight">
+              ${reports.summary.total_delivery_costs.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">Costos de peso y envío</p>
           </CardContent>
         </Card>
       </div>
@@ -315,6 +338,67 @@ export default function Reports() {
             </CardContent>
           </Card>
 
+          <Card className="border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingDown className="h-5 w-5 text-rose-500" />
+                Desglose de Costos Mensuales
+              </CardTitle>
+              <CardDescription>
+                Comparación entre costos de productos y costos de entrega
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <ChartContainer
+                config={{
+                  product_costs: {
+                    label: 'Costos de Productos',
+                    color: 'hsl(var(--chart-3))',
+                  },
+                  delivery_costs: {
+                    label: 'Costos de Entrega',
+                    color: 'hsl(var(--chart-4))',
+                  },
+                }}
+                className="h-[350px] w-full"
+              >
+                <BarChart data={reports.monthly_reports} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis 
+                    dataKey="month_short" 
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                  />
+                  <YAxis 
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px' }}
+                  />
+                  <Bar 
+                    dataKey="product_costs" 
+                    fill="var(--color-product_costs)" 
+                    name="Costos de Productos" 
+                    radius={[8, 8, 0, 0]}
+                    stackId="costs"
+                  />
+                  <Bar 
+                    dataKey="delivery_costs" 
+                    fill="var(--color-delivery_costs)" 
+                    name="Costos de Entrega"
+                    radius={[8, 8, 0, 0]}
+                    stackId="costs"
+                  />
+                </BarChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Tabla de Reportes Detallados</CardTitle>
@@ -328,7 +412,9 @@ export default function Reports() {
                   <TableRow>
                     <TableHead>Mes</TableHead>
                     <TableHead className="text-right">Ingresos</TableHead>
-                    <TableHead className="text-right">Costos</TableHead>
+                    <TableHead className="text-right">Costos Productos</TableHead>
+                    <TableHead className="text-right">Costos Entrega</TableHead>
+                    <TableHead className="text-right">Total Costos</TableHead>
                     <TableHead className="text-right">Ganancia Agentes</TableHead>
                     <TableHead className="text-right">Ganancia Sistema</TableHead>
                   </TableRow>
@@ -337,11 +423,19 @@ export default function Reports() {
                   {reports.monthly_reports.map((report, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{report.month}</TableCell>
-                      <TableCell className="text-right">${report.revenue.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-blue-600">
+                        ${report.revenue.toLocaleString()}
+                      </TableCell>
                       <TableCell className="text-right text-red-600">
+                        ${report.product_costs.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right text-orange-600">
+                        ${report.delivery_costs.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right text-red-700 font-semibold">
                         ${report.costs.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-right text-blue-600">
+                      <TableCell className="text-right text-purple-600">
                         ${report.agent_profits.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right text-green-600 font-semibold">
