@@ -7,11 +7,20 @@ import { formatDeliveryDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useDeleteDelivery } from '@/hooks/delivery/useDeleteDelivery';
 import { useUpdateDeliveryStatus } from '@/hooks/delivery/useUpdateDelivery';
 import { toast } from 'sonner';
 import AvatarUser from '../utils/AvatarUser';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface DeliveryTableProps {
   deliveries: DeliverReceip[];
@@ -19,6 +28,7 @@ interface DeliveryTableProps {
   onEdit?: (delivery: DeliverReceip) => void;
   onDelete?: (delivery: DeliverReceip) => void;
   onCapture?: (delivery: DeliverReceip) => void;
+  itemsPerPage?: number;
 }
 
 const DeliveryTable: React.FC<DeliveryTableProps> = ({ 
@@ -27,6 +37,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
   onEdit,
   onDelete,
   onCapture,
+  itemsPerPage = 10,
 }) => {
   const [dialogState, setDialogState] = useState<{ type: 'delete' | null; delivery: DeliverReceip | null }>({ type: null, delivery: null });
 
@@ -34,6 +45,60 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const updateStatusMutation = useUpdateDeliveryStatus();
+
+  // Estado de paginación
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Calcular deliveries paginados
+  const paginatedDeliveries = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return deliveries.slice(startIndex, endIndex);
+  }, [deliveries, currentPage, itemsPerPage]);
+
+  // Calcular total de páginas
+  const totalPages = Math.ceil(deliveries.length / itemsPerPage);
+
+  // Resetear a la primera página cuando cambian los deliveries
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [deliveries.length]);
+
+  // Generar números de página para mostrar
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    const showPages = 5;
+
+    if (totalPages <= showPages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
 
   const handleDeleteConfirm = async () => {
     if (!dialogState.delivery || !dialogState.delivery.id) return;
@@ -109,8 +174,9 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
-      <Table>
+    <>
+      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+        <Table>
         <TableHeader className="bg-gray-100 ">
           <TableRow>
             <TableHead>#</TableHead>
@@ -125,9 +191,9 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {deliveries.map((delivery, index) => (
+          {paginatedDeliveries.map((delivery, index) => (
             <TableRow key={delivery.id}>
-              <TableCell>{index + 1}</TableCell>
+              <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
               <TableCell>
                 {delivery.client && typeof delivery.client === 'object' ? (
                   <AvatarUser user={delivery.client} />
@@ -272,7 +338,47 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
           ))}
         </TableBody>
       </Table>
-      {/* Diálogo de confirmación para eliminar delivery */}
+    </div>
+
+    {/* Componente de paginación */}
+    {totalPages > 1 && (
+      <div className="flex justify-center mt-4">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              />
+            </PaginationItem>
+            
+            {getPageNumbers().map((page, idx) => (
+              <PaginationItem key={idx}>
+                {page === 'ellipsis' ? (
+                  <PaginationEllipsis />
+                ) : (
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page as number)}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                )}
+              </PaginationItem>
+            ))}
+            
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    )}
+
+    {/* Diálogo de confirmación para eliminar delivery */}
       <AlertDialog open={dialogState.type === 'delete' || isDeleting} onOpenChange={(open) => {
         // Prevent closing while deleting
         if (!open && isDeleting) return;
@@ -300,7 +406,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }
 

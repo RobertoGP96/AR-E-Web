@@ -2,15 +2,25 @@ import OrderStatusBadge from './OrderStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { formatCurrency, type Order, type OrderStatus, type PayStatus } from '@/types';
-import { Edit2, ShoppingCart, Trash2, MoreHorizontal, CheckCircle, Plus, Loader2, ExternalLink } from 'lucide-react';
+import { Edit2, ShoppingCart, Trash2, MoreHorizontal, CheckCircle, Plus, Loader2, ExternalLink, CalendarIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AvatarUser from '../utils/AvatarUser';
 import PayStatusBadge from '../utils/PayStatusBadge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useDeleteOrder } from '@/hooks/order/useDeleteOrder';
 import { toast } from 'sonner';
+import { formatDayMonth } from '@/lib/format-date';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface OrderTableProps {
   orders: Order[];
@@ -19,6 +29,7 @@ interface OrderTableProps {
   onDelete?: (order: Order) => void;
   onConfirmPayment?: (order: Order) => void;
   onAddProducts?: (order: Order) => void;
+  itemsPerPage?: number;
 }
 
 const OrderTable: React.FC<OrderTableProps> = ({ 
@@ -28,11 +39,66 @@ const OrderTable: React.FC<OrderTableProps> = ({
   onDelete,
   onConfirmPayment,
   onAddProducts,
+  itemsPerPage = 10,
 }) => {
   const [dialogState, setDialogState] = useState<{ type: 'delete' | null; order: Order | null }>({ type: null, order: null });
 
   const deleteOrderMutation = useDeleteOrder();
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Estado de paginación
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Calcular órdenes paginadas
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return orders.slice(startIndex, endIndex);
+  }, [orders, currentPage, itemsPerPage]);
+
+  // Calcular total de páginas
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+
+  // Resetear a la primera página cuando cambian las órdenes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [orders.length]);
+
+  // Generar números de página para mostrar
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    const showPages = 5;
+
+    if (totalPages <= showPages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
 
   const handleDeleteConfirm = async () => {
     if (!dialogState.order) return;
@@ -80,12 +146,14 @@ const OrderTable: React.FC<OrderTableProps> = ({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
-      <Table>
+    <>
+      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+        <Table>
         <TableHeader className="bg-gray-100 ">
           <TableRow>
             <TableHead>#</TableHead>
             <TableHead>ID</TableHead>
+            <TableHead>Fecha</TableHead>
             <TableHead>Manager</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Productos</TableHead>
@@ -96,13 +164,21 @@ const OrderTable: React.FC<OrderTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {orders.map((order, index) => (
+          {paginatedOrders.map((order, index) => (
               <TableRow key={order.id}>
-              <TableCell>{index + 1}</TableCell>
+              <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
               <TableCell>
                 <div className='flex flex-row items-center'>
                   <span className='rounded-full bg-gray-200 px-2  py-1 text-xs font-medium'>
                     {"#" + order.id}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className='flex flex-row items-center gap-1'>
+                  <CalendarIcon className="h-4 w-4 text-gray-500" />
+                  <span className='text-sm text-gray-600'>
+                    {order.created_at ? formatDayMonth(order.created_at) : 'N/A'}
                   </span>
                 </div>
               </TableCell>
@@ -236,7 +312,47 @@ const OrderTable: React.FC<OrderTableProps> = ({
           ))}
         </TableBody>
       </Table>
-      {/* Diálogo de confirmación para eliminar pedido */}
+    </div>
+
+    {/* Componente de paginación */}
+    {totalPages > 1 && (
+      <div className="flex justify-center mt-4">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              />
+            </PaginationItem>
+            
+            {getPageNumbers().map((page, idx) => (
+              <PaginationItem key={idx}>
+                {page === 'ellipsis' ? (
+                  <PaginationEllipsis />
+                ) : (
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page as number)}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                )}
+              </PaginationItem>
+            ))}
+            
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    )}
+
+    {/* Diálogo de confirmación para eliminar pedido */}
       <AlertDialog open={dialogState.type === 'delete' || isDeleting} onOpenChange={(open) => {
         // Prevent closing while deleting
         if (!open && isDeleting) return;
@@ -264,7 +380,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }
 

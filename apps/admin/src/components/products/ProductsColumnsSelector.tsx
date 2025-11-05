@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Columns3Cog } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -66,6 +66,7 @@ export default function ProductsColumnsSelector({ value, onChange }: Props) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="secondary">
+          <Columns3Cog className=" h-4 w-4" />
           Columnas
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>

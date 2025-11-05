@@ -10,9 +10,18 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { formatDate } from '@/lib/format-date';
 import { useDeleteUser, useVerifyUser, useToggleUserActive, useChangePassword } from '@/hooks/user';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import UserDetailsDialog from './UserDetailsDialog';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface UsersTableProps {
   users?: CustomUser[];
@@ -23,6 +32,7 @@ interface UsersTableProps {
   onToggleUserActive?: (userId: number, isActive: boolean) => void;
   isLoading?: boolean;
   error?: string | null;
+  itemsPerPage?: number;
 }
 
 // Iconos para los roles
@@ -54,7 +64,8 @@ export default function UsersTable({
   onVerifyUser,
   onToggleUserActive,
   isLoading = false,
-  error = null
+  error = null,
+  itemsPerPage = 10
 }: UsersTableProps) {
   // Estados para los diálogos de confirmación
   const [dialogState, setDialogState] = useState<DialogState>({
@@ -69,6 +80,59 @@ export default function UsersTable({
   // Estado para el popover de cambio de contraseña
   const [showPasswordPopover, setShowPasswordPopover] = useState(false);
   const [userToChangePassword, setUserToChangePassword] = useState<CustomUser | null>(null);
+
+  // Estado de paginación
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Calcular datos paginados
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return users.slice(startIndex, endIndex);
+  }, [users, currentPage, itemsPerPage]);
+
+  // Calcular total de páginas
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+
+  // Reiniciar a la página 1 cuando cambien los usuarios
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [users.length]);
+
+  // Función para generar números de página con puntos suspensivos
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
 
   // Hooks de mutación (solo para eliminar desde la tabla)
   const deleteUserMutation = useDeleteUser();
@@ -278,23 +342,24 @@ export default function UsersTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
-
-      <Table>
-        <TableHeader className='bg-gray-100 rounded-sm'>
-          <TableRow>
-            <TableHead className="text-center">#</TableHead>
-            <TableHead>Usuario</TableHead>
-            <TableHead>Correo</TableHead>
-            <TableHead>Rol</TableHead>
-            <TableHead>Verificación</TableHead>
-            <TableHead>Activación</TableHead>
-            <TableHead>Registro</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((user, index) => {
+    <>
+      <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(90vh-16rem)]">
+        <div className="overflow-auto flex-1">
+          <Table>
+            <TableHeader className='bg-gray-100 rounded-sm sticky top-0 z-10'>
+              <TableRow>
+                <TableHead className="text-center bg-gray-100">#</TableHead>
+                <TableHead className="bg-gray-100">Usuario</TableHead>
+                <TableHead className="bg-gray-100">Correo</TableHead>
+                <TableHead className="bg-gray-100">Rol</TableHead>
+                <TableHead className="bg-gray-100">Verificación</TableHead>
+                <TableHead className="bg-gray-100">Activación</TableHead>
+                <TableHead className="bg-gray-100">Registro</TableHead>
+                <TableHead className="text-right bg-gray-100">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+          {paginatedUsers.map((user, index) => {
             const RoleIcon = roleIcons[user.role];
             
             return (
@@ -304,7 +369,7 @@ export default function UsersTable({
               >
                 <TableCell className="py-4 px-3 text-center w-16">
                   <span className="inline-flex items-center justify-center w-8 h-8 text-gray-700 text-sm font-medium">
-                    {index + 1}
+                    {(currentPage - 1) * itemsPerPage + index + 1}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -488,8 +553,10 @@ export default function UsersTable({
               </TableRow>
             );
           })}
-        </TableBody>
-      </Table>
+            </TableBody>
+          </Table>
+        </div>
+      </div>
 
       {/* Diálogo de confirmación */}
       <AlertDialog open={dialogState.type !== null} onOpenChange={(open) => !open && handleCancel()}>
@@ -535,6 +602,49 @@ export default function UsersTable({
           }}
         />
       )}
-    </div>
+
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <Pagination className="mt-4">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            
+            {getPageNumbers().map((page, index) => {
+              if (page === 'ellipsis') {
+                return (
+                  <PaginationItem key={`ellipsis-${index}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                );
+              }
+              
+              return (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
+            
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
+    </>
   );
 }

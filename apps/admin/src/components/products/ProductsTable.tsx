@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState, useMemo } from 'react';
 // no local state for visible columns; controlled by parent
 import type { Product } from "../../types/models/product";
 import type { VisibleColumn } from './ProductsColumnsSelector';
@@ -16,11 +17,19 @@ import { Badge } from "@/components/ui/badge";
 import { parseTagsFromDescriptionBlock } from '@/lib/tags';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useState } from 'react';
 import { useDeleteProduct } from '@/hooks/product/useDeleteProduct';
 import { toast } from 'sonner';
 import { Link } from "react-router-dom";
 import QRLink from "./qr-link";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface ProductsTableProps {
   products: Product[];
@@ -29,6 +38,7 @@ interface ProductsTableProps {
   onGoToOrder?: (product: Product) => void;
   isLoading?: boolean;
   visibleColumns?: VisibleColumn[];
+  itemsPerPage?: number;
 }
 
 // Función helper para obtener el color del badge según el estado
@@ -51,6 +61,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
   onGoToOrder,
   isLoading = false,
   visibleColumns: visibleColumnsProp,
+  itemsPerPage = 10,
 }) => {
   const defaultCols: VisibleColumn[] = ['name', 'category', 'status', 'total_cost', 'actions'];
   const visibleColumns = (visibleColumnsProp ?? defaultCols) as VisibleColumn[];
@@ -59,6 +70,62 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
 
   const deleteMutation = useDeleteProduct();
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Estado de paginación
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Calcular productos paginados
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return products.slice(startIndex, endIndex);
+  }, [products, currentPage, itemsPerPage]);
+
+  // Calcular total de páginas
+  const totalPages = Math.ceil(products.length / itemsPerPage);
+
+  // Resetear a la primera página cuando cambian los productos
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [products.length]);
+
+  // Generar números de página para mostrar
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    const showPages = 5; // Número de páginas a mostrar
+
+    if (totalPages <= showPages) {
+      // Mostrar todas las páginas
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Mostrar páginas con elipsis
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
 
   const handleDeleteConfirm = async () => {
     if (!dialogState.product) return;
@@ -124,10 +191,10 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product, idx) => (
+            {paginatedProducts.map((product, idx) => (
               <TableRow key={product.id}>
-                <TableCell className="font-medium">{idx + 1}</TableCell>
-                {visibleColumns.includes('index') && <TableCell className="font-medium">{idx + 1}</TableCell>}
+                <TableCell className="font-medium">{(currentPage - 1) * itemsPerPage + idx + 1}</TableCell>
+                {visibleColumns.includes('index') && <TableCell className="font-medium">{(currentPage - 1) * itemsPerPage + idx + 1}</TableCell>}
                 {visibleColumns.includes('sku') && <TableCell className="font-mono text-sm">{product.sku}</TableCell>}
                 {visibleColumns.includes('name') && (
                   <TableCell>
@@ -324,20 +391,67 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
 
         {/* Resumen de totales */}
         <div className="border-t bg-gray-50 p-4">
-          <div className="flex justify-end gap-8 text-sm">
-            <div>
-              <span className="text-muted-foreground">Total productos: </span>
-              <span className="font-semibold">{products.length}</span>
+          <div className="flex justify-between items-center gap-8 text-sm">
+            <div className="flex gap-8">
+              <div>
+                <span className="text-muted-foreground">Total productos: </span>
+                <span className="font-semibold">{products.length}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Costo total: </span>
+                <span className="font-semibold">
+                  ${products.reduce((sum, p) => sum + p.total_cost, 0).toFixed(2)}
+                </span>
+              </div>
             </div>
-            <div>
-              <span className="text-muted-foreground">Costo total: </span>
-              <span className="font-semibold">
-                ${products.reduce((sum, p) => sum + p.total_cost, 0).toFixed(2)}
-              </span>
-            </div>
+            
+            {/* Información de paginación */}
+            {totalPages > 1 && (
+              <div className="text-muted-foreground">
+                Mostrando {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, products.length)} de {products.length}
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Componente de paginación */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                />
+              </PaginationItem>
+              
+              {getPageNumbers().map((page, index) => (
+                <PaginationItem key={index}>
+                  {page === 'ellipsis' ? (
+                    <PaginationEllipsis />
+                  ) : (
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page as number)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  )}
+                </PaginationItem>
+              ))}
+              
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <AlertDialog open={dialogState.type === 'delete' || isDeleting} onOpenChange={(open) => {
         // Prevent closing while deleting

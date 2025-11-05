@@ -66,7 +66,7 @@ export const formatDayMonth = (date: string | Date): string => {
   if (isNaN(dateObj.getTime())) return '';
   return dateObj.toLocaleDateString('es-ES', {
     day: '2-digit',
-    month: 'long'
+    month: 'short'
   });
 };
 

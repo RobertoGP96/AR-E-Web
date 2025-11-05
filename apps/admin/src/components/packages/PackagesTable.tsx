@@ -8,10 +8,19 @@ import { formatDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useDeletePackage } from '@/hooks/package/useDeletePackage';
 import { useUpdatePackageStatus } from '@/hooks/package';
 import { toast } from 'sonner';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface PackagesTableProps {
   packages: PackageType[];
@@ -19,6 +28,7 @@ interface PackagesTableProps {
   onEdit?: (pkg: PackageType) => void;
   onDelete?: (pkg: PackageType) => void;
   onCapture?: (pkg: PackageType) => void;
+  itemsPerPage?: number;
 }
 
 const PackagesTable: React.FC<PackagesTableProps> = ({ 
@@ -27,6 +37,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   onEdit,
   onDelete,
   onCapture,
+  itemsPerPage = 10,
 }) => {
   const [dialogState, setDialogState] = useState<{ type: 'delete' | null; pkg: PackageType | null }>({ type: null, pkg: null });
 
@@ -34,6 +45,60 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const updateStatusMutation = useUpdatePackageStatus();
+
+  // Estado de paginación
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Calcular packages paginados
+  const paginatedPackages = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return packages.slice(startIndex, endIndex);
+  }, [packages, currentPage, itemsPerPage]);
+
+  // Calcular total de páginas
+  const totalPages = Math.ceil(packages.length / itemsPerPage);
+
+  // Resetear a la primera página cuando cambian los packages
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [packages.length]);
+
+  // Generar números de página para mostrar
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    const showPages = 5;
+
+    if (totalPages <= showPages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
 
   const handleDeleteConfirm = async () => {
     if (!dialogState.pkg) return;
@@ -104,8 +169,9 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
-      <Table>
+    <>
+      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+        <Table>
         <TableHeader className="bg-gray-100 ">
           <TableRow>
             <TableHead>#</TableHead>
@@ -118,9 +184,9 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {packages.map((pkg, index) => (
+          {paginatedPackages.map((pkg, index) => (
             <TableRow key={pkg.id}>
-              <TableCell>{index + 1}</TableCell>
+              <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
               <TableCell>
                 <div className='flex flex-row items-center'>
                   <span className='rounded-full bg-gray-200 px-2 py-1 text-xs font-medium'>
@@ -260,7 +326,47 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
           ))}
         </TableBody>
       </Table>
-      {/* Diálogo de confirmación para eliminar paquete */}
+    </div>
+
+    {/* Componente de paginación */}
+    {totalPages > 1 && (
+      <div className="flex justify-center mt-4">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              />
+            </PaginationItem>
+            
+            {getPageNumbers().map((page, idx) => (
+              <PaginationItem key={idx}>
+                {page === 'ellipsis' ? (
+                  <PaginationEllipsis />
+                ) : (
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page as number)}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                )}
+              </PaginationItem>
+            ))}
+            
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    )}
+
+    {/* Diálogo de confirmación para eliminar paquete */}
       <AlertDialog open={dialogState.type === 'delete' || isDeleting} onOpenChange={(open) => {
         // Prevent closing while deleting
         if (!open && isDeleting) return;
@@ -288,7 +394,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }
 

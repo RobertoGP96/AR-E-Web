@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
 import type { ProductFilters as ApiProductFilters } from '@/types/api';
 import type { VisibleColumn } from '@/components/products/ProductsColumnsSelector';
+import ProductsColumnsSelector from '@/components/products/ProductsColumnsSelector';
 import { CompactMetricsSummary } from '@/components/metrics';
 
 export default function Products() {
@@ -50,16 +51,24 @@ export default function Products() {
       {/* Métricas compactas de productos */}
       <CompactMetricsSummary type="products" />
       
-      {/* Barra de búsqueda y control de columnas (popover) */}
-      <ProductFilters
-        filters={productFilters}
-        onFiltersChange={setProductFilters}
-        resultCount={products.length}
-        visibleColumns={visibleColumns}
-        onVisibleColumnsChange={(cols) => setVisibleColumns(cols)}
-      />
+      {/* Barra de búsqueda y filtros */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center">
+        <div className="flex-1 w-full">
+          <ProductFilters
+            filters={productFilters}
+            onFiltersChange={setProductFilters}
+            resultCount={products.length}
+          />
+        </div>
+        
+        {/* Selector de columnas visibles */}
+        <ProductsColumnsSelector 
+          value={visibleColumns} 
+          onChange={setVisibleColumns}
+        />
+      </div>
 
-  <ProductsTable products={products} isLoading={isLoading} visibleColumns={visibleColumns} />
+      <ProductsTable products={products} isLoading={isLoading} visibleColumns={visibleColumns} />
     </div>
   );
 }

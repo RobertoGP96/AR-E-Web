@@ -1,8 +1,6 @@
 import { Filter, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
-import ProductsColumnsSelector from './ProductsColumnsSelector';
-import type { VisibleColumn } from './ProductsColumnsSelector';
 
 
 interface ProductsFiltersProps {
@@ -12,17 +10,12 @@ interface ProductsFiltersProps {
   onSearchChange?: (value: string) => void;
   onCategoryChange?: (value: string) => void;
   onStatusChange?: (value: string) => void;
-  visibleColumns?: VisibleColumn[];
-  onVisibleColumnsChange?: (cols: VisibleColumn[]) => void;
 }
 
 
 export default function ProductsFilters({
   searchValue = "",
-
   onSearchChange,
-  visibleColumns = ['name','category','status','total_cost','actions', 'shop'] as VisibleColumn[],
-  onVisibleColumnsChange,
 }: ProductsFiltersProps) {
 
   return (
@@ -41,13 +34,10 @@ export default function ProductsFilters({
       </div>
 
       <div className="flex items-center gap-2">
-        <ProductsColumnsSelector value={visibleColumns} onChange={onVisibleColumnsChange || (() => {})} />
-
         <Button variant="secondary" onClick={() => { /* opcional: abrir modal avanzado */ }}>
           <Filter className="h-5 w-5 mr-2" />
           Filtros
         </Button>
-
       </div>
     </div>
   );

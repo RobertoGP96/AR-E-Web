@@ -12,7 +12,7 @@ import {
 import { Button } from "../../ui/button";
 import { Box, Edit2, Trash2, ShoppingBag, Loader2, MoreHorizontal, CheckCircle, ExternalLink, CalendarIcon } from "lucide-react";
 import { useShoppingReceipts } from "@/hooks/shopping-receipts/useShoppingReceipts";
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useDeleteShoppingReceipt } from "@/hooks/shopping-receipts/useDeleteShoppingReceipt";
 import { useUpdateShoppingReceipt } from "@/hooks/shopping-receipts/useUpdateShoppingReceipt";
 import { toast } from 'sonner';
@@ -23,17 +23,81 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { EditPurchaseForm } from './EditPurchaseForm';
 import type { ShoppingReceip } from '@/types';
 import { formatDayMonth } from "@/lib/format-date";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface PurshasesTableProps {
     onDelete?: (receipt: ShoppingReceip) => void;
+    itemsPerPage?: number;
 }
 
-const PurshasesTable: React.FC<PurshasesTableProps> = ({ onDelete }) => {
+const PurshasesTable: React.FC<PurshasesTableProps> = ({ onDelete, itemsPerPage = 10 }) => {
     const { shoppingReceipts, isLoading, error } = useShoppingReceipts();
     const [dialogState, setDialogState] = useState<{ type: 'delete' | 'edit' | null; receipt: ShoppingReceip | null }>({ type: null, receipt: null });
     const deleteReceiptMutation = useDeleteShoppingReceipt();
     const updateReceiptMutation = useUpdateShoppingReceipt();
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Estado de paginación
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // Calcular receipts paginados
+    const paginatedReceipts = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return shoppingReceipts.slice(startIndex, endIndex);
+    }, [shoppingReceipts, currentPage, itemsPerPage]);
+
+    // Calcular total de páginas
+    const totalPages = Math.ceil(shoppingReceipts.length / itemsPerPage);
+
+    // Resetear a la primera página cuando cambian los receipts
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [shoppingReceipts.length]);
+
+    // Generar números de página para mostrar
+    const getPageNumbers = () => {
+        const pages: (number | 'ellipsis')[] = [];
+        const showPages = 5;
+
+        if (totalPages <= showPages) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            if (currentPage <= 3) {
+                for (let i = 1; i <= 4; i++) {
+                    pages.push(i);
+                }
+                pages.push('ellipsis');
+                pages.push(totalPages);
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(1);
+                pages.push('ellipsis');
+                for (let i = totalPages - 3; i <= totalPages; i++) {
+                    pages.push(i);
+                }
+            } else {
+                pages.push(1);
+                pages.push('ellipsis');
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                    pages.push(i);
+                }
+                pages.push('ellipsis');
+                pages.push(totalPages);
+            }
+        }
+
+        return pages;
+    };
 
     const handleDeleteConfirm = async () => {
         if (!dialogState.receipt) return;
@@ -116,9 +180,9 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({ onDelete }) => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {shoppingReceipts.map((purchase, index) => (
+                        {paginatedReceipts.map((purchase, index) => (
                             <TableRow key={purchase.id}>
-                                <TableCell>{index + 1}</TableCell>
+                                <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                                 <TableCell>{"#00" + purchase.id}</TableCell>
                                 <TableCell>
                                     <div>
@@ -215,6 +279,45 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({ onDelete }) => {
                     </TableBody>
                 </Table>
             </div>
+            
+            {/* Componente de paginación */}
+            {totalPages > 1 && (
+                <div className="flex justify-center mt-4">
+                    <Pagination>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                />
+                            </PaginationItem>
+                            
+                            {getPageNumbers().map((page, idx) => (
+                                <PaginationItem key={idx}>
+                                    {page === 'ellipsis' ? (
+                                        <PaginationEllipsis />
+                                    ) : (
+                                        <PaginationLink
+                                            onClick={() => setCurrentPage(page as number)}
+                                            isActive={currentPage === page}
+                                        >
+                                            {page}
+                                        </PaginationLink>
+                                    )}
+                                </PaginationItem>
+                            ))}
+                            
+                            <PaginationItem>
+                                <PaginationNext
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                </div>
+            )}
+            
             {/* Diálogo de confirmación para eliminar compra */}
             <AlertDialog open={dialogState.type === 'delete' || isDeleting} onOpenChange={(open) => {
                 // Prevent closing while deleting
