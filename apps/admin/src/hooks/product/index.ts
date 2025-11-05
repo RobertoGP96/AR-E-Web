@@ -7,3 +7,4 @@ export * from './useProduct';
 export * from './useCreateProductBuyed';
 export * from './useDeleteProduct';
 export * from './useProductReceiveds';
+export * from './useUpdateProduct';

@@ -8,9 +8,7 @@ import {
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
-  BarChart,
-  Bar
+  CartesianGrid
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { 
@@ -172,84 +170,165 @@ export const UserMetricsBarChart = () => {
 };
 
 /**
- * Gráfico de barras mejorado para distribución de productos
+ * Gráfico de dona para distribución de productos por categoría
  */
 export const ProductMetricsPieChart = () => {
   const { productMetrics, isLoading } = useProductMetrics();
 
-  const chartData = React.useMemo(() => [
-    { status: "enStock", productos: productMetrics?.in_stock || 0, fill: COLORS.success },
-    { status: "sinStock", productos: productMetrics?.out_of_stock || 0, fill: COLORS.danger },
-    { status: "pendientes", productos: productMetrics?.pending_delivery || 0, fill: COLORS.warning }
-  ], [productMetrics]);
+  const chartData = React.useMemo(() => {
+    if (!productMetrics?.by_category) return [];
+    
+    // Usar los colores del array en orden
+    const categoryColors = [
+      COLORS.blue,
+      COLORS.success,
+      COLORS.orange,
+      COLORS.purple,
+      COLORS.emerald,
+      COLORS.danger,
+      COLORS.warning,
+      COLORS.info,
+      COLORS.primary,
+      COLORS.secondary,
+    ];
+    
+    return productMetrics.by_category.map((item, index) => ({
+      category: item.category,
+      productos: item.count,
+      fill: categoryColors[index % categoryColors.length]
+    }));
+  }, [productMetrics]);
 
-  const chartConfig = {
-    productos: {
-      label: "Productos",
-    },
-    enStock: {
-      label: "En Stock",
-      color: COLORS.success,
-    },
-    sinStock: {
-      label: "Sin Stock",
-      color: COLORS.danger,
-    },
-    pendientes: {
-      label: "Pendientes",
-      color: COLORS.warning,
-    },
-  } satisfies ChartConfig
+  const chartConfig = React.useMemo(() => {
+    const config: ChartConfig = {
+      productos: {
+        label: "Productos",
+      },
+    };
+    
+    chartData.forEach((item) => {
+      config[item.category] = {
+        label: item.category,
+        color: item.fill,
+      };
+    });
+    
+    return config;
+  }, [chartData]);
+
+  const totalProducts = React.useMemo(() => {
+    return chartData.reduce((acc, curr) => acc + curr.productos, 0);
+  }, [chartData]);
 
   if (isLoading || !productMetrics) {
     return (
-      <Card className="border-2 shadow-sm">
-        <CardHeader>
+      <Card className="flex flex-col border-2 shadow-sm">
+        <CardHeader className="items-center pb-0">
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-emerald-500" />
             Distribución de Productos
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="h-[300px] bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg animate-pulse" />
+        <CardContent className="flex-1 pb-0">
+          <div className="mx-auto aspect-square max-h-[280px] bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg animate-pulse" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!chartData.length) {
+    return (
+      <Card className="flex flex-col border-2 shadow-sm">
+        <CardHeader className="items-center pb-0">
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-emerald-500" />
+            Distribución de Productos
+          </CardTitle>
+          <CardDescription>Productos agrupados por categoría</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 pb-0">
+          <div className="flex items-center justify-center h-64 text-gray-500">
+            <div className="text-center">
+              <p className="text-sm">No hay productos registrados</p>
+              <p className="text-xs mt-1">Los productos aparecerán aquí cuando se registren</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
-      <CardHeader>
+    <Card className="flex flex-col border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
+      <CardHeader className="items-center pb-0">
         <CardTitle className="flex items-center gap-2">
           <Activity className="h-5 w-5 text-emerald-500" />
           Distribución de Productos
         </CardTitle>
-        <CardDescription>Estado del inventario actual</CardDescription>
+        <CardDescription>Productos agrupados por categoría</CardDescription>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px]">
-          <BarChart data={chartData} accessibilityLayer>
-            <CartesianGrid vertical={false} strokeDasharray="3 3" />
-            <XAxis
-              dataKey="status"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tickFormatter={(value) => chartConfig[value as keyof typeof chartConfig]?.label as string}
+      <CardContent className="flex-1 pb-0">
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto aspect-square max-h-[280px]"
+        >
+          <PieChart>
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent hideLabel />}
             />
-            <YAxis />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="productos" radius={8} />
-          </BarChart>
+            <Pie
+              data={chartData}
+              dataKey="productos"
+              nameKey="category"
+              innerRadius={70}
+              outerRadius={110}
+              strokeWidth={5}
+              paddingAngle={2}
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
+              <Label
+                content={({ viewBox }) => {
+                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                    return (
+                      <text
+                        x={viewBox.cx}
+                        y={viewBox.cy}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        <tspan
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          className="fill-foreground text-4xl font-bold"
+                        >
+                          {totalProducts.toLocaleString()}
+                        </tspan>
+                        <tspan
+                          x={viewBox.cx}
+                          y={(viewBox.cy || 0) + 28}
+                          className="fill-muted-foreground text-sm"
+                        >
+                          Productos
+                        </tspan>
+                      </text>
+                    );
+                  }
+                }}
+              />
+            </Pie>
+          </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium leading-none text-emerald-600">
+      <CardFooter className="flex-col gap-2 text-sm pt-4">
+        <div className="flex items-center gap-2 leading-none font-medium text-emerald-600">
           <TrendingUp className="h-4 w-4" />
-          Inventario actualizado
+          {chartData.length} categorías activas
         </div>
-        <div className="text-muted-foreground">
-          Total: {(chartData.reduce((acc, curr) => acc + curr.productos, 0)).toLocaleString()} productos
+        <div className="text-muted-foreground leading-none text-center">
+          Total de {totalProducts.toLocaleString()} productos registrados
         </div>
       </CardFooter>
     </Card>
@@ -554,15 +633,15 @@ export const OrderStatusComparisonChart = () => {
 export const DashboardCharts = () => {
   return (
     <div className="space-y-6">
-      {/* Primera fila: Usuarios y Productos */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-        <UserMetricsBarChart />
-        <ProductMetricsPieChart />
+      {/* Primera fila: Ingresos a todo lo ancho */}
+      <div className="w-full">
+        <RevenueMetricsLineChart />
       </div>
 
-      {/* Segunda fila: Ingresos y Estados de Órdenes */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-        <RevenueMetricsLineChart />
+      {/* Segunda fila: Usuarios, Productos y Estados de Órdenes en columnas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+        <UserMetricsBarChart />
+        <ProductMetricsPieChart />
         <OrderStatusComparisonChart />
       </div>
     </div>

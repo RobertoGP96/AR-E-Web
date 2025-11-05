@@ -22,6 +22,7 @@ interface ProductFormProps {
     onSubmit: (product: CreateProductData) => void
     orderId?: number
     initialValues?: Partial<CreateProductData>
+    isEditing?: boolean
 }
 
 // Función para extraer el nombre de la tienda del URL
@@ -76,7 +77,7 @@ const extractShopName = (url: string): string => {
 
 const TAGS_SEPARATOR = "\n\n--TAGS--\n"
 
-export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormProps) => {
+export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = false }: ProductFormProps) => {
     // Parse tags embedded in description if present
     const parseDescriptionForTags = (desc?: string) => {
         if (!desc) return { descPlain: '', parsedTags: [] as tag[] }
@@ -194,7 +195,8 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
             return
         }
 
-        if (!orderId) {
+        // En modo edición, orderId es opcional
+        if (!isEditing && !orderId) {
             alert('orderId es requerido para crear el producto')
             return
         }
@@ -239,13 +241,17 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
             category: newProduct.category ?? '',
             shop_taxes: shopTaxPct,
             added_taxes: addTaxPct,
+            own_taxes: Number(newProduct.own_taxes) || 0,
+            shop_delivery_cost: Number(newProduct.shop_delivery_cost) || 0,
             product_pictures: []
         } as unknown as CreateProductData
 
         onSubmit(productToSubmit)
 
-        // Limpiar el formulario
-        handleCancel()
+        // Limpiar el formulario solo si no estamos editando
+        if (!isEditing) {
+            handleCancel()
+        }
     }
 
     // Obtener categorías para el select
@@ -575,7 +581,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues }: ProductFormPro
                             disabled={!newProduct.name.trim() || !newProduct.link?.trim()}
                         >
                             <Save className="h-4 w-4 mr-2" />
-                            Añadir producto
+                            {isEditing ? 'Guardar cambios' : 'Añadir producto'}
                         </Button>
                     </div>
                 </form>

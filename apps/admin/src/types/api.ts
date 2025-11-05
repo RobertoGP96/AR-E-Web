@@ -172,6 +172,10 @@ export interface DashboardMetrics {
     in_stock: number;
     out_of_stock: number;
     pending_delivery: number;
+    by_category: {
+      category: string;
+      count: number;
+    }[];
   };
   users: {
     total: number;

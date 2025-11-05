@@ -2,7 +2,8 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Store, Tag, DollarSign, Package, Box, Truck, ShoppingBag } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Store, Tag, DollarSign, Package, Box, Truck, ShoppingBag, Edit2 } from 'lucide-react';
 import { parseTagsFromDescriptionBlock } from '@/lib/tags';
 import type { Product } from '@/types/models';
 import QRLink from './qr-link';
@@ -13,9 +14,10 @@ interface ProductRowProps {
     selectable?: boolean;
     isSelected?: boolean;
     onSelect?: (product: Product) => void;
+    onEdit?: (product: Product) => void;
 }
 
-const ProductRow: React.FC<ProductRowProps> = ({ product, selectable = false, isSelected = false, onSelect }) => {
+const ProductRow: React.FC<ProductRowProps> = ({ product, selectable = false, isSelected = false, onSelect, onEdit }) => {
     const tags = parseTagsFromDescriptionBlock(product.description);
 
     const handleRowClick = (e: React.MouseEvent) => {
@@ -130,6 +132,20 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, selectable = false, is
                                 {(product.total_cost || 0).toFixed(2)}
                             </p>
                         </div>
+                        {onEdit && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEdit(product);
+                                }}
+                                className="mt-2"
+                            >
+                                <Edit2 className="h-4 w-4 mr-1" />
+                                Editar
+                            </Button>
+                        )}
                     </div>
                 </div>
             </CardContent>

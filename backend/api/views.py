@@ -21,7 +21,7 @@ from rest_framework.decorators import api_view, action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import F, Sum
+from django.db.models import F, Sum, Count
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
@@ -1519,6 +1519,11 @@ class DashboardMetricsView(APIView):
         products_in_stock = Product.objects.filter(amount_purchased__gt=0).count()
         products_out_of_stock = Product.objects.filter(amount_purchased=0).count()
         products_pending_delivery = Product.objects.filter(amount_delivered__lt=F('amount_purchased')).count()
+        
+        # Productos por categoría
+        products_by_category = Product.objects.values('category__name').annotate(
+            count=Count('id')
+        ).order_by('-count')[:10]  # Top 10 categorías
 
         # Órdenes
         orders_total = Order.objects.count()
@@ -1546,7 +1551,14 @@ class DashboardMetricsView(APIView):
                 'total': products_total,
                 'in_stock': products_in_stock,
                 'out_of_stock': products_out_of_stock,
-                'pending_delivery': products_pending_delivery
+                'pending_delivery': products_pending_delivery,
+                'by_category': [
+                    {
+                        'category': item['category__name'] or 'Sin categoría',
+                        'count': item['count']
+                    }
+                    for item in products_by_category
+                ]
             },
             'orders': {
                 'total': orders_total,

@@ -1,17 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, DollarSign, User, Truck, ShoppingBag } from 'lucide-react';
 import { useOrder } from '@/hooks/order/useOrder';
 import ProductRow from '@/components/products/product-row';
+import { ProductEditDialog } from '@/components/products/ProductEditDialog';
 import OrderStatusBadge from './OrderStatusBadge';
 import PaymentStatusBadge from './PaymentStatusBadge';
 import { Badge } from '../ui/badge';
+import type { Product } from '@/types/models';
 
 const OrderDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { order, isLoading, error } = useOrder(Number(id) || 0);
+
+    // Estado para el diálogo de edición de producto
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+    const handleEditProduct = (product: Product) => {
+        setEditingProduct(product);
+        setIsEditDialogOpen(true);
+    };
+
+    const handleCloseEditDialog = (open: boolean) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+            setEditingProduct(null);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -119,7 +137,11 @@ const OrderDetails: React.FC = () => {
                                         </h4>
                                         <div className="space-y-2">
                                             {order.products.map((product) => (
-                                                <ProductRow key={product.id} product={product} />
+                                                <ProductRow 
+                                                    key={product.id} 
+                                                    product={product} 
+                                                    onEdit={handleEditProduct}
+                                                />
                                             ))}
                                         </div>
                                     </div>
@@ -200,6 +222,13 @@ const OrderDetails: React.FC = () => {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Diálogo de edición de producto */}
+            <ProductEditDialog
+                product={editingProduct}
+                open={isEditDialogOpen}
+                onOpenChange={handleCloseEditDialog}
+            />
         </div>
     );
 };

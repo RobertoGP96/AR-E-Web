@@ -1,4 +1,5 @@
 import { ProductsHeader, ProductsTable } from '@/components/products';
+import { ProductEditDialog } from '@/components/products/ProductEditDialog';
 import ProductFilters from '@/components/filters/product-filters';
 import type { ProductFilterState } from '@/components/filters/product-filters';
 import { useProducts } from '@/hooks/product/useProducts';
@@ -8,6 +9,7 @@ import type { ProductFilters as ApiProductFilters } from '@/types/api';
 import type { VisibleColumn } from '@/components/products/ProductsColumnsSelector';
 import ProductsColumnsSelector from '@/components/products/ProductsColumnsSelector';
 import { CompactMetricsSummary } from '@/components/metrics';
+import type { Product } from '@/types/models';
 
 export default function Products() {
   // Estados para filtros (usados por el nuevo ProductFilters popover)
@@ -19,6 +21,10 @@ export default function Products() {
     price_min: '',
     price_max: '',
   });
+
+  // Estado para el diálogo de edición
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const apiFilters = useMemo<ApiProductFilters>(() => {
     const f: ApiProductFilters = {};
@@ -36,6 +42,20 @@ export default function Products() {
 
 
   const [visibleColumns, setVisibleColumns] = useState<VisibleColumn[]>(['name','category','status','total_cost','actions', 'shop', 'amount_requested']);
+
+  // Manejador para abrir el diálogo de edición
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setIsEditDialogOpen(true);
+  };
+
+  // Manejador para cerrar el diálogo de edición
+  const handleCloseEditDialog = (open: boolean) => {
+    setIsEditDialogOpen(open);
+    if (!open) {
+      setEditingProduct(null);
+    }
+  };
 
   // Mostrar error si existe
   if (error) {
@@ -68,7 +88,19 @@ export default function Products() {
         />
       </div>
 
-      <ProductsTable products={products} isLoading={isLoading} visibleColumns={visibleColumns} />
+      <ProductsTable 
+        products={products} 
+        isLoading={isLoading} 
+        visibleColumns={visibleColumns}
+        onEdit={handleEdit}
+      />
+
+      {/* Diálogo de edición */}
+      <ProductEditDialog
+        product={editingProduct}
+        open={isEditDialogOpen}
+        onOpenChange={handleCloseEditDialog}
+      />
     </div>
   );
 }

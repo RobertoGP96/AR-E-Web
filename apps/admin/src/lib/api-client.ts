@@ -464,7 +464,7 @@ export class ApiClient {
       ...config,
       params: {
         page: 1,
-        page_size: 20, // DRF usa page_size en lugar de per_page
+        page_size: 1000, // Aumentado para obtener todos los elementos
         ...params,
       },
     });
