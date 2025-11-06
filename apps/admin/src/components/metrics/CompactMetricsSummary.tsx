@@ -27,8 +27,8 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="border-2">
-            <CardContent className="p-4">
-              <div className="h-16 bg-gradient-to-r from-gray-100 to-gray-50 rounded-lg animate-pulse" />
+            <CardContent className="p-4 ">
+              <div className=" h-16 bg-gradient-to-r from-gray-100 to-gray-50 rounded-lg animate-pulse" />
             </CardContent>
           </Card>
         ))}
@@ -99,7 +99,7 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             changeType: 'increase' as const
           },
           { 
-            label: 'En Stock', 
+            label: 'Encargados', 
             value: metrics.products.in_stock, 
             icon: Package, 
             color: 'text-emerald-600',
@@ -108,7 +108,7 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             hoverColor: 'hover:border-emerald-200 hover:shadow-emerald-100/50'
           },
           { 
-            label: 'Sin Stock', 
+            label: 'Comprados', 
             value: metrics.products.out_of_stock, 
             icon: Package, 
             color: 'text-rose-600',
@@ -119,7 +119,7 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             changeType: 'decrease' as const
           },
           { 
-            label: 'Pendientes', 
+            label: 'Entregados', 
             value: metrics.products.pending_delivery, 
             icon: Package, 
             color: 'text-amber-600',

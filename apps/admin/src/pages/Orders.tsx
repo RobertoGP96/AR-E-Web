@@ -109,9 +109,7 @@ const Orders = () => {
       
       {/* Métricas compactas de órdenes */}
       <CompactMetricsSummary type="orders" />
-      
-      {/* Métricas compactas de ingresos */}
-      <CompactMetricsSummary type="revenue" />
+
 
       <OrdersFilters
         searchTerm={searchValue}

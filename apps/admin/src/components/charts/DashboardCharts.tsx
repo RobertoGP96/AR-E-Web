@@ -351,7 +351,7 @@ export const RevenueMetricsLineChart = () => {
   const chartConfig = {
     ingresos: {
       label: "Ingresos",
-      color: COLORS.purple,
+      color: COLORS.orange,
     },
   } satisfies ChartConfig
 
@@ -360,7 +360,7 @@ export const RevenueMetricsLineChart = () => {
       <Card className="border-2 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-purple-500" />
+            <TrendingUp className="h-5 w-5 text-orange-500" />
             Tendencia de Ingresos
           </CardTitle>
         </CardHeader>
@@ -385,7 +385,7 @@ export const RevenueMetricsLineChart = () => {
         <CardDescription>Comparativa de ingresos por período</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px]">
+        <ChartContainer config={chartConfig} className="h-[300px] w-full">
           <LineChart
             data={chartData}
             margin={{

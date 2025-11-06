@@ -68,12 +68,12 @@ export default function Reports() {
         <h1 className="text-3xl font-bold">Reportes de Ganancias</h1>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <Card key={i}>
+            <Card key={i} className='p-4'>
               <CardHeader>
-                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-24 bg-gray-400" />
               </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-32" />
+              <CardContent className='p-4'>
+                <Skeleton className="h-8 w-32 bg-gray-400" />
               </CardContent>
             </Card>
           ))}
@@ -230,45 +230,45 @@ export default function Reports() {
               >
                 <LineChart data={reports.monthly_reports} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis 
-                    dataKey="month_short" 
+                  <XAxis
+                    dataKey="month_short"
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
                   />
-                  <YAxis 
+                  <YAxis
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Legend 
+                  <Legend
                     wrapperStyle={{ paddingTop: '20px' }}
                     iconType="line"
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="var(--color-revenue)" 
+                  <Line
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="var(--color-revenue)"
                     strokeWidth={3}
                     name="Ingresos"
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="system_profit" 
-                    stroke="var(--color-system_profit)" 
+                  <Line
+                    type="monotone"
+                    dataKey="system_profit"
+                    stroke="var(--color-system_profit)"
                     strokeWidth={3}
                     name="Ganancia Sistema"
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="agent_profits" 
-                    stroke="var(--color-agent_profits)" 
+                  <Line
+                    type="monotone"
+                    dataKey="agent_profits"
+                    stroke="var(--color-agent_profits)"
                     strokeWidth={3}
                     name="Ganancia Agentes"
                     dot={{ r: 4 }}
@@ -305,31 +305,31 @@ export default function Reports() {
               >
                 <BarChart data={reports.monthly_reports} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis 
-                    dataKey="month_short" 
+                  <XAxis
+                    dataKey="month_short"
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
                   />
-                  <YAxis 
+                  <YAxis
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Legend 
+                  <Legend
                     wrapperStyle={{ paddingTop: '20px' }}
                   />
-                  <Bar 
-                    dataKey="system_profit" 
-                    fill="var(--color-system_profit)" 
-                    name="Ganancia Sistema" 
+                  <Bar
+                    dataKey="system_profit"
+                    fill="var(--color-system_profit)"
+                    name="Ganancia Sistema"
                     radius={[8, 8, 0, 0]}
                   />
-                  <Bar 
-                    dataKey="agent_profits" 
-                    fill="var(--color-agent_profits)" 
+                  <Bar
+                    dataKey="agent_profits"
+                    fill="var(--color-agent_profits)"
                     name="Ganancia Agentes"
                     radius={[8, 8, 0, 0]}
                   />
@@ -364,32 +364,32 @@ export default function Reports() {
               >
                 <BarChart data={reports.monthly_reports} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis 
-                    dataKey="month_short" 
+                  <XAxis
+                    dataKey="month_short"
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
                   />
-                  <YAxis 
+                  <YAxis
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Legend 
+                  <Legend
                     wrapperStyle={{ paddingTop: '20px' }}
                   />
-                  <Bar 
-                    dataKey="product_costs" 
-                    fill="var(--color-product_costs)" 
-                    name="Costos de Productos" 
+                  <Bar
+                    dataKey="product_costs"
+                    fill="var(--color-product_costs)"
+                    name="Costos de Productos"
                     radius={[8, 8, 0, 0]}
                     stackId="costs"
                   />
-                  <Bar 
-                    dataKey="delivery_costs" 
-                    fill="var(--color-delivery_costs)" 
+                  <Bar
+                    dataKey="delivery_costs"
+                    fill="var(--color-delivery_costs)"
                     name="Costos de Entrega"
                     radius={[8, 8, 0, 0]}
                     stackId="costs"
@@ -529,31 +529,31 @@ export default function Reports() {
                 }}
                 className="h-[400px] w-full"
               >
-                <BarChart 
+                <BarChart
                   data={reports.agent_reports}
                   margin={{ top: 10, right: 30, left: 20, bottom: 80 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis 
-                    dataKey="agent_name" 
-                    angle={-45} 
-                    textAnchor="end" 
+                  <XAxis
+                    dataKey="agent_name"
+                    angle={-45}
+                    textAnchor="end"
                     height={100}
                     tickLine={false}
                     axisLine={false}
                     tickMargin={10}
                     interval={0}
                   />
-                  <YAxis 
+                  <YAxis
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar 
-                    dataKey="total_profit" 
-                    fill="var(--color-total_profit)" 
+                  <Bar
+                    dataKey="total_profit"
+                    fill="var(--color-total_profit)"
                     name="Ganancia Total"
                     radius={[8, 8, 0, 0]}
                   />

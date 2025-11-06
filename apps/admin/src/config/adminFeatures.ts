@@ -12,7 +12,7 @@ const FEATURES: AdminFeature[] = [
     id: 'products-management',
     title: 'Gestión de Productos',
     description: 'Crear, editar y listar productos en el sistema.',
-    enabled: false,
+    enabled: true,
     addedAt: new Date().toISOString()
   },
   {
@@ -33,14 +33,14 @@ const FEATURES: AdminFeature[] = [
     id: 'purchases-management',
     title: 'Gestión de Compras',
     description: 'Módulo para gestionar compras desde proveedores y órdenes de compra.',
-    enabled: false,
+    enabled: true,
     addedAt: new Date().toISOString()
   },
   {
     id: 'packages-management',
     title: 'Gestión de Paquetes',
     description: 'Seguimiento y agrupación de paquetes para envíos.',
-    enabled: false,
+    enabled: true,
     addedAt: new Date().toISOString()
   },
   {
@@ -61,13 +61,13 @@ const FEATURES: AdminFeature[] = [
     id: 'notifications',
     title: 'Notificaciones',
     description: 'Sistema de notificaciones por email y en-app.',
-    enabled: false,
+    enabled: true,
   },
   {
     id: 'reports',
     title: 'Informes y métricas',
     description: 'Panel de métricas y generación de reportes descargables.',
-    enabled: false
+    enabled: true
   },
   {
     id: 'users-management',

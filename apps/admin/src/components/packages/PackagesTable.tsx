@@ -170,7 +170,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
   return (
     <>
-      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+      <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(90vh-16rem)]">
+
         <Table>
         <TableHeader className="bg-gray-100 ">
           <TableRow>

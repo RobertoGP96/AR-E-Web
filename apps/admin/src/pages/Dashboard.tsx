@@ -37,7 +37,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-8 pb-8 animate-in fade-in duration-500">
       {/* Welcome Header Section */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 p-8 shadow-2xl animate-in slide-in-from-top duration-700">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary  to-orange-400 p-8 shadow-2xl animate-in slide-in-from-top duration-700">
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 -mt-4 -mr-4 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute bottom-0 left-0 -mb-8 -ml-8 h-40 w-40 rounded-full bg-white/10 blur-3xl" />

@@ -1,7 +1,7 @@
-import PurshasesHeader from '@/components/packages/purshases/PurshasesHeader';
-import PurshasesStats from '@/components/packages/purshases/PurshasesStats';
-import PurshasesTable from '@/components/packages/purshases/PurshasesTable';
-import PurshasesFilters from '@/components/packages/purshases/PurshasesFilters';
+import PurshasesHeader from '@/components/purshases/PurshasesHeader';
+import PurshasesStats from '@/components/purshases/PurshasesStats';
+import PurshasesTable from '@/components/purshases/PurshasesTable';
+import PurshasesFilters from '@/components/purshases/PurshasesFilters';
 
 export default function Purchases() {
   return (

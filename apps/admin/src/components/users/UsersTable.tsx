@@ -343,8 +343,7 @@ export default function UsersTable({
 
   return (
     <>
-      <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(90vh-16rem)]">
-        <div className="overflow-auto flex-1">
+      <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(100vh-15rem)]">
           <Table>
             <TableHeader className='bg-gray-100 rounded-sm sticky top-0 z-10'>
               <TableRow>
@@ -555,7 +554,6 @@ export default function UsersTable({
           })}
             </TableBody>
           </Table>
-        </div>
       </div>
 
       {/* Diálogo de confirmación */}

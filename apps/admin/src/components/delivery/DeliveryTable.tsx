@@ -31,8 +31,8 @@ interface DeliveryTableProps {
   itemsPerPage?: number;
 }
 
-const DeliveryTable: React.FC<DeliveryTableProps> = ({ 
-  deliveries, 
+const DeliveryTable: React.FC<DeliveryTableProps> = ({
+  deliveries,
   isLoading = false,
   onEdit,
   onDelete,
@@ -175,210 +175,210 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
 
   return (
     <>
-      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+      <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(92vh-16rem)]">
         <Table>
-        <TableHeader className="bg-gray-100 ">
-          <TableRow>
-            <TableHead>#</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Categoría</TableHead>
-            <TableHead>Peso</TableHead>
-            <TableHead>Costo</TableHead>
-            <TableHead>Llegada</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Captura</TableHead>
-            <TableHead>Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {paginatedDeliveries.map((delivery, index) => (
-            <TableRow key={delivery.id}>
-              <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-              <TableCell>
-                {delivery.client && typeof delivery.client === 'object' ? (
-                  <AvatarUser user={delivery.client} />
-                ) : (
-                  <span className="text-gray-400 text-sm italic">Sin cliente</span>
-                )}
-              </TableCell>
-              <TableCell>
-                {delivery.category ? (
-                  <div className="flex flex-col">
-                    <span className="font-medium text-sm">{delivery.category.name}</span>
-                    <span className="text-xs text-gray-500">
-                      ${delivery.category.shipping_cost_per_pound}/lb
+          <TableHeader className="bg-gray-100 ">
+            <TableRow>
+              <TableHead>#</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Categoría</TableHead>
+              <TableHead>Peso</TableHead>
+              <TableHead>Costo</TableHead>
+              <TableHead>Llegada</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Captura</TableHead>
+              <TableHead>Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedDeliveries.map((delivery, index) => (
+              <TableRow key={delivery.id}>
+                <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                <TableCell>
+                  {delivery.client && typeof delivery.client === 'object' ? (
+                    <AvatarUser user={delivery.client} />
+                  ) : (
+                    <span className="text-gray-400 text-sm italic">Sin cliente</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {delivery.category ? (
+                    <div className="flex flex-col">
+                      <span className="font-medium text-sm">{delivery.category.name}</span>
+                      <span className="text-xs text-gray-500">
+                        ${delivery.category.shipping_cost_per_pound}/lb
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 text-sm italic">Sin categoría</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className='flex flex-row items-center text-gray-500'>
+                    <Weight className="mr-2 inline h-4 w-4" />
+                    <span>
+                      {(delivery.weight || 0) + " Lb"}
                     </span>
                   </div>
-                ) : (
-                  <span className="text-gray-400 text-sm italic">Sin categoría</span>
-                )}
-              </TableCell>
-              <TableCell>
-                <div className='flex flex-row items-center text-gray-500'>
-                  <Weight className="mr-2 inline h-4 w-4" />
-                  <span>
-                    {(delivery.weight || 0) + " Lb"}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div>
-                  {"$ " + (delivery.total_cost_of_deliver || 0).toFixed(2)}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className='flex flex-row items-center text-gray-500'>
-                  <Clock className="mr-2 inline h-4 w-4" />
-                  {delivery.deliver_date ? formatDeliveryDate(delivery.deliver_date) : 'N/A'}
-                </div>
-              </TableCell>
-              <TableCell>
-                <DeliveryStatusBadge status={(delivery.status || 'Pendiente') as DeliveryStatus} />
-              </TableCell>
-              <TableCell>
-                <div className='flex flex-row gap-2'>
-                  <Button 
-                    className=' text-gray-600 cursor-pointer bg-gray-200'
-                    onClick={() => onCapture?.(delivery)}
-                  >
-                    <Camera className='h-5 w-5' />
-                  </Button>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit?.(delivery);
-                        }}
-                        className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onCapture?.(delivery);
-                        }}
-                        className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                      >
-                        <Camera className="h-4 w-4" />
-                        Capturar
-                      </DropdownMenuItem>
-
-                      {(delivery.status === 'Pendiente' || delivery.status === 'En transito') && (
+                </TableCell>
+                <TableCell>
+                  <div>
+                    {"$ " + (delivery.total_cost_of_deliver || 0).toFixed(2)}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className='flex flex-row items-center text-gray-500'>
+                    <Clock className="mr-2 inline h-4 w-4" />
+                    {delivery.deliver_date ? formatDeliveryDate(delivery.deliver_date) : 'N/A'}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <DeliveryStatusBadge status={(delivery.status || 'Pendiente') as DeliveryStatus} />
+                </TableCell>
+                <TableCell>
+                  <div className='flex flex-row gap-2'>
+                    <Button
+                      className=' text-gray-600 cursor-pointer bg-gray-200'
+                      onClick={() => onCapture?.(delivery)}
+                    >
+                      <Camera className='h-5 w-5' />
+                    </Button>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChange(delivery);
+                            onEdit?.(delivery);
                           }}
-                          className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
                         >
-                          <RotateCcw className="h-4 w-4" />
-                          Cambiar Estado
+                          <Edit2 className="h-4 w-4" />
+                          Editar
                         </DropdownMenuItem>
-                      )}
 
-                      <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCapture?.(delivery);
+                          }}
+                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                        >
+                          <Camera className="h-4 w-4" />
+                          Capturar
+                        </DropdownMenuItem>
 
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                        className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
-                      >
-                        <Link
-                          to={`/deliveries/${delivery.id}`}
-                          onClick={(e: React.MouseEvent) => {
+                        {(delivery.status === 'Pendiente' || delivery.status === 'En transito') && (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChange(delivery);
+                            }}
+                            className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                            Cambiar Estado
+                          </DropdownMenuItem>
+                        )}
+
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
                             e.stopPropagation();
                           }}
-                          className="inline-flex items-center gap-2"
-                          title={`Ver detalles del delivery ${delivery.id}`}
+                          className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
                         >
-                          <ExternalLink className="h-4 w-4" />
-                          Ver detalles
-                        </Link>
-                      </DropdownMenuItem>
+                          <Link
+                            to={`/deliveries/${delivery.id}`}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                            }}
+                            className="inline-flex items-center gap-2"
+                            title={`Ver detalles del delivery ${delivery.id}`}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Ver detalles
+                          </Link>
+                        </DropdownMenuItem>
 
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
 
-                          if (!delivery || !delivery.id) {
-                            console.error('Error: Delivery sin ID válido', delivery);
-                            return;
-                          }
+                            if (!delivery || !delivery.id) {
+                              console.error('Error: Delivery sin ID válido', delivery);
+                              return;
+                            }
 
-                          setDialogState({ type: 'delete', delivery });
-                        }}
-                        className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-
-    {/* Componente de paginación */}
-    {totalPages > 1 && (
-      <div className="flex justify-center mt-4">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-              />
-            </PaginationItem>
-            
-            {getPageNumbers().map((page, idx) => (
-              <PaginationItem key={idx}>
-                {page === 'ellipsis' ? (
-                  <PaginationEllipsis />
-                ) : (
-                  <PaginationLink
-                    onClick={() => setCurrentPage(page as number)}
-                    isActive={currentPage === page}
-                  >
-                    {page}
-                  </PaginationLink>
-                )}
-              </PaginationItem>
+                            setDialogState({ type: 'delete', delivery });
+                          }}
+                          className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </TableCell>
+              </TableRow>
             ))}
-            
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+          </TableBody>
+        </Table>
       </div>
-    )}
 
-    {/* Diálogo de confirmación para eliminar delivery */}
+      {/* Componente de paginación */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                />
+              </PaginationItem>
+
+              {getPageNumbers().map((page, idx) => (
+                <PaginationItem key={idx}>
+                  {page === 'ellipsis' ? (
+                    <PaginationEllipsis />
+                  ) : (
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page as number)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  )}
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+
+      {/* Diálogo de confirmación para eliminar delivery */}
       <AlertDialog open={dialogState.type === 'delete' || isDeleting} onOpenChange={(open) => {
         // Prevent closing while deleting
         if (!open && isDeleting) return;

@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Store, Tag, DollarSign, Package, Box } from 'lucide-react';
 import { parseTagsFromDescriptionBlock } from '@/lib/tags';
 import type { ProductBuyed } from '@/types/models/product-buyed';
-import QRLink from '../../products/qr-link';
+import QRLink from '../products/qr-link';
 import { useProduct } from '@/hooks/product/useProduct';
 
 interface PurchaseProductRowProps {
