@@ -20,8 +20,6 @@ import { useCategories } from '@/hooks/category/useCategory';
 import { useShops } from '@/hooks/shop/useShops';
 import type { Category } from '@/types/models/category';
 import type { Shop } from '@/types/models/shop';
-import ProductsColumnsSelector from '@/components/products/ProductsColumnsSelector';
-import type { VisibleColumn } from '@/components/products/ProductsColumnsSelector';
 
 export interface ProductFilterState {
   search: string;
@@ -36,16 +34,14 @@ interface ProductFiltersProps {
   filters: ProductFilterState;
   onFiltersChange: (filters: ProductFilterState) => void;
   resultCount?: number;
-  visibleColumns?: VisibleColumn[];
-  onVisibleColumnsChange?: (cols: VisibleColumn[]) => void;
+
+  
 }
 
 export const ProductFilters: React.FC<ProductFiltersProps> = ({
   filters,
   onFiltersChange,
   resultCount,
-  visibleColumns = ['name','category','status','total_cost','actions'] as VisibleColumn[],
-  onVisibleColumnsChange,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { data: categoriesData } = useCategories();
@@ -91,9 +87,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
               <Filter className="h-4 w-4" />
               <h4 className="font-semibold text-sm">Filtros de productos</h4>
             </div>
-            <div>
-              <ProductsColumnsSelector value={visibleColumns} onChange={onVisibleColumnsChange || (() => {})} />
-            </div>
+
           </div>
           <p className="text-xs text-muted-foreground">Filtra productos por búsqueda, categoría, tienda, estado y rango de precio</p>
         </div>

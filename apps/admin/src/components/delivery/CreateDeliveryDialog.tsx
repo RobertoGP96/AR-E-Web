@@ -22,7 +22,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Truck, Package, Clock, User, Tag } from 'lucide-react';
-import { useOrdersAvailableForDelivery } from '@/hooks/order';
 import { useUsers } from '@/hooks/user';
 import { useCategories } from '@/hooks/category/useCategory';
 
@@ -59,10 +58,6 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
     manager_profit: '',
   });
 
-  // Obtener órdenes disponibles para el cliente seleccionado
-  const { data: availableOrders = [], isLoading: ordersLoading } = useOrdersAvailableForDelivery(
-    formData.client_id ? parseInt(formData.client_id) : null
-  );
 
   // Funciones para obtener estilos según el estado
   const getDeliveryStatusStyles = (status: string) => {
@@ -211,53 +206,7 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
               )}
             </div>
 
-            {/* Orden - Solo se muestra si hay cliente seleccionado */}
-            {formData.client_id && (
-              <div className="grid gap-2">
-                <Label htmlFor="order_id">
-                  Orden Disponible (Opcional)
-                  {ordersLoading && <span className="text-xs text-gray-500 ml-2">Cargando...</span>}
-                </Label>
-                <Select
-                  value={formData.order_id}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, order_id: value }))
-                  }
-                  disabled={ordersLoading || availableOrders.length === 0}
-                >
-                  <SelectTrigger
-                    id="order_id"
-                    className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
-                  >
-                    <SelectValue 
-                      placeholder={
-                        availableOrders.length === 0 
-                          ? "No hay órdenes disponibles" 
-                          : "Selecciona una orden"
-                      } 
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableOrders.map((order) => (
-                      <SelectItem key={order.id} value={order.id.toString()}>
-                        <div className="flex items-center gap-2">
-                          <Package size={16} />
-                          <span>
-                            Orden #{order.id} - {order.status}
-                            {order.products && ` (${order.products.length} productos)`}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!ordersLoading && availableOrders.length === 0 && (
-                  <p className="text-xs text-gray-500">
-                    Este cliente no tiene órdenes con productos pendientes de entrega.
-                  </p>
-                )}
-              </div>
-            )}
+
 
             {/* Peso */}
             <div className="grid gap-2">

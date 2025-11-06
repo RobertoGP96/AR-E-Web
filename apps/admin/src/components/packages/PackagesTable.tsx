@@ -1,9 +1,10 @@
 
 import PackageStatusBadge from './PackageStatusBadge';
+import EditPackageDialog from './EditPackageDialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import type { Package as PackageType } from '@/types';
-import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Package, RotateCcw } from 'lucide-react';
+import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Package, RotateCcw, CheckCircle2 } from 'lucide-react';
 import { formatDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -21,6 +22,12 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 
 interface PackagesTableProps {
   packages: PackageType[];
@@ -40,6 +47,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   itemsPerPage = 10,
 }) => {
   const [dialogState, setDialogState] = useState<{ type: 'delete' | null; pkg: PackageType | null }>({ type: null, pkg: null });
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null);
 
   const deletePackageMutation = useDeletePackage();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -122,13 +131,29 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
   const handleDeleteCancel = () => setDialogState({ type: null, pkg: null });
 
+  // Función para obtener el siguiente estado
+  const getNextStatus = (currentStatus: string): string | null => {
+    if (currentStatus === 'Enviado') return 'Recibido';
+    if (currentStatus === 'Recibido') return 'Procesado';
+    return null;
+  };
+
+  // Función para obtener el ícono del siguiente estado
+  const getNextStatusIcon = (nextStatus: string) => {
+    if (nextStatus === 'Recibido') return Package;
+    if (nextStatus === 'Procesado') return CheckCircle2;
+    return RotateCcw;
+  };
+
+  // Función para obtener el color del siguiente estado
+  const getNextStatusColor = (nextStatus: string) => {
+    if (nextStatus === 'Recibido') return 'hover:bg-yellow-50 hover:text-yellow-600';
+    if (nextStatus === 'Procesado') return 'hover:bg-green-50 hover:text-green-600';
+    return 'hover:bg-purple-50 hover:text-purple-600';
+  };
+
   const handleStatusChange = async (pkg: PackageType) => {
-    let newStatus: string | null = null;
-    if (pkg.status_of_processing === 'Enviado') {
-      newStatus = 'Recibido';
-    } else if (pkg.status_of_processing === 'Recibido') {
-      newStatus = 'Procesado';
-    }
+    const newStatus = getNextStatus(pkg.status_of_processing);
 
     if (!newStatus) {
       toast.error('No se puede cambiar el estado de este paquete');
@@ -180,6 +205,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
             <TableHead>No. Rastreo</TableHead>
             <TableHead>Llegada</TableHead>
             <TableHead>Estado</TableHead>
+            <TableHead>Productos</TableHead>
             <TableHead>Captura</TableHead>
             <TableHead>Acciones</TableHead>
           </TableRow>
@@ -204,6 +230,59 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
               </TableCell>
               <TableCell>
                 <PackageStatusBadge status={pkg.status_of_processing} />
+              </TableCell>
+              <TableCell>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="cursor-pointer hover:bg-blue-50 hover:border-blue-300"
+                    >
+                      <Package className=" h-4 w-4" />
+                      {pkg.contained_products?.length || 0}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 max-h-96 overflow-y-auto" align="start">
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm border-b pb-2">
+                        Productos Recibidos ({pkg.contained_products?.length || 0})
+                      </h4>
+                      {pkg.contained_products && pkg.contained_products.length > 0 ? (
+                        <ul className="space-y-2">
+                          {pkg.contained_products.map((product) => (
+                            <li
+                              key={product.id}
+                              className="flex items-start justify-between p-2 rounded-md hover:bg-gray-50 border border-gray-100"
+                            >
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {product.original_product.name}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Cantidad: {product.amount_received}
+                                </p>
+                                {product.observation && (
+                                  <p className="text-xs text-gray-400 mt-1 italic">
+                                    {product.observation}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge variant="secondary" className="ml-2 shrink-0">
+                                x{product.amount_received}
+                              </Badge>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="text-center py-4 text-gray-500">
+                          <Package className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                          <p className="text-sm">No hay productos recibidos</p>
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </TableCell>
               <TableCell>
                 <div className='flex flex-row gap-2'>
@@ -231,7 +310,11 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
-                          onEdit?.(pkg);
+                          setSelectedPackage(pkg);
+                          setEditDialogOpen(true);
+                          if (onEdit) {
+                            onEdit(pkg);
+                          }
                         }}
                         className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
                       >
@@ -269,17 +352,28 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                         </Link>
                       </DropdownMenuItem>
 
-                      {(pkg.status_of_processing === 'Enviado' || pkg.status_of_processing === 'Recibido') && (
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusChange(pkg);
-                          }}
-                          className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                          Cambiar Estado
-                        </DropdownMenuItem>
+                      {getNextStatus(pkg.status_of_processing) && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChange(pkg);
+                            }}
+                            className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(getNextStatus(pkg.status_of_processing)!)}`}
+                          >
+                            {(() => {
+                              const nextStatus = getNextStatus(pkg.status_of_processing)!;
+                              const IconComponent = getNextStatusIcon(nextStatus);
+                              return (
+                                <>
+                                  <IconComponent className="h-4 w-4" />
+                                  <span>Marcar como {nextStatus}</span>
+                                </>
+                              );
+                            })()}
+                          </DropdownMenuItem>
+                        </>
                       )}
 
                       <DropdownMenuSeparator />
@@ -395,6 +489,13 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Diálogo para editar paquete */}
+      <EditPackageDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        package={selectedPackage}
+      />
     </>
   );
 }

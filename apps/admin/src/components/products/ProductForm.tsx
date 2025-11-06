@@ -1,4 +1,4 @@
-import { Plus, Save, Tag, X, Store, Link2, FileText, CheckCircle, AlertCircle, CircleAlert } from "lucide-react"
+import { Plus, Save, Tag, X, Store, Link2, FileText, CheckCircle, AlertCircle, CircleAlert, Receipt } from "lucide-react"
 import { serializeTagsToDescription, type StoredTag } from '@/lib/tags'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -75,6 +75,74 @@ const extractShopName = (url: string): string => {
 }
 
 
+// Función para obtener la tarifa de la tienda según el nombre
+const getShopTaxRate = (shopName: string): number => {
+    const normalizedName = shopName.toLowerCase()
+    
+    if (normalizedName.includes('shein')) return 0
+    if (normalizedName.includes('amazon') || normalizedName.includes('temu')) return 3
+    if (normalizedName.includes('aliexpress')) return 5
+    
+    // Para otras tiendas
+    return 5
+}
+
+// Función para calcular el total según las reglas de la empresa
+const calculateTotalCost = (
+    quantity: number,
+    unitPrice: number,
+    shippingCost: number,
+    shopName: string,
+    shopTaxRate: number | undefined,
+    addedTaxes: number = 0,
+    ownTaxes: number = 0
+): { 
+    subtotal: number; 
+    costoEnvio: number;
+    baseImpuesto: number; 
+    baseParaTarifa: number;
+    tarifaTienda: number;
+    impuestosAdicionales: number;
+    impuestosPropios: number;
+    total: number 
+} => {
+    // Precio del producto
+    const subtotal = quantity * unitPrice
+    
+    // Costo de envío
+    const costoEnvio = shippingCost
+    
+    // Impuesto base: 7% sobre el precio del producto
+    const baseImpuesto = subtotal * 0.07
+    
+    // Base para calcular la tarifa de tienda = Precio Producto + Impuesto Base + Costo de Envío
+    const baseParaTarifa = subtotal + baseImpuesto + costoEnvio
+    
+    // Tarifa por tienda (usar el valor proporcionado o auto-detectar)
+    const effectiveShopTaxRate = shopTaxRate ?? getShopTaxRate(shopName)
+    const tarifaTienda = baseParaTarifa * (effectiveShopTaxRate / 100)
+    
+    // Impuestos adicionales (valor fijo nominal)
+    const impuestosAdicionales = addedTaxes
+    
+    // Impuestos propios (valor fijo)
+    const impuestosPropios = ownTaxes
+    
+    // Total = Precio Producto + Impuesto Base + Costo Envío + Tarifa Tienda + Impuestos Adicionales + Impuestos Propios
+    const total = subtotal + baseImpuesto + costoEnvio + tarifaTienda + impuestosAdicionales + impuestosPropios
+    
+    return {
+        subtotal,
+        costoEnvio,
+        baseImpuesto,
+        baseParaTarifa,
+        tarifaTienda,
+        impuestosAdicionales,
+        impuestosPropios,
+        total
+    }
+}
+
 const TAGS_SEPARATOR = "\n\n--TAGS--\n"
 
 export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = false }: ProductFormProps) => {
@@ -117,6 +185,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         value: ""
     })
     const [isPopoverOpen, setIsPopoverOpen] = useState(false)
+    const [isInvoicePopoverOpen, setIsInvoicePopoverOpen] = useState(false)
 
     // Efecto para extraer automáticamente el nombre de la tienda cuando cambia el link
     useEffect(() => {
@@ -154,14 +223,26 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         if (matched) {
             setIsShopInDatabase(true);
             if (matched.name && matched.name !== newProduct.shop) {
-                setNewProduct(prev => ({ ...prev, shop: matched!.name, shop_taxes: matched!.tax_rate }))
+                setNewProduct(prev => ({ 
+                    ...prev, 
+                    shop: matched!.name
+                }))
+            }
+            // Si no hay shop_taxes definido manualmente, usar el de la BD
+            if (newProduct.shop_taxes === undefined || newProduct.shop_taxes === 0) {
+                setNewProduct(prev => ({ ...prev, shop_taxes: matched!.tax_rate }))
             }
             // almacenar id en un campo temporal del estado (no persistir en backend form state)
             setMatchedShopId(matched.id)
         } else if (newProduct.shop) {
             setIsShopInDatabase(false);
+            // Si la tienda no está en BD y no hay shop_taxes definido, usar auto-detectado
+            if (newProduct.shop_taxes === undefined || newProduct.shop_taxes === 0) {
+                const autoRate = getShopTaxRate(newProduct.shop)
+                setNewProduct(prev => ({ ...prev, shop_taxes: autoRate }))
+            }
         }
-    }, [newProduct.shop, newProduct.link, availableShops])
+    }, [newProduct.shop, newProduct.link, newProduct.shop_taxes, availableShops])
 
     // Id de la tienda detectada en la BD (si existe)
     const [matchedShopId, setMatchedShopId] = useState<number | undefined>(undefined)
@@ -222,27 +303,34 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
 
         const qty = Number(newProduct.amount_requested) || 1
         const unit = Number(newProduct.shop_cost) || 0
-        const shopTaxPct = Number(newProduct.shop_taxes) || 0
-        const addTaxPct = Number(newProduct.added_taxes) || 0
-        const computedTotal = qty * unit * (1 + shopTaxPct / 100) * (1 + addTaxPct / 100)
+        const shippingCost = Number(newProduct.shop_delivery_cost) || 0
+        const shopName = (matchedShopId ? (availableShops.find(s => s.id === matchedShopId)?.name) : newProduct.shop) || extractShopName(newProduct.link) || 'Unknown'
+        const shopTaxRate = newProduct.shop_taxes
+        const addedTaxes = Number(newProduct.added_taxes) || 0
+        const ownTaxes = Number(newProduct.own_taxes) || 0
+
+        // Calcular el total usando la función correcta
+        const calculation = calculateTotalCost(qty, unit, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes)
+        const computedTotal = calculation.total
 
         const productToSubmit = {
             // Asegurar que se envía el nombre del producto
             name: newProduct.name,
             // Enviar shop como nombre (lo que espera la API según el serializer que usa slug_field="name")
-            shop: (matchedShopId ? (availableShops.find(s => s.id === matchedShopId)?.name) : newProduct.shop) || extractShopName(newProduct.link) || 'Unknown',
+            shop: shopName,
             order: orderId,
             description: finalDescription,
             amount_requested: qty,
             link: newProduct.link,
             shop_cost: unit,
-            total_cost: Number(computedTotal) || 0,
+            total_cost: computedTotal,
             // category: enviar el nombre de la categoría (la API espera nombre)
             category: newProduct.category ?? '',
-            shop_taxes: shopTaxPct,
-            added_taxes: addTaxPct,
-            own_taxes: Number(newProduct.own_taxes) || 0,
-            shop_delivery_cost: Number(newProduct.shop_delivery_cost) || 0,
+            // Guardar los valores en campos apropiados
+            shop_delivery_cost: shippingCost, // Costo de envío
+            shop_taxes: shopTaxRate ?? getShopTaxRate(shopName), // Porcentaje de impuesto de tienda
+            added_taxes: addedTaxes, // Impuestos adicionales nominales
+            own_taxes: ownTaxes, // Impuestos propios nominales
             product_pictures: []
         } as unknown as CreateProductData
 
@@ -521,53 +609,251 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                     </div>
 
                     <Separator className="bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent" />
-                    {/* Cantidad, Costo y impuesto */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-4">
-                            <label htmlFor="amount_requested" className="text-sm font-semibold text-foreground/90">Cantidad encargada</label>
-                            <Input id="amount_requested" type="number" min={1} step="1" value={newProduct.amount_requested} onChange={(e) => setNewProduct({ ...newProduct, amount_requested: Number(e.target.value) })} />
+                    {/* Cantidad, Costo y otros valores */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="space-y-3">
+                            <label htmlFor="amount_requested" className="text-sm font-semibold text-foreground/90">Cantidad solicitada *</label>
+                            <Input 
+                                id="amount_requested" 
+                                type="number" 
+                                min={1} 
+                                step="1" 
+                                value={newProduct.amount_requested} 
+                                onChange={(e) => setNewProduct({ ...newProduct, amount_requested: Number(e.target.value) })} 
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/30"
+                            />
+                            <p className="text-xs text-muted-foreground">Número de unidades</p>
                         </div>
                         <div className="space-y-3">
-                            <label htmlFor="shop_cost" className="text-sm font-semibold text-foreground/90">Precio (unidad)</label>
-                            <Input id="shop_cost" type="number" step="0.01" value={newProduct.shop_cost} onChange={(e) => setNewProduct({ ...newProduct, shop_cost: Number(e.target.value) })} />
+                            <label htmlFor="shop_cost" className="text-sm font-semibold text-foreground/90">Precio unitario ($) *</label>
+                            <Input 
+                                id="shop_cost" 
+                                type="number" 
+                                min="0"
+                                step="0.01" 
+                                value={newProduct.shop_cost} 
+                                onChange={(e) => setNewProduct({ ...newProduct, shop_cost: Number(e.target.value) })} 
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/30"
+                                placeholder="0.00"
+                            />
+                            <p className="text-xs text-muted-foreground">Precio por unidad</p>
                         </div>
                         <div className="space-y-3">
-                            <label htmlFor="delivery" className="text-sm font-semibold text-foreground/90">Envío de tienda:</label>
-                            <Input id="tax" type="number" step="0.01" value={newProduct.shop_delivery_cost} onChange={(e) => setNewProduct({ ...newProduct, shop_delivery_cost: Number(e.target.value) })} />
+                            <label htmlFor="shop_delivery_cost" className="text-sm font-semibold text-foreground/90">Costo de envío ($) *</label>
+                            <Input 
+                                id="shop_delivery_cost" 
+                                type="number" 
+                                min="0"
+                                step="0.01" 
+                                value={newProduct.shop_delivery_cost} 
+                                onChange={(e) => setNewProduct({ ...newProduct, shop_delivery_cost: Number(e.target.value) })} 
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/30"
+                                placeholder="0.00"
+                            />
+                            <p className="text-xs text-muted-foreground">Costo de envío</p>
                         </div>
                         <div className="space-y-3">
-                            <label htmlFor="add_taxes" className="text-sm font-semibold text-foreground/90">Impuesto de la tienda (%)</label>
-                            <Input id="tax" type="number" step="0.01" value={newProduct.shop_taxes} onChange={(e) => setNewProduct({ ...newProduct, shop_taxes: Number(e.target.value) })} />
+                            {(() => {
+                                const qty = Number(newProduct.amount_requested) || 0
+                                const price = Number(newProduct.shop_cost) || 0
+                                const shippingCost = Number(newProduct.shop_delivery_cost) || 0
+                                const shopTaxRate = newProduct.shop_taxes ?? getShopTaxRate(newProduct.shop || '')
+                                
+                                // Calcular el valor del impuesto de tienda en dólares
+                                const subtotal = qty * price
+                                const baseImpuesto = subtotal * 0.07
+                                const baseParaTarifa = subtotal + baseImpuesto + shippingCost
+                                const valorImpuestoTienda = baseParaTarifa * (shopTaxRate / 100)
+                                
+                                return (
+                                    <>
+                                        <label htmlFor="shop_taxes" className="text-sm font-semibold text-foreground/90 flex items-center gap-1 mb-0">
+                                            Impuesto tienda
+                                            {(newProduct.shop && newProduct.shop_cost > 0) && (
+                                                <span className="text-xs text-emerald-600 dark:text-emerald-400  p-0 m-0">
+                                                    ({shopTaxRate}%)
+                                                </span>
+                                            )}
+                                        </label>
+                                        <Input 
+                                            id="shop_taxes" 
+                                            type="number" 
+                                            value={valorImpuestoTienda > 0 ? `$${valorImpuestoTienda.toFixed(2)}` : ''} 
+                                            readOnly
+                                            className="transition-all duration-200 bg-muted/30 border-muted-foreground/20 text-muted-foreground cursor-default"
+                                            placeholder="$0.00"
+                                        />
+                                        <p className="text-xs text-muted-foreground">Impuesto progresivo</p>
+                                    </>
+                                )
+                            })()}
                         </div>
                         <div className="space-y-3">
-                            <label htmlFor="add_taxes" className="text-sm font-semibold text-foreground/90">Impuesto de Envío:</label>
-                            <Input id="tax" type="number" step="0.01" value={newProduct.added_taxes} onChange={(e) => setNewProduct({ ...newProduct, added_taxes: Number(e.target.value) })} />
+                            <label htmlFor="added_taxes" className="text-sm font-semibold text-foreground/90">Impuesto adicional ($)</label>
+                            <Input 
+                                id="added_taxes" 
+                                type="number" 
+                                min="0"
+                                step="0.01" 
+                                value={newProduct.added_taxes} 
+                                onChange={(e) => setNewProduct({ ...newProduct, added_taxes: Number(e.target.value) })} 
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/30"
+                                placeholder="0.00"
+                            />
+                            <p className="text-xs text-muted-foreground">Valor fijo de impuesto adicional</p>
                         </div>
                         <div className="space-y-3">
-                            <label htmlFor="add_taxes" className="text-sm font-semibold text-foreground/90">Impuesto Agregado:</label>
-                            <Input id="tax" type="number" step="0.01" value={newProduct.own_taxes} onChange={(e) => setNewProduct({ ...newProduct, own_taxes: Number(e.target.value) })} />
+                            <label htmlFor="own_taxes" className="text-sm font-semibold text-foreground/90">Impuestos propios ($)</label>
+                            <Input 
+                                id="own_taxes" 
+                                type="number" 
+                                min="0"
+                                step="0.01" 
+                                value={newProduct.own_taxes} 
+                                onChange={(e) => setNewProduct({ ...newProduct, own_taxes: Number(e.target.value) })} 
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/30"
+                                placeholder="0.00"
+                            />
+                            <p className="text-xs text-muted-foreground">Valor fijo de impuestos propios</p>
                         </div>
-
                     </div>
 
+                    
 
 
 
-                    {/* Resumen de total calculado */}
+
+                    {/* Resumen de total calculado con detalle de factura */}
                     {(() => {
                         const qty = Number(newProduct.amount_requested) || 0
                         const price = Number(newProduct.shop_cost) || 0
-                        const shopTax = (Number(newProduct.shop_taxes) || 0) / 100
-                        const deliv = Number(newProduct.shop_delivery_cost) || 0
-                        const addTax = (Number(newProduct.added_taxes) || 0) / 100
-                        const ownTax = Number(newProduct.own_taxes) || 0
+                        const shippingCost = Number(newProduct.shop_delivery_cost) || 0
+                        const shopName = newProduct.shop || ''
+                        const shopTaxRate = newProduct.shop_taxes
+                        const addedTaxes = Number(newProduct.added_taxes) || 0
+                        const ownTaxes = Number(newProduct.own_taxes) || 0
 
-                        const subtotal = qty * price
-                        const totalCalc = (subtotal + deliv) * (1 + shopTax) * (1 + addTax) + ownTax
+                        const calculation = calculateTotalCost(qty, price, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes)
+
                         return (
-                            <div className="flex items-center justify-between">
-                                <div className="text-sm text-muted-foreground">Valor total (incl. impuesto)</div>
-                                <div className="text-lg font-semibold">${totalCalc.toFixed(2)}</div>
+                            <div className="space-y-4">
+                                <Separator className="bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent" />
+                                
+                                <div className="flex items-center justify-between p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20">
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-sm font-medium text-muted-foreground">Total a cobrar al cliente</div>
+                                        <Popover open={isInvoicePopoverOpen} onOpenChange={setIsInvoicePopoverOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    className="h-7 w-7 p-0 hover:bg-primary/20"
+                                                    type="button"
+                                                >
+                                                    <Receipt className="h-4 w-4 text-primary" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-80 p-0" align="end">
+                                                <div className="bg-gradient-to-br from-background to-muted/20">
+                                                    {/* Encabezado de factura */}
+                                                    <div className="p-4 bg-primary text-primary-foreground">
+                                                        <div className="flex items-center gap-2">
+                                                            <Receipt className="h-5 w-5" />
+                                                            <h3 className="font-bold text-lg">Desglose de Costos</h3>
+                                                        </div>
+                                                        <p className="text-xs opacity-90 mt-1">Cálculo detallado del producto</p>
+                                                    </div>
+
+                                                    {/* Detalles de la factura */}
+                                                    <div className="p-4 space-y-3">
+                                                        {/* Información del producto */}
+                                                        <div className="pb-3 border-b border-muted-foreground/10">
+                                                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Producto</p>
+                                                            <p className="text-sm font-medium truncate">{newProduct.name || 'Sin nombre'}</p>
+                                                            <p className="text-xs text-muted-foreground mt-1">Tienda: {shopName || 'No detectada'}</p>
+                                                        </div>
+
+                                                        {/* Cálculo de costos */}
+                                                        <div className="space-y-2">
+                                                            <div className="flex justify-between text-sm">
+                                                                <span className="text-muted-foreground">Precio unitario:</span>
+                                                                <span className="font-medium">${price.toFixed(2)}</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-sm">
+                                                                <span className="text-muted-foreground">Cantidad:</span>
+                                                                <span className="font-medium">x {qty}</span>
+                                                            </div>
+                                                            <Separator className="my-2" />
+                                                            <div className="flex justify-between text-sm font-medium">
+                                                                <span>Subtotal producto:</span>
+                                                                <span>${calculation.subtotal.toFixed(2)}</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-sm">
+                                                                <span className="text-muted-foreground">Costo de envío:</span>
+                                                                <span className="font-medium text-purple-600">+${calculation.costoEnvio.toFixed(2)}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <Separator className="my-2" />
+
+                                                        {/* Impuestos y tarifas */}
+                                                        <div className="space-y-2">
+                                                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Impuestos y Tarifas</p>
+                                                            
+                                                            <div className="flex justify-between text-sm">
+                                                                <span className="text-muted-foreground">Impuesto base (7%):</span>
+                                                                <span className="font-medium text-emerald-600">+${calculation.baseImpuesto.toFixed(2)}</span>
+                                                            </div>
+                                                            
+                                                            <div className="space-y-1">
+                                                                <div className="flex justify-between text-sm">
+                                                                    <span className="text-muted-foreground">
+                                                                        Tarifa tienda ({shopTaxRate ?? getShopTaxRate(shopName)}%):
+                                                                    </span>
+                                                                    <span className="font-medium text-blue-600">+${calculation.tarifaTienda.toFixed(2)}</span>
+                                                                </div>
+                                                                <p className="text-xs text-muted-foreground italic pl-2">
+                                                                    Base: ${calculation.baseParaTarifa.toFixed(2)} (Precio + Impuesto + Envío)
+                                                                </p>
+                                                            </div>
+                                                            
+                                                            {calculation.impuestosAdicionales > 0 && (
+                                                                <div className="flex justify-between text-sm">
+                                                                    <span className="text-muted-foreground">Impuestos adicionales:</span>
+                                                                    <span className="font-medium text-amber-600">+${calculation.impuestosAdicionales.toFixed(2)}</span>
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {calculation.impuestosPropios > 0 && (
+                                                                <div className="flex justify-between text-sm">
+                                                                    <span className="text-muted-foreground">Impuestos propios:</span>
+                                                                    <span className="font-medium text-orange-600">+${calculation.impuestosPropios.toFixed(2)}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <Separator className="my-3 bg-primary/20" />
+
+                                                        {/* Total */}
+                                                        <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg border border-primary/20">
+                                                            <span className="font-bold text-base">Total a Cobrar:</span>
+                                                            <span className="font-bold text-xl text-primary">${calculation.total.toFixed(2)}</span>
+                                                        </div>
+
+                                                        {/* Fórmula de cálculo */}
+                                                        <div className="mt-3 p-3 bg-muted/50 rounded-lg border border-muted-foreground/10">
+                                                            <p className="text-xs font-semibold text-muted-foreground mb-2">Fórmula aplicada:</p>
+                                                            <p className="text-xs text-muted-foreground font-mono leading-relaxed">
+                                                                Total = Producto + Impuesto Base (7%) + Envío + Tarifa Tienda + Impuestos Adicionales + Impuestos Propios
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
+                                    <div className="text-2xl font-bold text-primary">${calculation.total.toFixed(2)}</div>
+                                </div>
                             </div>
                         )
                     })()}

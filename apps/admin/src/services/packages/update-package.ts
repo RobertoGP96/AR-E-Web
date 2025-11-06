@@ -6,6 +6,9 @@ import { apiClient } from '../../lib/api-client';
 import type { Package } from '../../types';
 
 export interface UpdatePackageData {
+  agency_name?: string;
+  number_of_tracking?: string;
+  arrival_date?: string;
   description?: string;
   weight?: number;
   dimensions?: string;

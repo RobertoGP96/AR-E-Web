@@ -18,6 +18,7 @@ import Categories from '@/pages/Categories';
 import ProductDetails from '@/components/products/product-details';
 import OrderDetails from '@/components/orders/order-details';
 import { PurchaseDetails } from '@/components/purshases';
+import { PackageDetails } from '@/components/packages';
 import AddProductsToPackagePage from '@/components/packages/AddProductsToPackagePage';
 import Reports from '@/pages/Reports';
 
@@ -48,6 +49,7 @@ const AppRoutes = () => {
                 <Route path="purchases/:id" element={<PurchaseDetails />} />
 
                 <Route path="packages" element={<Packages />} />
+                <Route path="packages/:id" element={<PackageDetails />} />
                 <Route path="packages/:id/add-products" element={<AddProductsToPackagePage />} />
                 
                 <Route path="delivery" element={<Delivery />} />

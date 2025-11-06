@@ -1,12 +1,32 @@
 import { Link, useLocation } from 'react-router-dom';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+import { 
+  Home, 
+  Users, 
+  Store, 
+  Package, 
+  ShoppingCart, 
+  PackageCheck, 
+  Truck, 
+  ClipboardList, 
+  Settings, 
+  UserCircle, 
+  FolderTree,
+  type LucideIcon
+} from 'lucide-react';
+
+// Mapeo de rutas a iconos
+const routeIcons: Record<string, LucideIcon> = {
+  '/users': Users,
+  '/shops': Store,
+  '/products': Package,
+  '/purchases': ShoppingCart,
+  '/packages': PackageCheck,
+  '/delivery': Truck,
+  '/orders': ClipboardList,
+  '/settings': Settings,
+  '/profile': UserCircle,
+  '/categories': FolderTree,
+};
 
 // Mapeo de rutas a nombres legibles
 const routeNames: Record<string, string> = {
@@ -34,10 +54,8 @@ export function BreadcrumbNavigation() {
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter((x) => x);
 
-  // Construir los breadcrumbs
-  const breadcrumbs = [
-    { name: 'Dashboard', href: '/', },
-  ];
+  // Construir los breadcrumbs (sin incluir Dashboard inicial)
+  const pages: Array<{ name: string; href: string; current: boolean; icon?: LucideIcon }> = [];
 
   let currentPath = '';
   pathnames.forEach((pathname, index) => {
@@ -50,7 +68,12 @@ export function BreadcrumbNavigation() {
       name = detailRoutes[parentPath] || 'Detalles';
     }
 
-    breadcrumbs.push({ name, href: currentPath });
+    pages.push({ 
+      name, 
+      href: currentPath,
+      current: index === pathnames.length - 1,
+      icon: routeIcons[currentPath]
+    });
   });
 
   // Si estamos en la raíz, no mostrar breadcrumbs
@@ -59,25 +82,42 @@ export function BreadcrumbNavigation() {
   }
 
   return (
-    <div className="mb-2">
-      <Breadcrumb>
-        <BreadcrumbList className='text-xl'>
-          {breadcrumbs.map((crumb, index) => (
-            <div key={crumb.href} className="flex items-center">
-              {index > 0 && <BreadcrumbSeparator />}
-              <BreadcrumbItem>
-                {index === breadcrumbs.length - 1 ? (
-                  <BreadcrumbPage>{crumb.name}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink asChild>
-                    <Link to={crumb.href}>{crumb.name}</Link>
-                  </BreadcrumbLink>
-                )}
-              </BreadcrumbItem>
-            </div>
-          ))}
-        </BreadcrumbList>
-      </Breadcrumb>
-    </div>
+    <nav aria-label="Breadcrumb" className="flex mb-2">
+      <ol role="list" className="flex items-center space-x-4">
+        <li>
+          <div>
+            <Link to="/" className="text-gray-400 hover:text-gray-500">
+              <Home aria-hidden="true" className="size-5 shrink-0" />
+              <span className="sr-only">Home</span>
+            </Link>
+          </div>
+        </li>
+        {pages.map((page) => {
+          const Icon = page.icon;
+          return (
+            <li key={page.name}>
+              <div className="flex items-center">
+                <svg 
+                  fill="currentColor" 
+                  viewBox="0 0 20 20" 
+                  aria-hidden="true" 
+                  className="size-5 shrink-0 text-gray-300"
+                >
+                  <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z" />
+                </svg>
+                <Link
+                  to={page.href}
+                  aria-current={page.current ? 'page' : undefined}
+                  className="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700 flex items-center gap-2"
+                >
+                  {Icon && <Icon className="size-4 shrink-0" />}
+                  {page.name}
+                </Link>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
   );
 }
