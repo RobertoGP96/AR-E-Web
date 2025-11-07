@@ -74,6 +74,13 @@ let showNotificationCallback: ((message: string, type: 'success' | 'error' | 'in
 // Callback para actualizar el estado de autenticación (se puede configurar desde fuera)
 let authStateChangeCallback: ((isAuthenticated: boolean) => void) | null = null;
 
+// Flag para evitar múltiples redirecciones simultáneas
+let isRedirecting = false;
+
+// Timestamp de la última redirección para evitar loops
+let lastRedirectTime = 0;
+const REDIRECT_COOLDOWN = 1000; // 1 segundo entre redirecciones
+
 export function setRedirectToLoginCallback(callback: () => void) {
   redirectToLoginCallback = callback;
 }
@@ -175,6 +182,14 @@ export class ApiClient {
    * Maneja errores 401 - Unauthorized
    */
   private async handleUnauthorized() {
+    // Evitar procesamiento múltiple de errores 401 simultáneos
+    const now = Date.now();
+    if (isRedirecting || (now - lastRedirectTime < REDIRECT_COOLDOWN)) {
+      return;
+    }
+    
+    isRedirecting = true;
+    
     // Limpiar token local
     this.clearAuthToken();
     
@@ -192,19 +207,28 @@ export class ApiClient {
         if (authStateChangeCallback) {
           authStateChangeCallback(true);
         }
+        isRedirecting = false;
         return;
       } catch (refreshError) {
         console.error('Error refreshing token:', refreshError);
       }
     }
 
-    // Mostrar notificación de sesión expirada
-    if (showNotificationCallback) {
+    // Mostrar notificación de sesión expirada (solo una vez)
+    if (showNotificationCallback && !isRedirecting) {
       showNotificationCallback('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning');
     }
 
+    // Actualizar timestamp antes de redirigir
+    lastRedirectTime = now;
+    
     // Redirigir a login si no se puede refreshear
     this.redirectToLogin();
+    
+    // Reset flag después de un tiempo
+    setTimeout(() => {
+      isRedirecting = false;
+    }, REDIRECT_COOLDOWN);
   }
 
   /**
@@ -378,6 +402,11 @@ export class ApiClient {
    * Redirige a la página de login
    */
   private redirectToLogin() {
+    // Evitar redirecciones múltiples
+    if (isRedirecting) {
+      return;
+    }
+    
     // Usar callback si está configurado (React Router)
     if (redirectToLoginCallback) {
       redirectToLoginCallback();

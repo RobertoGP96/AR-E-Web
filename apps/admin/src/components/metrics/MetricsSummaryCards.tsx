@@ -102,21 +102,21 @@ export const MetricsSummaryCards = () => {
               card.iconBg
             )} />
             
-            <CardContent className="p-5 md:p-6 relative z-10">
-              <div className="flex items-start justify-between mb-3 md:mb-4">
+            <CardContent className="p-3 md:p-4 relative z-10">
+              <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 md:mb-2 truncate">
+                  <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1 truncate">
                     {card.title}
                   </p>
-                  <p className="text-2xl md:text-3xl font-bold tracking-tight text-foreground truncate">
+                  <p className="text-xl md:text-2xl font-bold tracking-tight text-foreground truncate">
                     {card.value}
                   </p>
                 </div>
                 <div className={cn(
-                  "p-2.5 md:p-3 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 flex-shrink-0",
+                  "p-2 md:p-2.5 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 flex-shrink-0",
                   card.iconBg
                 )}>
-                  <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                  <Icon className="w-4 h-4 md:w-5 md:h-5 text-white" />
                 </div>
               </div>
               

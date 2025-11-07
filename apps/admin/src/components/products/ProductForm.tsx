@@ -754,9 +754,9 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-80 p-0" align="end">
-                                                <div className="bg-gradient-to-br from-background to-muted/20">
+                                                <div className=" ">
                                                     {/* Encabezado de factura */}
-                                                    <div className="p-4 bg-primary text-primary-foreground">
+                                                    <div className="p-4 bg-primary text-primary-foreground rounded-t-sm">
                                                         <div className="flex items-center gap-2">
                                                             <Receipt className="h-5 w-5" />
                                                             <h3 className="font-bold text-lg">Desglose de Costos</h3>

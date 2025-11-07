@@ -1,8 +1,9 @@
 import DeliveryStatusBadge from './DeliveryStatusBadge';
+import EditDeliveryDialog from './EditDeliveryDialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import type { DeliverReceip, DeliveryStatus } from '@/types';
-import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Truck, RotateCcw, Weight } from 'lucide-react';
+import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Truck, Package, CheckCircle2, Weight } from 'lucide-react';
 import { formatDeliveryDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -40,6 +41,8 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
   itemsPerPage = 10,
 }) => {
   const [dialogState, setDialogState] = useState<{ type: 'delete' | null; delivery: DeliverReceip | null }>({ type: null, delivery: null });
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedDelivery, setSelectedDelivery] = useState<DeliverReceip | null>(null);
 
   const deleteDeliveryMutation = useDeleteDelivery();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -122,18 +125,34 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
 
   const handleDeleteCancel = () => setDialogState({ type: null, delivery: null });
 
+  // Función para obtener el siguiente estado
+  const getNextStatus = (currentStatus: DeliveryStatus): DeliveryStatus | null => {
+    if (currentStatus === 'Pendiente') return 'En transito';
+    if (currentStatus === 'En transito') return 'Entregado';
+    return null;
+  };
+
+  // Función para obtener el ícono del siguiente estado
+  const getNextStatusIcon = (nextStatus: DeliveryStatus) => {
+    if (nextStatus === 'En transito') return Truck;
+    if (nextStatus === 'Entregado') return CheckCircle2;
+    return Package;
+  };
+
+  // Función para obtener el color del siguiente estado
+  const getNextStatusColor = (nextStatus: DeliveryStatus) => {
+    if (nextStatus === 'En transito') return 'hover:bg-blue-50 hover:text-blue-600';
+    if (nextStatus === 'Entregado') return 'hover:bg-green-50 hover:text-green-600';
+    return 'hover:bg-purple-50 hover:text-purple-600';
+  };
+
   const handleStatusChange = async (delivery: DeliverReceip) => {
     if (!delivery || !delivery.id) {
       toast.error('Delivery inválido');
       return;
     }
 
-    let newStatus: string | null = null;
-    if (delivery.status === 'Pendiente') {
-      newStatus = 'En transito';
-    } else if (delivery.status === 'En transito') {
-      newStatus = 'Entregado';
-    }
+    const newStatus = getNextStatus(delivery.status);
 
     if (!newStatus) {
       toast.error('No se puede cambiar el estado de este delivery');
@@ -261,7 +280,11 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
-                            onEdit?.(delivery);
+                            setSelectedDelivery(delivery);
+                            setEditDialogOpen(true);
+                            if (onEdit) {
+                              onEdit(delivery);
+                            }
                           }}
                           className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
                         >
@@ -280,17 +303,28 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                           Capturar
                         </DropdownMenuItem>
 
-                        {(delivery.status === 'Pendiente' || delivery.status === 'En transito') && (
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStatusChange(delivery);
-                            }}
-                            className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
-                          >
-                            <RotateCcw className="h-4 w-4" />
-                            Cambiar Estado
-                          </DropdownMenuItem>
+                        {getNextStatus(delivery.status) && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusChange(delivery);
+                              }}
+                              className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(getNextStatus(delivery.status)!)}`}
+                            >
+                              {(() => {
+                                const nextStatus = getNextStatus(delivery.status)!;
+                                const IconComponent = getNextStatusIcon(nextStatus);
+                                return (
+                                  <>
+                                    <IconComponent className="h-4 w-4" />
+                                    <span>Marcar como {nextStatus}</span>
+                                  </>
+                                );
+                              })()}
+                            </DropdownMenuItem>
+                          </>
                         )}
 
                         <DropdownMenuSeparator />
@@ -406,6 +440,13 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Diálogo para editar delivery */}
+      <EditDeliveryDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        delivery={selectedDelivery}
+      />
     </>
   );
 }

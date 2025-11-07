@@ -190,6 +190,25 @@ export interface DashboardMetrics {
     this_month: number;
     last_month: number;
   };
+  purchases: {
+    total: number;
+    today: number;
+    this_week: number;
+    this_month: number;
+  };
+  packages: {
+    total: number;
+    sent: number;
+    in_transit: number;
+    delivered: number;
+    delayed: number;
+  };
+  deliveries: {
+    total: number;
+    today: number;
+    this_week: number;
+    pending: number;
+  };
 }
 
 export interface ChartData {

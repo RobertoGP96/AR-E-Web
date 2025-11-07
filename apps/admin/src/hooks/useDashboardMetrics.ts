@@ -67,3 +67,39 @@ export const useRevenueMetrics = () => {
     ...query,
   };
 };
+
+/**
+ * Hook para obtener métricas específicas de compras
+ */
+export const usePurchaseMetrics = () => {
+  const { data: metrics, ...query } = useDashboardMetrics();
+
+  return {
+    purchaseMetrics: metrics?.purchases,
+    ...query,
+  };
+};
+
+/**
+ * Hook para obtener métricas específicas de paquetes
+ */
+export const usePackageMetrics = () => {
+  const { data: metrics, ...query } = useDashboardMetrics();
+
+  return {
+    packageMetrics: metrics?.packages,
+    ...query,
+  };
+};
+
+/**
+ * Hook para obtener métricas específicas de entregas
+ */
+export const useDeliveryMetrics = () => {
+  const { data: metrics, ...query } = useDashboardMetrics();
+
+  return {
+    deliveryMetrics: metrics?.deliveries,
+    ...query,
+  };
+};

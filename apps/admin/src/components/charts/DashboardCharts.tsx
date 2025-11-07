@@ -21,20 +21,20 @@ import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
 import { useUserMetrics, useProductMetrics, useOrderMetrics, useRevenueMetrics } from '@/hooks/useDashboardMetrics';
 import { cn } from '@/lib/utils';
 
-// Configuración de colores para los gráficos
+// Configuración de colores para los gráficos - Tonalidades de Naranja
 const COLORS = {
-  primary: 'hsl(221, 83%, 53%)',
-  secondary: 'hsl(142, 76%, 36%)',
-  accent: 'hsl(25, 95%, 53%)',
-  danger: 'hsl(0, 84%, 60%)',
-  muted: 'hsl(215, 16%, 47%)',
-  success: 'hsl(142, 71%, 45%)',
-  warning: 'hsl(48, 96%, 53%)',
-  info: 'hsl(199, 89%, 48%)',
-  purple: 'hsl(271, 91%, 65%)',
-  emerald: 'hsl(160, 84%, 39%)',
-  blue: 'hsl(217, 91%, 60%)',
-  orange: 'hsl(24, 94%, 50%)'
+  primary: 'hsl(24, 94%, 50%)',      // Naranja vibrante
+  secondary: 'hsl(33, 100%, 50%)',   // Naranja dorado
+  accent: 'hsl(27, 98%, 54%)',       // Naranja brillante
+  danger: 'hsl(16, 100%, 50%)',      // Naranja rojizo
+  muted: 'hsl(30, 60%, 60%)',        // Naranja apagado
+  success: 'hsl(36, 100%, 50%)',     // Naranja amarillento
+  warning: 'hsl(39, 100%, 50%)',     // Naranja cálido
+  info: 'hsl(22, 90%, 52%)',         // Naranja coral
+  purple: 'hsl(20, 85%, 45%)',       // Naranja terracota
+  emerald: 'hsl(28, 95%, 48%)',      // Naranja medio
+  blue: 'hsl(25, 88%, 55%)',         // Naranja claro
+  orange: 'hsl(24, 94%, 50%)'        // Naranja base
 };
 
 /**
@@ -81,7 +81,7 @@ export const UserMetricsBarChart = () => {
       <Card className="flex flex-col border-2 shadow-sm">
         <CardHeader className="items-center pb-0">
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-blue-500" />
+            <Activity className="h-5 w-5 text-orange-500" />
             Métricas de Usuarios
           </CardTitle>
         </CardHeader>
@@ -96,7 +96,7 @@ export const UserMetricsBarChart = () => {
     <Card className="flex flex-col border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
       <CardHeader className="items-center pb-0">
         <CardTitle className="flex items-center gap-2">
-          <Activity className="h-5 w-5 text-blue-500" />
+          <Activity className="h-5 w-5 text-orange-500" />
           Métricas de Usuarios
         </CardTitle>
         <CardDescription>Distribución de usuarios por estado</CardDescription>
@@ -157,7 +157,7 @@ export const UserMetricsBarChart = () => {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm pt-4">
-        <div className="flex items-center gap-2 leading-none font-medium text-emerald-600">
+        <div className="flex items-center gap-2 leading-none font-medium text-orange-600">
           <TrendingUp className="h-4 w-4" />
           Total de usuarios registrados
         </div>
@@ -225,7 +225,7 @@ export const ProductMetricsPieChart = () => {
       <Card className="flex flex-col border-2 shadow-sm">
         <CardHeader className="items-center pb-0">
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-emerald-500" />
+            <Activity className="h-5 w-5 text-orange-500" />
             Distribución de Productos
           </CardTitle>
         </CardHeader>
@@ -241,7 +241,7 @@ export const ProductMetricsPieChart = () => {
       <Card className="flex flex-col border-2 shadow-sm">
         <CardHeader className="items-center pb-0">
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-emerald-500" />
+            <Activity className="h-5 w-5 text-orange-500" />
             Distribución de Productos
           </CardTitle>
           <CardDescription>Productos agrupados por categoría</CardDescription>
@@ -262,7 +262,7 @@ export const ProductMetricsPieChart = () => {
     <Card className="flex flex-col border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
       <CardHeader className="items-center pb-0">
         <CardTitle className="flex items-center gap-2">
-          <Activity className="h-5 w-5 text-emerald-500" />
+          <Activity className="h-5 w-5 text-orange-500" />
           Distribución de Productos
         </CardTitle>
         <CardDescription>Productos agrupados por categoría</CardDescription>
@@ -323,7 +323,7 @@ export const ProductMetricsPieChart = () => {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm pt-4">
-        <div className="flex items-center gap-2 leading-none font-medium text-emerald-600">
+        <div className="flex items-center gap-2 leading-none font-medium text-orange-600">
           <TrendingUp className="h-4 w-4" />
           {chartData.length} categorías activas
         </div>
@@ -360,7 +360,7 @@ export const RevenueMetricsLineChart = () => {
       <Card className="border-2 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-orange-500" />
+            <TrendingUp className="h-5 w-5 text-orange-600" />
             Tendencia de Ingresos
           </CardTitle>
         </CardHeader>
@@ -379,7 +379,7 @@ export const RevenueMetricsLineChart = () => {
     <Card className="border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-purple-500" />
+          <TrendingUp className="h-5 w-5 text-orange-600" />
           Tendencia de Ingresos
         </CardTitle>
         <CardDescription>Comparativa de ingresos por período</CardDescription>
@@ -425,10 +425,10 @@ export const RevenueMetricsLineChart = () => {
             <Line
               type="monotone"
               dataKey="ingresos"
-              stroke={COLORS.purple}
+              stroke={COLORS.primary}
               strokeWidth={3}
               dot={{
-                fill: COLORS.purple,
+                fill: COLORS.primary,
                 strokeWidth: 2,
                 r: 5,
               }}
@@ -442,7 +442,7 @@ export const RevenueMetricsLineChart = () => {
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className={cn(
           "flex gap-2 font-medium leading-none",
-          trend ? "text-emerald-600" : "text-rose-600"
+          trend ? "text-orange-600" : "text-orange-800"
         )}>
           {trend ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
           {trend ? "Crecimiento positivo" : "Tendencia a la baja"}
@@ -615,7 +615,7 @@ export const OrderStatusComparisonChart = () => {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm pt-4">
-        <div className="flex items-center gap-2 leading-none font-medium text-emerald-600">
+        <div className="flex items-center gap-2 leading-none font-medium text-orange-600">
           <TrendingUp className="h-4 w-4" />
           Órdenes procesadas este mes
         </div>

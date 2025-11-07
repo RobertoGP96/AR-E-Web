@@ -104,33 +104,45 @@ export default function Reports() {
       </div>
 
       {/* Resumen de Ganancias */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-        <Card className="border-2 border-blue-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+        <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 group cursor-pointer bg-gradient-to-br from-blue-50 via-blue-50/80 to-blue-100/50 border-blue-100 hover:border-blue-200 hover:shadow-blue-100/50">
+          {/* Efecto de brillo en hover */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Decorative corner accent */}
+          <div className="absolute top-0 right-0 w-24 h-24 opacity-10 transform translate-x-8 -translate-y-8 rounded-full blur-2xl transition-all duration-300 group-hover:scale-150 bg-gradient-to-br from-blue-500 to-blue-600" />
+          
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Ingresos Totales
             </CardTitle>
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-sm">
-              <DollarSign className="h-5 w-5 text-white" />
+            <div className="p-2.5 md:p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+              <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold tracking-tight">${reports.summary.total_revenue.toLocaleString()}</div>
+          <CardContent className="relative z-10">
+            <div className="text-2xl md:text-3xl font-bold tracking-tight">${reports.summary.total_revenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-2">Últimos 12 meses</p>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-emerald-100 hover:border-emerald-200 hover:shadow-lg transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 group cursor-pointer bg-gradient-to-br from-emerald-50 via-emerald-50/80 to-emerald-100/50 border-emerald-100 hover:border-emerald-200 hover:shadow-emerald-100/50">
+          {/* Efecto de brillo en hover */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Decorative corner accent */}
+          <div className="absolute top-0 right-0 w-24 h-24 opacity-10 transform translate-x-8 -translate-y-8 rounded-full blur-2xl transition-all duration-300 group-hover:scale-150 bg-gradient-to-br from-emerald-500 to-emerald-600" />
+          
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Ganancia del Sistema
             </CardTitle>
-            <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow-sm">
-              <TrendingUp className="h-5 w-5 text-white" />
+            <div className="p-2.5 md:p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+              <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-emerald-600 tracking-tight">
+          <CardContent className="relative z-10">
+            <div className="text-2xl md:text-3xl font-bold text-emerald-600 tracking-tight">
               ${reports.summary.total_system_profit.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
@@ -139,34 +151,46 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-purple-100 hover:border-purple-200 hover:shadow-lg transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 group cursor-pointer bg-gradient-to-br from-purple-50 via-purple-50/80 to-purple-100/50 border-purple-100 hover:border-purple-200 hover:shadow-purple-100/50">
+          {/* Efecto de brillo en hover */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Decorative corner accent */}
+          <div className="absolute top-0 right-0 w-24 h-24 opacity-10 transform translate-x-8 -translate-y-8 rounded-full blur-2xl transition-all duration-300 group-hover:scale-150 bg-gradient-to-br from-purple-500 to-purple-600" />
+          
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Ganancias de Agentes
             </CardTitle>
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-sm">
-              <Users className="h-5 w-5 text-white" />
+            <div className="p-2.5 md:p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+              <Users className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-purple-600 tracking-tight">
+          <CardContent className="relative z-10">
+            <div className="text-2xl md:text-3xl font-bold text-purple-600 tracking-tight">
               ${reports.summary.total_agent_profits.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-2">{reports.agent_reports.length} agentes activos</p>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-rose-100 hover:border-rose-200 hover:shadow-lg transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 group cursor-pointer bg-gradient-to-br from-rose-50 via-rose-50/80 to-rose-100/50 border-rose-100 hover:border-rose-200 hover:shadow-rose-100/50">
+          {/* Efecto de brillo en hover */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Decorative corner accent */}
+          <div className="absolute top-0 right-0 w-24 h-24 opacity-10 transform translate-x-8 -translate-y-8 rounded-full blur-2xl transition-all duration-300 group-hover:scale-150 bg-gradient-to-br from-rose-500 to-rose-600" />
+          
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Costos Totales
             </CardTitle>
-            <div className="p-2 bg-gradient-to-br from-rose-500 to-rose-600 rounded-lg shadow-sm">
-              <TrendingDown className="h-5 w-5 text-white" />
+            <div className="p-2.5 md:p-3 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+              <TrendingDown className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-rose-600 tracking-tight">
+          <CardContent className="relative z-10">
+            <div className="text-2xl md:text-3xl font-bold text-rose-600 tracking-tight">
               ${reports.summary.total_costs.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
@@ -175,17 +199,23 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-orange-100 hover:border-orange-200 hover:shadow-lg transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 group cursor-pointer bg-gradient-to-br from-orange-50 via-orange-50/80 to-orange-100/50 border-orange-100 hover:border-orange-200 hover:shadow-orange-100/50">
+          {/* Efecto de brillo en hover */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Decorative corner accent */}
+          <div className="absolute top-0 right-0 w-24 h-24 opacity-10 transform translate-x-8 -translate-y-8 rounded-full blur-2xl transition-all duration-300 group-hover:scale-150 bg-gradient-to-br from-orange-500 to-orange-600" />
+          
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Costos de Entrega
             </CardTitle>
-            <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-sm">
-              <TrendingDown className="h-5 w-5 text-white" />
+            <div className="p-2.5 md:p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+              <TrendingDown className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-orange-600 tracking-tight">
+          <CardContent className="relative z-10">
+            <div className="text-2xl md:text-3xl font-bold text-orange-600 tracking-tight">
               ${reports.summary.total_delivery_costs.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-2">Costos de peso y envío</p>
@@ -475,9 +505,9 @@ export default function Reports() {
                   {reports.agent_reports.map((agent, index) => (
                     <TableRow key={agent.agent_id}>
                       <TableCell className="font-medium">
-                        {index === 0 && <Badge className="bg-yellow-500">🥇</Badge>}
-                        {index === 1 && <Badge className="bg-gray-400">🥈</Badge>}
-                        {index === 2 && <Badge className="bg-orange-600">🥉</Badge>}
+                        {index === 0 && <Badge variant={'outline'} >🥇</Badge>}
+                        {index === 1 && <Badge variant={'outline'} >🥈</Badge>}
+                        {index === 2 && <Badge variant={'outline'} >🥉</Badge>}
                         {index > 2 && <span className="ml-2">{index + 1}</span>}
                       </TableCell>
                       <TableCell className="font-medium">{agent.agent_name}</TableCell>

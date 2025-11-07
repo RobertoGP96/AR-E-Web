@@ -1540,6 +1540,30 @@ class DashboardMetricsView(APIView):
         revenue_this_month = Order.objects.filter(pay_status='PAGADO', created_at__date__gte=month_ago).aggregate(total=Sum('products__total_cost'))['total'] or 0
         revenue_last_month = Order.objects.filter(pay_status='PAGADO', created_at__date__range=(last_month_start, last_month_end)).aggregate(total=Sum('products__total_cost'))['total'] or 0
 
+        # Compras (ProductBuyed)
+        purchases_total = ProductBuyed.objects.count()
+        purchases_today = ProductBuyed.objects.filter(buy_date__date=today).count()
+        purchases_this_week = ProductBuyed.objects.filter(buy_date__date__gte=week_ago).count()
+        purchases_this_month = ProductBuyed.objects.filter(buy_date__date__gte=month_ago).count()
+
+        # Paquetes (Package)
+        packages_total = Package.objects.count()
+        packages_sent = Package.objects.filter(status_of_processing='Enviado').count()
+        packages_in_transit = Package.objects.filter(status_of_processing='Recibido').count()
+        packages_delivered = Package.objects.filter(status_of_processing='Procesado').count()
+        # Como no hay estado de "retrasado" en el enum, usaremos 0
+        packages_delayed = 0
+
+        # Entregas (ProductDelivery)
+        deliveries_total = ProductDelivery.objects.count()
+        deliveries_today = ProductDelivery.objects.filter(created_at__date=today).count()
+        deliveries_this_week = ProductDelivery.objects.filter(created_at__date__gte=week_ago).count()
+        # Entregas pendientes: productos con amount_delivered < amount_purchased
+        deliveries_pending = Product.objects.filter(
+            amount_delivered__lt=F('amount_purchased'),
+            amount_purchased__gt=0
+        ).count()
+
         metrics = {
             'users': {
                 'total': users_total,
@@ -1574,6 +1598,25 @@ class DashboardMetricsView(APIView):
                 'this_week': revenue_this_week,
                 'this_month': revenue_this_month,
                 'last_month': revenue_last_month
+            },
+            'purchases': {
+                'total': purchases_total,
+                'today': purchases_today,
+                'this_week': purchases_this_week,
+                'this_month': purchases_this_month
+            },
+            'packages': {
+                'total': packages_total,
+                'sent': packages_sent,
+                'in_transit': packages_in_transit,
+                'delivered': packages_delivered,
+                'delayed': packages_delayed
+            },
+            'deliveries': {
+                'total': deliveries_total,
+                'today': deliveries_today,
+                'this_week': deliveries_this_week,
+                'pending': deliveries_pending
             }
         }
 

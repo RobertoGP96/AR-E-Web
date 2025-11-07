@@ -98,6 +98,60 @@ export function getStorageSize(): number {
 }
 
 /**
+ * Valida la consistencia de los datos de autenticación almacenados
+ */
+export interface AuthDataValidation {
+  isValid: boolean;
+  hasToken: boolean;
+  hasUser: boolean;
+  hasConsistentData: boolean;
+  issues: string[];
+}
+
+export function validateAuthData(): AuthDataValidation {
+  const issues: string[] = [];
+  
+  const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+  const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+  
+  const hasToken = !!accessToken;
+  const hasUser = !!userStr;
+  
+  // Caso 1: Token sin usuario
+  if (hasToken && !hasUser) {
+    issues.push('Token exists but no user data found');
+  }
+  
+  // Caso 2: Usuario sin token
+  if (!hasToken && hasUser) {
+    issues.push('User data exists but no token found');
+  }
+  
+  // Caso 3: Usuario con datos inválidos
+  if (hasUser) {
+    try {
+      const user = JSON.parse(userStr);
+      if (!user || typeof user !== 'object' || !user.id) {
+        issues.push('User data is invalid or missing ID');
+      }
+    } catch {
+      issues.push('User data is not valid JSON');
+    }
+  }
+  
+  const hasConsistentData = hasToken && hasUser && issues.length === 0;
+  const isValid = hasConsistentData || (!hasToken && !hasUser);
+  
+  return {
+    isValid,
+    hasToken,
+    hasUser,
+    hasConsistentData,
+    issues,
+  };
+}
+
+/**
  * Limpia todo el almacenamiento relacionado con autenticación
  */
 export function clearAuthStorage(): void {

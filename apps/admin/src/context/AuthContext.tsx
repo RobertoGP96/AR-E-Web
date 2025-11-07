@@ -5,13 +5,14 @@
  * persistencia de sesión y verificación de permisos.
  */
 
-import { createContext, useReducer, useEffect, useCallback } from 'react';
+import { createContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { 
   getStoredValue, 
   setStoredValue, 
   clearAuthStorage,
+  validateAuthData,
   STORAGE_KEYS 
 } from '@/utils/storage';
 import type { CustomUser } from '@/types/models';
@@ -57,18 +58,37 @@ interface AuthContextType extends AuthState {
 
 // Función para obtener el estado inicial con datos persistidos
 const getInitialState = (): AuthState => {
+  // Validar datos antes de inicializar
+  const validation = validateAuthData();
+  
   const storedUser = getStoredValue<CustomUser | null>(STORAGE_KEYS.USER, null);
   const storedPermissions = getStoredValue<string[]>(STORAGE_KEYS.PERMISSIONS, []);
   const storedLastActivity = getStoredValue<string | null>(STORAGE_KEYS.LAST_ACTIVITY, null);
   
-  // Solo considerar autenticado si hay token Y usuario almacenado
-  const hasToken = !!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-  const isAuthenticated = hasToken && !!storedUser;
+  // Si no hay datos válidos, limpiar y retornar estado vacío
+  if (!validation.isValid) {
+    if (import.meta.env.DEV && validation.issues.length > 0) {
+      console.warn('Auth data validation issues:', validation.issues);
+    }
+    clearAuthStorage();
+    return {
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+      permissions: [],
+      lastActivity: null,
+    };
+  }
+  
+  // Solo considerar autenticado si hay token Y usuario almacenado Y la validación pasó
+  const hasToken = validation.hasToken;
+  const isAuthenticated = hasToken && !!storedUser && validation.hasConsistentData;
   
   return {
     user: storedUser,
     isAuthenticated,
-    isLoading: hasToken && !!storedUser, // Solo mostrar loading si hay token y usuario para verificar
+    isLoading: false, // No mostrar loading inicialmente - se activará en checkExistingAuth si es necesario
     error: null,
     permissions: storedPermissions,
     lastActivity: storedLastActivity ? new Date(storedLastActivity) : null,
@@ -182,24 +202,41 @@ interface AuthProviderProps {
 // Componente proveedor del contexto
 export function AuthProvider({ children }: AuthProviderProps) {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const hasCheckedAuth = useRef(false);
+  const isCheckingAuth = useRef(false);
 
   /**
    * Verifica si existe un token válido al cargar la aplicación
    */
   const checkExistingAuth = useCallback(async () => {
-    // Si no hay token, no hay nada que verificar
-    if (!apiClient.isAuthenticated()) {
-      // Si hay datos de usuario guardados pero no hay token, limpiar todo
-      const storedUser = getStoredValue<CustomUser | null>(STORAGE_KEYS.USER, null);
-      if (storedUser) {
-        console.warn('Usuario guardado sin token válido, limpiando almacenamiento');
-        clearAuthStorage();
-      }
-      // No despachar error cuando simplemente no hay token - es una condición normal
-      // Solo asegurarse de que el estado esté limpio
-      dispatch({ type: 'AUTH_LOGOUT' });
+    // Evitar múltiples verificaciones simultáneas
+    if (isCheckingAuth.current || hasCheckedAuth.current) {
       return;
     }
+
+    // Verificar validación de datos antes de proceder
+    const validation = validateAuthData();
+    
+    // Si no hay datos válidos, limpiar y salir
+    if (!validation.isValid || !validation.hasToken) {
+      hasCheckedAuth.current = true;
+      if (validation.hasUser && !validation.hasToken) {
+        // Limpiar datos inconsistentes
+        clearAuthStorage();
+        dispatch({ type: 'AUTH_LOGOUT' });
+      }
+      return;
+    }
+
+    // Si no hay autenticación del cliente API, limpiar datos locales
+    if (!apiClient.isAuthenticated()) {
+      clearAuthStorage();
+      dispatch({ type: 'AUTH_LOGOUT' });
+      hasCheckedAuth.current = true;
+      return;
+    }
+
+    isCheckingAuth.current = true;
 
     // Si hay token pero no hay usuario guardado, intentar obtenerlo
     const storedUser = getStoredValue<CustomUser | null>(STORAGE_KEYS.USER, null);
@@ -208,8 +245,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         dispatch({ type: 'AUTH_START' });
         
         // Obtener información del usuario actual
-        // apiClient.getCurrentUser() devuelve directamente CustomUser, no un objeto con data
         const user = await apiClient.getCurrentUser();
+        
+        if (!user || !user.id) {
+          throw new Error('Invalid user data received from server');
+        }
         
         // Por ahora, permissions vacío hasta implementar sistema de permisos
         const permissions: string[] = [];
@@ -221,10 +261,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
             permissions 
           } 
         });
+
+        hasCheckedAuth.current = true;
       } catch (error) {
-        console.error('Error verifying existing auth:', error);
+        // Error verifying existing auth
         apiClient.clearAuthToken();
-        dispatch({ type: 'AUTH_ERROR', payload: 'Invalid authentication token' });
+        clearAuthStorage();
+        
+        const errorMessage = error instanceof Error ? error.message : 'Invalid authentication token';
+        dispatch({ type: 'AUTH_ERROR', payload: errorMessage });
+        hasCheckedAuth.current = true;
+      } finally {
+        isCheckingAuth.current = false;
       }
       return;
     }
@@ -238,6 +286,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         permissions: storedPermissions 
       } 
     });
+
+    // Marcar como verificado inmediatamente para evitar bloqueos
+    hasCheckedAuth.current = true;
+    isCheckingAuth.current = false;
 
     // Verificar token en segundo plano sin bloquear la UI
     try {
@@ -253,9 +305,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } 
       });
     } catch (error) {
-      // Si falla la verificación, mantener los datos guardados pero loggear el error
-      console.warn('Error al verificar autenticación en segundo plano:', error);
-      // No hacer logout aquí, dejar que el interceptor maneje errores 401
+      // Si falla la verificación en segundo plano, no hacer logout inmediatamente
+      // Dejar que el interceptor maneje los errores 401 en las siguientes peticiones
+      if (import.meta.env.DEV) {
+        console.warn('Error al verificar autenticación en segundo plano:', error);
+      }
     }
   }, []);
 
@@ -403,11 +457,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const handleAuthStateChange = useCallback((isAuthenticated: boolean) => {
     if (!isAuthenticated && state.isAuthenticated) {
       // Si el apiClient dice que no está autenticado pero el estado dice que sí,
-      // forzar logout
-      dispatch({ type: 'AUTH_LOGOUT' });
-    } else if (isAuthenticated && !state.isAuthenticated) {
+      // forzar logout solo si no estamos ya en proceso de verificación
+      if (!isCheckingAuth.current) {
+        hasCheckedAuth.current = false; // Permitir re-verificación
+        dispatch({ type: 'AUTH_LOGOUT' });
+      }
+    } else if (isAuthenticated && !state.isAuthenticated && !isCheckingAuth.current) {
       // Si el apiClient dice que está autenticado pero el estado dice que no,
       // intentar verificar (esto es menos común)
+      hasCheckedAuth.current = false; // Permitir re-verificación
       checkExistingAuth();
     }
   }, [state.isAuthenticated, checkExistingAuth]);
