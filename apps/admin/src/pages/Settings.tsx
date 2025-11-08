@@ -1,17 +1,60 @@
-import { useState } from 'react';
-import { Save, User, Shield, Bell, Database, Settings as SettingsIcon, StoreIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Save, User, Shield, Bell, Database, Settings as SettingsIcon, StoreIcon, DollarSign, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ShopsHeader } from '@/components/shops';
+import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { toast } from 'sonner';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
+  const { config, isLoading: isLoadingConfig, updateConfig, isUpdating } = useSystemConfig();
+  
+  // Estados locales para el formulario de variables
+  const [changeRate, setChangeRate] = useState('0');
+  const [costPerPound, setCostPerPound] = useState('0');
+
+  // Sincronizar valores cuando se carga la configuración
+  useEffect(() => {
+    if (config) {
+      setChangeRate(config.change_rate.toString());
+      setCostPerPound(config.cost_per_pound.toString());
+    }
+  }, [config]);
+
+  const handleSaveVariables = () => {
+    const changeRateValue = parseFloat(changeRate);
+    const costPerPoundValue = parseFloat(costPerPound);
+
+    // Validación de tasa de cambio
+    if (isNaN(changeRateValue) || changeRateValue < 0) {
+      toast.error('Error de validación', {
+        description: 'La tasa de cambio debe ser un número válido y positivo'
+      });
+      return;
+    }
+
+    // Validación de costo por libra
+    if (isNaN(costPerPoundValue) || costPerPoundValue < 0) {
+      toast.error('Error de validación', {
+        description: 'El costo por libra debe ser un número válido y positivo'
+      });
+      return;
+    }
+
+    // Ejecutar actualización
+    updateConfig({
+      change_rate: changeRateValue,
+      cost_per_pound: costPerPoundValue,
+    });
+  };
 
   const tabs = [
     { id: 'general', name: 'General', icon: User },
     { id: 'notifications', name: 'Notificaciones', icon: Bell },
+    { id: 'variables', name: 'Variables del Sistema', icon: DollarSign },
     { id: 'stores', name: 'Tiendas', icon: StoreIcon },
     { id: 'security', name: 'Seguridad', icon: Shield },
     { id: 'system', name: 'Sistema', icon: Database },
@@ -208,6 +251,195 @@ const Settings = () => {
             </Card>
           )}
 
+          {activeTab === 'variables' && (
+            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleSaveVariables(); }}>
+              <Card className="shadow-lg border-0 bg-white rounded-2xl">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                    <DollarSign className="h-6 w-6 text-orange-500" />
+                    Variables del Sistema
+                  </CardTitle>
+                  <p className="text-gray-600">
+                    Configura las variables económicas que afectan los cálculos de costos y ganancias
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-8">
+                  {/* Estado de carga */}
+                  {isLoadingConfig && (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+                      <span className="ml-3 text-gray-600">Cargando configuración...</span>
+                    </div>
+                  )}
+
+                  {/* Contenido cuando hay datos */}
+                  {!isLoadingConfig && config && (
+                    <>
+                      {/* Información importante */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <div className="flex">
+                          <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="ml-3 flex-1">
+                            <h3 className="text-sm font-medium text-blue-800">
+                              ℹ️ Información Importante
+                            </h3>
+                            <div className="mt-2 text-sm text-blue-700">
+                              <p>Estas variables se utilizan para calcular:</p>
+                              <ul className="list-disc list-inside mt-2 space-y-1">
+                                <li>Costos de productos en moneda local</li>
+                                <li>Costos de envío y deliveries</li>
+                                <li>Ganancias y márgenes de utilidad</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                  {/* Formulario de variables */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Tasa de cambio */}
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        💱 Tasa de Cambio (USD)
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <DollarSign className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={changeRate}
+                          onChange={(e) => setChangeRate(e.target.value)}
+                          placeholder="0.00"
+                          className="pl-10 border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
+                          disabled={isLoadingConfig}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Tasa de conversión de USD a tu moneda local
+                      </p>
+                      {config && (
+                        <div className="bg-gray-50 rounded-lg p-3 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Valor actual:</span>
+                            <span className="font-semibold text-gray-900">${config.change_rate.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between mt-1">
+                            <span className="text-gray-600">Última actualización:</span>
+                            <span className="text-gray-900">{new Date(config.updated_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Costo por libra */}
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        📦 Costo por Libra (USD)
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <DollarSign className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={costPerPound}
+                          onChange={(e) => setCostPerPound(e.target.value)}
+                          placeholder="0.00"
+                          className="pl-10 border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
+                          disabled={isLoadingConfig}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Costo general de envío por libra (lb) en USD
+                      </p>
+                      {config && (
+                        <div className="bg-gray-50 rounded-lg p-3 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Valor actual:</span>
+                            <span className="font-semibold text-gray-900">${config.cost_per_pound.toFixed(2)}/lb</span>
+                          </div>
+                          <div className="flex justify-between mt-1">
+                            <span className="text-gray-600">Última actualización:</span>
+                            <span className="text-gray-900">{new Date(config.updated_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Calculadora de ejemplo */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <h4 className="text-base font-medium text-gray-900 mb-4">
+                      🧮 Calculadora de Ejemplo
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100">
+                        <dt className="text-sm font-medium text-gray-600 mb-1">Producto $100 USD</dt>
+                        <dd className="text-lg font-bold text-orange-600">
+                          ${(parseFloat(changeRate) * 100).toFixed(2)}
+                        </dd>
+                        <p className="text-xs text-gray-500 mt-1">En moneda local</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100">
+                        <dt className="text-sm font-medium text-gray-600 mb-1">Envío 5 lb</dt>
+                        <dd className="text-lg font-bold text-orange-600">
+                          ${(parseFloat(costPerPound) * 5).toFixed(2)} USD
+                        </dd>
+                        <p className="text-xs text-gray-500 mt-1">Costo de envío</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100">
+                        <dt className="text-sm font-medium text-gray-600 mb-1">Envío 5 lb local</dt>
+                        <dd className="text-lg font-bold text-orange-600">
+                          ${(parseFloat(changeRate) * parseFloat(costPerPound) * 5).toFixed(2)}
+                        </dd>
+                        <p className="text-xs text-gray-500 mt-1">En moneda local</p>
+                      </div>
+                    </div>
+                  </div>
+                    </>
+                  )}
+
+                  {/* Error al cargar */}
+                  {!isLoadingConfig && !config && (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <div className="text-red-500 mb-2">⚠️</div>
+                      <p className="text-gray-600">No se pudo cargar la configuración del sistema</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <div className="flex justify-end">
+                <Button 
+                  type="submit"
+                  disabled={isLoadingConfig || isUpdating || !config}
+                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border-0"
+                >
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Guardar Variables
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
+
           {activeTab === 'security' && (
             <Card className="shadow-lg border-0 bg-white rounded-2xl">
               <CardHeader className="pb-4">
@@ -359,7 +591,7 @@ const Settings = () => {
           )}
           
 
-          {activeTab !== 'general' && (
+          {activeTab !== 'general' && activeTab !== 'stores' && activeTab !== 'variables' && (
             <div className="flex justify-end">
               <Button className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border-0">
                 <Save className="h-4 w-4 mr-2" />

@@ -1554,15 +1554,15 @@ class DashboardMetricsView(APIView):
         # Como no hay estado de "retrasado" en el enum, usaremos 0
         packages_delayed = 0
 
-        # Entregas (ProductDelivery)
-        deliveries_total = ProductDelivery.objects.count()
-        deliveries_today = ProductDelivery.objects.filter(created_at__date=today).count()
-        deliveries_this_week = ProductDelivery.objects.filter(created_at__date__gte=week_ago).count()
-        # Entregas pendientes: productos con amount_delivered < amount_purchased
-        deliveries_pending = Product.objects.filter(
-            amount_delivered__lt=F('amount_purchased'),
-            amount_purchased__gt=0
-        ).count()
+        # Entregas (DeliverReceip)
+        deliveries_total = DeliverReceip.objects.count()
+        deliveries_today = DeliverReceip.objects.filter(created_at__date=today).count()
+        deliveries_this_week = DeliverReceip.objects.filter(created_at__date__gte=week_ago).count()
+        deliveries_this_month = DeliverReceip.objects.filter(created_at__date__gte=month_ago).count()
+        # Entregas por estado
+        deliveries_pending = DeliverReceip.objects.filter(status='Pendiente').count()
+        deliveries_in_transit = DeliverReceip.objects.filter(status='En transito').count()
+        deliveries_delivered = DeliverReceip.objects.filter(status='Entregado').count()
 
         metrics = {
             'users': {
@@ -1616,7 +1616,10 @@ class DashboardMetricsView(APIView):
                 'total': deliveries_total,
                 'today': deliveries_today,
                 'this_week': deliveries_this_week,
-                'pending': deliveries_pending
+                'this_month': deliveries_this_month,
+                'pending': deliveries_pending,
+                'in_transit': deliveries_in_transit,
+                'delivered': deliveries_delivered
             }
         }
 

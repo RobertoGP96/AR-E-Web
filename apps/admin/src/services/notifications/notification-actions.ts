@@ -3,7 +3,6 @@
  */
 
 import { apiClient } from '../../lib/api-client';
-import type { ApiResponse } from '../../types/api';
 import type {
   Notification,
   MarkAsReadData,
@@ -14,22 +13,22 @@ import type {
  * Marca una notificación específica como leída
  */
 export const markAsRead = async (id: number): Promise<Notification> => {
-  return await apiClient.post<Notification>(`/api_data/notifications/${id}/mark-as-read/`);
+  return await apiClient.post<Notification>(`/api_data/notifications/${id}/mark_as_read/`);
 };
 
 /**
  * Marca una notificación específica como no leída
  */
 export const markAsUnread = async (id: number): Promise<Notification> => {
-  return await apiClient.post<Notification>(`/api_data/notifications/${id}/mark-as-unread/`);
+  return await apiClient.post<Notification>(`/api_data/notifications/${id}/mark_as_unread/`);
 };
 
 /**
  * Marca múltiples notificaciones como leídas
  */
-export const markMultipleAsRead = async (data: MarkAsReadData): Promise<ApiResponse<{ marked_count: number }>> => {
-  return await apiClient.post<ApiResponse<{ marked_count: number }>>(
-    '/api_data/notifications/mark-multiple-as-read/',
+export const markMultipleAsRead = async (data: MarkAsReadData): Promise<{ success: boolean; message: string; count: number }> => {
+  return await apiClient.post<{ success: boolean; message: string; count: number }>(
+    '/api_data/notifications/mark_all_as_read/',
     data
   );
 };
@@ -37,9 +36,10 @@ export const markMultipleAsRead = async (data: MarkAsReadData): Promise<ApiRespo
 /**
  * Marca todas las notificaciones como leídas
  */
-export const markAllAsRead = async (): Promise<ApiResponse<{ marked_count: number }>> => {
-  return await apiClient.post<ApiResponse<{ marked_count: number }>>(
-    '/api_data/notifications/mark-all-as-read/'
+export const markAllAsRead = async (): Promise<{ success: boolean; message: string; count: number }> => {
+  return await apiClient.post<{ success: boolean; message: string; count: number }>(
+    '/api_data/notifications/mark_all_as_read/',
+    {}
   );
 };
 
@@ -53,18 +53,18 @@ export const deleteNotification = async (id: number): Promise<void> => {
 /**
  * Elimina todas las notificaciones leídas
  */
-export const deleteReadNotifications = async (): Promise<ApiResponse<{ deleted_count: number }>> => {
-  return await apiClient.delete<ApiResponse<{ deleted_count: number }>>(
-    '/api_data/notifications/delete-read/'
+export const deleteReadNotifications = async (): Promise<{ success: boolean; message: string; deleted_count: number }> => {
+  return await apiClient.delete<{ success: boolean; message: string; deleted_count: number }>(
+    '/api_data/notifications/clear_read/'
   );
 };
 
 /**
  * Elimina todas las notificaciones del usuario
  */
-export const deleteAllNotifications = async (): Promise<ApiResponse<{ deleted_count: number }>> => {
-  return await apiClient.delete<ApiResponse<{ deleted_count: number }>>(
-    '/api_data/notifications/delete-all/'
+export const deleteAllNotifications = async (): Promise<{ success: boolean; message: string; deleted_count: number }> => {
+  return await apiClient.delete<{ success: boolean; message: string; deleted_count: number }>(
+    '/api_data/notifications/clear_all/'
   );
 };
 

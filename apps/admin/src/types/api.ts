@@ -207,7 +207,10 @@ export interface DashboardMetrics {
     total: number;
     today: number;
     this_week: number;
+    this_month: number;
     pending: number;
+    in_transit: number;
+    delivered: number;
   };
 }
 

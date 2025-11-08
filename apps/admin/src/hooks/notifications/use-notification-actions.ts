@@ -4,7 +4,6 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { ApiResponse } from '../../types/api';
 import type { Notification, MarkAsReadData } from '../../types/models';
 import {
   markAsRead,
@@ -64,7 +63,7 @@ export const useNotificationActions = (): UseNotificationActionsReturn => {
         description: notification.title,
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error('Error al marcar notificación como leída', {
         description: error?.message || 'Ocurrió un error inesperado',
       });
@@ -81,7 +80,7 @@ export const useNotificationActions = (): UseNotificationActionsReturn => {
         description: notification.title,
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error('Error al marcar notificación como no leída', {
         description: error?.message || 'Ocurrió un error inesperado',
       });
@@ -91,13 +90,13 @@ export const useNotificationActions = (): UseNotificationActionsReturn => {
   // Marcar múltiples como leídas
   const markMultipleAsReadMutation = useMutation({
     mutationFn: (data: MarkAsReadData) => markMultipleAsRead(data),
-    onSuccess: (response: ApiResponse<{ marked_count: number }>) => {
+    onSuccess: (response: { success: boolean; message: string; count: number }) => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      const count = response.data?.marked_count || 0;
+      const count = response?.count || 0;
       toast.success(`${count} notificaciones marcadas como leídas`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error('Error al marcar notificaciones como leídas', {
         description: error?.message || 'Ocurrió un error inesperado',
       });
@@ -107,13 +106,13 @@ export const useNotificationActions = (): UseNotificationActionsReturn => {
   // Marcar todas como leídas
   const markAllAsReadMutation = useMutation({
     mutationFn: () => markAllAsRead(),
-    onSuccess: (response: ApiResponse<{ marked_count: number }>) => {
+    onSuccess: (response: { success: boolean; message: string; count: number }) => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      const count = response.data?.marked_count || 0;
+      const count = response?.count || 0;
       toast.success(`Todas las notificaciones marcadas como leídas (${count})`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error('Error al marcar todas las notificaciones como leídas', {
         description: error?.message || 'Ocurrió un error inesperado',
       });
@@ -128,7 +127,7 @@ export const useNotificationActions = (): UseNotificationActionsReturn => {
 
       toast.success('Notificación eliminada');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error('Error al eliminar notificación', {
         description: error?.message || 'Ocurrió un error inesperado',
       });
@@ -138,13 +137,13 @@ export const useNotificationActions = (): UseNotificationActionsReturn => {
   // Eliminar notificaciones leídas
   const deleteReadNotificationsMutation = useMutation({
     mutationFn: () => deleteReadNotifications(),
-    onSuccess: (response: ApiResponse<{ deleted_count: number }>) => {
+    onSuccess: (response: { success: boolean; message: string; deleted_count: number }) => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      const count = response.data?.deleted_count || 0;
+      const count = response?.deleted_count || 0;
       toast.success(`${count} notificaciones leídas eliminadas`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error('Error al eliminar notificaciones leídas', {
         description: error?.message || 'Ocurrió un error inesperado',
       });
@@ -154,13 +153,13 @@ export const useNotificationActions = (): UseNotificationActionsReturn => {
   // Eliminar todas las notificaciones
   const deleteAllNotificationsMutation = useMutation({
     mutationFn: () => deleteAllNotifications(),
-    onSuccess: (response: ApiResponse<{ deleted_count: number }>) => {
+    onSuccess: (response: { success: boolean; message: string; deleted_count: number }) => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      const count = response.data?.deleted_count || 0;
+      const count = response?.deleted_count || 0;
       toast.success(`Todas las notificaciones eliminadas (${count})`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error('Error al eliminar todas las notificaciones', {
         description: error?.message || 'Ocurrió un error inesperado',
       });

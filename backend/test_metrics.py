@@ -13,7 +13,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
 from django.contrib.auth import get_user_model
-from api.models import Product, Order, ProductBuyed, Package, ProductDelivery
+from api.models import Product, Order, ProductBuyed, Package, DeliverReceip
 from datetime import datetime
 
 User = get_user_model()
@@ -85,17 +85,24 @@ def test_metrics():
     else:
         print("  ⚠️  No hay paquetes registrados")
     
-    # Entregas (ProductDelivery)
-    deliveries_total = ProductDelivery.objects.count()
+    # Entregas (DeliverReceip)
+    deliveries_total = DeliverReceip.objects.count()
+    deliveries_pending = DeliverReceip.objects.filter(status='Pendiente').count()
+    deliveries_in_transit = DeliverReceip.objects.filter(status='En transito').count()
+    deliveries_delivered = DeliverReceip.objects.filter(status='Entregado').count()
     
-    print("\n🚚 ENTREGAS (ProductDelivery):")
+    print("\n🚚 ENTREGAS (DeliverReceip):")
     print(f"  ✓ Total: {deliveries_total}")
+    print(f"  ✓ Pendientes: {deliveries_pending}")
+    print(f"  ✓ En tránsito: {deliveries_in_transit}")
+    print(f"  ✓ Entregadas: {deliveries_delivered}")
     
     if deliveries_total > 0:
-        latest_delivery = ProductDelivery.objects.order_by('-created_at').first()
+        latest_delivery = DeliverReceip.objects.order_by('-created_at').first()
         print(f"  ✓ Última entrega: {latest_delivery.created_at.strftime('%Y-%m-%d %H:%M')}")
-        print(f"  ✓ Producto: {latest_delivery.original_product.name}")
-        print(f"  ✓ Cantidad: {latest_delivery.amount_delivered}")
+        print(f"  ✓ Cliente: {latest_delivery.client.full_name}")
+        print(f"  ✓ Peso: {latest_delivery.weight} lb")
+        print(f"  ✓ Estado: {latest_delivery.status}")
     else:
         print("  ⚠️  No hay entregas registradas")
     
@@ -115,7 +122,7 @@ def test_metrics():
     "revenue": { "total": N, ... },
     "purchases": { "total": N, "today": N, "this_week": N, "this_month": N },
     "packages": { "total": N, "sent": N, "in_transit": N, "delivered": N, "delayed": 0 },
-    "deliveries": { "total": N, "today": N, "this_week": N, "pending": N }
+    "deliveries": { "total": N, "today": N, "this_week": N, "this_month": N, "pending": N, "in_transit": N, "delivered": N }
   },
   "message": "Métricas del dashboard obtenidas exitosamente"
 }

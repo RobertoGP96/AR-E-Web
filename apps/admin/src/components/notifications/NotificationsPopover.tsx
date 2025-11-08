@@ -83,6 +83,13 @@ export function NotificationsPopover() {
     actions.markAllAsRead.mutate();
   };
 
+  const handleNotificationClick = (notification: Notification) => {
+    // Si no está leída, marcarla como leída
+    if (!notification.is_read) {
+      actions.markAsRead.mutate(notification.id);
+    }
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -139,7 +146,9 @@ export function NotificationsPopover() {
             <div className="p-2">
               {displayNotifications.map((notification: Notification, index: number) => (
                 <div key={notification.id}>
-                  <div className={`group relative flex gap-4 p-4 hover:bg-gradient-to-r hover:from-orange-50/50 hover:to-amber-50/50 rounded-xl transition-all duration-200 cursor-pointer border-l-4 ${
+                  <div 
+                    onClick={() => handleNotificationClick(notification)}
+                    className={`group relative flex gap-4 p-4 hover:bg-gradient-to-r hover:from-orange-50/50 hover:to-amber-50/50 rounded-xl transition-all duration-200 cursor-pointer border-l-4 ${
                     !notification.is_read
                       ? 'border-l-orange-500 bg-gradient-to-r from-orange-50/30 to-amber-50/20'
                       : 'border-l-transparent hover:border-l-gray-200'

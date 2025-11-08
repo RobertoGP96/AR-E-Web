@@ -22,6 +22,12 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 
 interface DeliveryTableProps {
   deliveries: DeliverReceip[];
@@ -205,6 +211,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
               <TableHead>Costo</TableHead>
               <TableHead>Llegada</TableHead>
               <TableHead>Estado</TableHead>
+              <TableHead>Productos</TableHead>
               <TableHead>Captura</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
@@ -255,6 +262,59 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                   <DeliveryStatusBadge status={(delivery.status || 'Pendiente') as DeliveryStatus} />
                 </TableCell>
                 <TableCell>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="cursor-pointer hover:bg-blue-50 hover:border-blue-300"
+                      >
+                        <Package className=" h-4 w-4" />
+                        {delivery.delivered_products?.length || 0}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 max-h-96 overflow-y-auto" align="start">
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-sm border-b pb-2">
+                          Productos Entregados ({delivery.delivered_products?.length || 0})
+                        </h4>
+                        {delivery.delivered_products && delivery.delivered_products.length > 0 ? (
+                          <ul className="space-y-2">
+                            {delivery.delivered_products.map((product) => (
+                              <li
+                                key={product.id}
+                                className="flex items-start justify-between p-2 rounded-md hover:bg-gray-50 border border-gray-100"
+                              >
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {product.original_product.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Cantidad: {product.amount_delivered}
+                                  </p>
+                                  {product.reception && (
+                                    <p className="text-xs text-gray-400 mt-1 italic">
+                                      Recepción: {formatDeliveryDate(product.reception)}
+                                    </p>
+                                  )}
+                                </div>
+                                <Badge variant="secondary" className="ml-2 shrink-0">
+                                  x{product.amount_delivered}
+                                </Badge>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="text-center py-4 text-gray-500">
+                            <Package className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                            <p className="text-sm">No hay productos entregados</p>
+                          </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </TableCell>
+                <TableCell>
                   <div className='flex flex-row gap-2'>
                     <Button
                       className=' text-gray-600 cursor-pointer bg-gray-200'
@@ -303,6 +363,25 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                           Capturar
                         </DropdownMenuItem>
 
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                        >
+                          <Link
+                            to={`/delivery/${delivery.id}/add-products`}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                            }}
+                            className="inline-flex items-center gap-2"
+                            title={`Agregar productos al delivery ${delivery.id}`}
+                          >
+                            <Package className="h-4 w-4" />
+                            Agregar Productos
+                          </Link>
+                        </DropdownMenuItem>
+
                         {getNextStatus(delivery.status) && (
                           <>
                             <DropdownMenuSeparator />
@@ -336,7 +415,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                           className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
                         >
                           <Link
-                            to={`/deliveries/${delivery.id}`}
+                            to={`/delivery/${delivery.id}`}
                             onClick={(e: React.MouseEvent) => {
                               e.stopPropagation();
                             }}

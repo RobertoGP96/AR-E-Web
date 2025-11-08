@@ -369,8 +369,6 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
       case 'deliveries':
         if (!metrics.deliveries) return [];
         // Estados de entregas según DeliveryStatus: "Pendiente" | "En transito" | "Entregado" | "Fallida"
-        // Nota: El backend actualmente envía: total, today, this_week, pending
-        // Mostrando métricas más relevantes según estados del sistema
         return [
           { 
             label: 'Total Entregas', 
@@ -397,27 +395,64 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             badgeColor: 'bg-amber-50 text-amber-700 border-amber-200'
           },
           { 
-            label: 'Hoy', 
-            value: metrics.deliveries.today, 
+            label: 'En Tránsito', 
+            value: metrics.deliveries.in_transit, 
+            icon: Truck, 
+            color: 'text-indigo-600',
+            iconBg: 'bg-gradient-to-br from-indigo-500 to-indigo-600',
+            borderColor: 'border-indigo-100',
+            hoverColor: 'hover:border-indigo-200 hover:shadow-indigo-100/50',
+            bgGradient: 'bg-gradient-to-br from-indigo-50 via-indigo-50/80 to-indigo-100/50',
+            badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200'
+          },
+          { 
+            label: 'Entregadas', 
+            value: metrics.deliveries.delivered, 
             icon: PackageCheck, 
             color: 'text-emerald-600',
             iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
             borderColor: 'border-emerald-100',
             hoverColor: 'hover:border-emerald-200 hover:shadow-emerald-100/50',
             bgGradient: 'bg-gradient-to-br from-emerald-50 via-emerald-50/80 to-emerald-100/50',
-            badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            change: '+15%',
+            changeType: 'increase' as const
           },
           { 
-            label: 'Esta Semana', 
-            value: metrics.deliveries.this_week, 
+            label: 'Hoy', 
+            value: metrics.deliveries.today, 
             icon: PackageCheck, 
             color: 'text-purple-600',
             iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
             borderColor: 'border-purple-100',
             hoverColor: 'hover:border-purple-200 hover:shadow-purple-100/50',
             bgGradient: 'bg-gradient-to-br from-purple-50 via-purple-50/80 to-purple-100/50',
-            badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
+            badgeColor: 'bg-purple-50 text-purple-700 border-purple-200'
+          },
+          { 
+            label: 'Esta Semana', 
+            value: metrics.deliveries.this_week, 
+            icon: PackageCheck, 
+            color: 'text-cyan-600',
+            iconBg: 'bg-gradient-to-br from-cyan-500 to-cyan-600',
+            borderColor: 'border-cyan-100',
+            hoverColor: 'hover:border-cyan-200 hover:shadow-cyan-100/50',
+            bgGradient: 'bg-gradient-to-br from-cyan-50 via-cyan-50/80 to-cyan-100/50',
+            badgeColor: 'bg-cyan-50 text-cyan-700 border-cyan-200',
             change: '+12%',
+            changeType: 'increase' as const
+          },
+          { 
+            label: 'Este Mes', 
+            value: metrics.deliveries.this_month, 
+            icon: PackageCheck, 
+            color: 'text-teal-600',
+            iconBg: 'bg-gradient-to-br from-teal-500 to-teal-600',
+            borderColor: 'border-teal-100',
+            hoverColor: 'hover:border-teal-200 hover:shadow-teal-100/50',
+            bgGradient: 'bg-gradient-to-br from-teal-50 via-teal-50/80 to-teal-100/50',
+            badgeColor: 'bg-teal-50 text-teal-700 border-teal-200',
+            change: '+25%',
             changeType: 'increase' as const
           }
         ];

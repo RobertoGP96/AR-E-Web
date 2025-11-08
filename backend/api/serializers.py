@@ -492,15 +492,30 @@ class ShopSerializer(serializers.ModelSerializer):
 
 class CommonInformationSerializer(serializers.ModelSerializer):
     """
-    Serializador para información común administrada por el admin.
+    Serializador para configuración global del sistema.
+    Maneja la tasa de cambio y el costo de envío por libra.
     """
-    """Common information introduced for the admin"""
 
     class Meta:
-        """Class of model"""
-
         model = CommonInformation
-        fields = ["change_rate", "cost_per_pound"]
+        fields = ["id", "change_rate", "cost_per_pound", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def validate_change_rate(self, value):
+        """Validar que la tasa de cambio sea positiva"""
+        if value < 0:
+            raise serializers.ValidationError(
+                "La tasa de cambio no puede ser negativa."
+            )
+        return value
+
+    def validate_cost_per_pound(self, value):
+        """Validar que el costo por libra sea positivo"""
+        if value < 0:
+            raise serializers.ValidationError(
+                "El costo por libra no puede ser negativo."
+            )
+        return value
 
 
 class CategorySerializer(serializers.ModelSerializer):

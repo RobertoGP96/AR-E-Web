@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, Legend, LabelList } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -542,7 +542,7 @@ export default function Reports() {
           <Card className="border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-purple-500" />
+                <Users className="h-5 w-5 text-orange-500" />
                 Ganancias por Agente
               </CardTitle>
               <CardDescription>
@@ -554,39 +554,62 @@ export default function Reports() {
                 config={{
                   total_profit: {
                     label: 'Ganancia Total',
-                    color: 'hsl(var(--chart-1))',
+                    color: 'hsl(25 95% 53%)',
+                  },
+                  label: {
+                    color: 'hsl(var(--background))',
                   },
                 }}
-                className="h-[400px] w-full"
+                className="w-full"
+                style={{ height: `${reports.agent_reports.length * 52 + 20}px` }}
               >
                 <BarChart
                   data={reports.agent_reports}
-                  margin={{ top: 10, right: 30, left: 20, bottom: 80 }}
+                  layout="vertical"
+                  margin={{ top: 10, right: 50, left: 10, bottom: 10 }}
+                  barSize={32}
+                  barCategoryGap="20%"
                 >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis
-                    dataKey="agent_name"
-                    angle={-45}
-                    textAnchor="end"
-                    height={100}
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={10}
-                    interval={0}
-                  />
+                  <CartesianGrid horizontal={false} />
                   <YAxis
+                    dataKey="agent_name"
+                    type="category"
                     tickLine={false}
+                    tickMargin={10}
                     axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                    hide
                   />
-                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <XAxis 
+                    dataKey="total_profit" 
+                    type="number" 
+                    hide 
+                  />
+                  <ChartTooltip 
+                    cursor={false}
+                    content={<ChartTooltipContent indicator="line" />} 
+                  />
                   <Bar
                     dataKey="total_profit"
                     fill="var(--color-total_profit)"
                     name="Ganancia Total"
-                    radius={[8, 8, 0, 0]}
-                  />
+                    radius={4}
+                  >
+                    <LabelList
+                      dataKey="agent_name"
+                      position="insideLeft"
+                      offset={8}
+                      className="fill-black"
+                      fontSize={12}
+                    />
+                    <LabelList
+                      dataKey="total_profit"
+                      position="right"
+                      offset={8}
+                      className="fill-foreground"
+                      fontSize={12}
+                      formatter={(value: number) => `$${value.toLocaleString()}`}
+                    />
+                  </Bar>
                 </BarChart>
               </ChartContainer>
             </CardContent>

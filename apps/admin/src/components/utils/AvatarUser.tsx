@@ -20,7 +20,7 @@ const AvatarUser: React.FC<Props> = ({ user }) => {
     return (
         <div className="flex items-center space-x-4">
             <Avatar className={avatarClass}>
-                <AvatarFallback className={`font-semibold ${isNotClient ? "bg-white border-gray-500 border-2" : "bg-gradient-to-br from-orange-400 to-yellow-200"}`}>
+                <AvatarFallback className={`font-semibold ${isNotClient ? "bg-white border-gray-500 border-1" : "bg-gradient-to-br from-orange-400 to-yellow-200"}`}>
                     {user && user.name && user.last_name ? (
                         <>
                             <span>{user.name.charAt(0).toUpperCase()}{user.last_name.charAt(0).toUpperCase()}</span>
