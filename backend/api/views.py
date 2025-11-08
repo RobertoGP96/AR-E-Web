@@ -305,6 +305,63 @@ class UserViewSet(viewsets.ModelViewSet):
                 is_active=True  # Activo
             )
 
+    @extend_schema(
+        summary="Cambiar contraseña",
+        description="Permite al usuario autenticado cambiar su contraseña proporcionando la contraseña actual y la nueva.",
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'current_password': {'type': 'string', 'description': 'Contraseña actual'},
+                    'new_password': {'type': 'string', 'description': 'Nueva contraseña'}
+                },
+                'required': ['current_password', 'new_password']
+            }
+        },
+        responses={
+            200: {'description': 'Contraseña actualizada exitosamente'},
+            400: {'description': 'Error en la validación'},
+            401: {'description': 'No autenticado'}
+        },
+        tags=["Usuarios"]
+    )
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def change_password(self, request):
+        """Cambia la contraseña del usuario autenticado"""
+        user = request.user
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+
+        # Validar que se proporcionaron ambas contraseñas
+        if not current_password or not new_password:
+            return Response(
+                {'error': 'Se requieren la contraseña actual y la nueva contraseña'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Verificar la contraseña actual
+        if not user.check_password(current_password):
+            return Response(
+                {'error': 'La contraseña actual es incorrecta'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validar la nueva contraseña
+        if len(new_password) < 6:
+            return Response(
+                {'error': 'La nueva contraseña debe tener al menos 6 caracteres'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Cambiar la contraseña
+        user.set_password(new_password)
+        user.save()
+
+        return Response(
+            {'message': 'Contraseña actualizada exitosamente'},
+            status=status.HTTP_200_OK
+        )
+
 
 class PasswordRecoverList(APIView):
     """
@@ -1785,3 +1842,117 @@ class ProfitReportsView(APIView):
             },
             'message': 'Reportes de ganancias obtenidos exitosamente'
         })
+
+
+class SystemInfoView(APIView):
+    """
+    Vista para obtener información del sistema: versión, base de datos, uso de recursos, etc.
+    """
+    permission_classes = [AdminPermission]
+
+    @extend_schema(
+        summary="Obtener información del sistema",
+        description="Devuelve información sobre el sistema, base de datos y estadísticas generales",
+        responses={200: serializers.Serializer},
+        tags=["Sistema"]
+    )
+    def get(self, request):
+        import sys
+        import os
+        from django.db import connection
+        from django.conf import settings
+        import platform
+        import django
+        
+        try:
+            # Información de Django y Python
+            django_version = django.get_version()
+            python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            
+            # Información de la base de datos
+            db_engine = connection.settings_dict['ENGINE'].split('.')[-1]
+            db_name = connection.settings_dict['NAME']
+            
+            # Obtener tamaño de la base de datos
+            db_size_mb = 0
+            db_tables_count = 0
+            
+            with connection.cursor() as cursor:
+                # Para SQLite
+                if 'sqlite' in db_engine:
+                    if os.path.exists(db_name):
+                        db_size_bytes = os.path.getsize(db_name)
+                        db_size_mb = db_size_bytes / (1024 * 1024)  # Convertir a MB
+                    
+                    cursor.execute(
+                        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+                    )
+                    db_tables_count = cursor.fetchone()[0]
+                
+                # Para PostgreSQL
+                elif 'postgresql' in db_engine:
+                    cursor.execute(
+                        f"SELECT pg_database_size('{db_name}') / (1024 * 1024) as size_mb"
+                    )
+                    result = cursor.fetchone()
+                    db_size_mb = float(result[0]) if result else 0
+                    
+                    cursor.execute(
+                        "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'"
+                    )
+                    db_tables_count = cursor.fetchone()[0]
+            
+            # Contadores de registros por tabla principal
+            record_counts = {
+                'users': User.objects.count(),
+                'orders': Order.objects.count(),
+                'products': Product.objects.count(),
+                'packages': Package.objects.count(),
+                'shops': Shop.objects.count(),
+                'categories': Category.objects.count(),
+            }
+            
+            # Información del servidor
+            server_info = {
+                'os': platform.system(),
+                'os_version': platform.release(),
+                'architecture': platform.machine(),
+            }
+            
+            # Versión de la aplicación (puedes manejarla desde settings o un archivo)
+            app_version = getattr(settings, 'APP_VERSION', '1.2.3')
+            
+            # Fecha de última actualización (puedes tomarla de git o un archivo)
+            from datetime import datetime
+            last_updated = getattr(settings, 'LAST_UPDATED', datetime.now().strftime('%d/%m/%Y'))
+            
+            return Response({
+                'success': True,
+                'data': {
+                    'application': {
+                        'version': app_version,
+                        'last_updated': last_updated,
+                        'environment': getattr(settings, 'ENVIRONMENT', 'production'),
+                    },
+                    'database': {
+                        'engine': db_engine,
+                        'size_mb': round(db_size_mb, 2),
+                        'tables_count': db_tables_count,
+                        'record_counts': record_counts,
+                        'total_records': sum(record_counts.values()),
+                    },
+                    'server': server_info,
+                    'technology': {
+                        'django_version': django_version,
+                        'python_version': python_version,
+                        'database_type': db_engine.upper(),
+                    }
+                },
+                'message': 'Información del sistema obtenida exitosamente'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error al obtener información del sistema: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

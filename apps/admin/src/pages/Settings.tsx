@@ -1,20 +1,28 @@
 import { useState, useEffect } from 'react';
-import { Save, User, Shield, Bell, Database, Settings as SettingsIcon, StoreIcon, DollarSign, Loader2 } from 'lucide-react';
+import { Save, User, Shield, Bell, Database, Settings as SettingsIcon, DollarSign, Loader2, Info, Repeat, BaggageClaim, HardDrive, Server } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ShopsHeader } from '@/components/shops';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { useChangePassword } from '@/hooks/useChangePassword';
+import { useSystemInfo } from '@/hooks/useSystemInfo';
 import { toast } from 'sonner';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
   const { config, isLoading: isLoadingConfig, updateConfig, isUpdating } = useSystemConfig();
+  const { mutate: changePassword, isPending: isChangingPassword } = useChangePassword();
+  const { data: systemInfo, isLoading: isLoadingSystemInfo } = useSystemInfo();
   
   // Estados locales para el formulario de variables
   const [changeRate, setChangeRate] = useState('0');
   const [costPerPound, setCostPerPound] = useState('0');
+
+  // Estados para el formulario de cambio de contraseña
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Sincronizar valores cuando se carga la configuración
   useEffect(() => {
@@ -51,11 +59,52 @@ const Settings = () => {
     });
   };
 
+  const handleChangePassword = () => {
+    // Validar que todos los campos estén llenos
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error('Error de validación', {
+        description: 'Todos los campos son obligatorios'
+      });
+      return;
+    }
+
+    // Validar que las contraseñas coincidan
+    if (newPassword !== confirmPassword) {
+      toast.error('Error de validación', {
+        description: 'Las contraseñas no coinciden'
+      });
+      return;
+    }
+
+    // Validar longitud mínima
+    if (newPassword.length < 6) {
+      toast.error('Error de validación', {
+        description: 'La nueva contraseña debe tener al menos 6 caracteres'
+      });
+      return;
+    }
+
+    // Ejecutar cambio de contraseña
+    changePassword(
+      {
+        current_password: currentPassword,
+        new_password: newPassword,
+      },
+      {
+        onSuccess: () => {
+          // Limpiar formulario
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+        },
+      }
+    );
+  };
+
   const tabs = [
     { id: 'general', name: 'General', icon: User },
     { id: 'notifications', name: 'Notificaciones', icon: Bell },
     { id: 'variables', name: 'Variables del Sistema', icon: DollarSign },
-    { id: 'stores', name: 'Tiendas', icon: StoreIcon },
     { id: 'security', name: 'Seguridad', icon: Shield },
     { id: 'system', name: 'Sistema', icon: Database },
   ];
@@ -136,16 +185,7 @@ const Settings = () => {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Idioma
-                      </label>
-                      <select className="w-full py-3 px-4 border border-gray-200 bg-white rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 text-sm">
-                        <option>Español</option>
-                        <option>English</option>
-                        <option>Français</option>
-                      </select>
-                    </div>
+                    
 
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -276,18 +316,16 @@ const Settings = () => {
                   {!isLoadingConfig && config && (
                     <>
                       {/* Información importante */}
-                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                         <div className="flex">
                           <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                            </svg>
+                            <Info className="h-5 w-5 inline mr-1" />
                           </div>
                           <div className="ml-3 flex-1">
-                            <h3 className="text-sm font-medium text-blue-800">
-                              ℹ️ Información Importante
+                            <h3 className="text-sm font-medium text-gray-800">
+                               Información Importante
                             </h3>
-                            <div className="mt-2 text-sm text-blue-700">
+                            <div className="mt-2 text-sm text-gray-700">
                               <p>Estas variables se utilizan para calcular:</p>
                               <ul className="list-disc list-inside mt-2 space-y-1">
                                 <li>Costos de productos en moneda local</li>
@@ -304,7 +342,8 @@ const Settings = () => {
                     {/* Tasa de cambio */}
                     <div className="space-y-3">
                       <label className="block text-sm font-medium text-gray-700">
-                        💱 Tasa de Cambio (USD)
+                        <Repeat className="inline h-5 w-5 mr-1 text-orange-500" />
+                         Tasa de Cambio (USD)
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -341,7 +380,7 @@ const Settings = () => {
                     {/* Costo por libra */}
                     <div className="space-y-3">
                       <label className="block text-sm font-medium text-gray-700">
-                        📦 Costo por Libra (USD)
+                        <BaggageClaim className="inline h-5 w-5 mr-1 text-orange-500" /> Costo por Libra (USD)
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -373,36 +412,6 @@ const Settings = () => {
                           </div>
                         </div>
                       )}
-                    </div>
-                  </div>
-
-                  {/* Calculadora de ejemplo */}
-                  <div className="border-t border-gray-200 pt-6">
-                    <h4 className="text-base font-medium text-gray-900 mb-4">
-                      🧮 Calculadora de Ejemplo
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100">
-                        <dt className="text-sm font-medium text-gray-600 mb-1">Producto $100 USD</dt>
-                        <dd className="text-lg font-bold text-orange-600">
-                          ${(parseFloat(changeRate) * 100).toFixed(2)}
-                        </dd>
-                        <p className="text-xs text-gray-500 mt-1">En moneda local</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100">
-                        <dt className="text-sm font-medium text-gray-600 mb-1">Envío 5 lb</dt>
-                        <dd className="text-lg font-bold text-orange-600">
-                          ${(parseFloat(costPerPound) * 5).toFixed(2)} USD
-                        </dd>
-                        <p className="text-xs text-gray-500 mt-1">Costo de envío</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100">
-                        <dt className="text-sm font-medium text-gray-600 mb-1">Envío 5 lb local</dt>
-                        <dd className="text-lg font-bold text-orange-600">
-                          ${(parseFloat(changeRate) * parseFloat(costPerPound) * 5).toFixed(2)}
-                        </dd>
-                        <p className="text-xs text-gray-500 mt-1">En moneda local</p>
-                      </div>
                     </div>
                   </div>
                     </>
@@ -441,157 +450,218 @@ const Settings = () => {
           )}
 
           {activeTab === 'security' && (
-            <Card className="shadow-lg border-0 bg-white rounded-2xl">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-xl font-semibold text-gray-900">
-                  Seguridad
-                </CardTitle>
-                <p className="text-gray-600">
-                  Configuración de seguridad y autenticación
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-4">
-                    Cambiar contraseña
-                  </label>
-                  <div className="space-y-4">
-                    <Input
-                      type="password"
-                      placeholder="Contraseña actual"
-                      className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
-                    />
-                    <Input
-                      type="password"
-                      placeholder="Nueva contraseña"
-                      className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
-                    />
-                    <Input
-                      type="password"
-                      placeholder="Confirmar nueva contraseña"
-                      className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
-                    />
+            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleChangePassword(); }}>
+              <Card className="shadow-lg border-0 bg-white rounded-2xl">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-semibold flex flex-row gap-2  text-gray-900">
+                    <Shield className="h-6 w-6 text-orange-500" />
+                    Seguridad - Cambiar contraseña
+                  </CardTitle>
+                  <p className="text-gray-600">
+                    Configuración de seguridad y autenticación
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="current-password" className="block text-sm font-medium text-gray-700 mb-2">
+                          Contraseña actual
+                        </label>
+                        <Input
+                          id="current-password"
+                          type="password"
+                          placeholder="Ingresa tu contraseña actual"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
+                          disabled={isChangingPassword}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-2">
+                          Nueva contraseña
+                        </label>
+                        <Input
+                          id="new-password"
+                          type="password"
+                          placeholder="Ingresa tu nueva contraseña"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
+                          disabled={isChangingPassword}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          La contraseña debe tener al menos 6 caracteres
+                        </p>
+                      </div>
+                      <div>
+                        <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-2">
+                          Confirmar nueva contraseña
+                        </label>
+                        <Input
+                          id="confirm-password"
+                          type="password"
+                          placeholder="Confirma tu nueva contraseña"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
+                          disabled={isChangingPassword}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div className="pt-4 border-t border-gray-100">
-                  <div className="flex items-start">
-                    <div className="flex items-center h-5">
-                      <input
-                        id="two-factor"
-                        name="two-factor"
-                        type="checkbox"
-                        className="focus:ring-orange-500 h-4 w-4 text-orange-600 border-gray-300 rounded"
-                      />
-                    </div>
-                    <div className="ml-3">
-                      <label htmlFor="two-factor" className="font-medium text-gray-700 text-sm">
-                        Autenticación de dos factores
-                      </label>
-                      <p className="text-gray-500 text-sm">Añade una capa extra de seguridad a tu cuenta</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+
+              <div className="flex justify-end">
+                <Button 
+                  type="submit"
+                  disabled={isChangingPassword}
+                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border-0"
+                >
+                  {isChangingPassword ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Cambiando contraseña...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Cambiar contraseña
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
           )}
 
           {activeTab === 'system' && (
             <Card className="shadow-lg border-0 bg-white rounded-2xl">
               <CardHeader className="pb-4">
-                <CardTitle className="text-xl font-semibold text-gray-900">
+                <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <Database className="h-6 w-6 text-orange-500" />
                   Sistema
                 </CardTitle>
                 <p className="text-gray-600">
-                  Configuración técnica del sistema
+                  Información técnica del sistema y base de datos
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Zona horaria
-                    </label>
-                    <select className="w-full py-3 px-4 border border-gray-200 bg-white rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 text-sm">
-                      <option>America/Mexico_City</option>
-                      <option>America/New_York</option>
-                      <option>Europe/Madrid</option>
-                      <option>Asia/Tokyo</option>
-                    </select>
+                {/* Estado de carga */}
+                {isLoadingSystemInfo && (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+                    <span className="ml-3 text-gray-600">Cargando información del sistema...</span>
                   </div>
+                )}
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Formato de fecha
-                    </label>
-                    <select className="w-full py-3 px-4 border border-gray-200 bg-white rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 text-sm">
-                      <option>DD/MM/YYYY</option>
-                      <option>MM/DD/YYYY</option>
-                      <option>YYYY-MM-DD</option>
-                    </select>
-                  </div>
-                </div>
+                {/* Contenido cuando hay datos */}
+                {!isLoadingSystemInfo && systemInfo && (
+                  <>
+                    {/* Información de la aplicación */}
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
+                        <Server className="h-4 w-4 text-orange-500" />
+                        Información de la Aplicación
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 ">
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                          <dt className="text-sm font-medium text-gray-500 mb-1">Versión</dt>
+                          <dd className="text-sm text-gray-900 font-semibold">
+                            <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">
+                              v{systemInfo.application.version}
+                            </Badge>
+                          </dd>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                          <dt className="text-sm font-medium text-gray-500 mb-1">Última actualización</dt>
+                          <dd className="text-sm text-gray-900 font-semibold">{systemInfo.application.last_updated}</dd>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                          <dt className="text-sm font-medium text-gray-500 mb-1">Entorno</dt>
+                          <dd className="text-sm text-gray-900 font-semibold capitalize">
+                            {systemInfo.application.environment}
+                          </dd>
+                        </div>
+                      </div>
+                    </div>
 
-                <div className="pt-4 border-t border-gray-100">
-                  <div className="flex items-start">
-                    <div className="flex items-center h-5">
-                      <input
-                        id="maintenance"
-                        name="maintenance"
-                        type="checkbox"
-                        className="focus:ring-orange-500 h-4 w-4 text-orange-600 border-gray-300 rounded"
-                      />
+                    {/* Información de la base de datos */}
+                    <div className="pt-4 border-t border-gray-100">
+                      <h4 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
+                        <HardDrive className="h-4 w-4 text-orange-500" />
+                        Base de Datos
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                          <dt className="text-sm font-medium text-gray-700 mb-1">Motor de Base de Datos</dt>
+                          <dd className="text-sm text-gray-900 font-semibold">
+                            {systemInfo.technology.database_type}
+                          </dd>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                          <dt className="text-sm font-medium text-gray-700 mb-1">Tamaño de BD</dt>
+                          <dd className="text-sm text-gray-900 font-semibold">
+                            {systemInfo.database.size_mb.toFixed(2)} MB
+                          </dd>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                          <dt className="text-sm font-medium text-gray-700 mb-1">Número de Tablas</dt>
+                          <dd className="text-sm text-gray-900 font-semibold">
+                            {systemInfo.database.tables_count}
+                          </dd>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                          <dt className="text-sm font-medium text-gray-700 mb-1">Total de Registros</dt>
+                          <dd className="text-sm text-gray-900 font-semibold">
+                            {systemInfo.database.total_records.toLocaleString()}
+                          </dd>
+                        </div>
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <label htmlFor="maintenance" className="font-medium text-gray-700 text-sm">
-                        Modo mantenimiento
-                      </label>
-                      <p className="text-gray-500 text-sm">Desactivar temporalmente el acceso al sistema</p>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="pt-6 border-t border-gray-100">
-                  <h4 className="text-sm font-medium text-gray-900 mb-4">Información del sistema</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <dt className="text-sm font-medium text-gray-500 mb-1">Versión</dt>
-                      <dd className="text-sm text-gray-900 font-semibold">
-                        <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">
-                          v1.2.3
-                        </Badge>
-                      </dd>
+                    
+
+                    {/* Tecnología */}
+                    <div className="pt-4 border-t border-gray-100">
+                      <h4 className="text-sm font-medium text-gray-900 mb-4">Stack Tecnológico</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-gray-50 rounded-xl p-4">
+                          <dt className="text-sm font-medium text-gray-500 mb-1">Django</dt>
+                          <dd className="text-sm text-gray-900 font-semibold">v{systemInfo.technology.django_version}</dd>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl p-4">
+                          <dt className="text-sm font-medium text-gray-500 mb-1">Python</dt>
+                          <dd className="text-sm text-gray-900 font-semibold">v{systemInfo.technology.python_version}</dd>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl p-4">
+                          <dt className="text-sm font-medium text-gray-500 mb-1">Sistema Operativo</dt>
+                          <dd className="text-sm text-gray-900 font-semibold">
+                            {systemInfo.server.os} {systemInfo.server.os_version}
+                          </dd>
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <dt className="text-sm font-medium text-gray-500 mb-1">Base de datos</dt>
-                      <dd className="text-sm text-gray-900 font-semibold">PostgreSQL 14.2</dd>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <dt className="text-sm font-medium text-gray-500 mb-1">Última actualización</dt>
-                      <dd className="text-sm text-gray-900 font-semibold">08/01/2025</dd>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <dt className="text-sm font-medium text-gray-500 mb-1">Almacenamiento usado</dt>
-                      <dd className="text-sm text-gray-900 font-semibold">2.4 GB / 10 GB</dd>
-                    </div>
+                  </>
+                )}
+
+                {/* Error al cargar */}
+                {!isLoadingSystemInfo && !systemInfo && (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="text-red-500 mb-2 text-2xl">⚠️</div>
+                    <p className="text-gray-600">No se pudo cargar la información del sistema</p>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           )}
 
-          {activeTab === 'stores' && (
-            <Card className="shadow-lg border-0 bg-white rounded-2xl">
-              <CardHeader className="pb-4">
-                <ShopsHeader/>
-              </CardHeader>
-              <CardContent className="space-y-6">
-              </CardContent>
-            </Card>
-          )}
           
 
-          {activeTab !== 'general' && activeTab !== 'stores' && activeTab !== 'variables' && (
+          {activeTab !== 'general' && activeTab !== 'stores' && activeTab !== 'variables' && activeTab !== 'security' && (
             <div className="flex justify-end">
               <Button className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border-0">
                 <Save className="h-4 w-4 mr-2" />

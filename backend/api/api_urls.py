@@ -40,6 +40,7 @@ urlpatterns = [
     path("admin/create/", views.CreateAdminUserView.as_view(), name="create_admin_user"),
     path("api_data/dashboard/stats/", views.DashboardMetricsView.as_view(), name="dashboard_stats"),
     path("api_data/reports/profits/", views.ProfitReportsView.as_view(), name="profit_reports"),
+    path("api_data/system/info/", views.SystemInfoView.as_view(), name="system_info"),
     # URLs de notificaciones (incluidas bajo el mismo prefijo `api_data/`)
     path("api_data/", include("api.urls_notifications")),
 ]

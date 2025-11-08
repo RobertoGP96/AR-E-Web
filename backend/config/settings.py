@@ -374,3 +374,9 @@ if USE_FILE_LOGGING:
     LOGGING['root']['handlers'].append('file')
     LOGGING['loggers']['django']['handlers'].append('file')
     LOGGING['loggers']['api']['handlers'].append('file')
+
+
+# Application version and metadata
+APP_VERSION = '1.2.3'
+LAST_UPDATED = '07/11/2025'
+ENVIRONMENT = config('ENVIRONMENT', default='development')
