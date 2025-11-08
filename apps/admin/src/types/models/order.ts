@@ -14,6 +14,7 @@ export interface Order {
   sales_manager?: CustomUser;
   status: OrderStatus;
   pay_status: PayStatus;
+  observations?: string;
   
   // Productos y entregas
   products?: Product[];
@@ -37,13 +38,19 @@ export interface Order {
 // Tipos para crear/editar pedido
 export interface CreateOrderData {
   client_id: ID;
-  sales_manager_id: ID;
+  sales_manager_id?: ID;
   status?: OrderStatus;
   pay_status?: PayStatus;
+  observations?: string;
 }
 
 export interface UpdateOrderData extends Partial<CreateOrderData> {
-  id: ID;
+  id?: ID;
+  client_id?: ID;
+  sales_manager_id?: ID;
+  status?: OrderStatus;
+  pay_status?: PayStatus;
+  observations?: string;
 }
 
 // Filtros para pedidos

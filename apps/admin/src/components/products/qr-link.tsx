@@ -15,8 +15,8 @@ interface QRLinkProps {
 const QRLink: React.FC<QRLinkProps> = ({ link }) => {
   return (
     <Popover>
-      <PopoverTrigger asChild className='p-1'>
-        <Button variant="outline" className='cursor-pointer p-0'><QrCode className='w-6 h-6' /></Button>
+      <PopoverTrigger asChild className='p-0 px-0'>
+        <Button variant="outline" className='cursor-pointer p-0 px-0'><QrCode className='w-6 h-6' /></Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-4 flex items-center justify-center">
         <QRCodeSVG

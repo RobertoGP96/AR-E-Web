@@ -1920,7 +1920,7 @@ class SystemInfoView(APIView):
             }
             
             # Versión de la aplicación (puedes manejarla desde settings o un archivo)
-            app_version = getattr(settings, 'APP_VERSION', '1.2.3')
+            app_version = getattr(settings, 'APP_VERSION', '1.0.1')
             
             # Fecha de última actualización (puedes tomarla de git o un archivo)
             from datetime import datetime

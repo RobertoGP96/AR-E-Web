@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useCreateOrder } from '@/hooks/order';
+import { useState, useEffect, useMemo } from 'react';
+import { useUpdateOrder } from '@/hooks/order';
 import { useUsers } from '@/hooks/user';
 import { toast } from 'sonner';
 import {
@@ -20,16 +20,17 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CheckCircle2, Truck, XCircle, LoaderIcon, CircleAlert } from 'lucide-react';
-import type { CustomUser } from '@/types';
+import { Loader2, CheckCircle2, Truck, XCircle, User, CircleAlert } from 'lucide-react';
+import type { Order, OrderStatus, PayStatus, CustomUser } from '@/types';
 
-interface CreateOrderDialogProps {
+interface EditOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  order: Order | null;
 }
 
-export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps) {
-  const createOrderMutation = useCreateOrder();
+export default function EditOrderDialog({ open, onOpenChange, order }: EditOrderDialogProps) {
+  const updateOrderMutation = useUpdateOrder();
   
   // Obtener usuarios (clientes y agentes)
   const { data: clientsData } = useUsers({ role: 'client' });
@@ -39,11 +40,11 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
 
   // Estado del formulario
   const [formData, setFormData] = useState({
-    client_id: undefined as number | undefined,
+    client_id: 0,
     sales_manager_id: 0,
     observations: '',
-    pay_status: 'No pagado',
-    status: 'Encargado',
+    pay_status: 'No pagado' as PayStatus,
+    status: 'Encargado' as OrderStatus,
   });
 
   // Filtrar clientes según el agente seleccionado
@@ -65,12 +66,28 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
     });
   }, [clientsData?.results, formData.sales_manager_id]);
 
+  // Actualizar el formulario cuando cambie la orden
+  useEffect(() => {
+    if (order) {
+      setFormData({
+        client_id: typeof order.client === 'object' ? order.client.id : 0,
+        sales_manager_id: typeof order.sales_manager === 'object' ? order.sales_manager.id : 0,
+        observations: order.observations || '',
+        pay_status: order.pay_status || 'No pagado',
+        status: order.status || 'Encargado',
+      });
+    }
+  }, [order]);
+
   // Funciones para obtener estilos según el estado
   const getOrderStatusStyles = (status: string) => {
     const styles = {
       'Encargado': 'bg-blue-50 border-blue-300 text-blue-800',
       'Procesando': 'bg-yellow-50 border-yellow-300 text-yellow-800',
-      'Completado': 'bg-green-50 border-green-300 text-green-800',
+      'Comprado': 'bg-indigo-50 border-indigo-300 text-indigo-800',
+      'Recibido': 'bg-purple-50 border-purple-300 text-purple-800',
+      'En transito': 'bg-orange-50 border-orange-300 text-orange-800',
+      'Entregado': 'bg-green-50 border-green-300 text-green-800',
       'Cancelado': 'bg-red-50 border-red-300 text-red-800',
     };
     return styles[status as keyof typeof styles] || '';
@@ -79,8 +96,8 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
   const getPayStatusStyles = (status: string) => {
     const styles = {
       'No pagado': 'bg-red-50 border-red-300 text-red-800',
-      'Pagado': 'bg-green-50 border-green-300 text-green-800',
       'Parcial': 'bg-yellow-50 border-yellow-300 text-yellow-800',
+      'Pagado': 'bg-green-50 border-green-300 text-green-800',
     };
     return styles[status as keyof typeof styles] || '';
   };
@@ -88,82 +105,82 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!order) {
+      toast.error('No se ha seleccionado un pedido');
+      return;
+    }
+
+    // Validación básica
     if (!formData.client_id) {
-      toast.error('Por favor selecciona un cliente');
+      toast.error('El cliente es obligatorio');
       return;
     }
 
     try {
-      await createOrderMutation.mutateAsync({
-        client_id: formData.client_id,
-        sales_manager_id: formData.sales_manager_id || undefined,
-        observations: formData.observations || undefined,
-        pay_status: formData.pay_status,
-        status: formData.status,
+      await updateOrderMutation.mutateAsync({
+        id: order.id,
+        data: {
+          client_id: formData.client_id,
+          sales_manager_id: formData.sales_manager_id || undefined,
+          observations: formData.observations || undefined,
+          pay_status: formData.pay_status,
+          status: formData.status,
+        },
       });
 
-      toast.success('Pedido creado exitosamente');
-
-      // Resetear formulario y cerrar diálogo
-      setFormData({
-        client_id: undefined,
-        sales_manager_id: 0,
-        observations: '',
-        pay_status: 'No pagado',
-        status: 'Encargado',
-      });
+      toast.success(`Pedido #${order.id} actualizado exitosamente`);
       onOpenChange(false);
     } catch (error) {
-      console.error('Error creating order:', error);
-      toast.error('No se pudo crear el pedido. Por favor intenta de nuevo.');
+      console.error('Error updating order:', error);
+      toast.error('No se pudo actualizar el pedido. Por favor intenta de nuevo.');
     }
-  };
-
-  const handleClientChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, client_id: parseInt(value) }));
-  };
-
-  const handleAgentChange = (value: string) => {
-    const newAgentId = parseInt(value);
-    setFormData((prev) => ({ 
-      ...prev, 
-      sales_manager_id: newAgentId,
-      // Limpiar el cliente seleccionado si no está en la lista filtrada
-      client_id: prev.client_id && filteredClients.find(c => c.id === prev.client_id) 
-        ? prev.client_id 
-        : undefined
-    }));
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Crear Nuevo Pedido</DialogTitle>
+          <DialogTitle>Editar Pedido #{order?.id}</DialogTitle>
           <DialogDescription>
-            Complete los datos del pedido. Los campos marcados con * son obligatorios.
+            Modifica los datos del pedido. Los campos con (*) son obligatorios.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4 py-4">
-            {/* Agente de Ventas - Ahora primero para filtrar clientes */}
+            {/* Manager de Ventas - Primero para filtrar clientes */}
             <div className="grid gap-2">
-              <Label htmlFor="agent">Agente de Ventas</Label>
+              <Label htmlFor="sales_manager_id">Manager de Ventas</Label>
               <Select
-                value={formData.sales_manager_id.toString()}
-                onValueChange={handleAgentChange}
+                value={formData.sales_manager_id?.toString() || ""}
+                onValueChange={(value) => {
+                  const newAgentId = parseInt(value);
+                  setFormData(prev => ({
+                    ...prev,
+                    sales_manager_id: newAgentId,
+                    // Limpiar el cliente seleccionado si no está en la lista filtrada
+                    client_id: prev.client_id && filteredClients.find(c => c.id === prev.client_id)
+                      ? prev.client_id
+                      : 0
+                  }));
+                }}
               >
-                <SelectTrigger id="agent" className="border-gray-200 focus:border-orange-300">
-                  <SelectValue placeholder="Selecciona un agente (opcional)" />
+                <SelectTrigger id="sales_manager_id" className="border-gray-200 focus:border-orange-300">
+                  <SelectValue placeholder="Selecciona un agente" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="0">
-                    <span className="text-muted-foreground">Todos los clientes</span>
+                    <div className="flex items-center gap-2">
+                      <User size={16} className="text-gray-400" />
+                      <span className="text-gray-500">Todos los clientes</span>
+                    </div>
                   </SelectItem>
-                  {agents.map((agent: CustomUser) => (
+                  {agents.map((agent) => (
                     <SelectItem key={agent.id} value={agent.id.toString()}>
-                      {agent.full_name}
+                      <div className="flex items-center gap-2">
+                        <User size={16} />
+                        <span>{agent.full_name || `${agent.name} ${agent.last_name}`}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -173,26 +190,29 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
 
             {/* Cliente */}
             <div className="grid gap-2">
-              <Label htmlFor="client">
+              <Label htmlFor="client_id">
                 Cliente <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={formData.client_id?.toString() || ""}
-                onValueChange={handleClientChange}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: parseInt(value) }))}
               >
-                <SelectTrigger id="client" className="border-gray-200 focus:border-orange-300">
+                <SelectTrigger id="client_id" className="border-gray-200 focus:border-orange-300">
                   <SelectValue placeholder="Selecciona un cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredClients.map((client: CustomUser) => (
+                  {filteredClients.map((client) => (
                     <SelectItem key={client.id} value={client.id.toString()}>
-                      {client.full_name}
+                      <div className="flex items-center gap-2">
+                        <User size={16} />
+                        <span>{client.full_name || `${client.name} ${client.last_name}`}</span>
+                      </div>
                     </SelectItem>
                   ))}
                   {filteredClients.length === 0 && (
                     <div className="px-2 py-1 text-sm text-gray-500">
-                      {formData.sales_manager_id !== 0 
-                        ? 'No hay clientes asignados a este agente' 
+                      {formData.sales_manager_id !== 0
+                        ? 'No hay clientes asignados a este agente'
                         : 'No hay clientes disponibles'}
                     </div>
                   )}
@@ -205,11 +225,9 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
               <Label htmlFor="status">Estado del Pedido</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, status: value }))
-                }
+                onValueChange={(value: OrderStatus) => setFormData(prev => ({ ...prev, status: value }))}
               >
-                <SelectTrigger 
+                <SelectTrigger
                   id="status"
                   className={`${getOrderStatusStyles(formData.status)} font-medium`}
                 >
@@ -218,25 +236,43 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
                 <SelectContent>
                   <SelectItem value="Encargado">
                     <div className="flex items-center gap-2">
-                      <Truck size={16} />
+                      <CircleAlert size={16} className="text-blue-600" />
                       <span>Encargado</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="Procesando">
                     <div className="flex items-center gap-2">
-                      <LoaderIcon size={16} />
+                      <Loader2 size={16} className="text-yellow-600" />
                       <span>Procesando</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="Completado">
+                  <SelectItem value="Comprado">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 size={16} />
-                      <span>Completado</span>
+                      <CheckCircle2 size={16} className="text-indigo-600" />
+                      <span>Comprado</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Recibido">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 size={16} className="text-purple-600" />
+                      <span>Recibido</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="En transito">
+                    <div className="flex items-center gap-2">
+                      <Truck size={16} className="text-orange-600" />
+                      <span>En tránsito</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Entregado">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 size={16} className="text-green-600" />
+                      <span>Entregado</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="Cancelado">
                     <div className="flex items-center gap-2">
-                      <XCircle size={16} />
+                      <XCircle size={16} className="text-red-600" />
                       <span>Cancelado</span>
                     </div>
                   </SelectItem>
@@ -249,11 +285,9 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
               <Label htmlFor="pay_status">Estado de Pago</Label>
               <Select
                 value={formData.pay_status}
-                onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, pay_status: value }))
-                }
+                onValueChange={(value: PayStatus) => setFormData(prev => ({ ...prev, pay_status: value }))}
               >
-                <SelectTrigger 
+                <SelectTrigger
                   id="pay_status"
                   className={`${getPayStatusStyles(formData.pay_status)} font-medium`}
                 >
@@ -262,19 +296,19 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
                 <SelectContent>
                   <SelectItem value="No pagado">
                     <div className="flex items-center gap-2">
-                      <CircleAlert size={16} />
-                      <span>No pagado</span>
+                      <XCircle size={16} className="text-red-600" />
+                      <span>No Pagado</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="Pagado">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 size={16} />
+                      <CheckCircle2 size={16} className="text-green-600" />
                       <span>Pagado</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="Parcial">
                     <div className="flex items-center gap-2">
-                      <Loader2 size={16} />
+                      <Loader2 size={16} className="text-yellow-600" />
                       <span>Pago Parcial</span>
                     </div>
                   </SelectItem>
@@ -290,12 +324,9 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
                 placeholder="Ingresa cualquier observación o nota adicional..."
                 value={formData.observations}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    observations: e.target.value,
-                  }))
+                  setFormData(prev => ({ ...prev, observations: e.target.value }))
                 }
-                className="min-h-[100px]"
+                className="min-h-[100px] border-gray-200 focus:border-orange-300"
               />
             </div>
           </div>
@@ -305,18 +336,18 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
               type="button"
               variant="secondary"
               onClick={() => onOpenChange(false)}
-              disabled={createOrderMutation.isPending}
+              disabled={updateOrderMutation.isPending}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={createOrderMutation.isPending}>
-              {createOrderMutation.isPending ? (
+            <Button type="submit" disabled={updateOrderMutation.isPending}>
+              {updateOrderMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creando...
+                  Guardando...
                 </>
               ) : (
-                'Crear Pedido'
+                'Guardar Cambios'
               )}
             </Button>
           </DialogFooter>

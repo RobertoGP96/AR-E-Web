@@ -4,4 +4,5 @@
 
 export * from './useOrders';
 export * from './useCreateOrder';
+export * from './useUpdateOrder';
 export * from './use-orders-available-for-delivery';

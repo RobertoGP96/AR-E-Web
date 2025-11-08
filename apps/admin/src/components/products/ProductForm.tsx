@@ -197,6 +197,9 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         }
     }, [newProduct.link, newProduct.shop])
 
+    // Estado para controlar si se muestra el selector manual de tienda
+    const [showManualShopSelect, setShowManualShopSelect] = useState(false)
+
     // Cuando se detecta un shop por link, intentar normalizar con las shops de la BD
     const { shops: availableShops, error: shopsError } = useShops()
     useEffect(() => {
@@ -257,23 +260,26 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             return
         }
 
-        if (!newProduct.link?.trim()) {
-            alert('El link es un campo obligatorio')
+        // Validar que haya una tienda seleccionada
+        if (!newProduct.shop?.trim()) {
+            alert('Debes seleccionar o detectar una tienda')
             return
         }
 
-        // Validar que el link sea una URL válida
-        try {
-            new URL(newProduct.link)
-        } catch {
-            alert('Por favor, introduce un link válido')
-            return
-        }
+        // Validar el link solo si se proporciona
+        if (newProduct.link?.trim()) {
+            try {
+                new URL(newProduct.link)
+            } catch {
+                alert('Por favor, introduce un link válido')
+                return
+            }
 
-        // Validar longitud máxima del link
-        if (newProduct.link.length > 200) {
-            alert('El link no puede tener más de 200 caracteres')
-            return
+            // Validar longitud máxima del link
+            if (newProduct.link.length > 200) {
+                alert('El link no puede tener más de 200 caracteres')
+                return
+            }
         }
 
         // En modo edición, orderId es opcional
@@ -304,7 +310,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         const qty = Number(newProduct.amount_requested) || 1
         const unit = Number(newProduct.shop_cost) || 0
         const shippingCost = Number(newProduct.shop_delivery_cost) || 0
-        const shopName = (matchedShopId ? (availableShops.find(s => s.id === matchedShopId)?.name) : newProduct.shop) || extractShopName(newProduct.link) || 'Unknown'
+        const shopName = (matchedShopId ? (availableShops.find(s => s.id === matchedShopId)?.name) : newProduct.shop) || (newProduct.link ? extractShopName(newProduct.link) : '') || 'Unknown'
         const shopTaxRate = newProduct.shop_taxes
         const addedTaxes = Number(newProduct.added_taxes) || 0
         const ownTaxes = Number(newProduct.own_taxes) || 0
@@ -415,82 +421,135 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                             <div className="p-1 rounded ">
                                 <Link2 className="h-3 w-3 text-green-600 dark:text-green-400" />
                             </div>
-                            Link del producto *
+                            Link del producto
+                            <span className="text-xs text-muted-foreground font-normal">(opcional)</span>
                         </label>
                         <Input
                             id="link"
                             type="url"
                             placeholder="https://ejemplo.com/producto"
                             value={newProduct.link}
-                            onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
+                            onChange={(e) => {
+                                setNewProduct({ ...newProduct, link: e.target.value })
+                                // Si se ingresa un link, desactivar selector manual
+                                if (e.target.value.trim()) {
+                                    setShowManualShopSelect(false)
+                                }
+                            }}
                             className="transition-all duration-200 focus:ring-2 focus:ring-primary/30 focus:border-primary border-muted-foreground/20 hover:border-muted-foreground/40"
                             maxLength={200}
                         />
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <CircleAlert className="h-3 w-3 text-gray-500" />
-                            La tienda se detectará automáticamente del link
+                            Si proporcionas un link, la tienda se detectará automáticamente
                         </p>
                         <p className="text-xs text-muted-foreground">
                             Máximo 200 caracteres ({newProduct.link?.length || 0}/200)
                         </p>
                     </div>
 
-                    {/* Tienda (auto-detectada) */}
+                    {/* Tienda (auto-detectada o manual) */}
                     <div className="space-y-3">
-                        <label htmlFor="shop" className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
-                            <div className="p-1 rounded ">
-                                <Store className="h-3 w-3 text-purple-600 dark:text-purple-400" />
-                            </div>
-                            Tienda
-                        </label>
-                        <div className="relative">
-                            <Input
-                                id="shop"
-                                placeholder="Esperando detección automática..."
-                                value={newProduct.shop}
-                                readOnly
-                                className="bg-muted/30 border-muted-foreground/20 text-muted-foreground cursor-not-allowed pr-10"
-                            />
-                            {newProduct.shop ? (
-                                isShopInDatabase ? (
-                                    <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
-                                ) : isShopInDatabase === false ? (
-                                    <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
-                                ) : (
-                                    <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
-                                )
-                            ) : newProduct.link ? (
-                                <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
-                            ) : null}
-                        </div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            {newProduct.shop ? (
-                                isShopInDatabase ? (
-                                    <>
-                                        <CheckCircle className="h-3 w-3 text-emerald-500" />
-                                        Tienda detectada y registrada
-                                    </>
-                                ) : isShopInDatabase === false ? (
-                                    <>
-                                        <AlertCircle className="h-3 w-3 text-amber-500" />
-                                        Tienda detectada pero no registrada
-                                        <Badge variant="outline" className="ml-2 text-amber-600 border-amber-600">Advertencia</Badge>
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle className="h-3 w-3 text-emerald-500" />
-                                        Tienda detectada automáticamente
-                                    </>
-                                )
-                            ) : newProduct.link ? (
-                                <>
-                                    <AlertCircle className="h-3 w-3 text-amber-500" />
-                                    No se pudo detectar la tienda automáticamente
-                                </>
-                            ) : (
-                                "Introduce un link para detectar la tienda"
+                        <div className="flex items-center justify-between">
+                            <label htmlFor="shop" className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+                                <div className="p-1 rounded ">
+                                    <Store className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                                </div>
+                                Tienda *
+                            </label>
+                            {!newProduct.link?.trim() && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowManualShopSelect(!showManualShopSelect)}
+                                    className="h-8 text-xs"
+                                >
+                                    {showManualShopSelect ? 'Ocultar selector' : 'Seleccionar manualmente'}
+                                </Button>
                             )}
-                        </p>
+                        </div>
+                        
+                        {showManualShopSelect && !newProduct.link?.trim() ? (
+                            // Selector manual de tienda
+                            <>
+                                <Select
+                                    value={newProduct.shop || ''}
+                                    onValueChange={(val) => setNewProduct(prev => ({ ...prev, shop: val }))}
+                                >
+                                    <SelectTrigger id="shop">
+                                        <SelectValue placeholder="Selecciona una tienda" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableShops && availableShops.length > 0 ? (
+                                            availableShops.map((shop: { id: number; name: string }) => (
+                                                <SelectItem key={shop.id} value={shop.name}>
+                                                    {shop.name}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <SelectItem value="none" disabled>No hay tiendas disponibles</SelectItem>
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Store className="h-3 w-3 text-purple-500" />
+                                    Selecciona la tienda manualmente
+                                </p>
+                            </>
+                        ) : (
+                            // Campo de solo lectura (detección automática)
+                            <>
+                                <div className="relative">
+                                    <Input
+                                        id="shop"
+                                        placeholder={newProduct.link?.trim() ? "Esperando detección automática..." : "Sin tienda (usa selector manual)"}
+                                        value={newProduct.shop}
+                                        readOnly
+                                        className="bg-muted/30 border-muted-foreground/20 text-muted-foreground cursor-not-allowed pr-10"
+                                    />
+                                    {newProduct.shop ? (
+                                        isShopInDatabase ? (
+                                            <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                                        ) : isShopInDatabase === false ? (
+                                            <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
+                                        ) : (
+                                            <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                                        )
+                                    ) : newProduct.link ? (
+                                        <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
+                                    ) : null}
+                                </div>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    {newProduct.shop ? (
+                                        isShopInDatabase ? (
+                                            <>
+                                                <CheckCircle className="h-3 w-3 text-emerald-500" />
+                                                Tienda detectada y registrada
+                                            </>
+                                        ) : isShopInDatabase === false ? (
+                                            <>
+                                                <AlertCircle className="h-3 w-3 text-amber-500" />
+                                                Tienda detectada pero no registrada
+                                                <Badge variant="outline" className="ml-2 text-amber-600 border-amber-600">Advertencia</Badge>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle className="h-3 w-3 text-emerald-500" />
+                                                Tienda detectada automáticamente
+                                            </>
+                                        )
+                                    ) : newProduct.link ? (
+                                        <>
+                                            <AlertCircle className="h-3 w-3 text-amber-500" />
+                                            No se pudo detectar la tienda automáticamente
+                                        </>
+                                    ) : (
+                                        "Introduce un link o selecciona una tienda manualmente"
+                                    )}
+                                </p>
+                            </>
+                        )}
                         {shopsError && (
                             <p className="text-xs text-red-500 flex items-center gap-1">
                                 <AlertCircle className="h-3 w-3" />
@@ -864,7 +923,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                         <Button
                             type="submit"
                             className="min-w-[140px] h-10 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={!newProduct.name.trim() || !newProduct.link?.trim()}
+                            disabled={!newProduct.name.trim() || !newProduct.shop?.trim()}
                         >
                             <Save className="h-4 w-4 mr-2" />
                             {isEditing ? 'Guardar cambios' : 'Añadir producto'}

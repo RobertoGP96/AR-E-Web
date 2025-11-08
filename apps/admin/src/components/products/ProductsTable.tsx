@@ -197,7 +197,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                   {visibleColumns.includes('index') && <TableCell className="font-medium">{(currentPage - 1) * itemsPerPage + idx + 1}</TableCell>}
                   {visibleColumns.includes('sku') && <TableCell className="font-mono text-sm">{product.sku}</TableCell>}
                   {visibleColumns.includes('name') && (
-                    <TableCell>
+                    <TableCell className="flex flex-row items-center gap-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium capitalize">{product.name}</span>
                         <QRLink link={product.link || 'https://arye-shipps.netlify.app'} />
@@ -219,7 +219,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                         const tags = parseTagsFromDescriptionBlock(description);
                         if (!tags || tags.length === 0) return null;
                         return (
-                          <div className="mt-2 flex flex-wrap items-center gap-1">
+                          <div className=" flex flex-row flex-wrap items-start gap-1">
                             {tags.map((tag, i) => (
                               <Badge key={i} variant="secondary" className="text-xs">
                                 {tag.name}{tag.value ? `: ${tag.value}` : ''}
@@ -288,18 +288,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                   {visibleColumns.includes('actions') && (
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
-                        {onEdit && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onEdit(product)}
-                            title="Editar producto"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {/* Eliminar solo disponible desde el dropdown */}
-
+                        
                         {/* Dropdown con acciones: Ver detalles, Ir a pedido */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

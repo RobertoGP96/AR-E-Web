@@ -14,7 +14,7 @@ const Settings = () => {
   const { config, isLoading: isLoadingConfig, updateConfig, isUpdating } = useSystemConfig();
   const { mutate: changePassword, isPending: isChangingPassword } = useChangePassword();
   const { data: systemInfo, isLoading: isLoadingSystemInfo } = useSystemInfo();
-  
+
   // Estados locales para el formulario de variables
   const [changeRate, setChangeRate] = useState('0');
   const [costPerPound, setCostPerPound] = useState('0');
@@ -136,18 +136,16 @@ const Settings = () => {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`group rounded-xl px-4 py-3 flex items-center text-sm font-medium w-full text-left transition-all duration-200 ${
-                        activeTab === tab.id
-                          ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg'
-                          : 'text-gray-700 hover:text-orange-600 hover:bg-orange-50'
-                      }`}
+                      className={`group rounded-xl px-4 py-3 flex items-center text-sm font-medium w-full text-left transition-all duration-200 ${activeTab === tab.id
+                        ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg'
+                        : 'text-gray-700 hover:text-orange-600 hover:bg-orange-50'
+                        }`}
                     >
                       <Icon
-                        className={`flex-shrink-0 mr-3 h-5 w-5 ${
-                          activeTab === tab.id
-                            ? 'text-white'
-                            : 'text-gray-400 group-hover:text-orange-500'
-                        }`}
+                        className={`flex-shrink-0 mr-3 h-5 w-5 ${activeTab === tab.id
+                          ? 'text-white'
+                          : 'text-gray-400 group-hover:text-orange-500'
+                          }`}
                         aria-hidden="true"
                       />
                       <span className="truncate">{tab.name}</span>
@@ -185,7 +183,7 @@ const Settings = () => {
                       />
                     </div>
 
-                    
+
 
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -323,7 +321,7 @@ const Settings = () => {
                           </div>
                           <div className="ml-3 flex-1">
                             <h3 className="text-sm font-medium text-gray-800">
-                               Información Importante
+                              Información Importante
                             </h3>
                             <div className="mt-2 text-sm text-gray-700">
                               <p>Estas variables se utilizan para calcular:</p>
@@ -337,83 +335,83 @@ const Settings = () => {
                         </div>
                       </div>
 
-                  {/* Formulario de variables */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Tasa de cambio */}
-                    <div className="space-y-3">
-                      <label className="block text-sm font-medium text-gray-700">
-                        <Repeat className="inline h-5 w-5 mr-1 text-orange-500" />
-                         Tasa de Cambio (USD)
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <DollarSign className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={changeRate}
-                          onChange={(e) => setChangeRate(e.target.value)}
-                          placeholder="0.00"
-                          className="pl-10 border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
-                          disabled={isLoadingConfig}
-                        />
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        Tasa de conversión de USD a tu moneda local
-                      </p>
-                      {config && (
-                        <div className="bg-gray-50 rounded-lg p-3 text-xs">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Valor actual:</span>
-                            <span className="font-semibold text-gray-900">${config.change_rate.toFixed(2)}</span>
+                      {/* Formulario de variables */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Tasa de cambio */}
+                        <div className="space-y-3">
+                          <label className="block text-sm font-medium text-gray-700">
+                            <Repeat className="inline h-5 w-5 mr-1 text-orange-500" />
+                            Tasa de Cambio (USD)
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <DollarSign className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={changeRate}
+                              onChange={(e) => setChangeRate(e.target.value)}
+                              placeholder="0.00"
+                              className="pl-10 border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
+                              disabled={isLoadingConfig}
+                            />
                           </div>
-                          <div className="flex justify-between mt-1">
-                            <span className="text-gray-600">Última actualización:</span>
-                            <span className="text-gray-900">{new Date(config.updated_at).toLocaleDateString()}</span>
-                          </div>
+                          <p className="text-xs text-gray-500">
+                            Tasa de conversión de USD a tu moneda local
+                          </p>
+                          {config && (
+                            <div className="bg-gray-50 rounded-lg p-3 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Valor actual:</span>
+                                <span className="font-semibold text-gray-900">${config.change_rate.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between mt-1">
+                                <span className="text-gray-600">Última actualización:</span>
+                                <span className="text-gray-900">{new Date(config.updated_at).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
 
-                    {/* Costo por libra */}
-                    <div className="space-y-3">
-                      <label className="block text-sm font-medium text-gray-700">
-                        <BaggageClaim className="inline h-5 w-5 mr-1 text-orange-500" /> Costo por Libra (USD)
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <DollarSign className="h-5 w-5 text-gray-400" />
+                        {/* Costo por libra */}
+                        <div className="space-y-3">
+                          <label className="block text-sm font-medium text-gray-700">
+                            <BaggageClaim className="inline h-5 w-5 mr-1 text-orange-500" /> Costo por Libra (USD)
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <DollarSign className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={costPerPound}
+                              onChange={(e) => setCostPerPound(e.target.value)}
+                              placeholder="0.00"
+                              className="pl-10 border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
+                              disabled={isLoadingConfig}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            Costo general de envío por libra (lb) en USD
+                          </p>
+                          {config && (
+                            <div className="bg-gray-50 rounded-lg p-3 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Valor actual:</span>
+                                <span className="font-semibold text-gray-900">${config.cost_per_pound.toFixed(2)}/lb</span>
+                              </div>
+                              <div className="flex justify-between mt-1">
+                                <span className="text-gray-600">Última actualización:</span>
+                                <span className="text-gray-900">{new Date(config.updated_at).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={costPerPound}
-                          onChange={(e) => setCostPerPound(e.target.value)}
-                          placeholder="0.00"
-                          className="pl-10 border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
-                          disabled={isLoadingConfig}
-                        />
                       </div>
-                      <p className="text-xs text-gray-500">
-                        Costo general de envío por libra (lb) en USD
-                      </p>
-                      {config && (
-                        <div className="bg-gray-50 rounded-lg p-3 text-xs">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Valor actual:</span>
-                            <span className="font-semibold text-gray-900">${config.cost_per_pound.toFixed(2)}/lb</span>
-                          </div>
-                          <div className="flex justify-between mt-1">
-                            <span className="text-gray-600">Última actualización:</span>
-                            <span className="text-gray-900">{new Date(config.updated_at).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
                     </>
                   )}
 
@@ -428,7 +426,7 @@ const Settings = () => {
               </Card>
 
               <div className="flex justify-end">
-                <Button 
+                <Button
                   type="submit"
                   disabled={isLoadingConfig || isUpdating || !config}
                   className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border-0"
@@ -463,7 +461,7 @@ const Settings = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <label htmlFor="current-password" className="block text-sm font-medium text-gray-700 mb-2">
@@ -517,7 +515,7 @@ const Settings = () => {
               </Card>
 
               <div className="flex justify-end">
-                <Button 
+                <Button
                   type="submit"
                   disabled={isChangingPassword}
                   className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border-0"
@@ -623,21 +621,21 @@ const Settings = () => {
                       </div>
                     </div>
 
-                    
+
 
                     {/* Tecnología */}
-                    <div className="pt-4 border-t border-gray-100">
+                    <div className="pt-4 border-t border-gray-100 ">
                       <h4 className="text-sm font-medium text-gray-900 mb-4">Stack Tecnológico</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 ">
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <dt className="text-sm font-medium text-gray-500 mb-1">Django</dt>
                           <dd className="text-sm text-gray-900 font-semibold">v{systemInfo.technology.django_version}</dd>
                         </div>
-                        <div className="bg-gray-50 rounded-xl p-4">
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <dt className="text-sm font-medium text-gray-500 mb-1">Python</dt>
                           <dd className="text-sm text-gray-900 font-semibold">v{systemInfo.technology.python_version}</dd>
                         </div>
-                        <div className="bg-gray-50 rounded-xl p-4">
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <dt className="text-sm font-medium text-gray-500 mb-1">Sistema Operativo</dt>
                           <dd className="text-sm text-gray-900 font-semibold">
                             {systemInfo.server.os} {systemInfo.server.os_version}
@@ -659,7 +657,7 @@ const Settings = () => {
             </Card>
           )}
 
-          
+
 
           {activeTab !== 'general' && activeTab !== 'stores' && activeTab !== 'variables' && activeTab !== 'security' && (
             <div className="flex justify-end">

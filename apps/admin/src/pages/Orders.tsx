@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useOrders } from '../hooks/order/useOrders';
-import { OrdersHeader, OrdersFilters, OrdersTable, AddProductsDialog } from '@/components/orders';
+import { OrdersHeader, OrdersFilters, OrdersTable, AddProductsDialog, EditOrderDialog } from '@/components/orders';
 import type { CreateProductData, Order } from '@/types';
 import { toast } from 'sonner';
 import { useDeleteOrder } from '@/hooks/order/useDeleteOrder';
@@ -64,6 +64,9 @@ const Orders = () => {
   // Estado para el diálogo de añadir productos
   const [addProductsOrder, setAddProductsOrder] = useState<Order | null>(null);
 
+  // Estado para el diálogo de edición
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+
   // Hooks para mutaciones reales
   const markPaidMutation = useMarkOrderAsPaid();
   const addProductsMutation = useAddProductsToOrder();
@@ -82,6 +85,11 @@ const Orders = () => {
   // Handler para abrir diálogo de añadir productos
   const handleAddProducts = (order: Order) => {
     setAddProductsOrder(order);
+  };
+
+  // Handler para abrir diálogo de edición
+  const handleEdit = (order: Order) => {
+    setEditingOrder(order);
   };
 
   const handleAddProductsConfirm = async (order: Order, products: CreateProductData[]) => {
@@ -123,11 +131,20 @@ const Orders = () => {
       <OrdersTable 
         orders={filteredOrders}
         isLoading={isLoading}
-        
+        onEdit={handleEdit}
         onDelete={handleDelete}
         onConfirmPayment={handleConfirmPayment}
         onAddProducts={handleAddProducts}
       />
+
+      {/* Dialogo de editar pedido */}
+      {editingOrder && (
+        <EditOrderDialog
+          order={editingOrder}
+          open={Boolean(editingOrder)}
+          onOpenChange={(open) => !open && setEditingOrder(null)}
+        />
+      )}
 
       {/* Dialogo de añadir productos */}
       {addProductsOrder && (
