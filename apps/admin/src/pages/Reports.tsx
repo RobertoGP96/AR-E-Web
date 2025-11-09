@@ -234,28 +234,6 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 group cursor-pointer bg-gradient-to-br from-amber-50 via-amber-50/80 to-amber-100/50 border-amber-100 hover:border-amber-200 hover:shadow-amber-100/50">
-          {/* Efecto de brillo en hover */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          
-          {/* Decorative corner accent */}
-          <div className="absolute top-0 right-0 w-24 h-24 opacity-10 transform translate-x-8 -translate-y-8 rounded-full blur-2xl transition-all duration-300 group-hover:scale-150 bg-gradient-to-br from-amber-500 to-amber-600" />
-          
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-            <CardTitle className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Gastos Operativos
-            </CardTitle>
-            <div className="p-2.5 md:p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-              <TrendingDown className="h-5 w-5 md:h-6 md:w-6 text-white" />
-            </div>
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-2xl md:text-3xl font-bold text-amber-600 tracking-tight">
-              ${(reports.summary.total_purchase_operational_expenses || 0).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">Gastos extra de compras</p>
-          </CardContent>
-        </Card>
       </div>
 
       <Tabs defaultValue="monthly" className="space-y-4">

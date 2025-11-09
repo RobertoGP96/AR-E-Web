@@ -316,7 +316,8 @@ class ProductSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(int)
     def get_amount_received(self, obj):
-        return getattr(obj, 'amount_received', 0)
+        """Retorna la cantidad total de productos recibidos desde la base de datos"""
+        return obj.amount_received
 
     @extend_schema_field(float)
     def get_cost_per_product(self, obj):
@@ -758,22 +759,22 @@ class ProductReceivedSerializer(serializers.ModelSerializer):
     """
     """Product received by the logistical"""
 
-    original_product = serializers.SlugRelatedField(
+    original_product = ProductSerializer(read_only=True)
+    original_product_id = serializers.PrimaryKeyRelatedField(
         queryset=Product.objects.all(),
-        slug_field="id",
+        source='original_product',
+        write_only=True,
         error_messages={
             "does_not_exist": "El producto {value} no existe.",
             "invalid": "El valor proporcionado para el producto no es válido.",
         },
-        write_only=True,
-    )
-    original_product_detail = ProductSerializer(
-        source="original_product", read_only=True
     )
     
-    package = serializers.SlugRelatedField(
+    package_id = serializers.PrimaryKeyRelatedField(
         queryset=Package.objects.all(),
-        slug_field="id",
+        source='package',
+        required=False,
+        allow_null=True,
         error_messages={
             "does_not_exist": "El paquete {value} no existe.",
             "invalid": "El valor proporcionado para el paquete no es válido.",
@@ -786,8 +787,8 @@ class ProductReceivedSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "original_product",
-            "original_product_detail",
-            "package",
+            "original_product_id",
+            "package_id",
             "amount_received",
             "observation",
             "created_at",
@@ -818,27 +819,26 @@ class ProductDeliverySerializer(serializers.ModelSerializer):
     """
     """Product delivered and received by the logistical"""
 
-    original_product = serializers.SlugRelatedField(
+    original_product = ProductSerializer(read_only=True)
+    original_product_id = serializers.PrimaryKeyRelatedField(
         queryset=Product.objects.all(),
-        slug_field="id",
+        source='original_product',
+        write_only=True,
         error_messages={
             "does_not_exist": "El producto {value} no existe.",
             "invalid": "El valor proporcionado para el producto no es válido.",
         },
-        write_only=True,
-    )
-    original_product_detail = ProductSerializer(
-        source="original_product", read_only=True
     )
    
-    deliver_receip = serializers.SlugRelatedField(
+    deliver_receip_id = serializers.PrimaryKeyRelatedField(
         queryset=DeliverReceip.objects.all(),
-        slug_field="id",
+        source='deliver_receip',
+        required=False,
+        allow_null=True,
         error_messages={
             "does_not_exist": "El recibo de entrega {value} no existe.",
             "invalid": "El valor proporcionado para el recibo de entrega no es válido.",
         },
-        required=False,
     )
 
     class Meta:
@@ -846,8 +846,8 @@ class ProductDeliverySerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "original_product",
-            "original_product_detail",
-            "deliver_receip",
+            "original_product_id",
+            "deliver_receip_id",
             "amount_delivered",
             "reception",
             "created_at",
@@ -1010,7 +1010,11 @@ class PackageSerializer(serializers.ModelSerializer):
             "invalid": "El valor proporcionado para el pedido no es válido.",
         },
     )
-    contained_products = ProductReceivedSerializer(many=True, required=False)
+    contained_products = ProductReceivedSerializer(
+        many=True, 
+        required=False, 
+        source='package_products'
+    )
 
     class Meta:
         model = Package
@@ -1029,7 +1033,7 @@ class PackageSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         package_picture_data = validated_data.pop('package_picture', [])
-        contained_products_data = validated_data.pop('contained_products', [])
+        contained_products_data = validated_data.pop('package_products', [])
         package = Package.objects.create(**validated_data)
         
         # Asignar imágenes si se proporcionaron

@@ -12,7 +12,7 @@ import {
   TableHead,
 } from "@/components/ui/table";
 import { Button } from "../ui/button";
-import { Edit2, Trash2, ExternalLink, MoreHorizontal, Loader2, Box, ShoppingBag, Truck } from "lucide-react";
+import { Edit2, Trash2, ExternalLink, MoreHorizontal, Loader2, Box, ShoppingBag, Truck, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { parseTagsFromDescriptionBlock } from '@/lib/tags';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -260,10 +260,13 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                           <ShoppingBag className="h-4 w-4" />
                           {product.amount_purchased}
                         </div>
-
+                        <div className="flex items-center gap-1">
+                          <Briefcase className="h-4 w-4" />
+                          {product.amount_received}
+                        </div>
                         <div className="flex items-center gap-1">
                           <Truck className="h-4 w-4" />
-                          {product.amount_received}
+                          {product.amount_delivered}
                         </div>
                       </div>
                     </TableCell>
@@ -280,6 +283,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                       )}
                     </TableCell>
                   )}
+
                   {visibleColumns.includes('amount_delivered') && (
                     <TableCell className="text-center">
                       <span className={product.is_fully_delivered ? "font-semibold text-green-600" : ""}>

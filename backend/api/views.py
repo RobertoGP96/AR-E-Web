@@ -70,6 +70,13 @@ from api.models import (
     EvidenceImages,
     Category,
 )
+from api.enums import (
+    OrderStatusEnum,
+    ProductStatusEnum,
+    PackageStatusEnum,
+    DeliveryStatusEnum,
+    PaymentStatusEnum,
+)
 from api.utils.email_sender import send_email
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -885,6 +892,53 @@ class ProductReceivedViewSet(viewsets.ModelViewSet):
                 raise ValidationError(f"Error al procesar productos: {str(e)}") from e
 
     @extend_schema(
+        summary="Actualizar producto recibido",
+        description="Actualiza un registro de producto recibido y recalcula el estado del producto original.",
+        responses={200: ProductReceivedSerializer},
+        tags=["Productos recibidos"]
+    )
+    def update(self, request, *args, **kwargs):
+        with transaction.atomic():
+            partial = kwargs.pop('partial', False)
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            
+            # Guardar y actualizar el producto original
+            product_received = serializer.save()
+            
+            # Recalcular el amount_received y estado del producto original
+            if product_received.original_product:
+                product = product_received.original_product
+                total_received = sum(
+                    pr.amount_received 
+                    for pr in product.receiveds.all()
+                )
+                product.amount_received = total_received
+                
+                # Actualizar estado si es necesario
+                if total_received >= product.amount_requested:
+                    if product.status in [ProductStatusEnum.COMPRADO.value, ProductStatusEnum.ENCARGADO.value]:
+                        product.status = ProductStatusEnum.RECIBIDO.value
+                        product.save(update_fields=['amount_received', 'status', 'updated_at'])
+                    else:
+                        product.save(update_fields=['amount_received', 'updated_at'])
+                else:
+                    # Si ahora hay menos recibido que solicitado, ajustar estado
+                    if product.status == ProductStatusEnum.RECIBIDO.value:
+                        if product.amount_purchased >= product.amount_requested:
+                            product.status = ProductStatusEnum.COMPRADO.value
+                        else:
+                            product.status = ProductStatusEnum.ENCARGADO.value
+                    product.save(update_fields=['amount_received', 'status', 'updated_at'])
+            
+            return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
+    @extend_schema(
         summary="Entregar productos",
         description="Actualiza el estado de productos como entregados.",
         responses={201: ProductReceivedSerializer},
@@ -957,6 +1011,60 @@ class ProductDeliveryViewSet(viewsets.ModelViewSet):
                 )
             except Exception as e:
                 raise ValidationError(f"Error al procesar entregas: {str(e)}") from e
+
+    @extend_schema(
+        summary="Actualizar producto entregado",
+        description="Actualiza un registro de producto entregado y recalcula el estado del producto original.",
+        responses={200: ProductDeliverySerializer},
+        tags=["Productos entregados"]
+    )
+    def update(self, request, *args, **kwargs):
+        with transaction.atomic():
+            partial = kwargs.pop('partial', False)
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            
+            # Guardar y actualizar el producto original
+            product_delivery = serializer.save()
+            
+            # Recalcular el amount_delivered y estado del producto original
+            if product_delivery.original_product:
+                product = product_delivery.original_product
+                total_delivered = sum(
+                    pd.amount_delivered 
+                    for pd in product.delivers.all()
+                )
+                product.amount_delivered = total_delivered
+                
+                # Actualizar estado si es necesario
+                if total_delivered >= product.amount_requested:
+                    if product.status in [ProductStatusEnum.RECIBIDO.value, ProductStatusEnum.COMPRADO.value, ProductStatusEnum.ENCARGADO.value]:
+                        product.status = ProductStatusEnum.ENTREGADO.value
+                        product.save(update_fields=['amount_delivered', 'status', 'updated_at'])
+                    else:
+                        product.save(update_fields=['amount_delivered', 'updated_at'])
+                else:
+                    # Si ahora hay menos entregado que solicitado, ajustar estado
+                    if product.status == ProductStatusEnum.ENTREGADO.value:
+                        total_received = sum(pr.amount_received for pr in product.receiveds.all())
+                        if total_received >= product.amount_requested:
+                            product.status = ProductStatusEnum.RECIBIDO.value
+                        elif product.amount_purchased >= product.amount_requested:
+                            product.status = ProductStatusEnum.COMPRADO.value
+                        else:
+                            product.status = ProductStatusEnum.ENCARGADO.value
+                    product.save(update_fields=['amount_delivered', 'status', 'updated_at'])
+                
+                # Verificar si la orden debe cambiar a COMPLETADO
+                if product.order:
+                    product.order.update_status_based_on_delivery()
+            
+            return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
 
     @extend_schema(
         summary="Actualizar entregas",
@@ -1082,8 +1190,8 @@ class PackageViewSet(viewsets.ModelViewSet):
 
                     # Crear el producto recibido
                     product_received_data = {
-                        'original_product': original_product_id,
-                        'package': package.id,
+                        'original_product_id': original_product_id,
+                        'package_id': package.id,
                         'amount_received': amount_received,
                         'observation': product_data.get('observation', '')
                     }
@@ -1186,8 +1294,8 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
 
                     # Crear el producto entregado
                     product_delivery_data = {
-                        'original_product': original_product_id,
-                        'deliver_receip': delivery.id,
+                        'original_product_id': original_product_id,
+                        'deliver_receip_id': delivery.id,
                         'amount_delivered': amount_delivered,
                         'reception': product_data.get('reception', None)
                     }
@@ -1648,18 +1756,19 @@ class DashboardMetricsView(APIView):
 
         # Órdenes
         orders_total = Order.objects.count()
-        orders_pending = Order.objects.filter(status__in=['ENCARGADO', 'COMPRADO']).count()
-        orders_completed = Order.objects.filter(status='ENTREGADO').count()
+        # Usar los valores correctos del enum: Encargado, Procesando (pendientes) vs Completado
+        orders_pending = Order.objects.filter(status__in=[OrderStatusEnum.ENCARGADO.value, OrderStatusEnum.PROCESANDO.value]).count()
+        orders_completed = Order.objects.filter(status=OrderStatusEnum.COMPLETADO.value).count()
         orders_today = Order.objects.filter(created_at__date=today).count()
         orders_this_week = Order.objects.filter(created_at__date__gte=week_ago).count()
         orders_this_month = Order.objects.filter(created_at__date__gte=month_ago).count()
 
-        # Revenue - asumiendo de órdenes con pay_status 'PAGADO'
-        revenue_total = Order.objects.filter(pay_status='PAGADO').aggregate(total=Sum('products__total_cost'))['total'] or 0
-        revenue_today = Order.objects.filter(pay_status='PAGADO', created_at__date=today).aggregate(total=Sum('products__total_cost'))['total'] or 0
-        revenue_this_week = Order.objects.filter(pay_status='PAGADO', created_at__date__gte=week_ago).aggregate(total=Sum('products__total_cost'))['total'] or 0
-        revenue_this_month = Order.objects.filter(pay_status='PAGADO', created_at__date__gte=month_ago).aggregate(total=Sum('products__total_cost'))['total'] or 0
-        revenue_last_month = Order.objects.filter(pay_status='PAGADO', created_at__date__range=(last_month_start, last_month_end)).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        # Revenue - asumiendo de órdenes con pay_status 'Pagado'
+        revenue_total = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        revenue_today = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value, created_at__date=today).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        revenue_this_week = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value, created_at__date__gte=week_ago).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        revenue_this_month = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value, created_at__date__gte=month_ago).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        revenue_last_month = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value, created_at__date__range=(last_month_start, last_month_end)).aggregate(total=Sum('products__total_cost'))['total'] or 0
 
         # Compras (ProductBuyed)
         purchases_total = ProductBuyed.objects.count()
@@ -1783,7 +1892,7 @@ class ProfitReportsView(APIView):
             
             # Calcular ingresos del mes (sum de total_cost de productos en órdenes pagadas)
             revenue = Order.objects.filter(
-                pay_status='PAGADO',
+                pay_status=PaymentStatusEnum.PAGADO.value,
                 created_at__date__gte=month_start,
                 created_at__date__lte=month_end
             ).aggregate(total=Sum('products__total_cost'))['total'] or 0
@@ -1791,7 +1900,7 @@ class ProfitReportsView(APIView):
             # Calcular gastos del sistema para productos en este mes
             # Gastos = precio + envío + 7% del precio + impuesto adicional
             products_in_month = Product.objects.filter(
-                order__pay_status='PAGADO',
+                order__pay_status=PaymentStatusEnum.PAGADO.value,
                 created_at__date__gte=month_start,
                 created_at__date__lte=month_end
             )
@@ -1906,7 +2015,7 @@ class ProfitReportsView(APIView):
             # Órdenes completadas
             orders_completed = Order.objects.filter(
                 sales_manager=agent,
-                status='ENTREGADO'
+                status=OrderStatusEnum.COMPLETADO.value
             ).count()
             
             agent_reports.append({
