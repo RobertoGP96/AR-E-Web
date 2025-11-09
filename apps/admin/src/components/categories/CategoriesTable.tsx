@@ -47,6 +47,7 @@ const CategoriesTable: React.FC<CategoriesTableProps> = ({ categories, isLoading
             <TableHead className="w-12">#</TableHead>
             <TableHead>Nombre</TableHead>
             <TableHead className="text-right">Costo / lb</TableHead>
+            <TableHead className="text-right">Cobro Cliente / lb</TableHead>
             <TableHead className="text-right">Creado</TableHead>
             <TableHead className="text-center">Acciones</TableHead>
           </TableRow>
@@ -61,6 +62,7 @@ const CategoriesTable: React.FC<CategoriesTableProps> = ({ categories, isLoading
                 </div>
               </TableCell>
               <TableCell className="text-right font-semibold">${cat.shipping_cost_per_pound.toFixed(2)}</TableCell>
+              <TableCell className="text-right font-semibold text-green-600">${cat.client_shipping_charge.toFixed(2)}</TableCell>
               <TableCell className="text-right text-muted-foreground">
                 <div className="flex items-center justify-end gap-2">
                   <Clock className="h-4 w-4 text-gray-400" />

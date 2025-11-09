@@ -133,8 +133,11 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
 
   // Función para obtener el siguiente estado
   const getNextStatus = (currentStatus: DeliveryStatus): DeliveryStatus | null => {
-    if (currentStatus === 'Pendiente') return 'En transito';
-    if (currentStatus === 'En transito') return 'Entregado';
+    // Normalizar el estado actual
+    const lower = currentStatus.toLowerCase();
+    
+    if (lower === 'pendiente') return 'En transito';
+    if (lower === 'en transito' || lower === 'en tránsito') return 'Entregado';
     return null;
   };
 

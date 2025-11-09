@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useCreateDelivery } from '@/hooks/delivery/useCreateDelivery';
 import { toast } from 'sonner';
 import type { CreateDeliverReceipData } from '@/types/models/delivery';
@@ -34,8 +34,8 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
   const createDeliveryMutation = useCreateDelivery();
   const { data: usersData, isLoading: usersLoading } = useUsers({ role: 'client' });
   const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
-  const clients = usersData?.results || [];
-  const categories = categoriesData?.results || [];
+  const clients = useMemo(() => usersData?.results || [], [usersData?.results]);
+  const categories = useMemo(() => categoriesData?.results || [], [categoriesData?.results]);
 
   // Estado del formulario
   const [formData, setFormData] = useState<{
@@ -57,6 +57,23 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
     weight_cost: '',
     manager_profit: '',
   });
+
+
+  // Efecto para calcular automáticamente el costo por peso
+  useEffect(() => {
+    if (formData.category_id && formData.weight) {
+      const selectedCategory = categories.find(c => c.id.toString() === formData.category_id);
+      const weight = parseFloat(formData.weight);
+      
+      if (selectedCategory && !isNaN(weight) && weight > 0) {
+        const calculatedCost = selectedCategory.client_shipping_charge * weight;
+        setFormData(prev => ({ ...prev, weight_cost: calculatedCost.toFixed(2) }));
+      }
+    } else if (!formData.category_id || !formData.weight) {
+      // Limpiar el costo si no hay categoría o peso
+      setFormData(prev => ({ ...prev, weight_cost: '' }));
+    }
+  }, [formData.category_id, formData.weight, categories]);
 
 
   // Funciones para obtener estilos según el estado
@@ -191,7 +208,7 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
                         <Tag size={16} />
                         <span>{category.name}</span>
                         <span className="text-xs text-gray-500 ml-auto">
-                          ${category.shipping_cost_per_pound}/lb
+                          ${category.client_shipping_charge}/lb
                         </span>
                       </div>
                     </SelectItem>
@@ -200,8 +217,8 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
               </Select>
               {formData.category_id && (
                 <p className="text-xs text-gray-500">
-                  El costo de envío se calculará automáticamente: peso × $
-                  {categories.find(c => c.id.toString() === formData.category_id)?.shipping_cost_per_pound || 0}/lb
+                  El costo de entrega se calculará automáticamente: peso × $
+                  {categories.find(c => c.id.toString() === formData.category_id)?.client_shipping_charge || 0}/lb
                 </p>
               )}
             </div>
@@ -283,19 +300,24 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
             {/* Costo por Peso */}
             <div className="grid gap-2">
               <Label htmlFor="weight_cost">
-                Costo por Peso
+                Costo por Peso (Calculado automáticamente)
               </Label>
               <Input
                 id="weight_cost"
                 type="number"
                 step="0.01"
-                placeholder="Ej: 5.00"
+                placeholder="Selecciona categoría y peso"
                 value={formData.weight_cost}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, weight_cost: e.target.value }))
-                }
-                className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+                readOnly
+                className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 bg-gray-50"
               />
+              {formData.category_id && formData.weight && (
+                <p className="text-xs text-gray-500">
+                  Cálculo: {formData.weight} lb × $
+                  {categories.find(c => c.id.toString() === formData.category_id)?.client_shipping_charge || 0}/lb = $
+                  {formData.weight_cost || '0.00'}
+                </p>
+              )}
             </div>
 
             {/* Ganancia del Manager */}

@@ -12,7 +12,7 @@ import {
   TableHead,
 } from "@/components/ui/table";
 import { Button } from "../ui/button";
-import { Edit2, Trash2, ExternalLink, MoreHorizontal, Loader2, Box } from "lucide-react";
+import { Edit2, Trash2, ExternalLink, MoreHorizontal, Loader2, Box, ShoppingBag, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { parseTagsFromDescriptionBlock } from '@/lib/tags';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -182,7 +182,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                 {visibleColumns.includes('name') && <TableHead>Nombre</TableHead>}
                 {visibleColumns.includes('shop') && <TableHead>Tienda</TableHead>}
                 {visibleColumns.includes('category') && <TableHead>Categoría</TableHead>}
-                {visibleColumns.includes('amount_requested') && <TableHead className="text-center">Solicitado</TableHead>}
+                {visibleColumns.includes('amount_requested') && <TableHead className="text-center">Cantidades</TableHead>}
                 {visibleColumns.includes('amount_purchased') && <TableHead className="text-center">Comprado</TableHead>}
                 {visibleColumns.includes('amount_delivered') && <TableHead className="text-center">Entregado</TableHead>}
                 {visibleColumns.includes('status') && <TableHead className="text-center">Estado</TableHead>}
@@ -248,7 +248,26 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                       )}
                     </TableCell>
                   )}
-                  {visibleColumns.includes('amount_requested') && <TableCell className="text-center">{product.amount_requested}</TableCell>}
+                  {visibleColumns.includes('amount_requested') && (
+                    <TableCell>
+                      <div className="flex flex-row gap-1 items-center justify-center min-w-[140px]">
+                        <div className="flex items-center gap-1">
+                          <Box className="h-4 w-4" />
+                          {product.amount_requested}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <ShoppingBag className="h-4 w-4" />
+                          {product.amount_purchased}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <Truck className="h-4 w-4" />
+                          {product.amount_received}
+                        </div>
+                      </div>
+                    </TableCell>
+                  )}
                   {visibleColumns.includes('amount_purchased') && (
                     <TableCell className="text-center">
                       <span className={product.is_fully_purchased ? "font-semibold text-green-600" : ""}>
@@ -288,7 +307,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                   {visibleColumns.includes('actions') && (
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
-                        
+
                         {/* Dropdown con acciones: Ver detalles, Ir a pedido */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

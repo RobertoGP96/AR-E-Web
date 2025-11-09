@@ -8,3 +8,5 @@ export * from './useCreateProductBuyed';
 export * from './useDeleteProduct';
 export * from './useProductReceiveds';
 export * from './useUpdateProduct';
+export * from './useProductsBuyed';
+export * from './useDeleteProductBuyed';

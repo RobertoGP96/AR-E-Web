@@ -125,12 +125,36 @@ const PurchaseDetails: React.FC = () => {
                                 <div className="grid grid-cols-1 gap-2">
                                     <div className="p-2 rounded-lg">
                                         <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-                                            Costo Total
+                                            Costo Real de Compra
                                         </h4>
                                         <p className="text-2xl font-bold text-blue-700">
+                                            ${(shoppingReceipt.total_cost_of_purchase || 0).toFixed(2)}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Lo que se pagó efectivamente</p>
+                                    </div>
+                                    
+                                    <div className="p-2 rounded-lg">
+                                        <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                                            Valor de Productos
+                                        </h4>
+                                        <p className="text-2xl font-bold text-green-700">
                                             ${(shoppingReceipt.total_cost_of_shopping || 0).toFixed(2)}
                                         </p>
+                                        <p className="text-xs text-gray-500 mt-1">Suma del costo total de productos</p>
                                     </div>
+                                    
+                                    <div className="p-2 rounded-lg bg-amber-50 border border-amber-200">
+                                        <h4 className="text-sm font-medium text-amber-700 uppercase tracking-wide mb-2">
+                                            Gastos Operativos
+                                        </h4>
+                                        <p className="text-2xl font-bold text-amber-700">
+                                            ${(shoppingReceipt.operational_expenses || 0).toFixed(2)}
+                                        </p>
+                                        <p className="text-xs text-amber-600 mt-1">
+                                            Diferencia entre costo real y valor de productos
+                                        </p>
+                                    </div>
+                                    
                                     <div className="p-2 rounded-lg">
                                         <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
                                             Detalle de Productos
@@ -140,7 +164,7 @@ const PurchaseDetails: React.FC = () => {
                                                 {shoppingReceipt.buyed_products.map((product) => (
                                                     <div key={product.id} className="flex justify-between text-sm">
                                                         <span>{product.original_product_details.name} (x{product.amount_buyed})</span>
-                                                        <span>${((product.original_product_details.shop_cost || 0) * (product.amount_buyed || 0)).toFixed(2)}</span>
+                                                        <span>${((product.original_product_details.total_cost || 0) * (product.amount_buyed || 0)).toFixed(2)}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -148,36 +172,6 @@ const PurchaseDetails: React.FC = () => {
                                             <div className="text-center py-4">
                                                 <p className="text-xs text-gray-400">Sin productos</p>
                                             </div>
-                                        )}
-                                        {shoppingReceipt.buyed_products && shoppingReceipt.buyed_products.length > 0 && (
-                                            <>
-                                                <hr className="my-2" />
-                                                <div className="space-y-1 text-sm">
-                                                    {(() => {
-                                                        const totalFromProducts = shoppingReceipt.buyed_products?.reduce((sum, product) => sum + ((product.original_product_details.shop_cost || 0) * (product.amount_buyed || 0)), 0) || 0;
-                                                        const difference = (shoppingReceipt.total_cost_of_shopping || 0) - totalFromProducts;
-                                                        const percentage = totalFromProducts !== 0 ? (difference / totalFromProducts) * 100 : 0;
-                                                        return (
-                                                            <>
-                                                                <div className="flex justify-between">
-                                                                    <span>Suma de productos:</span>
-                                                                    <span>${totalFromProducts.toFixed(2)}</span>
-                                                                </div>
-                                                                <div className="flex justify-between font-semibold">
-                                                                    <span>Total compra:</span>
-                                                                    <span>${(shoppingReceipt.total_cost_of_shopping || 0).toFixed(2)}</span>
-                                                                </div>
-                                                                <div className="flex justify-between">
-                                                                    <span>Diferencia:</span>
-                                                                    <span className={difference >= 0 ? 'text-green-600' : 'text-red-600'}>
-                                                                        ${difference.toFixed(2)} ({percentage.toFixed(2)}%)
-                                                                    </span>
-                                                                </div>
-                                                            </>
-                                                        );
-                                                    })()}
-                                                </div>
-                                            </>
                                         )}
                                     </div>
                                 </div>

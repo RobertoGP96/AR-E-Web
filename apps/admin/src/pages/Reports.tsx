@@ -19,6 +19,12 @@ interface MonthlyReport {
   agent_profits: number;
   system_profit: number;
   projected_profit: number;
+  // Nuevos campos (opcionales para compatibilidad)
+  total_expenses?: number;
+  product_expenses?: number;
+  purchase_operational_expenses?: number;
+  delivery_expenses?: number;
+  system_delivery_profit?: number;
 }
 
 interface AgentReport {
@@ -43,6 +49,12 @@ interface ProfitReportsData {
     total_agent_profits: number;
     total_system_profit: number;
     profit_margin: number;
+    // Nuevos campos (opcionales para compatibilidad)
+    total_expenses?: number;
+    total_product_expenses?: number;
+    total_purchase_operational_expenses?: number;
+    total_delivery_expenses?: number;
+    total_system_delivery_profit?: number;
   };
 }
 
@@ -95,7 +107,7 @@ export default function Reports() {
     );
   }
 
-  if (!reports) return null;
+  if (!reports || !reports.summary) return null;
 
   return (
     <div className="space-y-6">
@@ -121,7 +133,7 @@ export default function Reports() {
             </div>
           </CardHeader>
           <CardContent className="relative z-10">
-            <div className="text-2xl md:text-3xl font-bold tracking-tight">${reports.summary.total_revenue.toLocaleString()}</div>
+            <div className="text-2xl md:text-3xl font-bold tracking-tight">${(reports.summary?.total_revenue || 0).toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-2">Últimos 12 meses</p>
           </CardContent>
         </Card>
@@ -143,10 +155,10 @@ export default function Reports() {
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="text-2xl md:text-3xl font-bold text-emerald-600 tracking-tight">
-              ${reports.summary.total_system_profit.toLocaleString()}
+              ${(reports.summary?.total_system_profit || 0).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Margen: {reports.summary.profit_margin.toFixed(1)}%
+              Margen: {(reports.summary?.profit_margin || 0).toFixed(1)}%
             </p>
           </CardContent>
         </Card>
@@ -168,9 +180,9 @@ export default function Reports() {
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="text-2xl md:text-3xl font-bold text-purple-600 tracking-tight">
-              ${reports.summary.total_agent_profits.toLocaleString()}
+              ${(reports.summary?.total_agent_profits || 0).toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground mt-2">{reports.agent_reports.length} agentes activos</p>
+            <p className="text-xs text-muted-foreground mt-2">{reports.agent_reports?.length || 0} agentes activos</p>
           </CardContent>
         </Card>
 
@@ -191,10 +203,10 @@ export default function Reports() {
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="text-2xl md:text-3xl font-bold text-rose-600 tracking-tight">
-              ${reports.summary.total_costs.toLocaleString()}
+              ${(reports.summary?.total_costs || 0).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Productos: ${reports.summary.total_product_costs.toLocaleString()}
+              Productos: ${(reports.summary?.total_product_costs || 0).toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -208,7 +220,7 @@ export default function Reports() {
           
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
             <CardTitle className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Costos de Entrega
+              Gastos de Entrega
             </CardTitle>
             <div className="p-2.5 md:p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
               <TrendingDown className="h-5 w-5 md:h-6 md:w-6 text-white" />
@@ -216,9 +228,32 @@ export default function Reports() {
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="text-2xl md:text-3xl font-bold text-orange-600 tracking-tight">
-              ${reports.summary.total_delivery_costs.toLocaleString()}
+              ${(reports.summary.total_delivery_expenses || reports.summary.total_delivery_costs || 0).toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Costos de peso y envío</p>
+            <p className="text-xs text-muted-foreground mt-2">Peso × costo por libra del sistema</p>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 group cursor-pointer bg-gradient-to-br from-amber-50 via-amber-50/80 to-amber-100/50 border-amber-100 hover:border-amber-200 hover:shadow-amber-100/50">
+          {/* Efecto de brillo en hover */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Decorative corner accent */}
+          <div className="absolute top-0 right-0 w-24 h-24 opacity-10 transform translate-x-8 -translate-y-8 rounded-full blur-2xl transition-all duration-300 group-hover:scale-150 bg-gradient-to-br from-amber-500 to-amber-600" />
+          
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Gastos Operativos
+            </CardTitle>
+            <div className="p-2.5 md:p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+              <TrendingDown className="h-5 w-5 md:h-6 md:w-6 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent className="relative z-10">
+            <div className="text-2xl md:text-3xl font-bold text-amber-600 tracking-tight">
+              ${(reports.summary.total_purchase_operational_expenses || 0).toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">Gastos extra de compras</p>
           </CardContent>
         </Card>
       </div>
@@ -258,7 +293,7 @@ export default function Reports() {
                 }}
                 className="h-[400px] w-full"
               >
-                <LineChart data={reports.monthly_reports} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
+                <LineChart data={reports.monthly_reports || []} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis
                     dataKey="month_short"
@@ -333,7 +368,7 @@ export default function Reports() {
                 }}
                 className="h-[350px] w-full"
               >
-                <BarChart data={reports.monthly_reports} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
+                <BarChart data={reports.monthly_reports || []} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis
                     dataKey="month_short"
@@ -392,7 +427,7 @@ export default function Reports() {
                 }}
                 className="h-[350px] w-full"
               >
-                <BarChart data={reports.monthly_reports} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
+                <BarChart data={reports.monthly_reports || []} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis
                     dataKey="month_short"
@@ -442,34 +477,38 @@ export default function Reports() {
                   <TableRow>
                     <TableHead>Mes</TableHead>
                     <TableHead className="text-right">Ingresos</TableHead>
-                    <TableHead className="text-right">Costos Productos</TableHead>
+                    <TableHead className="text-right">Gastos Productos</TableHead>
+                    <TableHead className="text-right">Gastos Operativos</TableHead>
                     <TableHead className="text-right">Costos Entrega</TableHead>
-                    <TableHead className="text-right">Total Costos</TableHead>
+                    <TableHead className="text-right">Total Gastos</TableHead>
                     <TableHead className="text-right">Ganancia Agentes</TableHead>
                     <TableHead className="text-right">Ganancia Sistema</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {reports.monthly_reports.map((report, index) => (
+                  {(reports.monthly_reports || []).map((report, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{report.month}</TableCell>
                       <TableCell className="text-right text-blue-600">
-                        ${report.revenue.toLocaleString()}
+                        ${(report.revenue || 0).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right text-red-600">
-                        ${report.product_costs.toLocaleString()}
+                        ${(report.product_expenses || report.product_costs || 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right text-amber-600">
+                        ${(report.purchase_operational_expenses || 0).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right text-orange-600">
-                        ${report.delivery_costs.toLocaleString()}
+                        ${(report.delivery_expenses || report.delivery_costs || 0).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right text-red-700 font-semibold">
-                        ${report.costs.toLocaleString()}
+                        ${(report.total_expenses || report.costs || 0).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right text-purple-600">
-                        ${report.agent_profits.toLocaleString()}
+                        ${(report.agent_profits || 0).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right text-green-600 font-semibold">
-                        ${report.system_profit.toLocaleString()}
+                        ${(report.system_profit || 0).toLocaleString()}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -502,7 +541,7 @@ export default function Reports() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {reports.agent_reports.map((agent, index) => (
+                  {(reports.agent_reports || []).map((agent, index) => (
                     <TableRow key={agent.agent_id}>
                       <TableCell className="font-medium">
                         {index === 0 && <Badge variant={'outline'} >🥇</Badge>}
@@ -512,22 +551,22 @@ export default function Reports() {
                       </TableCell>
                       <TableCell className="font-medium">{agent.agent_name}</TableCell>
                       <TableCell>{agent.agent_phone}</TableCell>
-                      <TableCell className="text-right">{agent.clients_count}</TableCell>
-                      <TableCell className="text-right">{agent.orders_count}</TableCell>
+                      <TableCell className="text-right">{agent.clients_count || 0}</TableCell>
+                      <TableCell className="text-right">{agent.orders_count || 0}</TableCell>
                       <TableCell className="text-right">
-                        <Badge variant={agent.orders_completed > 0 ? 'default' : 'secondary'}>
-                          {agent.orders_completed}
+                        <Badge variant={(agent.orders_completed || 0) > 0 ? 'default' : 'secondary'}>
+                          {agent.orders_completed || 0}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right text-blue-600">
-                        ${agent.current_month_profit.toLocaleString()}
+                        ${(agent.current_month_profit || 0).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right font-semibold text-green-600">
-                        ${agent.total_profit.toLocaleString()}
+                        ${(agent.total_profit || 0).toLocaleString()}
                       </TableCell>
                     </TableRow>
                   ))}
-                  {reports.agent_reports.length === 0 && (
+                  {(reports.agent_reports || []).length === 0 && (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center text-muted-foreground">
                         No hay agentes con ganancias registradas
@@ -561,10 +600,10 @@ export default function Reports() {
                   },
                 }}
                 className="w-full"
-                style={{ height: `${reports.agent_reports.length * 52 + 20}px` }}
+                style={{ height: `${(reports.agent_reports || []).length * 52 + 20}px` }}
               >
                 <BarChart
-                  data={reports.agent_reports}
+                  data={reports.agent_reports || []}
                   layout="vertical"
                   margin={{ top: 10, right: 50, left: 10, bottom: 10 }}
                   barSize={32}

@@ -8,6 +8,7 @@ import type { Category } from '../../types/models/category';
 export interface UpdateCategoryData {
   name?: string;
   shipping_cost_per_pound?: number;
+  client_shipping_charge?: number;
 }
 
 /**

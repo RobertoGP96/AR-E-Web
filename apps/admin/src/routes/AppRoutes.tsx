@@ -21,6 +21,8 @@ import { PurchaseDetails } from '@/components/purshases';
 import { PackageDetails } from '@/components/packages';
 import AddProductsToPackagePage from '@/components/packages/AddProductsToPackagePage';
 import AddProductsToDeliveryPage from '@/components/delivery/AddProductsToDeliveryPage';
+import AddMultipleProductsToOrderPage from '@/components/orders/AddMultipleProductsToOrderPage';
+import PurchaseProductsManagement from '@/pages/PurchaseProductsManagement';
 import Reports from '@/pages/Reports';
 
 const AppRoutes = () => {
@@ -48,6 +50,7 @@ const AppRoutes = () => {
                 
                 <Route path="purchases" element={<Purchases />} />
                 <Route path="purchases/:id" element={<PurchaseDetails />} />
+                <Route path="purchases/:id/manage-products" element={<PurchaseProductsManagement />} />
 
                 <Route path="packages" element={<Packages />} />
                 <Route path="packages/:id" element={<PackageDetails />} />
@@ -60,6 +63,7 @@ const AppRoutes = () => {
                 <Route path="orders" element={<Orders />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="orders/:id" element={<OrderDetails />} />
+                <Route path="orders/:id/add-products" element={<AddMultipleProductsToOrderPage />} />
                 
                 <Route path="profile" element={<Profile />} />
                 <Route path="settings" element={<Settings />} />

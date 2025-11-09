@@ -14,8 +14,12 @@ export interface ShoppingReceip {
   status_of_shopping: string;
   buy_date: DateTime;
   
+  // Campos de costo
+  total_cost_of_purchase: number;  // Costo real pagado en la compra
+  
   // Propiedades computadas
-  total_cost_of_shopping: number;
+  total_cost_of_shopping: number;  // Suma de total_cost de productos
+  operational_expenses: number;     // Gastos operativos: total_cost_of_purchase - total_cost_of_shopping
   buyed_products?: ProductBuyed[];
   
   // Timestamps
@@ -30,7 +34,7 @@ export interface CreateShoppingReceipData {
   status_of_shopping?: ShoppingStatus;
   buy_date?: DateTime;
   buyed_products?: CreateProductBuyedData[];
-  total_cost_of_shopping: number;
+  total_cost_of_purchase: number;  // Costo real de la compra
 }
 
 export interface UpdateShoppingReceipData extends Partial<CreateShoppingReceipData> {

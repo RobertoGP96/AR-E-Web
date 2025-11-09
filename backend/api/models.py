@@ -265,6 +265,7 @@ class Category(models.Model):
 
     name = models.CharField(max_length=100, unique=True)
     shipping_cost_per_pound = models.FloatField(default=0, help_text="Costo de envío por libra para esta categoría")
+    client_shipping_charge = models.FloatField(default=0, help_text="Cantidad que se le cobra al cliente por el envío por libra")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -444,11 +445,32 @@ class Product(models.Model):
 
     @property
     def total_received(self):
-        return sum(pr.amount_received for pr in self.delivers.all())
+        return sum(pr.amount_received for pr in self.receiveds.all())
 
     @property
     def total_delivered(self):
         return sum(pr.amount_delivered for pr in self.delivers.all())
+
+    @property
+    def system_expenses(self):
+        """
+        Gastos del sistema para este producto.
+        Fórmula: precio + envío + 7% del precio + impuesto adicional (added_taxes)
+        """
+        base_price = float(self.shop_cost)
+        shipping = float(self.shop_delivery_cost)
+        base_tax = base_price * 0.07  # 7% del precio
+        additional_tax = float(self.added_taxes)
+        
+        return base_price + shipping + base_tax + additional_tax
+    
+    @property
+    def system_profit(self):
+        """
+        Ganancia del sistema para este producto.
+        Fórmula: costo total cobrado al cliente - gastos del sistema
+        """
+        return float(self.total_cost) - self.system_expenses
 
     class Meta:
         ordering = ['-created_at']
@@ -468,6 +490,10 @@ class ShoppingReceip(models.Model):
         default=PaymentStatusEnum.NO_PAGADO.value
     )
     buy_date = models.DateTimeField(default=timezone.now)
+    total_cost_of_purchase = models.FloatField(
+        default=0,
+        help_text="Costo total real de la compra (lo que se pagó efectivamente)"
+    )
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -475,6 +501,26 @@ class ShoppingReceip(models.Model):
 
     def __str__(self):
         return f"Compra en {self.shop_of_buy.name} - {self.buy_date.strftime('%Y-%m-%d')}"
+
+    @property
+    def total_cost_of_shopping(self):
+        """
+        Suma del costo total (total_cost) de todos los productos en esta compra.
+        Este es el ingreso que se espera recibir del cliente por estos productos.
+        """
+        from django.db.models import Sum
+        total = self.buyed_products.aggregate(
+            total=Sum('original_product__total_cost')
+        )['total'] or 0
+        return float(total)
+    
+    @property
+    def operational_expenses(self):
+        """
+        Gastos operativos de la compra = diferencia entre lo pagado y el costo total de productos.
+        Representa los gastos adicionales (shipping extra, fees, etc.) de esta compra específica.
+        """
+        return float(self.total_cost_of_purchase - self.total_cost_of_shopping)
 
     class Meta:
         ordering = ['-buy_date']
@@ -529,6 +575,46 @@ class DeliverReceip(models.Model):
     def total_cost_of_deliver(self):
         """Calculate total cost of delivery"""
         return self.weight_cost + self.manager_profit
+    
+    @property
+    def delivery_expenses(self):
+        """
+        Gastos de la entrega = peso × costo por libra (del sistema).
+        Este es el costo operativo del envío.
+        """
+        if self.category and self.category.shipping_cost_per_pound:
+            return float(self.weight * self.category.shipping_cost_per_pound)
+        return float(self.weight_cost)
+    
+    @property
+    def agent_profit_calculated(self):
+        """
+        Ganancia del agente = peso × profit del agente.
+        Se calcula basado en el profit asignado al agente.
+        """
+        agent = self.client.assigned_agent
+        if agent and agent.agent_profit:
+            return float(self.weight * agent.agent_profit)
+        return float(self.manager_profit)
+    
+    @property
+    def client_charge(self):
+        """
+        Cobro al cliente = peso × tarifa de cobro al cliente.
+        Este es el ingreso que se recibe del cliente por el envío.
+        """
+        if self.category and self.category.client_shipping_charge:
+            return float(self.weight * self.category.client_shipping_charge)
+        # Si no hay categoría, retornar la suma de weight_cost + manager_profit
+        return float(self.weight_cost + self.manager_profit)
+    
+    @property
+    def system_delivery_profit(self):
+        """
+        Ganancia del sistema en esta entrega = cobro al cliente - ganancia del agente - gastos.
+        Representa la ganancia neta del sistema en el servicio de entrega.
+        """
+        return float(self.client_charge - self.agent_profit_calculated - self.delivery_expenses)
 
     class Meta:
         ordering = ['-deliver_date']

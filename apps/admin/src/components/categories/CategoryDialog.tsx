@@ -14,13 +14,13 @@ interface CategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialCategory?: Category | null;
-  onSave?: (data: { name: string; shipping_cost_per_pound: number; id?: number }) => Promise<void> | void;
+  onSave?: (data: { name: string; shipping_cost_per_pound: number; client_shipping_charge: number; id?: number }) => Promise<void> | void;
 }
 
 export default function CategoryDialog({ open, onOpenChange, initialCategory, onSave }: CategoryDialogProps) {
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (data: { name: string; shipping_cost_per_pound: number }) => {
+  const handleSubmit = async (data: { name: string; shipping_cost_per_pound: number; client_shipping_charge: number }) => {
     setLoading(true);
     try {
       if (onSave) {

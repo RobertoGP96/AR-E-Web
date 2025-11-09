@@ -16,9 +16,11 @@ export function useAddProductToDelivery() {
 
   return useMutation({
     mutationFn: async (data: AddProductToDeliveryData) => {
-      return apiClient.post(`/api_data/delivery_receips/${data.deliveryId}/add_product/`, {
-        product_id: data.productId,
-        amount_delivered: data.amount,
+      return apiClient.post(`/api_data/delivery_receips/${data.deliveryId}/add_products/`, {
+        products: [{
+          original_product: data.productId,
+          amount_delivered: data.amount,
+        }]
       });
     },
     onSuccess: (_, variables) => {

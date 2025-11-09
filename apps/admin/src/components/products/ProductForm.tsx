@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useShops } from '@/hooks/shop/useShops'
 import { useCategories } from '@/hooks/category/useCategory'
+import { useSystemConfig } from '@/hooks/useSystemConfig'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Card, CardContent } from '@/components/ui/card'
@@ -89,7 +90,6 @@ const getShopTaxRate = (shopName: string): number => {
 
 // Función para calcular el total según las reglas de la empresa
 const calculateTotalCost = (
-    quantity: number,
     unitPrice: number,
     shippingCost: number,
     shopName: string,
@@ -106,17 +106,20 @@ const calculateTotalCost = (
     impuestosPropios: number;
     total: number 
 } => {
-    // Precio del producto
-    const subtotal = quantity * unitPrice
+    // Precio del producto (unitario, la cantidad no afecta el cálculo)
+    const subtotal = unitPrice
     
     // Costo de envío
     const costoEnvio = shippingCost
     
-    // Impuesto base: 7% sobre el precio del producto
-    const baseImpuesto = subtotal * 0.07
+    // Base = precio + envío
+    const base = subtotal + costoEnvio
     
-    // Base para calcular la tarifa de tienda = Precio Producto + Impuesto Base + Costo de Envío
-    const baseParaTarifa = subtotal + baseImpuesto + costoEnvio
+    // Impuesto base: 7% sobre (precio + envío)
+    const baseImpuesto = base * 0.07
+    
+    // Base con impuesto = (precio + envío) + (precio + envío) * 0.07
+    const baseParaTarifa = base + baseImpuesto
     
     // Tarifa por tienda (usar el valor proporcionado o auto-detectar)
     const effectiveShopTaxRate = shopTaxRate ?? getShopTaxRate(shopName)
@@ -128,8 +131,9 @@ const calculateTotalCost = (
     // Impuestos propios (valor fijo)
     const impuestosPropios = ownTaxes
     
-    // Total = Precio Producto + Impuesto Base + Costo Envío + Tarifa Tienda + Impuestos Adicionales + Impuestos Propios
-    const total = subtotal + baseImpuesto + costoEnvio + tarifaTienda + impuestosAdicionales + impuestosPropios
+    // Total = (precio + envío) + (precio + envío) * 0.07 + ((precio + envío) + (precio + envío) * 0.07) * imp_tienda + imp_add + imp_propio
+    // Simplificado: Total = base + baseImpuesto + tarifaTienda + impuestosAdicionales + impuestosPropios
+    const total = base + baseImpuesto + tarifaTienda + impuestosAdicionales + impuestosPropios
     
     return {
         subtotal,
@@ -144,6 +148,14 @@ const calculateTotalCost = (
 }
 
 const TAGS_SEPARATOR = "\n\n--TAGS--\n"
+
+// Función para formatear números con separador de miles
+const formatCurrency = (value: number): string => {
+    return value.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })
+}
 
 export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = false }: ProductFormProps) => {
     // Parse tags embedded in description if present
@@ -186,6 +198,10 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
     })
     const [isPopoverOpen, setIsPopoverOpen] = useState(false)
     const [isInvoicePopoverOpen, setIsInvoicePopoverOpen] = useState(false)
+
+    // Obtener configuración del sistema (tasa de cambio)
+    const { config: systemConfig } = useSystemConfig()
+    const exchangeRate = systemConfig?.change_rate || 1
 
     // Efecto para extraer automáticamente el nombre de la tienda cuando cambia el link
     useEffect(() => {
@@ -316,7 +332,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         const ownTaxes = Number(newProduct.own_taxes) || 0
 
         // Calcular el total usando la función correcta
-        const calculation = calculateTotalCost(qty, unit, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes)
+        const calculation = calculateTotalCost(unit, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes)
         const computedTotal = calculation.total
 
         const productToSubmit = {
@@ -668,119 +684,128 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                     </div>
 
                     <Separator className="bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent" />
-                    {/* Cantidad, Costo y otros valores */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="space-y-3">
-                            <label htmlFor="amount_requested" className="text-sm font-semibold text-foreground/90">Cantidad solicitada *</label>
-                            <Input 
-                                id="amount_requested" 
-                                type="number" 
-                                min={1} 
-                                step="1" 
-                                value={newProduct.amount_requested} 
-                                onChange={(e) => setNewProduct({ ...newProduct, amount_requested: Number(e.target.value) })} 
-                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/30"
-                            />
-                            <p className="text-xs text-muted-foreground">Número de unidades</p>
-                        </div>
-                        <div className="space-y-3">
-                            <label htmlFor="shop_cost" className="text-sm font-semibold text-foreground/90">Precio unitario ($) *</label>
-                            <Input 
-                                id="shop_cost" 
-                                type="number" 
-                                min="0"
-                                step="0.01" 
-                                value={newProduct.shop_cost} 
-                                onChange={(e) => setNewProduct({ ...newProduct, shop_cost: Number(e.target.value) })} 
-                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/30"
-                                placeholder="0.00"
-                            />
-                            <p className="text-xs text-muted-foreground">Precio por unidad</p>
-                        </div>
-                        <div className="space-y-3">
-                            <label htmlFor="shop_delivery_cost" className="text-sm font-semibold text-foreground/90">Costo de envío ($) *</label>
-                            <Input 
-                                id="shop_delivery_cost" 
-                                type="number" 
-                                min="0"
-                                step="0.01" 
-                                value={newProduct.shop_delivery_cost} 
-                                onChange={(e) => setNewProduct({ ...newProduct, shop_delivery_cost: Number(e.target.value) })} 
-                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/30"
-                                placeholder="0.00"
-                            />
-                            <p className="text-xs text-muted-foreground">Costo de envío</p>
-                        </div>
-                        <div className="space-y-3">
+                    
+                    {/* Sección Económica */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Información Económica</h3>
+
+                        {/* Grid uniforme - Responsive */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Cantidad */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="amount_requested" className="text-sm font-medium text-foreground">
+                                    Cantidad
+                                </label>
+                                <Input 
+                                    id="amount_requested" 
+                                    type="number" 
+                                    min={1} 
+                                    step="1" 
+                                    value={newProduct.amount_requested} 
+                                    onChange={(e) => setNewProduct({ ...newProduct, amount_requested: Number(e.target.value) })} 
+                                    className="h-10"
+                                />
+                            </div>
+
+                            {/* Precio unitario */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="shop_cost" className="text-sm font-medium text-foreground">
+                                    Precio
+                                </label>
+                                <Input 
+                                    id="shop_cost" 
+                                    type="number" 
+                                    min="0"
+                                    step="0.01" 
+                                    value={newProduct.shop_cost} 
+                                    onChange={(e) => setNewProduct({ ...newProduct, shop_cost: Number(e.target.value) })} 
+                                    className="h-10"
+                                    placeholder="0.00"
+                                />
+                            </div>
+
+                            {/* Costo de envío */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="shop_delivery_cost" className="text-sm font-medium text-foreground">
+                                    Costo Envío
+                                </label>
+                                <Input 
+                                    id="shop_delivery_cost" 
+                                    type="number" 
+                                    min="0"
+                                    step="0.01" 
+                                    value={newProduct.shop_delivery_cost} 
+                                    onChange={(e) => setNewProduct({ ...newProduct, shop_delivery_cost: Number(e.target.value) })} 
+                                    className="h-10"
+                                    placeholder="0.00"
+                                />
+                            </div>
+                            {/* Impuesto de tienda (calculado) */}
+                            <div className="space-y-1.5">
                             {(() => {
-                                const qty = Number(newProduct.amount_requested) || 0
                                 const price = Number(newProduct.shop_cost) || 0
                                 const shippingCost = Number(newProduct.shop_delivery_cost) || 0
                                 const shopTaxRate = newProduct.shop_taxes ?? getShopTaxRate(newProduct.shop || '')
                                 
                                 // Calcular el valor del impuesto de tienda en dólares
-                                const subtotal = qty * price
-                                const baseImpuesto = subtotal * 0.07
-                                const baseParaTarifa = subtotal + baseImpuesto + shippingCost
+                                const base = price + shippingCost
+                                const baseImpuesto = base * 0.07
+                                const baseParaTarifa = base + baseImpuesto
                                 const valorImpuestoTienda = baseParaTarifa * (shopTaxRate / 100)
                                 
                                 return (
                                     <>
-                                        <label htmlFor="shop_taxes" className="text-sm font-semibold text-foreground/90 flex items-center gap-1 mb-0">
-                                            Impuesto tienda
-                                            {(newProduct.shop && newProduct.shop_cost > 0) && (
-                                                <span className="text-xs text-emerald-600 dark:text-emerald-400  p-0 m-0">
-                                                    ({shopTaxRate}%)
-                                                </span>
-                                            )}
+                                        <label htmlFor="shop_taxes" className="text-sm font-medium text-foreground">
+                                            Impuesto Tienda ({shopTaxRate}%)
                                         </label>
                                         <Input 
                                             id="shop_taxes" 
-                                            type="number" 
-                                            value={valorImpuestoTienda > 0 ? `$${valorImpuestoTienda.toFixed(2)}` : ''} 
+                                            type="text" 
+                                            value={valorImpuestoTienda > 0 ? `$${formatCurrency(valorImpuestoTienda)}` : ''} 
                                             readOnly
-                                            className="transition-all duration-200 bg-muted/30 border-muted-foreground/20 text-muted-foreground cursor-default"
+                                            className="h-10 bg-muted/50 cursor-default"
                                             placeholder="$0.00"
                                         />
-                                        <p className="text-xs text-muted-foreground">Impuesto progresivo</p>
                                     </>
                                 )
                             })()}
-                        </div>
-                        <div className="space-y-3">
-                            <label htmlFor="added_taxes" className="text-sm font-semibold text-foreground/90">Impuesto adicional ($)</label>
-                            <Input 
-                                id="added_taxes" 
-                                type="number" 
-                                min="0"
-                                step="0.01" 
-                                value={newProduct.added_taxes} 
-                                onChange={(e) => setNewProduct({ ...newProduct, added_taxes: Number(e.target.value) })} 
-                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/30"
-                                placeholder="0.00"
-                            />
-                            <p className="text-xs text-muted-foreground">Valor fijo de impuesto adicional</p>
-                        </div>
-                        <div className="space-y-3">
-                            <label htmlFor="own_taxes" className="text-sm font-semibold text-foreground/90">Impuestos propios ($)</label>
-                            <Input 
-                                id="own_taxes" 
-                                type="number" 
-                                min="0"
-                                step="0.01" 
-                                value={newProduct.own_taxes} 
-                                onChange={(e) => setNewProduct({ ...newProduct, own_taxes: Number(e.target.value) })} 
-                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/30"
-                                placeholder="0.00"
-                            />
-                            <p className="text-xs text-muted-foreground">Valor fijo de impuestos propios</p>
+                            </div>
+
+                            {/* Impuesto adicional */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="added_taxes" className="text-sm font-medium text-foreground">
+                                    Impuesto Adicional
+                                </label>
+                                <Input 
+                                    id="added_taxes" 
+                                    type="number" 
+                                    min="0"
+                                    step="0.01" 
+                                    value={newProduct.added_taxes} 
+                                    onChange={(e) => setNewProduct({ ...newProduct, added_taxes: Number(e.target.value) })} 
+                                    className="h-10"
+                                    placeholder="0.00"
+                                />
+                            </div>
+
+                            {/* Impuestos propios */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="own_taxes" className="text-sm font-medium text-foreground">
+                                    Impuestos Propios ($)
+                                </label>
+                                <Input 
+                                    id="own_taxes" 
+                                    type="number" 
+                                    min="0"
+                                    step="0.01" 
+                                    value={newProduct.own_taxes} 
+                                    onChange={(e) => setNewProduct({ ...newProduct, own_taxes: Number(e.target.value) })} 
+                                    className="h-10"
+                                    placeholder="0.00"
+                                />
+                            </div>
                         </div>
                     </div>
-
-                    
-
-
-
 
                     {/* Resumen de total calculado con detalle de factura */}
                     {(() => {
@@ -792,30 +817,31 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                         const addedTaxes = Number(newProduct.added_taxes) || 0
                         const ownTaxes = Number(newProduct.own_taxes) || 0
 
-                        const calculation = calculateTotalCost(qty, price, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes)
+                        const calculation = calculateTotalCost(price, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes)
 
                         return (
                             <div className="space-y-4">
                                 <Separator className="bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent" />
                                 
-                                <div className="flex items-center justify-between p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20">
-                                    <div className="flex items-center gap-2">
-                                        <div className="text-sm font-medium text-muted-foreground">Total a cobrar al cliente</div>
+                                {/* Card de resumen total - Minimalista */}
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-muted/30 rounded-lg border">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-medium text-muted-foreground">Total a Cobrar</span>
                                         <Popover open={isInvoicePopoverOpen} onOpenChange={setIsInvoicePopoverOpen}>
                                             <PopoverTrigger asChild>
                                                 <Button 
-                                                    variant="ghost" 
+                                                    variant="outline" 
                                                     size="sm" 
-                                                    className="h-7 w-7 p-0 hover:bg-primary/20"
+                                                    className="h-8 w-8 p-0"
                                                     type="button"
                                                 >
-                                                    <Receipt className="h-4 w-4 text-primary" />
+                                                    <Receipt className="h-4 w-4" />
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-80 p-0" align="end">
-                                                <div className=" ">
+                                            <PopoverContent className="w-[90vw] sm:w-96 p-0" align="end" side="top">
+                                                <div className="max-h-[80vh] overflow-y-auto">
                                                     {/* Encabezado de factura */}
-                                                    <div className="p-4 bg-primary text-primary-foreground rounded-t-sm">
+                                                    <div className="p-4 bg-primary text-primary-foreground rounded-t-lg sticky top-0 z-10">
                                                         <div className="flex items-center gap-2">
                                                             <Receipt className="h-5 w-5" />
                                                             <h3 className="font-bold text-lg">Desglose de Costos</h3>
@@ -836,7 +862,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                                         <div className="space-y-2">
                                                             <div className="flex justify-between text-sm">
                                                                 <span className="text-muted-foreground">Precio unitario:</span>
-                                                                <span className="font-medium">${price.toFixed(2)}</span>
+                                                                <span className="font-medium">${formatCurrency(price)}</span>
                                                             </div>
                                                             <div className="flex justify-between text-sm">
                                                                 <span className="text-muted-foreground">Cantidad:</span>
@@ -845,11 +871,11 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                                             <Separator className="my-2" />
                                                             <div className="flex justify-between text-sm font-medium">
                                                                 <span>Subtotal producto:</span>
-                                                                <span>${calculation.subtotal.toFixed(2)}</span>
+                                                                <span>${formatCurrency(calculation.subtotal)}</span>
                                                             </div>
                                                             <div className="flex justify-between text-sm">
                                                                 <span className="text-muted-foreground">Costo de envío:</span>
-                                                                <span className="font-medium text-purple-600">+${calculation.costoEnvio.toFixed(2)}</span>
+                                                                <span className="font-medium text-purple-600">+${formatCurrency(calculation.costoEnvio)}</span>
                                                             </div>
                                                         </div>
 
@@ -861,7 +887,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                                             
                                                             <div className="flex justify-between text-sm">
                                                                 <span className="text-muted-foreground">Impuesto base (7%):</span>
-                                                                <span className="font-medium text-emerald-600">+${calculation.baseImpuesto.toFixed(2)}</span>
+                                                                <span className="font-medium text-emerald-600">+${formatCurrency(calculation.baseImpuesto)}</span>
                                                             </div>
                                                             
                                                             <div className="space-y-1">
@@ -869,60 +895,74 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                                                     <span className="text-muted-foreground">
                                                                         Tarifa tienda ({shopTaxRate ?? getShopTaxRate(shopName)}%):
                                                                     </span>
-                                                                    <span className="font-medium text-blue-600">+${calculation.tarifaTienda.toFixed(2)}</span>
+                                                                    <span className="font-medium text-blue-600">+${formatCurrency(calculation.tarifaTienda)}</span>
                                                                 </div>
-                                                                <p className="text-xs text-muted-foreground italic pl-2">
-                                                                    Base: ${calculation.baseParaTarifa.toFixed(2)} (Precio + Impuesto + Envío)
-                                                                </p>
+                                                                
                                                             </div>
                                                             
                                                             {calculation.impuestosAdicionales > 0 && (
                                                                 <div className="flex justify-between text-sm">
                                                                     <span className="text-muted-foreground">Impuestos adicionales:</span>
-                                                                    <span className="font-medium text-amber-600">+${calculation.impuestosAdicionales.toFixed(2)}</span>
+                                                                    <span className="font-medium text-amber-600">+${formatCurrency(calculation.impuestosAdicionales)}</span>
                                                                 </div>
                                                             )}
                                                             
                                                             {calculation.impuestosPropios > 0 && (
                                                                 <div className="flex justify-between text-sm">
                                                                     <span className="text-muted-foreground">Impuestos propios:</span>
-                                                                    <span className="font-medium text-orange-600">+${calculation.impuestosPropios.toFixed(2)}</span>
+                                                                    <span className="font-medium text-orange-600">+${formatCurrency(calculation.impuestosPropios)}</span>
                                                                 </div>
                                                             )}
                                                         </div>
 
                                                         <Separator className="my-3 bg-primary/20" />
 
-                                                        {/* Total */}
+                                                        {/* Total en USD */}
                                                         <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg border border-primary/20">
-                                                            <span className="font-bold text-base">Total a Cobrar:</span>
-                                                            <span className="font-bold text-xl text-primary">${calculation.total.toFixed(2)}</span>
+                                                            <span className="font-bold text-xs">Total a Cobrar (USD):</span>
+                                                            <span className="font-bold text-xs text-primary">${formatCurrency(calculation.total)}</span>
                                                         </div>
 
-                                                        {/* Fórmula de cálculo */}
-                                                        <div className="mt-3 p-3 bg-muted/50 rounded-lg border border-muted-foreground/10">
-                                                            <p className="text-xs font-semibold text-muted-foreground mb-2">Fórmula aplicada:</p>
-                                                            <p className="text-xs text-muted-foreground font-mono leading-relaxed">
-                                                                Total = Producto + Impuesto Base (7%) + Envío + Tarifa Tienda + Impuestos Adicionales + Impuestos Propios
-                                                            </p>
+                                                        {/* Total en CUP */}
+                                                        <div className="flex justify-between items-center p-3 ">
+                                                            <div className="flex flex-col">
+                                                                <span className="font-bold text-xs text-gray-900">Total en CUP:</span>
+                                                                <span className="text-xs text-gray-700 font-mono">
+                                                                    Tasa: {formatCurrency(exchangeRate)} CUP/USD
+                                                                </span>
+                                                            </div>
+                                                            <span className="font-bold text-xs text-gray-600">
+                                                                ${formatCurrency(calculation.total * exchangeRate)} CUP
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </PopoverContent>
                                         </Popover>
                                     </div>
-                                    <div className="text-2xl font-bold text-primary">${calculation.total.toFixed(2)}</div>
+                                    
+                                    {/* Totales - Minimalista */}
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                            <div className="text-xs text-muted-foreground">USD</div>
+                                            <div className="text-2xl font-bold">${formatCurrency(calculation.total)}</div>
+                                        </div>
+                                        <div className="h-10 w-px bg-border" />
+                                        <div className="text-right">
+                                            <div className="text-xs text-muted-foreground">CUP</div>
+                                            <div className="text-lg font-semibold">{formatCurrency(calculation.total * exchangeRate)}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )
                     })()}
 
-                    {/* Botones de acción */}
-                    <div className="flex justify-end gap-4 pt-2">
-
+                    {/* Botones de acción - Minimalista */}
+                    <div className="flex justify-end pt-2">
                         <Button
                             type="submit"
-                            className="min-w-[140px] h-10 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full sm:w-auto"
                             disabled={!newProduct.name.trim() || !newProduct.shop?.trim()}
                         >
                             <Save className="h-4 w-4 mr-2" />

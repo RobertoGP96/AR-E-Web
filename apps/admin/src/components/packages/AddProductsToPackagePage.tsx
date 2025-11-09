@@ -76,7 +76,7 @@ export default function AddProductsToPackagePage() {
     try {
       // Preparar los datos para enviar (sin el campo id)
       const productsToSend: AddProductsToPackageData[] = productEntries.map(entry => ({
-        original_product: parseInt(entry.original_product),
+        original_product: entry.original_product, // Enviar como string (UUID)
         amount_received: entry.amount_received
       }));
 

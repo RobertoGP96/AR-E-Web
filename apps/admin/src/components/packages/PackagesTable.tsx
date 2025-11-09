@@ -4,7 +4,7 @@ import EditPackageDialog from './EditPackageDialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import type { Package as PackageType } from '@/types';
-import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Package, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Package, CheckCircle2 } from 'lucide-react';
 import { formatDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -54,6 +54,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const updateStatusMutation = useUpdatePackageStatus();
+  const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
 
   // Estado de paginación
   const [currentPage, setCurrentPage] = useState(1);
@@ -131,10 +132,13 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
   const handleDeleteCancel = () => setDialogState({ type: null, pkg: null });
 
-  // Función para obtener el siguiente estado
+  // Función para obtener el siguiente estado del paquete
   const getNextStatus = (currentStatus: string): string | null => {
-    if (currentStatus === 'Enviado') return 'Recibido';
-    if (currentStatus === 'Recibido') return 'Procesado';
+    // Normalizar el estado actual
+    const normalized = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1).toLowerCase();
+    
+    if (normalized === 'Enviado') return 'Recibido';
+    if (normalized === 'Recibido') return 'Procesado';
     return null;
   };
 
@@ -142,7 +146,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   const getNextStatusIcon = (nextStatus: string) => {
     if (nextStatus === 'Recibido') return Package;
     if (nextStatus === 'Procesado') return CheckCircle2;
-    return RotateCcw;
+    return Package;
   };
 
   // Función para obtener el color del siguiente estado
@@ -150,6 +154,15 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     if (nextStatus === 'Recibido') return 'hover:bg-yellow-50 hover:text-yellow-600';
     if (nextStatus === 'Procesado') return 'hover:bg-green-50 hover:text-green-600';
     return 'hover:bg-purple-50 hover:text-purple-600';
+  };
+
+  // Función para obtener el label del siguiente estado
+  const getNextStatusLabel = (nextStatus: string) => {
+    const labels: Record<string, string> = {
+      'Recibido': 'Recibir Paquete',
+      'Procesado': 'Procesar Paquete',
+    };
+    return labels[nextStatus] || `Marcar como ${nextStatus}`;
   };
 
   const handleStatusChange = async (pkg: PackageType) => {
@@ -160,12 +173,22 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
       return;
     }
 
+    setUpdatingStatusId(pkg.id);
     try {
       await updateStatusMutation.mutateAsync({ id: pkg.id, status: newStatus });
-      toast.success(`Estado del paquete #${pkg.agency_name} cambiado a ${newStatus}`);
+      
+      // Mensaje personalizado según el nuevo estado
+      const messages: Record<string, string> = {
+        'Recibido': `Paquete #${pkg.agency_name} marcado como Recibido`,
+        'Procesado': `Paquete #${pkg.agency_name} marcado como Procesado`,
+      };
+      
+      toast.success(messages[newStatus] || `Estado del paquete #${pkg.agency_name} cambiado a ${newStatus}`);
     } catch (err) {
       console.error('Error al cambiar estado del paquete:', err);
       toast.error('Error al cambiar el estado del paquete');
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -352,6 +375,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                         </Link>
                       </DropdownMenuItem>
 
+                      {/* Cambio de estado en dropdown */}
                       {getNextStatus(pkg.status_of_processing) && (
                         <>
                           <DropdownMenuSeparator />
@@ -360,18 +384,27 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                               e.stopPropagation();
                               handleStatusChange(pkg);
                             }}
+                            disabled={updatingStatusId === pkg.id}
                             className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(getNextStatus(pkg.status_of_processing)!)}`}
                           >
-                            {(() => {
-                              const nextStatus = getNextStatus(pkg.status_of_processing)!;
-                              const IconComponent = getNextStatusIcon(nextStatus);
-                              return (
-                                <>
-                                  <IconComponent className="h-4 w-4" />
-                                  <span>Marcar como {nextStatus}</span>
-                                </>
-                              );
-                            })()}
+                            {updatingStatusId === pkg.id ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>Actualizando...</span>
+                              </>
+                            ) : (
+                              (() => {
+                                const nextStatus = getNextStatus(pkg.status_of_processing)!;
+                                const IconComponent = getNextStatusIcon(nextStatus);
+                                const label = getNextStatusLabel(nextStatus);
+                                return (
+                                  <>
+                                    <IconComponent className="h-4 w-4" />
+                                    <span>{label}</span>
+                                  </>
+                                );
+                              })()
+                            )}
                           </DropdownMenuItem>
                         </>
                       )}

@@ -268,6 +268,25 @@ const OrderTable: React.FC<OrderTableProps> = ({
                             Añadir producto
                           </DropdownMenuItem>
 
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                            className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
+                          >
+                            <Link
+                              to={`/orders/${order.id}/add-products`}
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                              }}
+                              className="inline-flex items-center gap-2"
+                              title={`Agregar múltiples productos al pedido ${order.id}`}
+                            >
+                              <ShoppingCart className="h-4 w-4" />
+                              Agregar múltiples productos
+                            </Link>
+                          </DropdownMenuItem>
+
                           <DropdownMenuSeparator />
 
                           <DropdownMenuItem

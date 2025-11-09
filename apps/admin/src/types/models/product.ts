@@ -30,11 +30,15 @@ export interface Product {
   
   // Precios
   shop_cost: number;
-  shop_delivery_cost: number;
   shop_taxes: number;
+  shop_delivery_cost: number;
   own_taxes: number;
   added_taxes: number;
   total_cost: number;
+  
+  // Cálculos del sistema (nuevos campos)
+  system_expenses: number;  // Gastos: precio + envío + 7% + impuesto add
+  system_profit: number;     // Ganancias: total_cost - system_expenses
   
   // Timestamps
   created_at: DateTime;

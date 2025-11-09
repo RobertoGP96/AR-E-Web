@@ -10,7 +10,7 @@ import {
     TableHead,
 } from "@/components/ui/table";
 import { Button } from "../ui/button";
-import { Box, Edit2, Trash2, ShoppingBag, Loader2, MoreHorizontal, CheckCircle, ExternalLink, CalendarIcon } from "lucide-react";
+import { Box, Edit2, Trash2, ShoppingBag, Loader2, MoreHorizontal, CheckCircle, ExternalLink, CalendarIcon, ShoppingCart } from "lucide-react";
 import { useShoppingReceipts } from "@/hooks/shopping-receipts/useShoppingReceipts";
 import { useState, useMemo, useEffect } from 'react';
 import { useDeleteShoppingReceipt } from "@/hooks/shopping-receipts/useDeleteShoppingReceipt";
@@ -260,6 +260,27 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({ onDelete, itemsPerPage 
                                                             Ver detalles
                                                         </Link>
                                                     </DropdownMenuItem>
+
+                                                    <DropdownMenuItem
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                        }}
+                                                        className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
+                                                    >
+                                                        <Link
+                                                            to={`/purchases/${purchase.id}/manage-products`}
+                                                            onClick={(e: React.MouseEvent) => {
+                                                                e.stopPropagation();
+                                                            }}
+                                                            className="inline-flex items-center gap-2"
+                                                            title={`Gestionar productos de la compra ${purchase.id}`}
+                                                        >
+                                                            <ShoppingCart className="h-4 w-4" />
+                                                            Gestionar Productos
+                                                        </Link>
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuSeparator />
 
                                                     <DropdownMenuItem
                                                         onClick={(e) => {

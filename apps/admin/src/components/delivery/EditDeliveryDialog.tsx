@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useUpdateDelivery } from '@/hooks/delivery';
 import { useCategories } from '@/hooks/category/useCategory';
 import { toast } from 'sonner';
@@ -32,6 +32,7 @@ interface EditDeliveryDialogProps {
 export default function EditDeliveryDialog({ open, onOpenChange, delivery }: EditDeliveryDialogProps) {
   const updateDeliveryMutation = useUpdateDelivery();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const categoryList = useMemo(() => categories?.results || [], [categories?.results]);
 
   // Estado del formulario
   const [formData, setFormData] = useState({
@@ -56,6 +57,18 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
       });
     }
   }, [delivery]);
+
+  // Efecto para calcular automáticamente el costo por peso
+  useEffect(() => {
+    if (formData.category_id && formData.weight > 0) {
+      const selectedCategory = categoryList.find(c => c.id === formData.category_id);
+      
+      if (selectedCategory) {
+        const calculatedCost = selectedCategory.client_shipping_charge * formData.weight;
+        setFormData(prev => ({ ...prev, weight_cost: parseFloat(calculatedCost.toFixed(2)) }));
+      }
+    }
+  }, [formData.category_id, formData.weight, categoryList]);
 
   // Funciones para obtener estilos según el estado
   const getDeliveryStatusStyles = (status: string) => {
@@ -164,15 +177,15 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                   className="border-gray-200 focus:border-orange-300"
                 >
                   <SelectValue placeholder="Selecciona una categoría">
-                    {formData.category_id && categories?.results ? (
+                    {formData.category_id && categoryList ? (
                       <div className="flex items-center gap-2">
                         <Package className="h-4 w-4 text-gray-500" />
                         <span>
-                          {categories.results.find(c => c.id === formData.category_id)?.name || 'Categoría desconocida'}
+                          {categoryList.find(c => c.id === formData.category_id)?.name || 'Categoría desconocida'}
                         </span>
-                        {categories.results.find(c => c.id === formData.category_id) && (
+                        {categoryList.find(c => c.id === formData.category_id) && (
                           <span className="text-xs text-gray-500">
-                            (${categories.results.find(c => c.id === formData.category_id)?.shipping_cost_per_pound}/lb)
+                            (${categoryList.find(c => c.id === formData.category_id)?.client_shipping_charge}/lb)
                           </span>
                         )}
                       </div>
@@ -187,8 +200,8 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span className="ml-2 text-sm">Cargando...</span>
                     </div>
-                  ) : categories?.results && categories.results.length > 0 ? (
-                    categories.results.map((category) => (
+                  ) : categoryList.length > 0 ? (
+                    categoryList.map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         <div className="flex items-center justify-between gap-4 w-full">
                           <div className="flex items-center gap-2">
@@ -196,7 +209,7 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                             <span>{category.name}</span>
                           </div>
                           <span className="text-xs text-gray-500">
-                            ${category.shipping_cost_per_pound}/lb
+                            ${category.client_shipping_charge}/lb
                           </span>
                         </div>
                       </SelectItem>
@@ -208,9 +221,9 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                   )}
                 </SelectContent>
               </Select>
-              {formData.category_id && categories?.results && (
+              {formData.category_id && categoryList && (
                 <p className="text-xs text-gray-500">
-                  Costo de envío: ${categories.results.find(c => c.id === formData.category_id)?.shipping_cost_per_pound || 0}/lb
+                  Cobro al cliente: ${categoryList.find(c => c.id === formData.category_id)?.client_shipping_charge || 0}/lb
                 </p>
               )}
             </div>
@@ -298,7 +311,9 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
               </summary>
               <div className="grid gap-3 mt-3">
                 <div className="grid gap-2">
-                  <Label htmlFor="weight_cost">Costo por Peso ($)</Label>
+                  <Label htmlFor="weight_cost">
+                    Costo por Peso (Calculado automáticamente)
+                  </Label>
                   <Input
                     id="weight_cost"
                     type="number"
@@ -306,11 +321,16 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                     min="0"
                     placeholder="0.00"
                     value={formData.weight_cost}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, weight_cost: parseFloat(e.target.value) || 0 }))
-                    }
-                    className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+                    readOnly
+                    className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 bg-gray-50"
                   />
+                  {formData.category_id && formData.weight > 0 && (
+                    <p className="text-xs text-gray-500">
+                      Cálculo: {formData.weight} lb × $
+                      {categoryList.find(c => c.id === formData.category_id)?.client_shipping_charge || 0}/lb = $
+                      {formData.weight_cost.toFixed(2)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid gap-2">
@@ -335,18 +355,14 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-sm font-medium text-blue-900 mb-2">Resumen de Costos</p>
               <div className="space-y-1 text-sm text-blue-800">
-                {formData.category_id && categories?.results && (
+                {formData.category_id && categoryList && (
                   <div className="flex justify-between">
-                    <span>Costo de envío ({formData.weight} lb):</span>
+                    <span>Costo de entrega ({formData.weight} lb):</span>
                     <span className="font-medium">
-                      ${((categories.results.find(c => c.id === formData.category_id)?.shipping_cost_per_pound || 0) * formData.weight).toFixed(2)}
+                      ${((categoryList.find(c => c.id === formData.category_id)?.client_shipping_charge || 0) * formData.weight).toFixed(2)}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span>Costo adicional por peso:</span>
-                  <span className="font-medium">${formData.weight_cost.toFixed(2)}</span>
-                </div>
                 <div className="flex justify-between">
                   <span>Ganancia manager:</span>
                   <span className="font-medium">${formData.manager_profit.toFixed(2)}</span>
@@ -355,8 +371,7 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                   <span className="font-semibold">Total estimado:</span>
                   <span className="font-semibold">
                     ${(
-                      ((categories?.results?.find(c => c.id === formData.category_id)?.shipping_cost_per_pound || 0) * formData.weight) +
-                      formData.weight_cost +
+                      ((categoryList.find(c => c.id === formData.category_id)?.client_shipping_charge || 0) * formData.weight) +
                       formData.manager_profit
                     ).toFixed(2)}
                   </span>

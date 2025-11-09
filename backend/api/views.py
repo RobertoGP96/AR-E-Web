@@ -770,7 +770,7 @@ class ProductBuyedViewSet(viewsets.ModelViewSet):
     """
     queryset = ProductBuyed.objects.all()
     serializer_class = ProductBuyedSerializer
-    permission_classes = [ReadOnly | AccountantPermission]
+    permission_classes = [ReadOnly | AccountantPermission | AdminPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['original_product', 'shoping_receip']
     search_fields = ['original_product__name', 'original_product__sku']
@@ -850,7 +850,7 @@ class ProductReceivedViewSet(viewsets.ModelViewSet):
     """
     queryset = ProductReceived.objects.all()
     serializer_class = ProductReceivedSerializer
-    permission_classes = [ReadOnly | LogisticalPermission]
+    permission_classes = [ReadOnly | LogisticalPermission | AdminPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['original_product', 'package']
     search_fields = ['original_product__name', 'original_product__sku', 'package__number_of_tracking']
@@ -926,7 +926,7 @@ class ProductDeliveryViewSet(viewsets.ModelViewSet):
     """
     queryset = ProductDelivery.objects.all()
     serializer_class = ProductDeliverySerializer
-    permission_classes = [ReadOnly | LogisticalPermission]
+    permission_classes = [ReadOnly | LogisticalPermission | AdminPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['original_product', 'deliver_receip']
     search_fields = ['original_product__name', 'original_product__sku', 'deliver_receip__id']
@@ -1156,6 +1156,70 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         # Obtener datos del cliente, su agente asignado y la categoría
         return queryset.select_related('client', 'client__assigned_agent', 'category')
+    
+    @action(detail=True, methods=['post'], permission_classes=[LogisticalPermission | AdminPermission])
+    def add_products(self, request, pk=None):
+        """
+        Agregar productos entregados a una entrega específica.
+        """
+        try:
+            delivery = self.get_object()
+            products_data = request.data.get('products', [])
+
+            if not products_data:
+                return Response(
+                    {'error': 'Se requiere una lista de productos'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            added_count = 0
+            with transaction.atomic():
+                for product_data in products_data:
+                    # Validar datos requeridos
+                    original_product_id = product_data.get('original_product')
+                    amount_delivered = product_data.get('amount_delivered')
+
+                    if not original_product_id or not amount_delivered:
+                        raise ValidationError(
+                            f'Faltan datos requeridos para el producto: original_product y amount_delivered son obligatorios'
+                        )
+
+                    # Crear el producto entregado
+                    product_delivery_data = {
+                        'original_product': original_product_id,
+                        'deliver_receip': delivery.id,
+                        'amount_delivered': amount_delivered,
+                        'reception': product_data.get('reception', None)
+                    }
+
+                    serializer = ProductDeliverySerializer(data=product_delivery_data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+                    added_count += 1
+
+            return Response(
+                {
+                    'message': f'Se agregaron {added_count} productos a la entrega exitosamente',
+                    'added_products': added_count
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except DeliverReceip.DoesNotExist:
+            return Response(
+                {'error': 'Entrega no encontrada'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except ValidationError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error al agregar productos: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class ImageUploadApiView(APIView):
@@ -1724,40 +1788,73 @@ class ProfitReportsView(APIView):
                 created_at__date__lte=month_end
             ).aggregate(total=Sum('products__total_cost'))['total'] or 0
             
-            # Calcular costos reales del mes (sum de real_cost_of_product de productos comprados)
-            product_costs = ProductBuyed.objects.filter(
+            # Calcular gastos del sistema para productos en este mes
+            # Gastos = precio + envío + 7% del precio + impuesto adicional
+            products_in_month = Product.objects.filter(
+                order__pay_status='PAGADO',
+                created_at__date__gte=month_start,
+                created_at__date__lte=month_end
+            )
+            
+            product_expenses = sum(
+                float(p.system_expenses) for p in products_in_month
+            )
+            
+            # Calcular gastos operativos de compras en este mes
+            # Gastos operativos = diferencia entre costo de compra y suma de costos de productos
+            purchases_in_month = ShoppingReceip.objects.filter(
                 buy_date__gte=month_start,
                 buy_date__lte=month_end
-            ).aggregate(total=Sum('real_cost_of_product'))['total'] or 0
+            )
             
-            # Calcular costos de entrega del mes (sum de weight_cost de deliveries)
-            delivery_costs = DeliverReceip.objects.filter(
+            purchase_operational_expenses = sum(
+                float(p.operational_expenses) for p in purchases_in_month
+            )
+            
+            # Calcular gastos de entrega del mes usando el nuevo cálculo
+            # Gastos = peso × costo por libra (del sistema)
+            deliveries_in_month = DeliverReceip.objects.filter(
                 deliver_date__gte=month_start,
                 deliver_date__lte=month_end
-            ).aggregate(total=Sum('weight_cost'))['total'] or 0
+            )
             
-            # Calcular ganancias de agentes del mes (sum de manager_profit de entregas)
-            agent_profits = DeliverReceip.objects.filter(
-                deliver_date__gte=month_start,
-                deliver_date__lte=month_end
-            ).aggregate(total=Sum('manager_profit'))['total'] or 0
+            delivery_expenses = sum(
+                float(d.delivery_expenses) for d in deliveries_in_month
+            )
             
-            # Total de costos = costos de productos + costos de entrega
-            costs = product_costs + delivery_costs
+            # Calcular ganancias de agentes del mes usando el nuevo cálculo
+            # Ganancia agente = peso × profit del agente
+            agent_profits = sum(
+                float(d.agent_profit_calculated) for d in deliveries_in_month
+            )
             
-            # Ganancia proyectada del sistema = ingresos - costos - ganancias de agentes
-            system_profit = revenue - costs - agent_profits
+            # Calcular ganancia del sistema por entregas
+            system_delivery_profit = sum(
+                float(d.system_delivery_profit) for d in deliveries_in_month
+            )
+            
+            # Total de gastos del sistema = gastos de productos + gastos operativos de compras + gastos de entrega
+            total_expenses = product_expenses + purchase_operational_expenses + delivery_expenses
+            
+            # Ganancia del sistema = ingresos - gastos del sistema - ganancias de agentes
+            system_profit = revenue - total_expenses - agent_profits
             
             monthly_reports.append({
                 'month': month_start.strftime('%B %Y'),
                 'month_short': month_start.strftime('%b'),
                 'revenue': float(revenue),
-                'costs': float(costs),
-                'product_costs': float(product_costs),
-                'delivery_costs': float(delivery_costs),
+                'total_expenses': float(total_expenses),
+                'product_expenses': float(product_expenses),
+                'purchase_operational_expenses': float(purchase_operational_expenses),
+                'delivery_expenses': float(delivery_expenses),
                 'agent_profits': float(agent_profits),
+                'system_delivery_profit': float(system_delivery_profit),
                 'system_profit': float(system_profit),
-                'projected_profit': float(system_profit)  # Para compatibilidad con el frontend
+                'projected_profit': float(system_profit),  # Para compatibilidad con el frontend
+                # Mantener compatibilidad con campos anteriores
+                'costs': float(total_expenses),
+                'product_costs': float(product_expenses),
+                'delivery_costs': float(delivery_expenses)
             })
         
         # Calcular ganancias por agente (totales)
@@ -1765,18 +1862,27 @@ class ProfitReportsView(APIView):
         agent_reports = []
         
         for agent in agents:
-            # Total de ganancias del agente (basado en deliveries de sus clientes asignados)
-            total_profit = DeliverReceip.objects.filter(
+            # Total de ganancias del agente usando el nuevo cálculo
+            # Ganancia = peso × profit del agente
+            agent_deliveries = DeliverReceip.objects.filter(
                 client__assigned_agent=agent
-            ).aggregate(total=Sum('manager_profit'))['total'] or 0
+            )
+            
+            total_profit = sum(
+                float(d.agent_profit_calculated) for d in agent_deliveries
+            )
             
             # Ganancias del mes actual
             month_start = current_date.replace(day=1)
-            current_month_profit = DeliverReceip.objects.filter(
+            current_month_deliveries = DeliverReceip.objects.filter(
                 client__assigned_agent=agent,
                 deliver_date__gte=month_start,
                 deliver_date__lte=current_date
-            ).aggregate(total=Sum('manager_profit'))['total'] or 0
+            )
+            
+            current_month_profit = sum(
+                float(d.agent_profit_calculated) for d in current_month_deliveries
+            )
             
             # Número de clientes asignados
             # Cuenta clientes únicos que tienen órdenes con este agente como sales_manager
@@ -1819,10 +1925,12 @@ class ProfitReportsView(APIView):
         
         # Calcular totales generales
         total_revenue = sum(report['revenue'] for report in monthly_reports)
-        total_costs = sum(report['costs'] for report in monthly_reports)
-        total_product_costs = sum(report['product_costs'] for report in monthly_reports)
-        total_delivery_costs = sum(report['delivery_costs'] for report in monthly_reports)
+        total_expenses = sum(report['total_expenses'] for report in monthly_reports)
+        total_product_expenses = sum(report['product_expenses'] for report in monthly_reports)
+        total_purchase_operational_expenses = sum(report['purchase_operational_expenses'] for report in monthly_reports)
+        total_delivery_expenses = sum(report['delivery_expenses'] for report in monthly_reports)
         total_agent_profits = sum(report['agent_profits'] for report in monthly_reports)
+        total_system_delivery_profit = sum(report['system_delivery_profit'] for report in monthly_reports)
         total_system_profit = sum(report['system_profit'] for report in monthly_reports)
         
         return Response({
@@ -1832,12 +1940,18 @@ class ProfitReportsView(APIView):
                 'agent_reports': agent_reports,
                 'summary': {
                     'total_revenue': float(total_revenue),
-                    'total_costs': float(total_costs),
-                    'total_product_costs': float(total_product_costs),
-                    'total_delivery_costs': float(total_delivery_costs),
+                    'total_expenses': float(total_expenses),
+                    'total_product_expenses': float(total_product_expenses),
+                    'total_purchase_operational_expenses': float(total_purchase_operational_expenses),
+                    'total_delivery_expenses': float(total_delivery_expenses),
                     'total_agent_profits': float(total_agent_profits),
+                    'total_system_delivery_profit': float(total_system_delivery_profit),
                     'total_system_profit': float(total_system_profit),
-                    'profit_margin': float((total_system_profit / total_revenue * 100) if total_revenue > 0 else 0)
+                    'profit_margin': float((total_system_profit / total_revenue * 100) if total_revenue > 0 else 0),
+                    # Mantener compatibilidad con campos anteriores
+                    'total_costs': float(total_expenses),
+                    'total_product_costs': float(total_product_expenses),
+                    'total_delivery_costs': float(total_delivery_expenses)
                 }
             },
             'message': 'Reportes de ganancias obtenidos exitosamente'

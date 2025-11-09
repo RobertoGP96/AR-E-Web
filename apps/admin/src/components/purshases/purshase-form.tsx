@@ -36,7 +36,7 @@ const createShoppingReceipSchema = z.object({
   shopping_account_id: z.number().min(1, 'Debes seleccionar una cuenta de compra').optional(),
   status_of_shopping: z.enum(['No pagado', 'Pagado', 'Parcial']).optional(),
   buy_date: z.string().optional(),
-  total_cost_of_shopping: z.number().optional(),
+  total_cost_of_purchase: z.number().min(0, 'El costo debe ser mayor o igual a 0').optional(),
 });
 
 type CreateShoppingReceipFormData = z.infer<typeof createShoppingReceipSchema>;
@@ -76,7 +76,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
       shopping_account_id: undefined,
       status_of_shopping: undefined,
       buy_date: undefined,
-      total_cost_of_shopping: undefined,
+      total_cost_of_purchase: undefined,
     },
   });
 
@@ -126,7 +126,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
         shop_of_buy: selectedShop.name,
         status_of_shopping: data.status_of_shopping,
         buy_date: data.buy_date,
-        total_cost_of_shopping: data.total_cost_of_shopping,
+        total_cost_of_purchase: data.total_cost_of_purchase || 0,
         buyed_products: selectedProducts,
       } as const;
 
@@ -320,16 +320,16 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
         <div className="">
           <FormField
             control={form.control}
-            name="total_cost_of_shopping"
+            name="total_cost_of_purchase"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Costo Total:</FormLabel>
+                <FormLabel>Costo Real de Compra:</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
                     min={0}
                     step="0.01"
-                    placeholder="Ingresa el costo total"
+                    placeholder="Ingresa el costo real pagado"
                     value={field.value || ''}
                     onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                   />

@@ -250,6 +250,8 @@ class ProductSerializer(serializers.ModelSerializer):
     amount_delivered = serializers.SerializerMethodField(read_only=True)
     amount_received = serializers.SerializerMethodField(read_only=True)
     cost_per_product = serializers.SerializerMethodField(read_only=True)
+    system_expenses = serializers.SerializerMethodField(read_only=True)
+    system_profit = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         """MetaClassName"""
@@ -280,6 +282,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "added_taxes",
             "total_cost",
             "cost_per_product",
+            "system_expenses",
+            "system_profit",
             "created_at",
             "updated_at",
         ]
@@ -317,6 +321,16 @@ class ProductSerializer(serializers.ModelSerializer):
     @extend_schema_field(float)
     def get_cost_per_product(self, obj):
         return getattr(obj, 'cost_per_product', 0.0)
+
+    @extend_schema_field(float)
+    def get_system_expenses(self, obj):
+        """Retorna los gastos del sistema para este producto"""
+        return float(obj.system_expenses) if hasattr(obj, 'system_expenses') else 0.0
+    
+    @extend_schema_field(float)
+    def get_system_profit(self, obj):
+        """Retorna la ganancia del sistema para este producto"""
+        return float(obj.system_profit) if hasattr(obj, 'system_profit') else 0.0
 
     def validate_shop_cost(self, value):
         """Ensure shop_cost is not negative."""
@@ -529,6 +543,7 @@ class CategorySerializer(serializers.ModelSerializer):
             "id",
             "name",
             "shipping_cost_per_pound",
+            "client_shipping_charge",
             "created_at",
             "updated_at",
         ]
@@ -550,6 +565,12 @@ class CategorySerializer(serializers.ModelSerializer):
         """Validar que el costo de envío no sea negativo"""
         if value < 0:
             raise serializers.ValidationError("El costo de envío por libra no puede ser negativo.")
+        return value
+
+    def validate_client_shipping_charge(self, value):
+        """Validar que el cargo al cliente no sea negativo"""
+        if value < 0:
+            raise serializers.ValidationError("El cargo de envío al cliente no puede ser negativo.")
         return value
 
 
@@ -668,10 +689,17 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
     buyed_products = ProductBuyedSerializer(many=True)
 
     total_cost_of_shopping = serializers.SerializerMethodField(read_only=True)
+    operational_expenses = serializers.SerializerMethodField(read_only=True)
 
     @extend_schema_field(float)
     def get_total_cost_of_shopping(self, obj):
-        return obj.total_cost_of_shopping() if hasattr(obj, 'total_cost_of_shopping') else 0.0
+        """Suma del costo total de todos los productos en esta compra"""
+        return float(obj.total_cost_of_shopping) if hasattr(obj, 'total_cost_of_shopping') else 0.0
+
+    @extend_schema_field(float)
+    def get_operational_expenses(self, obj):
+        """Gastos operativos de la compra (diferencia entre costo de compra y suma de productos)"""
+        return float(obj.operational_expenses) if hasattr(obj, 'operational_expenses') else 0.0
 
     class Meta:
         """Class of model"""
@@ -681,7 +709,9 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
             "id",
             "shopping_account",
             "shop_of_buy",
+            "total_cost_of_purchase",
             "total_cost_of_shopping",
+            "operational_expenses",
             "buy_date",
             "buyed_products",
             "status_of_shopping"
@@ -893,6 +923,12 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
 
     total_cost_of_deliver = serializers.SerializerMethodField(read_only=True)
     calculated_shipping_cost = serializers.SerializerMethodField(read_only=True)
+    
+    # Nuevos campos calculados
+    delivery_expenses = serializers.SerializerMethodField(read_only=True)
+    agent_profit_calculated = serializers.SerializerMethodField(read_only=True)
+    client_charge = serializers.SerializerMethodField(read_only=True)
+    system_delivery_profit = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = DeliverReceip
@@ -911,6 +947,11 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
             "manager_profit",
             "total_cost_of_deliver",
             "calculated_shipping_cost",
+            # Nuevos campos calculados
+            "delivery_expenses",
+            "agent_profit_calculated",
+            "client_charge",
+            "system_delivery_profit",
             "created_at",
             "updated_at",
         ]
@@ -931,6 +972,26 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'calculate_shipping_cost'):
             return obj.calculate_shipping_cost()
         return 0.0
+    
+    @extend_schema_field(float)
+    def get_delivery_expenses(self, obj):
+        """Retorna los gastos de la entrega (peso × costo por libra)"""
+        return float(obj.delivery_expenses) if hasattr(obj, 'delivery_expenses') else 0.0
+    
+    @extend_schema_field(float)
+    def get_agent_profit_calculated(self, obj):
+        """Retorna la ganancia del agente (peso × profit del agente)"""
+        return float(obj.agent_profit_calculated) if hasattr(obj, 'agent_profit_calculated') else 0.0
+    
+    @extend_schema_field(float)
+    def get_client_charge(self, obj):
+        """Retorna el cobro al cliente (peso × tarifa de cobro)"""
+        return float(obj.client_charge) if hasattr(obj, 'client_charge') else 0.0
+    
+    @extend_schema_field(float)
+    def get_system_delivery_profit(self, obj):
+        """Retorna la ganancia del sistema en esta entrega"""
+        return float(obj.system_delivery_profit) if hasattr(obj, 'system_delivery_profit') else 0.0
 
 
 class PackageSerializer(serializers.ModelSerializer):

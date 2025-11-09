@@ -46,7 +46,7 @@ export default function AddProductsToPackageDialog({
 
   // Estado del formulario
   const [productEntries, setProductEntries] = useState<ProductEntry[]>([
-    { id: '1', original_product: 0, amount_received: 1 }
+    { id: '1', original_product: '', amount_received: 1 }
   ]);
 
   // Función para agregar una nueva entrada de producto
@@ -54,7 +54,7 @@ export default function AddProductsToPackageDialog({
     const newId = Date.now().toString();
     setProductEntries(prev => [...prev, {
       id: newId,
-      original_product: 0,
+      original_product: '',
       amount_received: 1
     }]);
   };
@@ -84,7 +84,7 @@ export default function AddProductsToPackageDialog({
 
     // Validar cada entrada
     for (const entry of productEntries) {
-      if (!entry.original_product || entry.original_product === 0) {
+      if (!entry.original_product || entry.original_product === '') {
         toast.error('Todos los productos deben ser seleccionados');
         return;
       }
@@ -109,7 +109,7 @@ export default function AddProductsToPackageDialog({
       toast.success(`Se agregaron ${productEntries.length} productos al paquete exitosamente`);
 
       // Resetear formulario y cerrar diálogo
-      setProductEntries([{ id: '1', original_product: 0, amount_received: 1 }]);
+      setProductEntries([{ id: '1', original_product: '', amount_received: 1 }]);
       onOpenChange(false);
     } catch (error) {
       console.error('Error adding products to package:', error);
@@ -154,9 +154,9 @@ export default function AddProductsToPackageDialog({
                       Producto <span className="text-red-500">*</span>
                     </Label>
                     <Select
-                      value={entry.original_product.toString()}
+                      value={entry.original_product}
                       onValueChange={(value) =>
-                        updateProductEntry(entry.id, 'original_product', parseInt(value))
+                        updateProductEntry(entry.id, 'original_product', value)
                       }
                     >
                       <SelectTrigger id={`product-${entry.id}`}>
@@ -164,7 +164,7 @@ export default function AddProductsToPackageDialog({
                       </SelectTrigger>
                       <SelectContent>
                         {products.map((product: Product) => (
-                          <SelectItem key={product.id} value={product.id.toString()}>
+                          <SelectItem key={product.id} value={product.id}>
                             {product.name} (SKU: {product.sku})
                           </SelectItem>
                         ))}

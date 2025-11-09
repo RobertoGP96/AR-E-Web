@@ -30,7 +30,21 @@ const statusConfig: Record<DeliveryStatus, { color: string; label: string; icon:
 };
 
 const DeliveryStatusBadge: React.FC<Props> = ({ status }) => {
-  const config = statusConfig[status] || statusConfig["Pendiente"];
+  // Normalizar el estado: primera letra mayúscula, resto minúsculas (excepto "En transito")
+  let normalizedStatus: DeliveryStatus;
+  
+  if (!status) {
+    normalizedStatus = "Pendiente";
+  } else {
+    const lower = status.toLowerCase();
+    if (lower === 'en transito' || lower === 'en tránsito') {
+      normalizedStatus = "En transito";
+    } else {
+      normalizedStatus = (status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()) as DeliveryStatus;
+    }
+  }
+  
+  const config = statusConfig[normalizedStatus] || statusConfig["Pendiente"];
   const Icon = config.icon;
   return (
     <span

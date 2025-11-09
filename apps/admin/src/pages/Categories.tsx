@@ -63,10 +63,17 @@ export default function Categories() {
     }
   };
 
-  const handleSave = async (payload: { name: string; shipping_cost_per_pound: number; id?: number }) => {
+  const handleSave = async (payload: { name: string; shipping_cost_per_pound: number; client_shipping_charge: number; id?: number }) => {
     if (payload.id) {
       try {
-        await updateMutation.mutateAsync({ id: payload.id, data: { name: payload.name, shipping_cost_per_pound: payload.shipping_cost_per_pound } });
+        await updateMutation.mutateAsync({ 
+          id: payload.id, 
+          data: { 
+            name: payload.name, 
+            shipping_cost_per_pound: payload.shipping_cost_per_pound,
+            client_shipping_charge: payload.client_shipping_charge
+          } 
+        });
         toast.success('Categoría actualizada');
       } catch (err: unknown) {
         const message = err && typeof err === 'object' && 'message' in err ? (err as Record<string, unknown>)['message'] : 'Error actualizando categoría';
@@ -74,7 +81,11 @@ export default function Categories() {
       }
     } else {
       try {
-        await createMutation.mutateAsync({ name: payload.name, shipping_cost_per_pound: payload.shipping_cost_per_pound });
+        await createMutation.mutateAsync({ 
+          name: payload.name, 
+          shipping_cost_per_pound: payload.shipping_cost_per_pound,
+          client_shipping_charge: payload.client_shipping_charge
+        });
         toast.success('Categoría creada');
       } catch (err: unknown) {
         const message = err && typeof err === 'object' && 'message' in err ? (err as Record<string, unknown>)['message'] : 'Error creando categoría';

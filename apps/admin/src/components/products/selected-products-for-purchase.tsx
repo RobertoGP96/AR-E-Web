@@ -35,6 +35,7 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
 }) => {
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [open, setOpen] = useState(false);
 
   // Update filters based on internal state
   const updatedFilters: ProductFilters = useMemo(() => ({
@@ -65,6 +66,7 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
     if (selectionMode && onProductsConfirmed && selectedProducts.length > 0) {
       onProductsConfirmed(selectedProducts);
       setSelectedProducts([]); // Limpiar selección después de confirmar
+      setOpen(false); // Cerrar el popover
     }
   };
 
@@ -120,7 +122,7 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
   }
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" className="flex items-center gap-2">
           <ShoppingCart className="h-4 w-4" />

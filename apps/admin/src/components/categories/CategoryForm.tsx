@@ -9,6 +9,7 @@ import { Loader2, Save } from 'lucide-react';
 const categorySchema = z.object({
   name: z.string().min(1, 'Nombre requerido'),
   shipping_cost_per_pound: z.number().min(0, 'Debe ser >= 0'),
+  client_shipping_charge: z.number().min(0, 'Debe ser >= 0'),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -25,6 +26,7 @@ export default function CategoryForm({ initialValues, loading = false, onSubmit 
     defaultValues: {
       name: initialValues?.name || '',
       shipping_cost_per_pound: initialValues?.shipping_cost_per_pound ?? 0,
+      client_shipping_charge: initialValues?.client_shipping_charge ?? 0,
     },
   });
 
@@ -44,6 +46,12 @@ export default function CategoryForm({ initialValues, loading = false, onSubmit 
         <Label>Costo de envío por libra</Label>
         <Input type="number" step="0.01" {...register('shipping_cost_per_pound', { valueAsNumber: true })} />
         {errors.shipping_cost_per_pound && <p className="text-sm text-destructive">{errors.shipping_cost_per_pound.message}</p>}
+      </div>
+
+      <div className="grid gap-2">
+        <Label>Cobro al cliente por libra</Label>
+        <Input type="number" step="0.01" {...register('client_shipping_charge', { valueAsNumber: true })} />
+        {errors.client_shipping_charge && <p className="text-sm text-destructive">{errors.client_shipping_charge.message}</p>}
       </div>
 
       <div className="flex justify-end gap-2">

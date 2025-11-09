@@ -25,7 +25,8 @@ const statusConfig: Record<string, { color: string; label: string; icon: React.R
 };
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
-    const config = statusConfig[status] || {
+    const normalizedStatus = status.toLowerCase();
+    const config = statusConfig[normalizedStatus] || {
         color: "bg-gray-300 text-black",
         label: status,
         icon: <HelpCircle className="inline-block mr-1 h-4 w-4" />,

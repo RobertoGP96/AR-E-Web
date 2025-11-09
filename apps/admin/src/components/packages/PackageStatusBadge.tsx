@@ -25,7 +25,12 @@ const statusConfig: Record<PackageStatus, { color: string; label: string; icon: 
 };
 
 const PackageStatusBadge: React.FC<Props> = ({ status }) => {
-  const config = statusConfig[status] || statusConfig["Enviado"];
+  // Normalizar el estado: primera letra mayúscula, resto minúsculas
+  const normalizedStatus = status 
+    ? (status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()) as PackageStatus
+    : "Enviado" as PackageStatus;
+  
+  const config = statusConfig[normalizedStatus] || statusConfig["Enviado"];
   const Icon = config.icon;
   return (
     <span

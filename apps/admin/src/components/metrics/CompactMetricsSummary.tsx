@@ -418,43 +418,6 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             change: '+15%',
             changeType: 'increase' as const
           },
-          { 
-            label: 'Hoy', 
-            value: metrics.deliveries.today, 
-            icon: PackageCheck, 
-            color: 'text-purple-600',
-            iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
-            borderColor: 'border-purple-100',
-            hoverColor: 'hover:border-purple-200 hover:shadow-purple-100/50',
-            bgGradient: 'bg-gradient-to-br from-purple-50 via-purple-50/80 to-purple-100/50',
-            badgeColor: 'bg-purple-50 text-purple-700 border-purple-200'
-          },
-          { 
-            label: 'Esta Semana', 
-            value: metrics.deliveries.this_week, 
-            icon: PackageCheck, 
-            color: 'text-cyan-600',
-            iconBg: 'bg-gradient-to-br from-cyan-500 to-cyan-600',
-            borderColor: 'border-cyan-100',
-            hoverColor: 'hover:border-cyan-200 hover:shadow-cyan-100/50',
-            bgGradient: 'bg-gradient-to-br from-cyan-50 via-cyan-50/80 to-cyan-100/50',
-            badgeColor: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-            change: '+12%',
-            changeType: 'increase' as const
-          },
-          { 
-            label: 'Este Mes', 
-            value: metrics.deliveries.this_month, 
-            icon: PackageCheck, 
-            color: 'text-teal-600',
-            iconBg: 'bg-gradient-to-br from-teal-500 to-teal-600',
-            borderColor: 'border-teal-100',
-            hoverColor: 'hover:border-teal-200 hover:shadow-teal-100/50',
-            bgGradient: 'bg-gradient-to-br from-teal-50 via-teal-50/80 to-teal-100/50',
-            badgeColor: 'bg-teal-50 text-teal-700 border-teal-200',
-            change: '+25%',
-            changeType: 'increase' as const
-          }
         ];
       default:
         return [];

@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
 export interface AddProductsToPackageData {
-  original_product: number;
+  original_product: string; // UUID del producto
   amount_received: number;
 }
 
