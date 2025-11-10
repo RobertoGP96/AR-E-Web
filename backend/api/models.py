@@ -147,6 +147,12 @@ class Order(models.Model):
     )
     observations = models.TextField(blank=True, null=True)
     
+    # Campos de pago
+    received_value_of_client = models.FloatField(
+        default=0,
+        help_text="Cantidad total recibida del cliente por este pedido"
+    )
+    
     # Timestamps
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -174,19 +180,14 @@ class Order(models.Model):
         """Total cost of order"""
         return sum(product.total_cost for product in self.products.all())
 
-    # NOTA: Los siguientes métodos fueron deshabilitados porque DeliverReceip ya no tiene 
-    # relación directa con Order, solo con el cliente
-    # def received_products(self):
-    #     """Total products received"""
-    #     return list(self.delivery_receipts.all())
-
-    # def received_value_of_client(self):
-    #     """Total value of objects received by client"""
-    #     return sum(receipt.total_cost_of_deliver() for receipt in self.delivery_receipts.all())
-
-    # def extra_payments(self):
-    #     """Extra payment in case of excedent or missing"""
-    #     return self.received_value_of_client() - self.total_cost()
+    @property
+    def balance(self):
+        """
+        Balance del pedido = cantidad recibida - costo total
+        Un balance positivo indica que el cliente pagó de más
+        Un balance negativo indica que falta por cobrar
+        """
+        return float(self.received_value_of_client - self.total_cost())
 
     @property
     def total_products_requested(self):

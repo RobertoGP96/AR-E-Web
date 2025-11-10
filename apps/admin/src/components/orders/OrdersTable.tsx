@@ -10,8 +10,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useState, useMemo, useEffect } from 'react';
 import { useDeleteOrder } from '@/hooks/order/useDeleteOrder';
+import { useMarkOrderAsPaid } from '@/hooks/order/useMarkOrderAsPaid';
 import { toast } from 'sonner';
 import { formatDayMonth } from '@/lib/format-date';
+import { ConfirmPaymentDialog } from './ConfirmPaymentDialog';
 import {
   Pagination,
   PaginationContent,
@@ -42,8 +44,11 @@ const OrderTable: React.FC<OrderTableProps> = ({
   itemsPerPage = 10,
 }) => {
   const [dialogState, setDialogState] = useState<{ type: 'delete' | null; order: Order | null }>({ type: null, order: null });
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<Order | null>(null);
 
   const deleteOrderMutation = useDeleteOrder();
+  const markOrderAsPaidMutation = useMarkOrderAsPaid();
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Estado de paginación
@@ -117,6 +122,41 @@ const OrderTable: React.FC<OrderTableProps> = ({
     } finally {
       setIsDeleting(false);
       setDialogState({ type: null, order: null });
+    }
+  };
+
+  const handlePaymentConfirm = async (orderId: number, amountReceived: number) => {
+    console.log(`[OrdersTable] handlePaymentConfirm llamado con:`, {
+      orderId,
+      amountReceived,
+      selectedOrder: selectedOrderForPayment
+    });
+
+    if (!orderId || orderId === undefined) {
+      console.error('[OrdersTable] ERROR: orderId es undefined o inválido', orderId);
+      toast.error('Error: ID de pedido inválido');
+      return;
+    }
+
+    try {
+      if (onConfirmPayment && selectedOrderForPayment) {
+        // Si se proporciona un callback personalizado, úsalo
+        console.log('[OrdersTable] Usando callback personalizado onConfirmPayment');
+        await onConfirmPayment(selectedOrderForPayment);
+      } else {
+        // Usar el hook de mutación
+        console.log(`[OrdersTable] Llamando a markOrderAsPaidMutation con orderId: ${orderId}, amount: ${amountReceived}`);
+        await markOrderAsPaidMutation.mutateAsync({ orderId, amountReceived });
+        toast.success(`Pago confirmado para el pedido #${orderId}`, {
+          description: `Se registró ${formatCurrency(amountReceived)} como cantidad recibida.`
+        });
+      }
+      setPaymentDialogOpen(false);
+      setSelectedOrderForPayment(null);
+    } catch (err) {
+      console.error('[OrdersTable] Error al confirmar pago:', err);
+      toast.error('Error al confirmar el pago');
+      throw err; // Re-lanzar para que el diálogo maneje el error
     }
   };
 
@@ -238,7 +278,9 @@ const OrderTable: React.FC<OrderTableProps> = ({
                                 return;
                               }
 
-                              onConfirmPayment?.(order);
+                              // Abrir el diálogo de confirmación de pago
+                              setSelectedOrderForPayment(order);
+                              setPaymentDialogOpen(true);
                             }}
                             className={`flex items-center gap-2 rounded-lg ${order.pay_status === 'Pagado' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-50 hover:text-green-600'}`}
                           >
@@ -401,6 +443,17 @@ const OrderTable: React.FC<OrderTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Diálogo de confirmación de pago */}
+      <ConfirmPaymentDialog
+        order={selectedOrderForPayment}
+        open={paymentDialogOpen}
+        onClose={() => {
+          setPaymentDialogOpen(false);
+          setSelectedOrderForPayment(null);
+        }}
+        onConfirm={handlePaymentConfirm}
+      />
     </>
   );
 }

@@ -4,7 +4,6 @@ import { OrdersHeader, OrdersFilters, OrdersTable, AddProductsDialog, EditOrderD
 import type { CreateProductData, Order } from '@/types';
 import { toast } from 'sonner';
 import { useDeleteOrder } from '@/hooks/order/useDeleteOrder';
-import { useMarkOrderAsPaid } from '@/hooks/order/useMarkOrderAsPaid';
 import { useAddProductsToOrder } from '@/hooks/order/useAddProductsToOrder';
 import { CompactMetricsSummary } from '@/components/metrics';
 
@@ -68,19 +67,7 @@ const Orders = () => {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
 
   // Hooks para mutaciones reales
-  const markPaidMutation = useMarkOrderAsPaid();
   const addProductsMutation = useAddProductsToOrder();
-
-  // Handler para confirmar pago usando mutación
-  const handleConfirmPayment = async (order: Order) => {
-    try {
-      await markPaidMutation.mutateAsync(order.id);
-      toast.success(`Pago confirmado para pedido #${order.id}`);
-    } catch (err) {
-      console.error('Error confirmando pago:', err);
-      toast.error('Error al confirmar el pago');
-    }
-  };
 
   // Handler para abrir diálogo de añadir productos
   const handleAddProducts = (order: Order) => {
@@ -133,7 +120,6 @@ const Orders = () => {
         isLoading={isLoading}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        onConfirmPayment={handleConfirmPayment}
         onAddProducts={handleAddProducts}
       />
 

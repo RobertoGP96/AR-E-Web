@@ -33,8 +33,10 @@ interface CreateDeliveryDialogProps {
 export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliveryDialogProps) {
   const createDeliveryMutation = useCreateDelivery();
   const { data: usersData, isLoading: usersLoading } = useUsers({ role: 'client' });
+  const { data: agentsData } = useUsers({ role: 'agent' });
   const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
   const clients = useMemo(() => usersData?.results || [], [usersData?.results]);
+  const agents = useMemo(() => agentsData?.results || [], [agentsData?.results]);
   const categories = useMemo(() => categoriesData?.results || [], [categoriesData?.results]);
 
   // Estado del formulario
@@ -58,6 +60,18 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
     manager_profit: '',
   });
 
+  // Obtener el cliente seleccionado
+  const selectedClient = useMemo(() => {
+    if (!formData.client_id) return null;
+    return clients.find(c => c.id.toString() === formData.client_id);
+  }, [formData.client_id, clients]);
+
+  // Obtener el agente asignado al cliente seleccionado
+  const assignedAgent = useMemo(() => {
+    if (!selectedClient || !selectedClient.assigned_agent) return null;
+    return agents.find(a => a.id === selectedClient.assigned_agent);
+  }, [selectedClient, agents]);
+
 
   // Efecto para calcular automáticamente el costo por peso
   useEffect(() => {
@@ -74,6 +88,22 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
       setFormData(prev => ({ ...prev, weight_cost: '' }));
     }
   }, [formData.category_id, formData.weight, categories]);
+
+  // Efecto para calcular automáticamente la ganancia del manager (peso × agent_profit del agente asignado)
+  useEffect(() => {
+    if (assignedAgent && formData.weight) {
+      const weight = parseFloat(formData.weight);
+      const agentProfit = assignedAgent.agent_profit || 0;
+      
+      if (!isNaN(weight) && weight > 0 && agentProfit > 0) {
+        const calculatedProfit = weight * agentProfit;
+        setFormData(prev => ({ ...prev, manager_profit: calculatedProfit.toFixed(2) }));
+      }
+    } else if (!assignedAgent || !formData.weight) {
+      // Limpiar la ganancia si no hay agente asignado o peso
+      setFormData(prev => ({ ...prev, manager_profit: '' }));
+    }
+  }, [assignedAgent, formData.weight]);
 
 
   // Funciones para obtener estilos según el estado
@@ -323,19 +353,30 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
             {/* Ganancia del Manager */}
             <div className="grid gap-2">
               <Label htmlFor="manager_profit">
-                Ganancia del Manager
+                Ganancia del Manager (Editable)
               </Label>
               <Input
                 id="manager_profit"
                 type="number"
                 step="0.01"
-                placeholder="Ej: 2.00"
+                placeholder="Calculado automáticamente"
                 value={formData.manager_profit}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, manager_profit: e.target.value }))
                 }
                 className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
               />
+              {assignedAgent && formData.weight && (
+                <p className="text-xs text-gray-500">
+                  Cálculo: {formData.weight} lb × ${assignedAgent.agent_profit || 0}/lb (profit del agente {assignedAgent.name}) = $
+                  {formData.manager_profit || '0.00'}
+                </p>
+              )}
+              {selectedClient && !assignedAgent && (
+                <p className="text-xs text-amber-600">
+                  ⚠️ Este cliente no tiene un agente asignado
+                </p>
+              )}
             </div>
           </div>
 

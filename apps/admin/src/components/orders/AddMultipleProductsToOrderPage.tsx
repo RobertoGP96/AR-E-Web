@@ -161,7 +161,7 @@ export default function AddMultipleProductsToOrderPage() {
                       <TableCell>{product.amount_requested}</TableCell>
                       <TableCell>${product.shop_cost.toFixed(2)}</TableCell>
                       <TableCell className="font-semibold">
-                        ${((product.shop_cost || 0) * (product.amount_requested || 1)).toFixed(2)}
+                        ${(product.shop_cost || 0).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -187,7 +187,7 @@ export default function AddMultipleProductsToOrderPage() {
                   <p className="text-lg font-bold text-orange-600">
                     Total estimado: $
                     {productsList
-                      .reduce((sum, p) => sum + ((p.shop_cost || 0) * (p.amount_requested || 1)), 0)
+                      .reduce((sum, p) => sum + (p.shop_cost || 0), 0)
                       .toFixed(2)}
                   </p>
                 </div>

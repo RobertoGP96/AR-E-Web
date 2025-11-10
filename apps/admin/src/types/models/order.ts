@@ -22,8 +22,7 @@ export interface Order {
   
   // Propiedades computadas de dinero
   total_cost: number;
-  received_value_of_client?: number;
-  extra_payments?: number;
+  received_value_of_client: number;
   
   // Propiedades computadas de productos (del backend)
   total_products_requested: number;

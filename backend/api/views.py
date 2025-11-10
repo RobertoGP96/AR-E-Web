@@ -1763,12 +1763,33 @@ class DashboardMetricsView(APIView):
         orders_this_week = Order.objects.filter(created_at__date__gte=week_ago).count()
         orders_this_month = Order.objects.filter(created_at__date__gte=month_ago).count()
 
-        # Revenue - asumiendo de órdenes con pay_status 'Pagado'
-        revenue_total = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value).aggregate(total=Sum('products__total_cost'))['total'] or 0
-        revenue_today = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value, created_at__date=today).aggregate(total=Sum('products__total_cost'))['total'] or 0
-        revenue_this_week = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value, created_at__date__gte=week_ago).aggregate(total=Sum('products__total_cost'))['total'] or 0
-        revenue_this_month = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value, created_at__date__gte=month_ago).aggregate(total=Sum('products__total_cost'))['total'] or 0
-        revenue_last_month = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value, created_at__date__range=(last_month_start, last_month_end)).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        # Revenue - ingresos de órdenes pagadas + cobro al cliente por entregas
+        # Ingresos de productos
+        revenue_products_total = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        revenue_products_today = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value, created_at__date=today).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        revenue_products_this_week = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value, created_at__date__gte=week_ago).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        revenue_products_this_month = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value, created_at__date__gte=month_ago).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        revenue_products_last_month = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value, created_at__date__range=(last_month_start, last_month_end)).aggregate(total=Sum('products__total_cost'))['total'] or 0
+        
+        # Ingresos de entregas (cobro al cliente)
+        all_deliveries = DeliverReceip.objects.all()
+        deliveries_today_set = DeliverReceip.objects.filter(deliver_date__date=today)
+        deliveries_this_week_set = DeliverReceip.objects.filter(deliver_date__date__gte=week_ago)
+        deliveries_this_month_set = DeliverReceip.objects.filter(deliver_date__date__gte=month_ago)
+        deliveries_last_month_set = DeliverReceip.objects.filter(deliver_date__date__range=(last_month_start, last_month_end))
+        
+        revenue_deliveries_total = sum(float(d.client_charge) for d in all_deliveries)
+        revenue_deliveries_today = sum(float(d.client_charge) for d in deliveries_today_set)
+        revenue_deliveries_this_week = sum(float(d.client_charge) for d in deliveries_this_week_set)
+        revenue_deliveries_this_month = sum(float(d.client_charge) for d in deliveries_this_month_set)
+        revenue_deliveries_last_month = sum(float(d.client_charge) for d in deliveries_last_month_set)
+        
+        # Total de ingresos = productos + entregas
+        revenue_total = revenue_products_total + revenue_deliveries_total
+        revenue_today = revenue_products_today + revenue_deliveries_today
+        revenue_this_week = revenue_products_this_week + revenue_deliveries_this_week
+        revenue_this_month = revenue_products_this_month + revenue_deliveries_this_month
+        revenue_last_month = revenue_products_last_month + revenue_deliveries_last_month
 
         # Compras (ProductBuyed)
         purchases_total = ProductBuyed.objects.count()
@@ -1890,12 +1911,25 @@ class ProfitReportsView(APIView):
                 else:
                     month_end = month_start.replace(month=month_start.month + 1, day=1) - timedelta(days=1)
             
-            # Calcular ingresos del mes (sum de total_cost de productos en órdenes pagadas)
-            revenue = Order.objects.filter(
+            # Calcular ingresos del mes (sum de total_cost de productos en órdenes pagadas + cobro al cliente por entregas)
+            # Ingresos de productos
+            revenue_products = Order.objects.filter(
                 pay_status=PaymentStatusEnum.PAGADO.value,
                 created_at__date__gte=month_start,
                 created_at__date__lte=month_end
             ).aggregate(total=Sum('products__total_cost'))['total'] or 0
+            
+            # Obtener entregas del mes (usaremos esta consulta para varios cálculos)
+            deliveries_in_month = DeliverReceip.objects.filter(
+                deliver_date__gte=month_start,
+                deliver_date__lte=month_end
+            )
+            
+            # Ingresos de entregas (cobro al cliente)
+            revenue_deliveries = sum(float(d.client_charge) for d in deliveries_in_month)
+            
+            # Total de ingresos = productos + entregas
+            revenue = revenue_products + revenue_deliveries
             
             # Calcular gastos del sistema para productos en este mes
             # Gastos = precio + envío + 7% del precio + impuesto adicional
@@ -1922,11 +1956,6 @@ class ProfitReportsView(APIView):
             
             # Calcular gastos de entrega del mes usando el nuevo cálculo
             # Gastos = peso × costo por libra (del sistema)
-            deliveries_in_month = DeliverReceip.objects.filter(
-                deliver_date__gte=month_start,
-                deliver_date__lte=month_end
-            )
-            
             delivery_expenses = sum(
                 float(d.delivery_expenses) for d in deliveries_in_month
             )

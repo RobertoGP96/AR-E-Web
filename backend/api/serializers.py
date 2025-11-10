@@ -392,33 +392,11 @@ class OrderSerializer(serializers.ModelSerializer):
     products = ProductSerializer(many=True, read_only=True)
 
     total_cost = serializers.SerializerMethodField(read_only=True)
-    received_value_of_client = serializers.SerializerMethodField(read_only=True)
-    extra_payments = serializers.SerializerMethodField(read_only=True)
 
     @extend_schema_field(float)
     def get_total_cost(self, obj):
         val = getattr(obj, 'total_cost', None)
         # Si el atributo es un método, llamarlo; si es un valor (ej. anotación), retornarlo
-        if callable(val):
-            try:
-                return float(val())
-            except Exception:
-                return 0.0
-        return float(val) if val is not None else 0.0
-
-    @extend_schema_field(float)
-    def get_received_value_of_client(self, obj):
-        val = getattr(obj, 'received_value_of_client', None)
-        if callable(val):
-            try:
-                return float(val())
-            except Exception:
-                return 0.0
-        return float(val) if val is not None else 0.0
-
-    @extend_schema_field(float)
-    def get_extra_payments(self, obj):
-        val = getattr(obj, 'extra_payments', None)
         if callable(val):
             try:
                 return float(val())
@@ -446,7 +424,6 @@ class OrderSerializer(serializers.ModelSerializer):
             "total_cost",
             "products",
             "received_value_of_client",
-            "extra_payments",
         ]
         depth = 0
         read_only_fields = ["id"]
@@ -456,6 +433,33 @@ class OrderSerializer(serializers.ModelSerializer):
         if value and value.role != 'agent':
             raise serializers.ValidationError("El usuario no es agente.")
         return value
+
+    def update(self, instance, validated_data):
+        """
+        Actualiza la orden y verifica automáticamente el estado de pago
+        basándose en la cantidad recibida del cliente.
+        """
+        # Actualizar los campos normalmente
+        instance = super().update(instance, validated_data)
+        
+        # Si se actualizó received_value_of_client, verificar el pay_status
+        if 'received_value_of_client' in validated_data:
+            # Obtener el costo total de la orden
+            total_cost = instance.total_cost() if callable(instance.total_cost) else instance.total_cost
+            
+            # Si la cantidad recibida es mayor o igual al costo total, marcar como Pagado
+            if instance.received_value_of_client >= total_cost:
+                instance.pay_status = 'Pagado'
+            # Si es parcialmente pagado (mayor a 0 pero menor al total)
+            elif instance.received_value_of_client > 0:
+                instance.pay_status = 'Parcial'  # Usar el valor correcto del enum
+            # Si no se ha recibido nada
+            else:
+                instance.pay_status = 'No pagado'
+            
+            instance.save()
+        
+        return instance
 
 
 class BuyingAccountsSerializer(serializers.ModelSerializer):

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useUpdateDelivery } from '@/hooks/delivery';
 import { useCategories } from '@/hooks/category/useCategory';
+import { useUsers } from '@/hooks/user';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -32,7 +33,16 @@ interface EditDeliveryDialogProps {
 export default function EditDeliveryDialog({ open, onOpenChange, delivery }: EditDeliveryDialogProps) {
   const updateDeliveryMutation = useUpdateDelivery();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const { data: agentsData } = useUsers({ role: 'agent' });
   const categoryList = useMemo(() => categories?.results || [], [categories?.results]);
+  const agents = useMemo(() => agentsData?.results || [], [agentsData?.results]);
+
+  // Obtener el agente asignado al cliente del delivery
+  const assignedAgent = useMemo(() => {
+    if (!delivery?.client || typeof delivery.client !== 'object') return null;
+    if (!delivery.client.assigned_agent) return null;
+    return agents.find(a => a.id === delivery.client.assigned_agent);
+  }, [delivery, agents]);
 
   // Estado del formulario
   const [formData, setFormData] = useState({
@@ -69,6 +79,18 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
       }
     }
   }, [formData.category_id, formData.weight, categoryList]);
+
+  // Efecto para calcular automáticamente la ganancia del manager (peso × agent_profit del agente asignado)
+  useEffect(() => {
+    if (assignedAgent && formData.weight > 0) {
+      const agentProfit = assignedAgent.agent_profit || 0;
+      
+      if (agentProfit > 0) {
+        const calculatedProfit = formData.weight * agentProfit;
+        setFormData(prev => ({ ...prev, manager_profit: parseFloat(calculatedProfit.toFixed(2)) }));
+      }
+    }
+  }, [assignedAgent, formData.weight]);
 
   // Funciones para obtener estilos según el estado
   const getDeliveryStatusStyles = (status: string) => {
@@ -334,7 +356,7 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="manager_profit">Ganancia del Manager ($)</Label>
+                  <Label htmlFor="manager_profit">Ganancia del Manager ($) - Editable</Label>
                   <Input
                     id="manager_profit"
                     type="number"
@@ -347,6 +369,17 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                     }
                     className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
                   />
+                  {assignedAgent && formData.weight > 0 && (
+                    <p className="text-xs text-gray-500">
+                      Cálculo: {formData.weight} lb × ${assignedAgent.agent_profit || 0}/lb (profit del agente {assignedAgent.name}) = $
+                      {formData.manager_profit.toFixed(2)}
+                    </p>
+                  )}
+                  {delivery?.client && typeof delivery.client === 'object' && !assignedAgent && (
+                    <p className="text-xs text-amber-600">
+                      ⚠️ Este cliente no tiene un agente asignado
+                    </p>
+                  )}
                 </div>
               </div>
             </details>

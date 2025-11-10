@@ -193,23 +193,15 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
               </div>
               Resumen Financiero
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="flex justify-between items-center p-5 bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-md border border-orange-200 dark:border-orange-700">
                 <span className="text-sm font-semibold text-gray-700 dark:text-orange-300">Total del pedido:</span>
                 <span className="font-bold text-2xl text-orange-600 dark:text-orange-400">{formatPrice(order.total_cost)}</span>
               </div>
-              {order.received_value_of_client && (
-                <div className="flex justify-between items-center p-5 bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-md border border-orange-100 dark:border-orange-800">
-                  <span className="text-sm font-medium text-gray-600 dark:text-orange-400">Valor recibido:</span>
-                  <span className="font-bold text-xl text-gray-900 dark:text-orange-200">{formatPrice(order.received_value_of_client)}</span>
-                </div>
-              )}
-              {order.extra_payments && (
-                <div className="flex justify-between items-center p-5 bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-md border border-orange-100 dark:border-orange-800">
-                  <span className="text-sm font-medium text-gray-600 dark:text-orange-400">Pagos adicionales:</span>
-                  <span className="font-bold text-xl text-gray-900 dark:text-orange-200">{formatPrice(order.extra_payments)}</span>
-                </div>
-              )}
+              <div className="flex justify-between items-center p-5 bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-md border border-orange-100 dark:border-orange-800">
+                <span className="text-sm font-medium text-gray-600 dark:text-orange-400">Valor recibido:</span>
+                <span className="font-bold text-xl text-gray-900 dark:text-orange-200">{formatPrice(order.received_value_of_client || 0)}</span>
+              </div>
             </div>
           </div>
         </CardContent>

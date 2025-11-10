@@ -6,7 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, Legend, La
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Users, Trophy } from 'lucide-react';
 import axios from 'axios';
 
 interface MonthlyReport {
@@ -134,7 +134,7 @@ export default function Reports() {
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="text-2xl md:text-3xl font-bold tracking-tight">${(reports.summary?.total_revenue || 0).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-2">Últimos 12 meses</p>
+            <p className="text-xs text-muted-foreground mt-2">Productos + Entregas (12 meses)</p>
           </CardContent>
         </Card>
 
@@ -522,10 +522,8 @@ export default function Reports() {
                   {(reports.agent_reports || []).map((agent, index) => (
                     <TableRow key={agent.agent_id}>
                       <TableCell className="font-medium">
-                        {index === 0 && <Badge variant={'outline'} >🥇</Badge>}
-                        {index === 1 && <Badge variant={'outline'} >🥈</Badge>}
-                        {index === 2 && <Badge variant={'outline'} >🥉</Badge>}
-                        {index > 2 && <span className="ml-2">{index + 1}</span>}
+                        {index === 0 && <Trophy className="h-4 w-4" />}
+                        {index > 0 && <span className="ml-2">{index + 1}</span>}
                       </TableCell>
                       <TableCell className="font-medium">{agent.agent_name}</TableCell>
                       <TableCell>{agent.agent_phone}</TableCell>

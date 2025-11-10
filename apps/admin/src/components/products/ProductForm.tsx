@@ -106,7 +106,7 @@ const calculateTotalCost = (
     impuestosPropios: number;
     total: number 
 } => {
-    // Precio del producto (unitario, la cantidad no afecta el cálculo)
+    // Precio del producto (sin multiplicar por cantidad)
     const subtotal = unitPrice
     
     // Costo de envío
@@ -809,7 +809,6 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
 
                     {/* Resumen de total calculado con detalle de factura */}
                     {(() => {
-                        const qty = Number(newProduct.amount_requested) || 0
                         const price = Number(newProduct.shop_cost) || 0
                         const shippingCost = Number(newProduct.shop_delivery_cost) || 0
                         const shopName = newProduct.shop || ''
@@ -861,12 +860,8 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                                         {/* Cálculo de costos */}
                                                         <div className="space-y-2">
                                                             <div className="flex justify-between text-sm">
-                                                                <span className="text-muted-foreground">Precio unitario:</span>
+                                                                <span className="text-muted-foreground">Precio del producto:</span>
                                                                 <span className="font-medium">${formatCurrency(price)}</span>
-                                                            </div>
-                                                            <div className="flex justify-between text-sm">
-                                                                <span className="text-muted-foreground">Cantidad:</span>
-                                                                <span className="font-medium">x {qty}</span>
                                                             </div>
                                                             <Separator className="my-2" />
                                                             <div className="flex justify-between text-sm font-medium">

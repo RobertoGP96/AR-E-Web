@@ -181,15 +181,6 @@ const ProductDetails: React.FC = () => {
                                             </p>
                                         </div>
 
-                                        <div className=" p-4 rounded-lg ">
-                                            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-                                                Cantidad
-                                            </h4>
-                                            <p className="text-lg font-semibold ">
-                                               x{(product.amount_requested || 0)}
-                                            </p>
-                                        </div>
-
                                         <div className=" p-4 rounded-lg">
                                             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
                                                 Costo de Envío de Tienda
@@ -201,10 +192,10 @@ const ProductDetails: React.FC = () => {
                                         
                                         <div className="p-4 rounded-lg border-2 border-dotted">
                                             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-                                                total de producto
+                                                Subtotal Base
                                             </h4>
                                             <p className="text-lg font-semibold text-yellow-700">
-                                                =${(product.shop_cost*product.amount_requested+product.shop_delivery_cost || 0).toFixed(2)}
+                                                =${(product.shop_cost + product.shop_delivery_cost || 0).toFixed(2)}
                                             </p>
                                         </div>
                                     </div>

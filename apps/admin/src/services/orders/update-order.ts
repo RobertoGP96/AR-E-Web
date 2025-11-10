@@ -10,6 +10,7 @@ export interface UpdateOrderData {
   pay_status?: string;
   status?: string;
   client_email?: string;
+  received_value_of_client?: number;
 }
 
 /**
@@ -48,10 +49,35 @@ export const assignOrderToAgent = async (orderId: number, agentEmail: string): P
 };
 
 /**
- * Marca una orden como pagada
+ * Marca una orden como pagada con la cantidad recibida.
+ * El backend determinará automáticamente el pay_status basándose en:
+ * - Si received_value >= total_cost => 'Pagado'
+ * - Si 0 < received_value < total_cost => 'Parcial'
+ * - Si received_value == 0 => 'No pagado'
  */
-export const markOrderAsPaid = async (id: number): Promise<Order> => {
-  // El backend y los tipos usan etiquetas en español (ej. 'Pagado')
+export const markOrderAsPaid = async (id: number, amountReceived?: number): Promise<Order> => {
+  // Validar que el ID sea válido
+  if (!id || id === undefined || id === null) {
+    const error = `[markOrderAsPaid] ERROR: ID inválido recibido: ${id}`;
+    console.error(error);
+    throw new Error('ID de orden inválido. No se puede actualizar el pago.');
+  }
+
+  console.log(`[markOrderAsPaid] Parámetros recibidos - ID: ${id}, Amount: ${amountReceived}`);
+
+  // Si se proporciona una cantidad recibida, actualizamos solo ese campo
+  // El backend se encargará de ajustar automáticamente el pay_status
+  if (amountReceived !== undefined && amountReceived > 0) {
+    console.log(`[markOrderAsPaid] Actualizando orden ${id} con cantidad recibida: ${amountReceived}`);
+    const url = `/api_data/order/${id}/`;
+    console.log(`[markOrderAsPaid] URL completa: ${url}`);
+    return await apiClient.patch<Order>(url, {
+      received_value_of_client: amountReceived
+    });
+  }
+  
+  // Si no se proporciona cantidad, marcamos como Pagado directamente
+  console.log(`[markOrderAsPaid] Actualizando orden ${id} a estado Pagado sin cantidad específica`);
   return await updateOrderPaymentStatus(id, 'Pagado');
 };
 

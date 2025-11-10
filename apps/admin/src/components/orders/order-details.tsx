@@ -195,15 +195,6 @@ const OrderDetails: React.FC = () => {
                                             ${(order.received_value_of_client || 0).toFixed(2)}
                                         </p>
                                     </div>
-
-                                    <div className=" p-2 rounded-lg">
-                                        <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-                                            Pagos Extra
-                                        </h4>
-                                        <p className="text-xl font-semibold text-yellow-700">
-                                            ${(order.extra_payments || 0).toFixed(2)}
-                                        </p>
-                                    </div>
                                 </div>
 
                                 <Separator />
@@ -212,8 +203,8 @@ const OrderDetails: React.FC = () => {
                                     <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
                                         Balance
                                     </h4>
-                                    <p className={`text-xl font-bold ${(order.received_value_of_client || 0) + (order.extra_payments || 0) - (order.total_cost || 0) >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                                        ${((order.received_value_of_client || 0) + (order.extra_payments || 0) - (order.total_cost || 0)).toFixed(2)}
+                                    <p className={`text-xl font-bold ${(order.received_value_of_client || 0) - (order.total_cost || 0) >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                                        ${((order.received_value_of_client || 0) - (order.total_cost || 0)).toFixed(2)}
                                     </p>
                                 </div>
                             </CardContent>
