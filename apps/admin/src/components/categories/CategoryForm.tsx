@@ -25,8 +25,8 @@ export default function CategoryForm({ initialValues, loading = false, onSubmit 
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: initialValues?.name || '',
-      shipping_cost_per_pound: initialValues?.shipping_cost_per_pound ?? 0,
-      client_shipping_charge: initialValues?.client_shipping_charge ?? 0,
+      shipping_cost_per_pound: initialValues?.shipping_cost_per_pound ?? undefined,
+      client_shipping_charge: initialValues?.client_shipping_charge ?? undefined,
     },
   });
 
@@ -44,13 +44,13 @@ export default function CategoryForm({ initialValues, loading = false, onSubmit 
 
       <div className="grid gap-2">
         <Label>Costo de envío por libra</Label>
-        <Input type="number" step="0.01" {...register('shipping_cost_per_pound', { valueAsNumber: true })} />
+        <Input type="number" prefix='$' step="0.01" placeholder='0.00' {...register('shipping_cost_per_pound', { valueAsNumber: true })} />
         {errors.shipping_cost_per_pound && <p className="text-sm text-destructive">{errors.shipping_cost_per_pound.message}</p>}
       </div>
 
       <div className="grid gap-2">
         <Label>Cobro al cliente por libra</Label>
-        <Input type="number" step="0.01" {...register('client_shipping_charge', { valueAsNumber: true })} />
+        <Input type="number" placeholder='0.00' step="0.01" {...register('client_shipping_charge', { valueAsNumber: true })} />
         {errors.client_shipping_charge && <p className="text-sm text-destructive">{errors.client_shipping_charge.message}</p>}
       </div>
 

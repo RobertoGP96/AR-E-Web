@@ -32,6 +32,8 @@ export interface Product {
   shop_cost: number;
   shop_taxes: number;
   shop_delivery_cost: number;
+  base_tax: number; // IVA 7% calculado sobre (precio + envío)
+  shop_tax_amount: number; // Impuesto adicional calculado (3% o 5%)
   own_taxes: number;
   added_taxes: number;
   total_cost: number;
@@ -68,9 +70,11 @@ export interface CreateProductData {
   status?: ProductStatus;
   //PRICE
   
-  shop_cost: number;
+  shop_cost?: number;
   shop_delivery_cost?: number;
   shop_taxes?: number;
+  base_tax?: number; // IVA 7% calculado sobre (precio + envío)
+  shop_tax_amount?: number; // Impuesto adicional calculado (3% o 5%)
   own_taxes?: number;
   added_taxes?: number;
   total_cost?: number;

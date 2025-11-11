@@ -204,7 +204,7 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({ onDelete, itemsPerPage 
                                     <TableCell>
                                         <StatusBadge status={purchase.status_of_shopping} />
                                     </TableCell>
-                                    <TableCell>${purchase.total_cost_of_shopping.toFixed(2)}</TableCell>
+                                    <TableCell>${purchase.total_cost_of_purchase.toFixed(2)}</TableCell>
                                     <TableCell>
                                         <div className="text-right">
                                             <DropdownMenu>

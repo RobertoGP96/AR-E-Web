@@ -21,9 +21,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Truck, Package, Clock, User, Tag } from 'lucide-react';
+import { Loader2, Truck, Package, Clock, User, Tag, Weight } from 'lucide-react';
 import { useUsers } from '@/hooks/user';
 import { useCategories } from '@/hooks/category/useCategory';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '../ui/input-group';
+import { DatePicker } from '../utils/DatePicker';
 
 interface CreateDeliveryDialogProps {
   open: boolean;
@@ -78,7 +80,7 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
     if (formData.category_id && formData.weight) {
       const selectedCategory = categories.find(c => c.id.toString() === formData.category_id);
       const weight = parseFloat(formData.weight);
-      
+
       if (selectedCategory && !isNaN(weight) && weight > 0) {
         const calculatedCost = selectedCategory.client_shipping_charge * weight;
         setFormData(prev => ({ ...prev, weight_cost: calculatedCost.toFixed(2) }));
@@ -94,7 +96,7 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
     if (assignedAgent && formData.weight) {
       const weight = parseFloat(formData.weight);
       const agentProfit = assignedAgent.agent_profit || 0;
-      
+
       if (!isNaN(weight) && weight > 0 && agentProfit > 0) {
         const calculatedProfit = weight * agentProfit;
         setFormData(prev => ({ ...prev, manager_profit: calculatedProfit.toFixed(2) }));
@@ -260,17 +262,25 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
               <Label htmlFor="weight">
                 Peso (Lb) <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="weight"
-                type="number"
-                step="0.01"
-                placeholder="Ej: 2.5"
-                value={formData.weight}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, weight: e.target.value }))
-                }
-                className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
-              />
+              <InputGroup>
+                <InputGroupInput
+                  id="weight"
+                  type="number"
+                  step="0.01"
+                  placeholder="Ej: 2.5"
+                  value={formData.weight}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, weight: e.target.value }))
+                  }
+                  className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+                />
+                <InputGroupAddon>
+                  <Weight className='h-4 w-4' />
+                </InputGroupAddon>
+
+                <InputGroupAddon align="inline-end">Lb</InputGroupAddon>
+              </InputGroup>
+
             </div>
 
             {/* Fecha de Entrega */}
@@ -286,6 +296,11 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
                   setFormData((prev) => ({ ...prev, deliver_date: e.target.value }))
                 }
                 className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+              />
+
+              <DatePicker
+                value={formData.deliver_date ? new Date(formData.deliver_date) : undefined}
+                onChange={(date: Date | undefined) => setFormData({ ...formData, deliver_date: date?.toISOString() || '' })}
               />
             </div>
 

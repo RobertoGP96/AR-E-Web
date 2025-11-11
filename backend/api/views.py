@@ -1745,9 +1745,11 @@ class DashboardMetricsView(APIView):
 
         # Productos
         products_total = Product.objects.count()
-        products_in_stock = Product.objects.filter(amount_purchased__gt=0).count()
-        products_out_of_stock = Product.objects.filter(amount_purchased=0).count()
-        products_pending_delivery = Product.objects.filter(amount_delivered__lt=F('amount_purchased')).count()
+        # Contar productos por estado
+        products_ordered = Product.objects.filter(status=ProductStatusEnum.ENCARGADO.value).count()
+        products_purchased = Product.objects.filter(status=ProductStatusEnum.COMPRADO.value).count()
+        products_received = Product.objects.filter(status=ProductStatusEnum.RECIBIDO.value).count()
+        products_delivered = Product.objects.filter(status=ProductStatusEnum.ENTREGADO.value).count()
         
         # Productos por categoría
         products_by_category = Product.objects.values('category__name').annotate(
@@ -1824,9 +1826,10 @@ class DashboardMetricsView(APIView):
             },
             'products': {
                 'total': products_total,
-                'in_stock': products_in_stock,
-                'out_of_stock': products_out_of_stock,
-                'pending_delivery': products_pending_delivery,
+                'ordered': products_ordered,
+                'purchased': products_purchased,
+                'received': products_received,
+                'delivered': products_delivered,
                 'by_category': [
                     {
                         'category': item['category__name'] or 'Sin categoría',
@@ -1911,13 +1914,20 @@ class ProfitReportsView(APIView):
                 else:
                     month_end = month_start.replace(month=month_start.month + 1, day=1) - timedelta(days=1)
             
-            # Calcular ingresos del mes (sum de total_cost de productos en órdenes pagadas + cobro al cliente por entregas)
-            # Ingresos de productos
-            revenue_products = Order.objects.filter(
-                pay_status=PaymentStatusEnum.PAGADO.value,
-                created_at__date__gte=month_start,
-                created_at__date__lte=month_end
-            ).aggregate(total=Sum('products__total_cost'))['total'] or 0
+            # Calcular ingresos del mes
+            # IMPORTANTE: Los ingresos son la suma de:
+            # 1. Costo de productos de órdenes completadas del mes (independiente del estado de pago)
+            # 2. Cobro al cliente por entregas realizadas en el mes
+            
+            # Ingresos de productos: Considerar productos de órdenes completadas en este mes
+            # Usar created_at para determinar cuándo se generó el ingreso
+            products_in_completed_orders = Product.objects.filter(
+                order__status=OrderStatusEnum.COMPLETADO.value,
+                order__created_at__date__gte=month_start,
+                order__created_at__date__lte=month_end
+            )
+            
+            revenue_products = sum(float(p.total_cost) for p in products_in_completed_orders)
             
             # Obtener entregas del mes (usaremos esta consulta para varios cálculos)
             deliveries_in_month = DeliverReceip.objects.filter(
@@ -1933,26 +1943,33 @@ class ProfitReportsView(APIView):
             
             # Calcular gastos del sistema para productos en este mes
             # Gastos = precio + envío + 7% del precio + impuesto adicional
-            products_in_month = Product.objects.filter(
-                order__pay_status=PaymentStatusEnum.PAGADO.value,
-                created_at__date__gte=month_start,
-                created_at__date__lte=month_end
-            )
-            
+            # Usar la misma lista de productos que para los ingresos
             product_expenses = sum(
-                float(p.system_expenses) for p in products_in_month
+                float(p.system_expenses) for p in products_in_completed_orders
             )
             
-            # Calcular gastos operativos de compras en este mes
-            # Gastos operativos = diferencia entre costo de compra y suma de costos de productos
+            # GANANCIA DE PRODUCTOS: diferencia entre lo cobrado y los gastos reales
+            product_profit = sum(
+                float(p.system_profit) for p in products_in_completed_orders
+            )
+            
+            # GANANCIA DE COMPRAS: diferencia entre el costo de productos y lo que se pagó realmente
+            # Esto es una GANANCIA porque se cobra más al cliente de lo que se pagó
             purchases_in_month = ShoppingReceip.objects.filter(
                 buy_date__gte=month_start,
                 buy_date__lte=month_end
             )
             
-            purchase_operational_expenses = sum(
-                float(p.operational_expenses) for p in purchases_in_month
+            purchase_profit = sum(
+                float(p.total_cost_of_purchase) for p in purchases_in_month
             )
+            
+            purchase_products_cost = sum(
+                float(p.total_cost_of_shopping) for p in purchases_in_month
+            )
+            
+            # Ganancia de compras = lo que se cobra - lo que se pagó
+            purchase_operational_profit = purchase_products_cost - purchase_profit
             
             # Calcular gastos de entrega del mes usando el nuevo cálculo
             # Gastos = peso × costo por libra (del sistema)
@@ -1966,16 +1983,20 @@ class ProfitReportsView(APIView):
                 float(d.agent_profit_calculated) for d in deliveries_in_month
             )
             
-            # Calcular ganancia del sistema por entregas
+            # GANANCIA DEL SISTEMA POR ENTREGAS
+            # Ganancia = cobro al cliente - ganancia agente - gastos de entrega
             system_delivery_profit = sum(
                 float(d.system_delivery_profit) for d in deliveries_in_month
             )
             
-            # Total de gastos del sistema = gastos de productos + gastos operativos de compras + gastos de entrega
-            total_expenses = product_expenses + purchase_operational_expenses + delivery_expenses
+            # Total de gastos del sistema (solo gastos reales, no se incluye purchase_operational_profit)
+            total_expenses = product_expenses + delivery_expenses
             
-            # Ganancia del sistema = ingresos - gastos del sistema - ganancias de agentes
-            system_profit = revenue - total_expenses - agent_profits
+            # GANANCIA TOTAL DEL SISTEMA = suma de las 3 fuentes de ganancia
+            # 1. Ganancia de productos (cobro - gastos)
+            # 2. Ganancia de compras (diferencia entre cobro y pago real)
+            # 3. Ganancia de entregas (cobro cliente - ganancia agente - gastos entrega)
+            system_profit = product_profit + purchase_operational_profit + system_delivery_profit
             
             monthly_reports.append({
                 'month': month_start.strftime('%B %Y'),
@@ -1983,7 +2004,8 @@ class ProfitReportsView(APIView):
                 'revenue': float(revenue),
                 'total_expenses': float(total_expenses),
                 'product_expenses': float(product_expenses),
-                'purchase_operational_expenses': float(purchase_operational_expenses),
+                'product_profit': float(product_profit),
+                'purchase_operational_profit': float(purchase_operational_profit),
                 'delivery_expenses': float(delivery_expenses),
                 'agent_profits': float(agent_profits),
                 'system_delivery_profit': float(system_delivery_profit),
@@ -1992,7 +2014,8 @@ class ProfitReportsView(APIView):
                 # Mantener compatibilidad con campos anteriores
                 'costs': float(total_expenses),
                 'product_costs': float(product_expenses),
-                'delivery_costs': float(delivery_expenses)
+                'delivery_costs': float(delivery_expenses),
+                'purchase_operational_expenses': float(purchase_operational_profit)  # Renombrado pero mantiene compatibilidad
             })
         
         # Calcular ganancias por agente (totales)

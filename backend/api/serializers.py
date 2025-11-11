@@ -278,6 +278,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "shop_cost",
             "shop_delivery_cost",
             "shop_taxes",
+            "base_tax",
+            "shop_tax_amount",
             "own_taxes",
             "added_taxes",
             "total_cost",
@@ -438,26 +440,51 @@ class OrderSerializer(serializers.ModelSerializer):
         """
         Actualiza la orden y verifica automáticamente el estado de pago
         basándose en la cantidad recibida del cliente.
-        """
-        # Actualizar los campos normalmente
-        instance = super().update(instance, validated_data)
         
-        # Si se actualizó received_value_of_client, verificar el pay_status
+        IMPORTANTE: Si se actualiza 'received_value_of_client', el valor se SUMA
+        al valor actual, no se reemplaza. Esto permite pagos parciales acumulativos.
+        """
+        # Si se está actualizando received_value_of_client, necesitamos manejarlo de forma especial
+        # para acumular el valor (sumarlo al anterior) en lugar de reemplazarlo
         if 'received_value_of_client' in validated_data:
+            # Guardar el valor que se quiere añadir
+            amount_to_add = validated_data['received_value_of_client']
+            previous_amount = instance.received_value_of_client
+            
+            # Sumar al valor actual en lugar de reemplazarlo
+            instance.received_value_of_client += amount_to_add
+            
+            print(f"[OrderSerializer] Actualizando pago de orden #{instance.id}")
+            print(f"  - Cantidad anterior: ${previous_amount}")
+            print(f"  - Cantidad añadida: ${amount_to_add}")
+            print(f"  - Nuevo total recibido: ${instance.received_value_of_client}")
+            
+            # Remover del validated_data para evitar que super().update() lo sobrescriba
+            validated_data.pop('received_value_of_client')
+            
+            # Actualizar otros campos si los hay
+            instance = super().update(instance, validated_data)
+            
             # Obtener el costo total de la orden
             total_cost = instance.total_cost() if callable(instance.total_cost) else instance.total_cost
             
-            # Si la cantidad recibida es mayor o igual al costo total, marcar como Pagado
+            print(f"  - Costo total de la orden: ${total_cost}")
+            
+            # Actualizar el estado de pago basándose en el nuevo total acumulado
             if instance.received_value_of_client >= total_cost:
                 instance.pay_status = 'Pagado'
-            # Si es parcialmente pagado (mayor a 0 pero menor al total)
+                print(f"  - Nuevo estado: Pagado (recibido >= total)")
             elif instance.received_value_of_client > 0:
-                instance.pay_status = 'Parcial'  # Usar el valor correcto del enum
-            # Si no se ha recibido nada
+                instance.pay_status = 'Parcial'
+                print(f"  - Nuevo estado: Parcial (recibido < total)")
             else:
                 instance.pay_status = 'No pagado'
+                print(f"  - Nuevo estado: No pagado (recibido = 0)")
             
             instance.save()
+        else:
+            # Si no se actualizó received_value_of_client, actualizar normalmente
+            instance = super().update(instance, validated_data)
         
         return instance
 

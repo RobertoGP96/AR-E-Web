@@ -412,6 +412,8 @@ class Product(models.Model):
     shop_cost = models.FloatField()
     shop_delivery_cost = models.FloatField(default=0)
     shop_taxes = models.FloatField(default=0)
+    base_tax = models.FloatField(default=0, help_text="IVA 7% calculado sobre (precio + envío)")
+    shop_tax_amount = models.FloatField(default=0, help_text="Impuesto adicional calculado (3% o 5%)")
     own_taxes = models.FloatField(default=0)
     added_taxes = models.FloatField(default=0)
     total_cost = models.FloatField(default=0)
@@ -459,10 +461,10 @@ class Product(models.Model):
         Gastos del sistema para este producto.
         Fórmula: precio + envío + 7% del precio + impuesto adicional (added_taxes)
         """
-        base_price = float(self.shop_cost)
-        shipping = float(self.shop_delivery_cost)
+        base_price = self.shop_cost
+        shipping = self.shop_delivery_cost
         base_tax = base_price * 0.07  # 7% del precio
-        additional_tax = float(self.added_taxes)
+        additional_tax = self.added_taxes
         
         return base_price + shipping + base_tax + additional_tax
     
@@ -522,7 +524,7 @@ class ShoppingReceip(models.Model):
         Gastos operativos de la compra = diferencia entre lo pagado y el costo total de productos.
         Representa los gastos adicionales (shipping extra, fees, etc.) de esta compra específica.
         """
-        return float(self.total_cost_of_purchase - self.total_cost_of_shopping)
+        return float(self.total_cost_of_shopping - self.total_cost_of_purchase)
 
     class Meta:
         ordering = ['-buy_date']

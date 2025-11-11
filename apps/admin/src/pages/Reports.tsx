@@ -8,23 +8,24 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, TrendingDown, DollarSign, Users, Trophy } from 'lucide-react';
 import axios from 'axios';
+import { formatUSD } from '@/lib/format-usd';
 
 interface MonthlyReport {
   month: string;
   month_short: string;
   revenue: number;
-  costs: number;
-  product_costs: number;
-  delivery_costs: number;
+  total_expenses: number;
+  product_expenses: number;
+  purchase_operational_expenses: number;
+  delivery_expenses: number;
   agent_profits: number;
+  system_delivery_profit: number;
   system_profit: number;
   projected_profit: number;
-  // Nuevos campos (opcionales para compatibilidad)
-  total_expenses?: number;
-  product_expenses?: number;
-  purchase_operational_expenses?: number;
-  delivery_expenses?: number;
-  system_delivery_profit?: number;
+  // Campos legacy para compatibilidad hacia atrás
+  costs?: number;
+  product_costs?: number;
+  delivery_costs?: number;
 }
 
 interface AgentReport {
@@ -43,18 +44,18 @@ interface ProfitReportsData {
   agent_reports: AgentReport[];
   summary: {
     total_revenue: number;
-    total_costs: number;
-    total_product_costs: number;
-    total_delivery_costs: number;
+    total_expenses: number;
+    total_product_expenses: number;
+    total_purchase_operational_expenses: number;
+    total_delivery_expenses: number;
     total_agent_profits: number;
+    total_system_delivery_profit: number;
     total_system_profit: number;
     profit_margin: number;
-    // Nuevos campos (opcionales para compatibilidad)
-    total_expenses?: number;
-    total_product_expenses?: number;
-    total_purchase_operational_expenses?: number;
-    total_delivery_expenses?: number;
-    total_system_delivery_profit?: number;
+    // Campos legacy para compatibilidad hacia atrás
+    total_costs?: number;
+    total_product_costs?: number;
+    total_delivery_costs?: number;
   };
 }
 
@@ -133,7 +134,7 @@ export default function Reports() {
             </div>
           </CardHeader>
           <CardContent className="relative z-10">
-            <div className="text-2xl md:text-3xl font-bold tracking-tight">${(reports.summary?.total_revenue || 0).toLocaleString()}</div>
+            <div className="text-2xl md:text-3xl font-bold tracking-tight">{formatUSD(reports.summary?.total_revenue || 0)}</div>
             <p className="text-xs text-muted-foreground mt-2">Productos + Entregas (12 meses)</p>
           </CardContent>
         </Card>
@@ -155,7 +156,7 @@ export default function Reports() {
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="text-2xl md:text-3xl font-bold text-emerald-600 tracking-tight">
-              ${(reports.summary?.total_system_profit || 0).toLocaleString()}
+              {formatUSD(reports.summary?.total_system_profit || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               Margen: {(reports.summary?.profit_margin || 0).toFixed(1)}%
@@ -180,7 +181,7 @@ export default function Reports() {
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="text-2xl md:text-3xl font-bold text-purple-600 tracking-tight">
-              ${(reports.summary?.total_agent_profits || 0).toLocaleString()}
+              {formatUSD(reports.summary?.total_agent_profits || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-2">{reports.agent_reports?.length || 0} agentes activos</p>
           </CardContent>
@@ -203,10 +204,10 @@ export default function Reports() {
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="text-2xl md:text-3xl font-bold text-rose-600 tracking-tight">
-              ${(reports.summary?.total_costs || 0).toLocaleString()}
+              {formatUSD(reports.summary.total_expenses || reports.summary.total_costs || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Productos: ${(reports.summary?.total_product_costs || 0).toLocaleString()}
+              Productos: {formatUSD(reports.summary.total_product_expenses || reports.summary.total_product_costs || 0)}
             </p>
           </CardContent>
         </Card>
@@ -228,7 +229,7 @@ export default function Reports() {
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="text-2xl md:text-3xl font-bold text-orange-600 tracking-tight">
-              ${(reports.summary.total_delivery_expenses || reports.summary.total_delivery_costs || 0).toLocaleString()}
+              {formatUSD(reports.summary.total_delivery_expenses || reports.summary.total_delivery_costs || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-2">Peso × costo por libra del sistema</p>
           </CardContent>

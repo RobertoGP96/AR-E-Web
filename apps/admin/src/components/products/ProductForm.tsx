@@ -182,11 +182,13 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         shop: initialValues?.shop || '',
         description: initialParsed.descPlain || '',
         amount_requested: initialValues?.amount_requested ?? 1,
-        shop_cost: initialValues?.shop_cost ?? 0,
+        shop_cost: initialValues?.shop_cost ?? undefined,
         total_cost: initialValues?.total_cost ?? 0,
         category: initialValues?.category ?? undefined,
-        added_taxes: initialValues?.added_taxes ?? 0,
+        added_taxes: initialValues?.added_taxes ?? undefined,
         shop_taxes: initialValues?.shop_taxes,
+        base_tax: initialValues?.base_tax ?? 0,
+        shop_tax_amount: initialValues?.shop_tax_amount ?? 0,
 
 
     });
@@ -351,6 +353,8 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             // Guardar los valores en campos apropiados
             shop_delivery_cost: shippingCost, // Costo de envío
             shop_taxes: shopTaxRate ?? getShopTaxRate(shopName), // Porcentaje de impuesto de tienda
+            base_tax: calculation.baseImpuesto, // IVA 7% calculado
+            shop_tax_amount: calculation.tarifaTienda, // Impuesto adicional calculado (3% o 5%)
             added_taxes: addedTaxes, // Impuestos adicionales nominales
             own_taxes: ownTaxes, // Impuestos propios nominales
             product_pictures: []
@@ -380,6 +384,8 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             category: undefined,
             added_taxes: 0,
             shop_taxes: 0,
+            base_tax: 0,
+            shop_tax_amount: 0,
             own_taxes: 0,
             shop_delivery_cost: 0,
         })

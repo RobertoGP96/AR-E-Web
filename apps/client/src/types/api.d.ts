@@ -124,9 +124,10 @@ export interface DashboardMetrics {
   };
   products: {
     total: number;
-    in_stock: number;
-    out_of_stock: number;
-    pending_delivery: number;
+    ordered: number;
+    purchased: number;
+    received: number;
+    delivered: number;
   };
   users: {
     total: number;

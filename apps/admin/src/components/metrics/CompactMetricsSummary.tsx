@@ -117,38 +117,51 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
           },
           { 
             label: 'Encargados', 
-            value: metrics.products.in_stock, 
-            icon: Package, 
-            color: 'text-emerald-600',
-            iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-            borderColor: 'border-emerald-100',
-            hoverColor: 'hover:border-emerald-200 hover:shadow-emerald-100/50',
-            bgGradient: 'bg-gradient-to-br from-emerald-50 via-emerald-50/80 to-emerald-100/50',
-            badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200'
-          },
-          { 
-            label: 'Comprados', 
-            value: metrics.products.out_of_stock, 
-            icon: Package, 
-            color: 'text-rose-600',
-            iconBg: 'bg-gradient-to-br from-rose-500 to-rose-600',
-            borderColor: 'border-rose-100',
-            hoverColor: 'hover:border-rose-200 hover:shadow-rose-100/50',
-            bgGradient: 'bg-gradient-to-br from-rose-50 via-rose-50/80 to-rose-100/50',
-            badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
-            change: '-2%',
-            changeType: 'decrease' as const
-          },
-          { 
-            label: 'Entregados', 
-            value: metrics.products.pending_delivery, 
-            icon: Package, 
+            value: metrics.products.ordered, 
+            icon: ShoppingCart, 
             color: 'text-amber-600',
             iconBg: 'bg-gradient-to-br from-amber-500 to-amber-600',
             borderColor: 'border-amber-100',
             hoverColor: 'hover:border-amber-200 hover:shadow-amber-100/50',
             bgGradient: 'bg-gradient-to-br from-amber-50 via-amber-50/80 to-amber-100/50',
             badgeColor: 'bg-amber-50 text-amber-700 border-amber-200'
+          },
+          { 
+            label: 'Comprados', 
+            value: metrics.products.purchased, 
+            icon: ShoppingBag, 
+            color: 'text-sky-600',
+            iconBg: 'bg-gradient-to-br from-sky-500 to-sky-600',
+            borderColor: 'border-sky-100',
+            hoverColor: 'hover:border-sky-200 hover:shadow-sky-100/50',
+            bgGradient: 'bg-gradient-to-br from-sky-50 via-sky-50/80 to-sky-100/50',
+            badgeColor: 'bg-sky-50 text-sky-700 border-sky-200',
+            change: '+5%',
+            changeType: 'increase' as const
+          },
+          { 
+            label: 'Recibidos', 
+            value: metrics.products.received, 
+            icon: PackageCheck, 
+            color: 'text-purple-600',
+            iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
+            borderColor: 'border-purple-100',
+            hoverColor: 'hover:border-purple-200 hover:shadow-purple-100/50',
+            bgGradient: 'bg-gradient-to-br from-purple-50 via-purple-50/80 to-purple-100/50',
+            badgeColor: 'bg-purple-50 text-purple-700 border-purple-200'
+          },
+          { 
+            label: 'Entregados', 
+            value: metrics.products.delivered, 
+            icon: Truck, 
+            color: 'text-emerald-600',
+            iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
+            borderColor: 'border-emerald-100',
+            hoverColor: 'hover:border-emerald-200 hover:shadow-emerald-100/50',
+            bgGradient: 'bg-gradient-to-br from-emerald-50 via-emerald-50/80 to-emerald-100/50',
+            badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            change: '+10%',
+            changeType: 'increase' as const
           }
         ];
       case 'orders':
@@ -426,6 +439,17 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
 
   const metricsData = getMetricsForType();
 
+  // Determinar el número de columnas según el tipo y cantidad de métricas
+  const getGridCols = () => {
+    const count = metricsData.length;
+    if (count === 5) {
+      // Para productos que tiene 5 métricas, usar layout especial
+      return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5";
+    }
+    // Para los demás casos (4 métricas)
+    return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
+  };
+
   // Si no hay datos disponibles para este tipo específico, mostrar mensaje informativo
   if (!metrics || metricsData.length === 0) {
     const metricTypeLabels = {
@@ -460,7 +484,7 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+    <div className={cn("grid gap-4 md:gap-6", getGridCols())}>
       {metricsData.map((metric) => {
         const Icon = metric.icon;
         return (
