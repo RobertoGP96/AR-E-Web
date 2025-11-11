@@ -181,7 +181,7 @@ export default function Reports() {
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="text-2xl md:text-3xl font-bold text-purple-600 tracking-tight">
-              {formatUSD(reports.summary?.total_agent_profits || 0)}
+              {formatUSD(reports.summary.total_agent_profits)}
             </div>
             <p className="text-xs text-muted-foreground mt-2">{reports.agent_reports?.length || 0} agentes activos</p>
           </CardContent>

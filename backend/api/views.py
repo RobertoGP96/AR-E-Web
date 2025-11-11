@@ -1930,9 +1930,10 @@ class ProfitReportsView(APIView):
             revenue_products = sum(float(p.total_cost) for p in products_in_completed_orders)
             
             # Obtener entregas del mes (usaremos esta consulta para varios cálculos)
+            # Usar __date para filtrar solo por fecha, no por datetime completo
             deliveries_in_month = DeliverReceip.objects.filter(
-                deliver_date__gte=month_start,
-                deliver_date__lte=month_end
+                deliver_date__date__gte=month_start,
+                deliver_date__date__lte=month_end
             )
             
             # Ingresos de entregas (cobro al cliente)
@@ -2037,8 +2038,8 @@ class ProfitReportsView(APIView):
             month_start = current_date.replace(day=1)
             current_month_deliveries = DeliverReceip.objects.filter(
                 client__assigned_agent=agent,
-                deliver_date__gte=month_start,
-                deliver_date__lte=current_date
+                deliver_date__date__gte=month_start,
+                deliver_date__date__lte=current_date
             )
             
             current_month_profit = sum(
