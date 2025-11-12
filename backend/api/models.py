@@ -477,9 +477,12 @@ class Product(models.Model):
     def system_profit(self):
         """
         Ganancia del sistema para este producto.
-        Fórmula: costo total cobrado al cliente - gastos del sistema
+        Fórmula: (costo total cobrado al cliente - gastos del sistema) + impuestos propios (own_taxes)
+        
+        El campo own_taxes representa impuestos adicionales que se suman a las ganancias del sistema.
         """
-        return float(self.total_cost) - self.system_expenses
+        base_profit = float(self.total_cost) - self.system_expenses
+        return base_profit + self.own_taxes
 
     class Meta:
         ordering = ['-created_at']

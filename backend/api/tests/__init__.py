@@ -30,6 +30,7 @@ class BaseAPITestCase(APITestCase):
         # Create test users
         self.admin_user = User.objects.create_user(
             email='admin@test.com',
+            phone_number='1111111111',
             name='Admin',
             last_name='User',
             password='testpass123',
@@ -40,6 +41,7 @@ class BaseAPITestCase(APITestCase):
         
         self.agent_user = User.objects.create_user(
             email='agent@test.com',
+            phone_number='2222222222',
             name='Agent',
             last_name='User',
             password='testpass123',
@@ -50,6 +52,7 @@ class BaseAPITestCase(APITestCase):
         
         self.client_user = User.objects.create_user(
             email='client@test.com',
+            phone_number='3333333333',
             name='Client',
             last_name='User',
             password='testpass123',
@@ -60,6 +63,7 @@ class BaseAPITestCase(APITestCase):
         
         self.buyer_user = User.objects.create_user(
             email='buyer@test.com',
+            phone_number='4444444444',
             name='Buyer',
             last_name='User',
             password='testpass123',
@@ -115,6 +119,7 @@ class ModelTestCase(TestCase):
         """Set up test data"""
         self.test_user = User.objects.create_user(
             email='test@example.com',
+            phone_number='1234567890',
             name='Test',
             last_name='User',
             password='testpass123'
@@ -122,10 +127,11 @@ class ModelTestCase(TestCase):
         
         self.agent_user = User.objects.create_user(
             email='agent@example.com',
+            phone_number='0987654321',
             name='Agent',
             last_name='User',
             password='testpass123',
-            is_agent=True
+            role='agent'
         )
         
         self.test_shop = Shop.objects.create(

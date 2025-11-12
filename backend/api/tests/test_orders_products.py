@@ -100,6 +100,72 @@ class ProductModelTest(ModelTestCase):
         """Test cost per product returns 0 when no buys"""
         self.assertEqual(self.product.cost_per_product(), 0)
 
+    def test_product_system_expenses_calculation(self):
+        """Test that system_expenses includes added_taxes but NOT own_taxes"""
+        # Setup: shop_cost=10, delivery=2, IVA 7%=0.7, added_taxes=0.5
+        # Expected: 10 + 2 + 0.7 + 0.5 = 13.2
+        expected_expenses = 10.0 + 2.0 + 0.7 + 0.5
+        self.assertAlmostEqual(self.product.system_expenses, expected_expenses, places=2)
+        
+    def test_product_system_profit_calculation(self):
+        """Test that system_profit includes own_taxes as additional profit"""
+        # Setup: total_cost=20, system_expenses=13.2, own_taxes=0.5
+        # Expected: (20 - 13.2) + 0.5 = 7.3
+        expected_profit = (20.0 - self.product.system_expenses) + 0.5
+        self.assertAlmostEqual(self.product.system_profit, expected_profit, places=2)
+    
+    def test_added_taxes_increases_expenses(self):
+        """Test that added_taxes increases system expenses"""
+        # Create product without added_taxes
+        product_no_added = Product.objects.create(
+            sku='TEST002',
+            name='Test Product No Added',
+            shop=self.test_shop,
+            amount_requested=5,
+            order=self.order,
+            shop_cost=10.0,
+            shop_delivery_cost=2.0,
+            charge_iva=True,
+            own_taxes=0.0,
+            added_taxes=0.0,
+            total_cost=15.0
+        )
+        
+        # Expenses without added_taxes: 10 + 2 + 0.7 = 12.7
+        expenses_without = product_no_added.system_expenses
+        
+        # Expenses with added_taxes: 10 + 2 + 0.7 + 0.5 = 13.2
+        expenses_with = self.product.system_expenses
+        
+        # Verify that added_taxes increases expenses
+        self.assertAlmostEqual(expenses_with - expenses_without, 0.5, places=2)
+    
+    def test_own_taxes_increases_profit(self):
+        """Test that own_taxes increases system profit"""
+        # Create product without own_taxes
+        product_no_own = Product.objects.create(
+            sku='TEST003',
+            name='Test Product No Own',
+            shop=self.test_shop,
+            amount_requested=5,
+            order=self.order,
+            shop_cost=10.0,
+            shop_delivery_cost=2.0,
+            charge_iva=True,
+            own_taxes=0.0,
+            added_taxes=0.5,
+            total_cost=20.0
+        )
+        
+        # Profit without own_taxes
+        profit_without = product_no_own.system_profit
+        
+        # Profit with own_taxes (should be 0.5 more)
+        profit_with = self.product.system_profit
+        
+        # Verify that own_taxes increases profit
+        self.assertAlmostEqual(profit_with - profit_without, 0.5, places=2)
+
 
 class OrderAPITest(BaseAPITestCase):
     """Test the Order API endpoints"""
