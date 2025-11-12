@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useMemo } from 'react';
+import CloudinaryImage from '@/components/images/CloudinaryImage';
 
 const Dashboard = () => {
   // Obtener saludo según hora del día
@@ -116,6 +117,9 @@ const Dashboard = () => {
             <p className="text-sm text-gray-600 mt-1">
               Visualiza el rendimiento de tu negocio con gráficos interactivos
             </p>
+          </div>
+          <div className='min-h-2 bg-amber-600'>
+            <CloudinaryImage />
           </div>
         </div>
         <Separator className="my-4" />
