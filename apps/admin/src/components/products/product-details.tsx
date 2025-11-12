@@ -198,6 +198,33 @@ const ProductDetails: React.FC = () => {
                                                 =${(product.shop_cost + product.shop_delivery_cost || 0).toFixed(2)}
                                             </p>
                                         </div>
+                                        
+                                        <div className="bg-blue-50 p-4 rounded-lg">
+                                            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                                                IVA (7%)
+                                            </h4>
+                                            <div className="flex items-center gap-2">
+                                                {product.charge_iva ?? true ? (
+                                                    <>
+                                                        <span className="text-lg font-semibold text-blue-700">
+                                                            +${(product.base_tax || 0).toFixed(2)}
+                                                        </span>
+                                                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">
+                                                            Aplicado
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="text-lg font-semibold text-gray-400">
+                                                            $0.00
+                                                        </span>
+                                                        <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full font-medium">
+                                                            Exento
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className='flex flex-col gap-2'>
 

@@ -30,6 +30,7 @@ export interface Product {
   shop_cost: number;
   shop_delivery_cost: number;
   shop_taxes: number;
+  charge_iva: boolean;
   own_taxes: number;
   added_taxes: number;
   total_cost: number;
@@ -66,6 +67,7 @@ export interface CreateProductData {
   shop_cost?: number;
   shop_delivery_cost?: number;
   shop_taxes?: number;
+  charge_iva?: boolean;
   own_taxes?: number;
   added_taxes?: number;
   total_cost?: number;

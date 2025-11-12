@@ -12,6 +12,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import type { CreateProductData } from "@/types/models"
+import { Switch } from "../ui/switch"
+import { Label } from "../ui/label"
 
 type tag = {
     icon: React.ComponentType,
@@ -79,11 +81,11 @@ const extractShopName = (url: string): string => {
 // Función para obtener la tarifa de la tienda según el nombre
 const getShopTaxRate = (shopName: string): number => {
     const normalizedName = shopName.toLowerCase()
-    
+
     if (normalizedName.includes('shein')) return 0
     if (normalizedName.includes('amazon') || normalizedName.includes('temu')) return 3
     if (normalizedName.includes('aliexpress')) return 5
-    
+
     // Para otras tiendas
     return 5
 }
@@ -95,46 +97,47 @@ const calculateTotalCost = (
     shopName: string,
     shopTaxRate: number | undefined,
     addedTaxes: number = 0,
-    ownTaxes: number = 0
-): { 
-    subtotal: number; 
+    ownTaxes: number = 0,
+    chargeIva: boolean = true
+): {
+    subtotal: number;
     costoEnvio: number;
-    baseImpuesto: number; 
+    baseImpuesto: number;
     baseParaTarifa: number;
     tarifaTienda: number;
     impuestosAdicionales: number;
     impuestosPropios: number;
-    total: number 
+    total: number
 } => {
     // Precio del producto (sin multiplicar por cantidad)
     const subtotal = unitPrice
-    
+
     // Costo de envío
     const costoEnvio = shippingCost
-    
+
     // Base = precio + envío
     const base = subtotal + costoEnvio
-    
-    // Impuesto base: 7% sobre (precio + envío)
-    const baseImpuesto = base * 0.07
-    
-    // Base con impuesto = (precio + envío) + (precio + envío) * 0.07
+
+    // Impuesto base: 7% sobre (precio + envío) solo si chargeIva es true
+    const baseImpuesto = chargeIva ? base * 0.07 : 0
+
+    // Base con impuesto = (precio + envío) + (precio + envío) * 0.07 (si aplica)
     const baseParaTarifa = base + baseImpuesto
-    
+
     // Tarifa por tienda (usar el valor proporcionado o auto-detectar)
     const effectiveShopTaxRate = shopTaxRate ?? getShopTaxRate(shopName)
     const tarifaTienda = baseParaTarifa * (effectiveShopTaxRate / 100)
-    
+
     // Impuestos adicionales (valor fijo nominal)
     const impuestosAdicionales = addedTaxes
-    
+
     // Impuestos propios (valor fijo)
     const impuestosPropios = ownTaxes
-    
-    // Total = (precio + envío) + (precio + envío) * 0.07 + ((precio + envío) + (precio + envío) * 0.07) * imp_tienda + imp_add + imp_propio
+
+    // Total = (precio + envío) + (precio + envío) * 0.07 (si aplica) + ((precio + envío) + (precio + envío) * 0.07) * imp_tienda + imp_add + imp_propio
     // Simplificado: Total = base + baseImpuesto + tarifaTienda + impuestosAdicionales + impuestosPropios
     const total = base + baseImpuesto + tarifaTienda + impuestosAdicionales + impuestosPropios
-    
+
     return {
         subtotal,
         costoEnvio,
@@ -191,6 +194,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         shop_tax_amount: initialValues?.shop_tax_amount ?? 0,
         own_taxes: initialValues?.own_taxes ?? 0,
         shop_delivery_cost: initialValues?.shop_delivery_cost ?? 0,
+        charge_iva: initialValues?.charge_iva ?? true,
         order: orderId || 0, // Agregar order obligatorio
     });
     const [tags, setTags] = useState<tag[]>(initialParsed.parsedTags || [])
@@ -245,7 +249,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         if (matched) {
             setIsShopInDatabase(true);
             const updates: Partial<CreateProductData> = {}
-            
+
             if (matched.name && matched.name !== newProduct.shop) {
                 updates.shop = matched.name
             }
@@ -253,7 +257,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             if (newProduct.shop_taxes === undefined || newProduct.shop_taxes === 0) {
                 updates.shop_taxes = matched.tax_rate
             }
-            
+
             if (Object.keys(updates).length > 0) {
                 setNewProduct(prev => ({ ...prev, ...updates }))
             }
@@ -337,9 +341,10 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         const shopTaxRate = newProduct.shop_taxes
         const addedTaxes = Number(newProduct.added_taxes) || 0
         const ownTaxes = Number(newProduct.own_taxes) || 0
+        const chargeIva = newProduct.charge_iva ?? true
 
         // Calcular el total usando la función correcta
-        const calculation = calculateTotalCost(unit, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes)
+        const calculation = calculateTotalCost(unit, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
         const computedTotal = calculation.total
 
         const productToSubmit = {
@@ -358,6 +363,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             // Guardar los valores en campos apropiados
             shop_delivery_cost: shippingCost, // Costo de envío
             shop_taxes: shopTaxRate ?? getShopTaxRate(shopName), // Porcentaje de impuesto de tienda
+            charge_iva: chargeIva, // Si se cobra IVA o no
             base_tax: calculation.baseImpuesto, // IVA 7% calculado
             shop_tax_amount: calculation.tarifaTienda, // Impuesto adicional calculado (3% o 5%)
             added_taxes: addedTaxes, // Impuestos adicionales nominales
@@ -393,6 +399,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             shop_tax_amount: 0,
             own_taxes: 0,
             shop_delivery_cost: 0,
+            charge_iva: true,
             order: orderId || 0,
         })
         // Restore to initial parsed tags if editing, otherwise clear
@@ -497,7 +504,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                 </Button>
                             )}
                         </div>
-                        
+
                         {showManualShopSelect && !newProduct.link?.trim() ? (
                             // Selector manual de tienda
                             <>
@@ -696,7 +703,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                     </div>
 
                     <Separator className="bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent" />
-                    
+
                     {/* Sección Económica */}
                     <div className="space-y-4">
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Información Económica</h3>
@@ -708,13 +715,13 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                 <label htmlFor="amount_requested" className="text-sm font-medium text-foreground">
                                     Cantidad
                                 </label>
-                                <Input 
-                                    id="amount_requested" 
-                                    type="number" 
-                                    min={1} 
-                                    step="1" 
-                                    value={newProduct.amount_requested} 
-                                    onChange={(e) => setNewProduct({ ...newProduct, amount_requested: Number(e.target.value) })} 
+                                <Input
+                                    id="amount_requested"
+                                    type="number"
+                                    min={1}
+                                    step="1"
+                                    value={newProduct.amount_requested}
+                                    onChange={(e) => setNewProduct({ ...newProduct, amount_requested: Number(e.target.value) })}
                                     className="h-10"
                                 />
                             </div>
@@ -724,13 +731,13 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                 <label htmlFor="shop_cost" className="text-sm font-medium text-foreground">
                                     Precio
                                 </label>
-                                <Input 
-                                    id="shop_cost" 
-                                    type="number" 
+                                <Input
+                                    id="shop_cost"
+                                    type="number"
                                     min="0"
-                                    step="0.01" 
-                                    value={newProduct.shop_cost} 
-                                    onChange={(e) => setNewProduct({ ...newProduct, shop_cost: Number(e.target.value) })} 
+                                    step="0.01"
+                                    value={newProduct.shop_cost}
+                                    onChange={(e) => setNewProduct({ ...newProduct, shop_cost: Number(e.target.value) })}
                                     className="h-10"
                                     placeholder="0.00"
                                 />
@@ -741,46 +748,50 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                 <label htmlFor="shop_delivery_cost" className="text-sm font-medium text-foreground">
                                     Costo Envío
                                 </label>
-                                <Input 
-                                    id="shop_delivery_cost" 
-                                    type="number" 
+                                <Input
+                                    id="shop_delivery_cost"
+                                    type="number"
                                     min="0"
-                                    step="0.01" 
-                                    value={newProduct.shop_delivery_cost} 
-                                    onChange={(e) => setNewProduct({ ...newProduct, shop_delivery_cost: Number(e.target.value) })} 
+                                    step="0.01"
+                                    value={newProduct.shop_delivery_cost}
+                                    onChange={(e) => setNewProduct({ ...newProduct, shop_delivery_cost: Number(e.target.value) })}
                                     className="h-10"
                                     placeholder="0.00"
                                 />
                             </div>
+
+
+
                             {/* Impuesto de tienda (calculado) */}
                             <div className="space-y-1.5">
-                            {(() => {
-                                const price = Number(newProduct.shop_cost) || 0
-                                const shippingCost = Number(newProduct.shop_delivery_cost) || 0
-                                const shopTaxRate = newProduct.shop_taxes ?? getShopTaxRate(newProduct.shop || '')
-                                
-                                // Calcular el valor del impuesto de tienda en dólares
-                                const base = price + shippingCost
-                                const baseImpuesto = base * 0.07
-                                const baseParaTarifa = base + baseImpuesto
-                                const valorImpuestoTienda = baseParaTarifa * (shopTaxRate / 100)
-                                
-                                return (
-                                    <>
-                                        <label htmlFor="shop_taxes" className="text-sm font-medium text-foreground">
-                                            Impuesto Tienda ({shopTaxRate}%)
-                                        </label>
-                                        <Input 
-                                            id="shop_taxes" 
-                                            type="text" 
-                                            value={valorImpuestoTienda > 0 ? `$${formatCurrency(valorImpuestoTienda)}` : ''} 
-                                            readOnly
-                                            className="h-10 bg-muted/50 cursor-default"
-                                            placeholder="$0.00"
-                                        />
-                                    </>
-                                )
-                            })()}
+                                {(() => {
+                                    const price = Number(newProduct.shop_cost) || 0
+                                    const shippingCost = Number(newProduct.shop_delivery_cost) || 0
+                                    const shopTaxRate = newProduct.shop_taxes ?? getShopTaxRate(newProduct.shop || '')
+                                    const chargeIva = newProduct.charge_iva ?? true
+
+                                    // Calcular el valor del impuesto de tienda en dólares
+                                    const base = price + shippingCost
+                                    const baseImpuesto = chargeIva ? base * 0.07 : 0
+                                    const baseParaTarifa = base + baseImpuesto
+                                    const valorImpuestoTienda = baseParaTarifa * (shopTaxRate / 100)
+
+                                    return (
+                                        <>
+                                            <label htmlFor="shop_taxes" className="text-sm font-medium text-foreground">
+                                                Impuesto Tienda ({shopTaxRate}%)
+                                            </label>
+                                            <Input
+                                                id="shop_taxes"
+                                                type="text"
+                                                value={valorImpuestoTienda > 0 ? `$${formatCurrency(valorImpuestoTienda)}` : ''}
+                                                readOnly
+                                                className="h-10 bg-muted/50 cursor-default"
+                                                placeholder="$0.00"
+                                            />
+                                        </>
+                                    )
+                                })()}
                             </div>
 
                             {/* Impuesto adicional */}
@@ -788,13 +799,13 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                 <label htmlFor="added_taxes" className="text-sm font-medium text-foreground">
                                     Impuesto Adicional
                                 </label>
-                                <Input 
-                                    id="added_taxes" 
-                                    type="number" 
+                                <Input
+                                    id="added_taxes"
+                                    type="number"
                                     min="0"
-                                    step="0.01" 
-                                    value={newProduct.added_taxes} 
-                                    onChange={(e) => setNewProduct({ ...newProduct, added_taxes: Number(e.target.value) })} 
+                                    step="0.01"
+                                    value={newProduct.added_taxes}
+                                    onChange={(e) => setNewProduct({ ...newProduct, added_taxes: Number(e.target.value) })}
                                     className="h-10"
                                     placeholder="0.00"
                                 />
@@ -805,16 +816,27 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                 <label htmlFor="own_taxes" className="text-sm font-medium text-foreground">
                                     Impuestos Propios ($)
                                 </label>
-                                <Input 
-                                    id="own_taxes" 
-                                    type="number" 
+                                <Input
+                                    id="own_taxes"
+                                    type="number"
                                     min="0"
-                                    step="0.01" 
-                                    value={newProduct.own_taxes} 
-                                    onChange={(e) => setNewProduct({ ...newProduct, own_taxes: Number(e.target.value) })} 
+                                    step="0.01"
+                                    value={newProduct.own_taxes}
+                                    onChange={(e) => setNewProduct({ ...newProduct, own_taxes: Number(e.target.value) })}
                                     className="h-10"
                                     placeholder="0.00"
                                 />
+                            </div>
+                        </div>
+                        <div>
+                            {/* Cobrar IVA */}
+                            <div className="flex items-center space-x-2">
+                                <Switch
+                                    id="airplane-mode"
+                                    checked={!!newProduct.charge_iva}
+                                    onCheckedChange={(checked: boolean) => setNewProduct(prev => ({ ...prev, charge_iva: Boolean(checked) }))}
+                                />
+                                <Label htmlFor="airplane-mode">Aplicar 7%</Label>
                             </div>
                         </div>
                     </div>
@@ -827,22 +849,23 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                         const shopTaxRate = newProduct.shop_taxes
                         const addedTaxes = Number(newProduct.added_taxes) || 0
                         const ownTaxes = Number(newProduct.own_taxes) || 0
+                        const chargeIva = newProduct.charge_iva ?? true
 
-                        const calculation = calculateTotalCost(price, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes)
+                        const calculation = calculateTotalCost(price, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
 
                         return (
                             <div className="space-y-4">
                                 <Separator className="bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent" />
-                                
+
                                 {/* Card de resumen total - Minimalista */}
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-muted/30 rounded-lg border">
                                     <div className="flex items-center gap-3">
                                         <span className="text-sm font-medium text-muted-foreground">Total a Cobrar</span>
                                         <Popover open={isInvoicePopoverOpen} onOpenChange={setIsInvoicePopoverOpen}>
                                             <PopoverTrigger asChild>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
                                                     className="h-8 w-8 p-0"
                                                     type="button"
                                                 >
@@ -891,12 +914,12 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                                         {/* Impuestos y tarifas */}
                                                         <div className="space-y-2">
                                                             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Impuestos y Tarifas</p>
-                                                            
+
                                                             <div className="flex justify-between text-sm">
                                                                 <span className="text-muted-foreground">Impuesto base (7%):</span>
                                                                 <span className="font-medium text-emerald-600">+${formatCurrency(calculation.baseImpuesto)}</span>
                                                             </div>
-                                                            
+
                                                             <div className="space-y-1">
                                                                 <div className="flex justify-between text-sm">
                                                                     <span className="text-muted-foreground">
@@ -904,16 +927,16 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                                                     </span>
                                                                     <span className="font-medium text-blue-600">+${formatCurrency(calculation.tarifaTienda)}</span>
                                                                 </div>
-                                                                
+
                                                             </div>
-                                                            
+
                                                             {calculation.impuestosAdicionales > 0 && (
                                                                 <div className="flex justify-between text-sm">
                                                                     <span className="text-muted-foreground">Impuestos adicionales:</span>
                                                                     <span className="font-medium text-amber-600">+${formatCurrency(calculation.impuestosAdicionales)}</span>
                                                                 </div>
                                                             )}
-                                                            
+
                                                             {calculation.impuestosPropios > 0 && (
                                                                 <div className="flex justify-between text-sm">
                                                                     <span className="text-muted-foreground">Impuestos propios:</span>
@@ -947,7 +970,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                             </PopoverContent>
                                         </Popover>
                                     </div>
-                                    
+
                                     {/* Totales - Minimalista */}
                                     <div className="flex items-center gap-4">
                                         <div className="text-right">

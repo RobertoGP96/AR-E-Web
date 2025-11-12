@@ -278,6 +278,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "shop_cost",
             "shop_delivery_cost",
             "shop_taxes",
+            "charge_iva",
             "base_tax",
             "shop_tax_amount",
             "own_taxes",

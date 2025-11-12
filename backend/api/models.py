@@ -412,6 +412,10 @@ class Product(models.Model):
     shop_cost = models.FloatField()
     shop_delivery_cost = models.FloatField(default=0)
     shop_taxes = models.FloatField(default=0)
+    charge_iva = models.BooleanField(
+        default=True,
+        help_text="Indica si se debe cobrar IVA (7%) para este producto"
+    )
     base_tax = models.FloatField(default=0, help_text="IVA 7% calculado sobre (precio + envío)")
     shop_tax_amount = models.FloatField(default=0, help_text="Impuesto adicional calculado (3% o 5%)")
     own_taxes = models.FloatField(default=0)
@@ -459,11 +463,12 @@ class Product(models.Model):
     def system_expenses(self):
         """
         Gastos del sistema para este producto.
-        Fórmula: precio + envío + 7% del precio + impuesto adicional (added_taxes)
+        Fórmula: precio + envío + (7% del precio si charge_iva=True) + impuesto adicional (added_taxes)
         """
         base_price = self.shop_cost
         shipping = self.shop_delivery_cost
-        base_tax = base_price * 0.07  # 7% del precio
+        # Solo aplicar IVA si charge_iva es True
+        base_tax = (base_price * 0.07) if self.charge_iva else 0
         additional_tax = self.added_taxes
         
         return base_price + shipping + base_tax + additional_tax

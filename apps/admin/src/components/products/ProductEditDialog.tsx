@@ -43,6 +43,7 @@ export const ProductEditDialog = ({ product, open, onOpenChange }: ProductEditDi
         category: product.category,
         added_taxes: product.added_taxes,
         shop_taxes: product.shop_taxes,
+        charge_iva: product.charge_iva,
         own_taxes: product.own_taxes,
         shop_delivery_cost: product.shop_delivery_cost,
     }
