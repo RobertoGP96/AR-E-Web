@@ -6,3 +6,8 @@ export { default as CreateDeliveryDialog } from './CreateDeliveryDialog';
 export { default as EditDeliveryDialog } from './EditDeliveryDialog';
 export { AddProductToDeliveryDialog } from './AddProductToDeliveryDialog';
 export { DeliveryProductsTable } from './DeliveryProductsTable';
+export { default as AddProductsToDeliveryPage } from './AddProductsToDeliveryPage';
+export { default as RemoveProductsFromDeliveryPage } from './RemoveProductsFromDeliveryPage';
+
+// Delivery products management
+export * from './delivery-products';

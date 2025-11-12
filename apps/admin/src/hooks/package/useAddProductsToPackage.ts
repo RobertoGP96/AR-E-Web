@@ -4,6 +4,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
+import type { CreateProductReceivedData } from '@/types';
 
 export interface AddProductsToPackageData {
   original_product: string; // UUID del producto
@@ -17,7 +18,7 @@ export function useAddProductsToPackage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ packageId, products }: { packageId: number; products: AddProductsToPackageData[] }) =>
+    mutationFn: ({ packageId, products }: { packageId: number; products: CreateProductReceivedData[] }) =>
       apiClient.post(`/api_data/package/${packageId}/add_products/`, {
         products
       }),

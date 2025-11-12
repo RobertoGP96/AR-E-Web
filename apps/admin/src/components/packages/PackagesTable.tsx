@@ -4,7 +4,7 @@ import EditPackageDialog from './EditPackageDialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import type { Package as PackageType } from '@/types';
-import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Package, CheckCircle2 } from 'lucide-react';
+import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Package, CheckCircle2, Box } from 'lucide-react';
 import { formatDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -38,8 +38,8 @@ interface PackagesTableProps {
   itemsPerPage?: number;
 }
 
-const PackagesTable: React.FC<PackagesTableProps> = ({ 
-  packages, 
+const PackagesTable: React.FC<PackagesTableProps> = ({
+  packages,
   isLoading = false,
   onEdit,
   onDelete,
@@ -136,7 +136,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   const getNextStatus = (currentStatus: string): string | null => {
     // Normalizar el estado actual
     const normalized = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1).toLowerCase();
-    
+
     if (normalized === 'Enviado') return 'Recibido';
     if (normalized === 'Recibido') return 'Procesado';
     return null;
@@ -176,13 +176,13 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     setUpdatingStatusId(pkg.id);
     try {
       await updateStatusMutation.mutateAsync({ id: pkg.id, status: newStatus });
-      
+
       // Mensaje personalizado según el nuevo estado
       const messages: Record<string, string> = {
         'Recibido': `Paquete #${pkg.agency_name} marcado como Recibido`,
         'Procesado': `Paquete #${pkg.agency_name} marcado como Procesado`,
       };
-      
+
       toast.success(messages[newStatus] || `Estado del paquete #${pkg.agency_name} cambiado a ${newStatus}`);
     } catch (err) {
       console.error('Error al cambiar estado del paquete:', err);
@@ -221,280 +221,318 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
       <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(90vh-16rem)]">
 
         <Table>
-        <TableHeader className="bg-gray-100 ">
-          <TableRow>
-            <TableHead>#</TableHead>
-            <TableHead>ID</TableHead>
-            <TableHead>No. Rastreo</TableHead>
-            <TableHead>Llegada</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Productos</TableHead>
-            <TableHead>Captura</TableHead>
-            <TableHead>Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {paginatedPackages.map((pkg, index) => (
-            <TableRow key={pkg.id}>
-              <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-              <TableCell>
-                <div className='flex flex-row items-center'>
-                  <span className='rounded-full bg-gray-200 px-2 py-1 text-xs font-medium'>
-                    {"#" + pkg.agency_name}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell>{pkg.number_of_tracking}</TableCell>
-              <TableCell>
-                <div className='flex flex-row items-center text-gray-500'>
-                  <Clock className="mr-2 inline h-4 w-4" />
-                  {formatDate(pkg.arrival_date)}
-                </div>
-              </TableCell>
-              <TableCell>
-                <PackageStatusBadge status={pkg.status_of_processing} />
-              </TableCell>
-              <TableCell>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="cursor-pointer hover:bg-blue-50 hover:border-blue-300"
-                    >
-                      <Package className=" h-4 w-4" />
-                      {pkg.contained_products?.length || 0}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 max-h-96 overflow-y-auto" align="start">
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-sm border-b pb-2">
-                        Productos Recibidos ({pkg.contained_products?.length || 0})
-                      </h4>
-                      {pkg.contained_products && pkg.contained_products.length > 0 ? (
-                        <ul className="space-y-2">
-                          {pkg.contained_products.map((product) => (
-                            <li
-                              key={product.id}
-                              className="flex items-start justify-between p-2 rounded-md hover:bg-gray-50 border border-gray-100"
-                            >
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-900">
-                                  {product.original_product.name}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Cantidad: {product.amount_received}
-                                </p>
-                                {product.observation && (
-                                  <p className="text-xs text-gray-400 mt-1 italic">
-                                    {product.observation}
-                                  </p>
-                                )}
-                              </div>
-                              <Badge variant="secondary" className="ml-2 shrink-0">
-                                x{product.amount_received}
-                              </Badge>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <div className="text-center py-4 text-gray-500">
-                          <Package className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                          <p className="text-sm">No hay productos recibidos</p>
-                        </div>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </TableCell>
-              <TableCell>
-                <div className='flex flex-row gap-2'>
-                  <Button 
-                    className='text-gray-600 cursor-pointer bg-gray-200 hover:bg-gray-300'
-                    onClick={() => onCapture?.(pkg)}
-                  >
-                    <Camera className='h-5 w-5' />
-                  </Button>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedPackage(pkg);
-                          setEditDialogOpen(true);
-                          if (onEdit) {
-                            onEdit(pkg);
-                          }
-                        }}
-                        className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onCapture?.(pkg);
-                        }}
-                        className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                      >
-                        <Camera className="h-4 w-4" />
-                        Capturar
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                        className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                      >
-                        <Link
-                          to={`/packages/${pkg.id}/add-products`}
-                          onClick={(e: React.MouseEvent) => {
-                            e.stopPropagation();
-                          }}
-                          className="inline-flex items-center gap-2"
-                          title={`Agregar productos al paquete ${pkg.agency_name}`}
-                        >
-                          <Package className="h-4 w-4" />
-                          Agregar Productos
-                        </Link>
-                      </DropdownMenuItem>
-
-                      {/* Cambio de estado en dropdown */}
-                      {getNextStatus(pkg.status_of_processing) && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStatusChange(pkg);
-                            }}
-                            disabled={updatingStatusId === pkg.id}
-                            className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(getNextStatus(pkg.status_of_processing)!)}`}
-                          >
-                            {updatingStatusId === pkg.id ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>Actualizando...</span>
-                              </>
-                            ) : (
-                              (() => {
-                                const nextStatus = getNextStatus(pkg.status_of_processing)!;
-                                const IconComponent = getNextStatusIcon(nextStatus);
-                                const label = getNextStatusLabel(nextStatus);
-                                return (
-                                  <>
-                                    <IconComponent className="h-4 w-4" />
-                                    <span>{label}</span>
-                                  </>
-                                );
-                              })()
-                            )}
-                          </DropdownMenuItem>
-                        </>
-                      )}
-
-                      <DropdownMenuSeparator />
-
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                        className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
-                      >
-                        <Link
-                          to={`/packages/${pkg.id}`}
-                          onClick={(e: React.MouseEvent) => {
-                            e.stopPropagation();
-                          }}
-                          className="inline-flex items-center gap-2"
-                          title={`Ver detalles del paquete ${pkg.id}`}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          Ver detalles
-                        </Link>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-
-                          if (!pkg || !pkg.id) {
-                            console.error('Error: Paquete sin ID válido', pkg);
-                            return;
-                          }
-
-                          setDialogState({ type: 'delete', pkg });
-                        }}
-                        className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </TableCell>
+          <TableHeader className="bg-gray-100 ">
+            <TableRow>
+              <TableHead>#</TableHead>
+              <TableHead>ID</TableHead>
+              <TableHead>No. Rastreo</TableHead>
+              <TableHead>Llegada</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Productos</TableHead>
+              <TableHead>Captura</TableHead>
+              <TableHead>Acciones</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {paginatedPackages.map((pkg, index) => (
+              <TableRow key={pkg.id}>
+                <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                <TableCell>
+                  <div className='flex flex-row items-center'>
+                    <span className='rounded-full bg-gray-200 px-2 py-1 text-xs font-medium'>
+                      {"#" + pkg.agency_name}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>{pkg.number_of_tracking}</TableCell>
+                <TableCell>
+                  <div className='flex flex-row items-center text-gray-500'>
+                    <Clock className="mr-2 inline h-4 w-4" />
+                    {formatDate(pkg.arrival_date)}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <PackageStatusBadge status={pkg.status_of_processing} />
+                </TableCell>
+                <TableCell>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="cursor-pointer hover:bg-blue-50 hover:border-blue-300"
+                      >
+                        <Package className=" h-4 w-4" />
+                        {pkg.contained_products?.length || 0}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 max-h-96 overflow-y-auto" align="start">
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-sm border-b pb-2">
+                          Productos Recibidos ({pkg.contained_products?.length || 0})
+                        </h4>
+                        {pkg.contained_products && pkg.contained_products.length > 0 ? (
+                          <ul className="space-y-2">
+                            {pkg.contained_products.map((product) => (
+                              <li
+                                key={product.id}
+                                className="flex items-start justify-between p-2 rounded-md hover:bg-gray-50 border border-gray-100"
+                              >
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {product.original_product.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Cantidad: {product.amount_received}
+                                  </p>
+                                  {product.observation && (
+                                    <p className="text-xs text-gray-400 mt-1 italic">
+                                      {product.observation}
+                                    </p>
+                                  )}
+                                </div>
+                                <Badge variant="secondary" className="ml-2 shrink-0">
+                                  x{product.amount_received}
+                                </Badge>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="text-center py-4 text-gray-500">
+                            <Package className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                            <p className="text-sm">No hay productos recibidos</p>
+                          </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </TableCell>
+                <TableCell>
+                  <div className='flex flex-row gap-2'>
+                    <Button
+                      className='text-gray-600 cursor-pointer bg-gray-200 hover:bg-gray-300'
+                      onClick={() => onCapture?.(pkg)}
+                    >
+                      <Camera className='h-5 w-5' />
+                    </Button>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPackage(pkg);
+                            setEditDialogOpen(true);
+                            if (onEdit) {
+                              onEdit(pkg);
+                            }
+                          }}
+                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
 
-    {/* Componente de paginación */}
-    {totalPages > 1 && (
-      <div className="flex justify-center mt-4">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-              />
-            </PaginationItem>
-            
-            {getPageNumbers().map((page, idx) => (
-              <PaginationItem key={idx}>
-                {page === 'ellipsis' ? (
-                  <PaginationEllipsis />
-                ) : (
-                  <PaginationLink
-                    onClick={() => setCurrentPage(page as number)}
-                    isActive={currentPage === page}
-                  >
-                    {page}
-                  </PaginationLink>
-                )}
-              </PaginationItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCapture?.(pkg);
+                          }}
+                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                        >
+                          <Camera className="h-4 w-4" />
+                          Capturar
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                        >
+                          <Link
+                            to={`/packages/${pkg.id}/add-products`}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                            }}
+                            className="inline-flex items-center gap-2"
+                            title={`Agregar productos al paquete ${pkg.agency_name}`}
+                          >
+                            <Package className="h-4 w-4" />
+                            Agregar Productos
+                          </Link>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
+                        >
+                          <Link
+                            to={`/packages/${pkg.id}/manage-products`}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                            }}
+                            className="inline-flex items-center gap-2"
+                            title={`Gestionar productos del paquete ${pkg.agency_name}`}
+                          >
+                            <Box className="h-4 w-4" />
+                            Gestionar Productos
+                          </Link>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                        >
+                          <Link
+                            to={`/packages/${pkg.id}/remove-products`}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                            }}
+                            className="inline-flex items-center gap-2"
+                            title={`Eliminar productos del paquete ${pkg.agency_name}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar Productos
+                          </Link>
+                        </DropdownMenuItem>
+
+                        {/* Cambio de estado en dropdown */}
+                        {getNextStatus(pkg.status_of_processing) && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusChange(pkg);
+                              }}
+                              disabled={updatingStatusId === pkg.id}
+                              className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(getNextStatus(pkg.status_of_processing)!)}`}
+                            >
+                              {updatingStatusId === pkg.id ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span>Actualizando...</span>
+                                </>
+                              ) : (
+                                (() => {
+                                  const nextStatus = getNextStatus(pkg.status_of_processing)!;
+                                  const IconComponent = getNextStatusIcon(nextStatus);
+                                  const label = getNextStatusLabel(nextStatus);
+                                  return (
+                                    <>
+                                      <IconComponent className="h-4 w-4" />
+                                      <span>{label}</span>
+                                    </>
+                                  );
+                                })()
+                              )}
+                            </DropdownMenuItem>
+                          </>
+                        )}
+
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
+                        >
+                          <Link
+                            to={`/packages/${pkg.id}`}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                            }}
+                            className="inline-flex items-center gap-2"
+                            title={`Ver detalles del paquete ${pkg.id}`}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Ver detalles
+                          </Link>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+
+                            if (!pkg || !pkg.id) {
+                              console.error('Error: Paquete sin ID válido', pkg);
+                              return;
+                            }
+
+                            setDialogState({ type: 'delete', pkg });
+                          }}
+                          className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </TableCell>
+              </TableRow>
             ))}
-            
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+          </TableBody>
+        </Table>
       </div>
-    )}
 
-    {/* Diálogo de confirmación para eliminar paquete */}
+      {/* Componente de paginación */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                />
+              </PaginationItem>
+
+              {getPageNumbers().map((page, idx) => (
+                <PaginationItem key={idx}>
+                  {page === 'ellipsis' ? (
+                    <PaginationEllipsis />
+                  ) : (
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page as number)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  )}
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+
+      {/* Diálogo de confirmación para eliminar paquete */}
       <AlertDialog open={dialogState.type === 'delete' || isDeleting} onOpenChange={(open) => {
         // Prevent closing while deleting
         if (!open && isDeleting) return;

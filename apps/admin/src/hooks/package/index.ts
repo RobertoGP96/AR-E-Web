@@ -4,3 +4,4 @@ export * from './useDeletePackage';
 export * from './usePackages';
 export * from './usePackage';
 export * from './useUpdatePackage';
+export * from './useRemoveProductFromPackage';

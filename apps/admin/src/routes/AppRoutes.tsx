@@ -20,9 +20,13 @@ import OrderDetails from '@/components/orders/order-details';
 import { PurchaseDetails } from '@/components/purshases';
 import { PackageDetails } from '@/components/packages';
 import AddProductsToPackagePage from '@/components/packages/AddProductsToPackagePage';
+import RemoveProductsFromPackagePage from '@/components/packages/RemoveProductsFromPackagePage';
 import AddProductsToDeliveryPage from '@/components/delivery/AddProductsToDeliveryPage';
+import RemoveProductsFromDeliveryPage from '@/components/delivery/RemoveProductsFromDeliveryPage';
 import AddMultipleProductsToOrderPage from '@/components/orders/AddMultipleProductsToOrderPage';
 import PurchaseProductsManagement from '@/pages/PurchaseProductsManagement';
+import PackageProductsManagement from '@/pages/PackageProductsManagement';
+import DeliveryProductsManagement from '@/pages/DeliveryProductsManagement';
 import Reports from '@/pages/Reports';
 
 const AppRoutes = () => {
@@ -54,11 +58,15 @@ const AppRoutes = () => {
 
                 <Route path="packages" element={<Packages />} />
                 <Route path="packages/:id" element={<PackageDetails />} />
+                <Route path="packages/:id/manage-products" element={<PackageProductsManagement />} />
                 <Route path="packages/:id/add-products" element={<AddProductsToPackagePage />} />
+                <Route path="packages/:id/remove-products" element={<RemoveProductsFromPackagePage />} />
                 
                 <Route path="delivery" element={<Delivery />} />
                 <Route path="delivery/:id" element={<DeliveryDetail />} />
+                <Route path="delivery/:id/manage-products" element={<DeliveryProductsManagement />} />
                 <Route path="delivery/:id/add-products" element={<AddProductsToDeliveryPage />} />
+                <Route path="delivery/:id/remove-products" element={<RemoveProductsFromDeliveryPage />} />
                 
                 <Route path="orders" element={<Orders />} />
                 <Route path="reports" element={<Reports />} />

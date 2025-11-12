@@ -159,7 +159,7 @@ export default function AddMultipleProductsToOrderPage() {
                       </TableCell>
                       <TableCell>{product.shop}</TableCell>
                       <TableCell>{product.amount_requested}</TableCell>
-                      <TableCell>${product.shop_cost.toFixed(2)}</TableCell>
+                      <TableCell>${(product.shop_cost || 0).toFixed(2)}</TableCell>
                       <TableCell className="font-semibold">
                         ${(product.shop_cost || 0).toFixed(2)}
                       </TableCell>

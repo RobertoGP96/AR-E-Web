@@ -185,12 +185,13 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         shop_cost: initialValues?.shop_cost ?? undefined,
         total_cost: initialValues?.total_cost ?? 0,
         category: initialValues?.category ?? undefined,
-        added_taxes: initialValues?.added_taxes ?? undefined,
-        shop_taxes: initialValues?.shop_taxes,
+        added_taxes: initialValues?.added_taxes ?? 0,
+        shop_taxes: initialValues?.shop_taxes ?? 0,
         base_tax: initialValues?.base_tax ?? 0,
         shop_tax_amount: initialValues?.shop_tax_amount ?? 0,
-
-
+        own_taxes: initialValues?.own_taxes ?? 0,
+        shop_delivery_cost: initialValues?.shop_delivery_cost ?? 0,
+        order: orderId || 0, // Agregar order obligatorio
     });
     const [tags, setTags] = useState<tag[]>(initialParsed.parsedTags || [])
     const [newtag, setNewTag] = useState<tag>({
@@ -230,9 +231,9 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         let matched = availableShops.find(s => s.name && s.name.toLowerCase() === detected)
 
         // Si no hay match por nombre, intentar buscar por hostname dentro del link de la shop
-        if (!matched) {
+        if (!matched && newProduct.link) {
             try {
-                const urlObj = new URL(newProduct.link as string)
+                const urlObj = new URL(newProduct.link)
                 const hostname = urlObj.hostname.replace(/^www\./, '').toLowerCase()
                 matched = availableShops.find(s => s.link && s.link.toLowerCase().includes(hostname))
             } catch {
@@ -243,15 +244,18 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         // Si encontramos una tienda en la BD, normalizar el campo shop con su name
         if (matched) {
             setIsShopInDatabase(true);
+            const updates: Partial<CreateProductData> = {}
+            
             if (matched.name && matched.name !== newProduct.shop) {
-                setNewProduct(prev => ({ 
-                    ...prev, 
-                    shop: matched!.name
-                }))
+                updates.shop = matched.name
             }
             // Si no hay shop_taxes definido manualmente, usar el de la BD
             if (newProduct.shop_taxes === undefined || newProduct.shop_taxes === 0) {
-                setNewProduct(prev => ({ ...prev, shop_taxes: matched!.tax_rate }))
+                updates.shop_taxes = matched.tax_rate
+            }
+            
+            if (Object.keys(updates).length > 0) {
+                setNewProduct(prev => ({ ...prev, ...updates }))
             }
             // almacenar id en un campo temporal del estado (no persistir en backend form state)
             setMatchedShopId(matched.id)
@@ -263,7 +267,8 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                 setNewProduct(prev => ({ ...prev, shop_taxes: autoRate }))
             }
         }
-    }, [newProduct.shop, newProduct.link, newProduct.shop_taxes, availableShops])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [newProduct.shop, newProduct.link, availableShops])
 
     // Id de la tienda detectada en la BD (si existe)
     const [matchedShopId, setMatchedShopId] = useState<number | undefined>(undefined)
@@ -388,6 +393,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             shop_tax_amount: 0,
             own_taxes: 0,
             shop_delivery_cost: 0,
+            order: orderId || 0,
         })
         // Restore to initial parsed tags if editing, otherwise clear
         setTags(initialParsed.parsedTags || [])

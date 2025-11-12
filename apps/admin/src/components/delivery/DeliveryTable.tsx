@@ -3,7 +3,7 @@ import EditDeliveryDialog from './EditDeliveryDialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import type { DeliverReceip, DeliveryStatus } from '@/types';
-import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Truck, Package, CheckCircle2, Weight } from 'lucide-react';
+import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Truck, Package, CheckCircle2, Weight, Boxes } from 'lucide-react';
 import { formatDeliveryDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -135,7 +135,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
   const getNextStatus = (currentStatus: DeliveryStatus): DeliveryStatus | null => {
     // Normalizar el estado actual
     const lower = currentStatus.toLowerCase();
-    
+
     if (lower === 'pendiente') return 'En transito';
     if (lower === 'en transito' || lower === 'en tránsito') return 'Entregado';
     return null;
@@ -252,7 +252,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                 </TableCell>
                 <TableCell>
                   <div>
-                    {"$ " + (delivery.weight_cost|| 0).toFixed(2)}
+                    {"$ " + (delivery.weight_cost || 0).toFixed(2)}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -382,6 +382,44 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                           >
                             <Package className="h-4 w-4" />
                             Agregar Productos
+                          </Link>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
+                        >
+                          <Link
+                            to={`/delivery/${delivery.id}/manage-products`}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                            }}
+                            className="inline-flex items-center gap-2"
+                            title={`Gestionar productos de la compra ${delivery.id}`}
+                          >
+                            <Boxes className="h-4 w-4" />
+                            Gestionar Productos
+                          </Link>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                        >
+                          <Link
+                            to={`/delivery/${delivery.id}/remove-products`}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                            }}
+                            className="inline-flex items-center gap-2"
+                            title={`Eliminar productos del delivery ${delivery.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar Productos
                           </Link>
                         </DropdownMenuItem>
 

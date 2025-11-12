@@ -14,12 +14,12 @@ import type { CreateProductData } from '@/types/models/product';
  */
 
 export const createProduct = async (productData: CreateProductData): Promise<Product> => {
-  const { shop_id, shop_name, order_id, ...data } = productData as unknown as Partial<CreateProductData> & { shop_name?: string };
+  const { shop, order, ...data } = productData as unknown as Partial<CreateProductData> & { shop_name?: string };
 
   // Construir payload como objeto genérico (la API acepta campos específicos)
   const payload: Record<string, unknown> = {
     ...(data as Partial<CreateProductData>),
-    order: order_id as number | undefined,
+    order: order as number | undefined,
   };
 
   const shopTaxes = (data as Partial<CreateProductData>).shop_taxes;
@@ -30,10 +30,8 @@ export const createProduct = async (productData: CreateProductData): Promise<Pro
   // mapearlos a nombres si la UI conoce los mappings. Aquí asumimos que el
   // frontend envía shop_name y category como nombre cuando sea necesario.
   // Si se reciben IDs, dejamos pasar los IDs (backend debería resolverlos)
-  if (typeof shop_id !== 'undefined') {
-    payload.shop = shop_id;
-  } else if (typeof shop_name !== 'undefined') {
-    payload.shop = shop_name;
+  if (typeof shop !== 'undefined') {
+    payload.shop = shop;
   }
 
   // category en ModelCreateProductData es ID, pero muchos endpoints esperan
@@ -57,7 +55,7 @@ export const createMultipleProducts = async (
   const createdProducts: Product[] = [];
   
   for (const productData of products) {
-    const response = await createProduct({ ...productData, order_id: orderId });
+    const response = await createProduct({ ...productData, order: orderId });
     if (response) {
       createdProducts.push(response);
     }

@@ -12,12 +12,12 @@ export function useAddProductsToOrder() {
   return useMutation({
     mutationFn: async ({ orderId, products }: { orderId: number; products: CreateProductData[] }) => {
       for (const p of products) {
-        const { shop_id, ...rest } = p as Partial<CreateProductData>;
+        const { shop, ...rest } = p as Partial<CreateProductData>;
         const payload: Record<string, unknown> = {
           ...rest,
           order: orderId,
         };
-        if (typeof shop_id !== 'undefined') payload.shop = shop_id;
+        if (typeof shop !== 'undefined') payload.shop = shop;
 
         await apiClient.post('/api_data/product/', payload);
       }

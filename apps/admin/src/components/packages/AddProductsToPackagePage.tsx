@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAddProductsToPackage } from '@/hooks/package';
-import type { AddProductsToPackageData } from '@/hooks/package';
+import type { CreateProductReceivedData } from '@/types';
 import { useProducts } from '@/hooks/product/useProducts';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { ProductSelectorPopover } from '@/components/products/ProductSelectorPopover';
 
-interface ProductEntry extends Omit<AddProductsToPackageData, 'original_product'> {
+interface ProductEntry {
   id: string; // Para identificar cada entrada en la lista
-  original_product: string; // Cambiado a string para coincidir con Product.id
+  original_product_id: string; // UUID del producto
+  amount_received: number;
 }
 
 export default function AddProductsToPackagePage() {
@@ -25,7 +26,7 @@ export default function AddProductsToPackagePage() {
 
   // Estado del formulario
   const [productEntries, setProductEntries] = useState<ProductEntry[]>([
-    { id: '1', original_product: '', amount_received: 1 }
+    { id: '1', original_product_id: '', amount_received: 1 }
   ]);
 
   // Función para agregar una nueva entrada de producto
@@ -33,7 +34,7 @@ export default function AddProductsToPackagePage() {
     const newId = Date.now().toString();
     setProductEntries(prev => [...prev, {
       id: newId,
-      original_product: '',
+      original_product_id: '',
       amount_received: 1
     }]);
   };
@@ -63,7 +64,7 @@ export default function AddProductsToPackagePage() {
 
     // Validar cada entrada
     for (const entry of productEntries) {
-      if (!entry.original_product || entry.original_product === '') {
+      if (!entry.original_product_id || entry.original_product_id === '') {
         toast.error('Todos los productos deben ser seleccionados');
         return;
       }
@@ -75,8 +76,8 @@ export default function AddProductsToPackagePage() {
 
     try {
       // Preparar los datos para enviar (sin el campo id)
-      const productsToSend: AddProductsToPackageData[] = productEntries.map(entry => ({
-        original_product: entry.original_product, // Enviar como string (UUID)
+      const productsToSend: CreateProductReceivedData[] = productEntries.map(entry => ({
+        original_product_id: entry.original_product_id,
         amount_received: entry.amount_received
       }));
 
@@ -88,7 +89,7 @@ export default function AddProductsToPackagePage() {
       toast.success(`Se agregaron ${productEntries.length} productos al paquete exitosamente`);
 
       // Resetear formulario y navegar de vuelta
-      setProductEntries([{ id: '1', original_product: '', amount_received: 1 }]);
+      setProductEntries([{ id: '1', original_product_id: '', amount_received: 1 }]);
       navigate('/packages');
     } catch (error) {
       console.error('Error adding products to package:', error);
@@ -141,9 +142,9 @@ export default function AddProductsToPackagePage() {
                   </Label>
                   <ProductSelectorPopover
                     products={products}
-                    value={entry.original_product}
+                    value={entry.original_product_id}
                     onSelect={(productId) =>
-                      updateProductEntry(entry.id, 'original_product', productId)
+                      updateProductEntry(entry.id, 'original_product_id', productId)
                     }
                     placeholder="Selecciona un producto"
                     disabled={false}

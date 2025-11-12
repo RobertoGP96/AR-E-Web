@@ -5,12 +5,12 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLe
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, AreaChart, Area } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TrendingUp, TrendingDown, DollarSign, Users, Trophy } from 'lucide-react';
 import axios from 'axios';
 import { formatUSD } from '@/lib/format-usd';
 import * as React from 'react';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface MonthlyReport {
   month: string;
@@ -95,19 +95,7 @@ export default function Reports() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Reportes de Ganancias</h1>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className='p-4'>
-              <CardHeader>
-                <Skeleton className="h-4 w-24 bg-gray-400" />
-              </CardHeader>
-              <CardContent className='p-4'>
-                <Skeleton className="h-8 w-32 bg-gray-400" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <LoadingSpinner text='Cargando Reportes...' size='lg' />
       </div>
     );
   }

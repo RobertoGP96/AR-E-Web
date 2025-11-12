@@ -43,7 +43,7 @@ const PackageDetails: React.FC = () => {
                 className="mb-4 hover:bg-gray-100"
             >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver a Paquetes
+                
             </Button>
 
             <Card className="w-full shadow-lg">

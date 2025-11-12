@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Check, ChevronsUpDown, Search, Filter, X } from 'lucide-react';
+import { Check, ChevronsUpDown, Search, Filter, X, ShoppingBag, Box, Briefcase, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +39,7 @@ function ProductSelectorPopover({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProductStatus | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [shopFilter, setShopFilter] = useState<string>('all');
 
   // Obtener categorías únicas
   const categories = useMemo(() => {
@@ -46,6 +47,14 @@ function ProductSelectorPopover({
       new Set(products.map(p => p.category).filter(Boolean))
     ) as string[];
     return uniqueCategories;
+  }, [products]);
+
+  // Obtener tiendas únicas
+  const shops = useMemo(() => {
+    const uniqueShops = Array.from(
+      new Set(products.map(p => p.shop).filter(Boolean))
+    ) as string[];
+    return uniqueShops.sort();
   }, [products]);
 
   // Filtrar productos
@@ -57,10 +66,11 @@ function ProductSelectorPopover({
 
       const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
       const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+      const matchesShop = shopFilter === 'all' || product.shop === shopFilter;
 
-      return matchesSearch && matchesStatus && matchesCategory;
+      return matchesSearch && matchesStatus && matchesCategory && matchesShop;
     });
-  }, [products, searchQuery, statusFilter, categoryFilter]);
+  }, [products, searchQuery, statusFilter, categoryFilter, shopFilter]);
 
   const selectedProduct = products.find(p => p.id === value);
 
@@ -73,9 +83,10 @@ function ProductSelectorPopover({
     setSearchQuery('');
     setStatusFilter('all');
     setCategoryFilter('all');
+    setShopFilter('all');
   };
 
-  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || categoryFilter !== 'all';
+  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || categoryFilter !== 'all' || shopFilter !== 'all';
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -90,9 +101,13 @@ function ProductSelectorPopover({
           {selectedProduct ? (
             <div className="flex items-center gap-2 truncate">
               <span className="truncate">{selectedProduct.name}</span>
-              <Badge variant="secondary" className="text-xs">
-                {selectedProduct.sku}
-              </Badge>
+              {
+                selectedProduct.sku && (
+                  <Badge variant="secondary" className="text-xs">
+                    {selectedProduct.sku}
+                  </Badge>
+                )
+              }
             </div>
           ) : (
             placeholder
@@ -125,13 +140,13 @@ function ProductSelectorPopover({
           </div>
 
           {/* Filtros */}
-          <div className="flex gap-2 mb-3">
+          <div className="grid grid-cols-3 gap-2 mb-3">
             <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ProductStatus | 'all')}>
-              <SelectTrigger className="flex-1 h-8 text-xs">
+              <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 {Object.values(PRODUCT_STATUSES).map((status) => (
                   <SelectItem key={status} value={status}>
                     {status}
@@ -141,14 +156,28 @@ function ProductSelectorPopover({
             </Select>
 
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="flex-1 h-8 text-xs">
+              <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Categoría" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las categorías</SelectItem>
+                <SelectItem value="all">Todas</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={shopFilter} onValueChange={setShopFilter}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Tienda" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {shops.map((shop) => (
+                  <SelectItem key={shop} value={shop}>
+                    {shop}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -181,34 +210,64 @@ function ProductSelectorPopover({
                   key={product.id}
                   onClick={() => handleSelect(product.id)}
                   className={cn(
-                    "flex items-start gap-3 p-3 rounded-md cursor-pointer hover:bg-accent",
-                    value === product.id && "bg-accent"
+                    "flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors border mb-2 ",
+                    value === product.id
+                      ? "bg-primary/10 border-primary"
+                      : "hover:bg-accent border-gray-200/70"
                   )}
                 >
-                  <Check
-                    className={cn(
-                      "mt-0.5 h-4 w-4 shrink-0",
-                      value === product.id ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">{product.name}</span>
-                      <Badge variant="outline" className="text-xs shrink-0">
-                        {product.sku}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>Estado: {product.status}</span>
-                      {product.category && (
-                        <>
-                          <span>•</span>
-                          <span>{product.category}</span>
-                        </>
+                  <div className="flex items-center justify-center shrink-0">
+                    <Check
+                      className={cn(
+                        "h-4 w-4",
+                        value === product.id ? "opacity-100 text-primary" : "opacity-0"
                       )}
-                      <span>•</span>
-                      <span>Cantidad: {product.amount_requested}</span>
+                    />
+                  </div>
+
+                  <div className="flex-1 min-w-0 space-y-2">
+                    {/* Encabezado del producto */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-sm truncate">{product.name}</h4>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {product.sku && (
+                            <Badge variant="outline" className="text-xs font-mono">
+                              {product.sku}
+                            </Badge>
+                          )}
+
+                          <Badge variant="outline" className="text-xs">{product.shop}</Badge>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Información detallada */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="flex flex-row gap-1 items-center justify-center min-w-[140px]">
+                        <div className="flex items-center gap-1">
+                          <Box className="h-4 w-4" />
+                          {product.amount_requested}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <ShoppingBag className="h-4 w-4" />
+                          {product.amount_purchased}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Briefcase className="h-4 w-4" />
+                          {product.amount_received}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Truck className="h-4 w-4" />
+                          {product.amount_delivered}
+                        </div>
+                      </div>
+
+
+                    </div>
+
+                    
                   </div>
                 </div>
               ))

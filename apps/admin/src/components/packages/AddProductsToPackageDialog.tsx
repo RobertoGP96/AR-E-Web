@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAddProductsToPackage } from '@/hooks/package';
 import type { AddProductsToPackageData } from '@/hooks/package';
+import type { CreateProductReceivedData } from '@/types';
 import { useProducts } from '@/hooks/product/useProducts';
 import { toast } from 'sonner';
 import {
@@ -95,9 +96,9 @@ export default function AddProductsToPackageDialog({
     }
 
     try {
-      // Preparar los datos para enviar (sin el campo id)
-      const productsToSend: AddProductsToPackageData[] = productEntries.map(entry => ({
-        original_product: entry.original_product,
+      // Preparar los datos para enviar (convertir original_product a original_product_id)
+      const productsToSend: CreateProductReceivedData[] = productEntries.map(entry => ({
+        original_product_id: entry.original_product,
         amount_received: entry.amount_received
       }));
 

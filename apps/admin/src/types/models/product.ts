@@ -65,7 +65,7 @@ export interface CreateProductData {
   description?: string;
   category?: string; // Nombre de la categoría (slug_field="name")
   amount_requested: number;
-  order?: ID; // ID del pedido (slug_field="id")
+  order: ID; // ID del pedido (slug_field="id")
   
   status?: ProductStatus;
   //PRICE
