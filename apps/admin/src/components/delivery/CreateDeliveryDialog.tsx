@@ -285,18 +285,6 @@ export default function CreateDeliveryDialog({ open, onOpenChange }: CreateDeliv
 
             {/* Fecha de Entrega */}
             <div className="grid gap-2">
-              <Label htmlFor="deliver_date">
-                Fecha de Entrega
-              </Label>
-              <Input
-                id="deliver_date"
-                type="date"
-                value={formData.deliver_date}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, deliver_date: e.target.value }))
-                }
-                className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
-              />
 
               <DatePicker
                 value={formData.deliver_date ? new Date(formData.deliver_date) : undefined}

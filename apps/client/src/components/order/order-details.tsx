@@ -451,7 +451,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                     <div className="bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-900/20 dark:to-yellow-800/20 p-5 rounded-2xl shadow-md border border-amber-200 dark:border-amber-700">
                       <span className="font-semibold text-amber-700 dark:text-amber-300 block mb-3">Costo de envío:</span>
                       <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                        {formatPrice(delivery.total_cost_of_deliver)}
+                        {formatPrice(delivery.weight_cost)}
                       </p>
                     </div>
                     

@@ -38,7 +38,7 @@ if all_deliveries.count() > 0:
         
         # Calcular valores
         print(f"\n  Cálculos:")
-        print(f"    - agent_profit_calculated: ${delivery.agent_profit_calculated:.2f}")
+        print(f"    - agent_profit: ${delivery.manager_profit:.2f}")
         print(f"    - delivery_expenses: ${delivery.delivery_expenses:.2f}")
         print(f"    - client_charge: ${delivery.client_charge:.2f}")
         print(f"    - system_delivery_profit: ${delivery.system_delivery_profit:.2f}")
@@ -69,14 +69,14 @@ deliveries_last_12_months = DeliverReceip.objects.filter(
 print(f"Entregas en últimos 12 meses: {deliveries_last_12_months.count()}")
 
 if deliveries_last_12_months.count() > 0:
-    total_agent_profit = sum(float(d.agent_profit_calculated) for d in deliveries_last_12_months)
+    total_agent_profit = sum(float(d.manager_profit) for d in deliveries_last_12_months)
     print(f"Ganancia total de agentes (12 meses): ${total_agent_profit:.2f}")
     print()
     
     for delivery in deliveries_last_12_months:
         agent = delivery.client.assigned_agent
         agent_name = agent.full_name if agent else "Sin agente"
-        print(f"  - Entrega {delivery.id}: {agent_name} - ${delivery.agent_profit_calculated:.2f}")
+        print(f"  - Entrega {delivery.id}: {agent_name} - ${delivery.manager_profit:.2f}")
 
 # 3. Verificar agentes activos
 print("\n3. AGENTES ACTIVOS Y SUS GANANCIAS")
@@ -97,7 +97,7 @@ for agent in agents:
     print(f"  Total entregas (históricas): {agent_deliveries.count()}")
     
     if agent_deliveries.count() > 0:
-        total_profit = sum(float(d.agent_profit_calculated) for d in agent_deliveries)
+        total_profit = sum(float(d.manager_profit) for d in agent_deliveries)
         print(f"  Ganancia total (histórica): ${total_profit:.2f}")
         
         # Entregas del mes actual
@@ -109,7 +109,7 @@ for agent in agents:
         )
         
         if current_month_deliveries.count() > 0:
-            current_month_profit = sum(float(d.agent_profit_calculated) for d in current_month_deliveries)
+            current_month_profit = sum(float(d.manager_profit) for d in current_month_deliveries)
             print(f"  Ganancia mes actual: ${current_month_profit:.2f}")
         else:
             print(f"  Ganancia mes actual: $0.00")

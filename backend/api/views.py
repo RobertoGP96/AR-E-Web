@@ -1780,11 +1780,11 @@ class DashboardMetricsView(APIView):
         deliveries_this_month_set = DeliverReceip.objects.filter(deliver_date__date__gte=month_ago)
         deliveries_last_month_set = DeliverReceip.objects.filter(deliver_date__date__range=(last_month_start, last_month_end))
         
-        revenue_deliveries_total = sum(float(d.client_charge) for d in all_deliveries)
-        revenue_deliveries_today = sum(float(d.client_charge) for d in deliveries_today_set)
-        revenue_deliveries_this_week = sum(float(d.client_charge) for d in deliveries_this_week_set)
-        revenue_deliveries_this_month = sum(float(d.client_charge) for d in deliveries_this_month_set)
-        revenue_deliveries_last_month = sum(float(d.client_charge) for d in deliveries_last_month_set)
+        revenue_deliveries_total = sum(float(d.weight_cost) for d in all_deliveries)
+        revenue_deliveries_today = sum(float(d.weight_cost) for d in deliveries_today_set)
+        revenue_deliveries_this_week = sum(float(d.weight_cost) for d in deliveries_this_week_set)
+        revenue_deliveries_this_month = sum(float(d.weight_cost) for d in deliveries_this_month_set)
+        revenue_deliveries_last_month = sum(float(d.weight_cost) for d in deliveries_last_month_set)
         
         # Total de ingresos = productos + entregas
         revenue_total = revenue_products_total + revenue_deliveries_total
@@ -1937,7 +1937,7 @@ class ProfitReportsView(APIView):
             )
             
             # Ingresos de entregas (cobro al cliente)
-            revenue_deliveries = sum(float(d.client_charge) for d in deliveries_in_month)
+            revenue_deliveries = sum(float(d.weight_cost) for d in deliveries_in_month)
             
             # Total de ingresos = productos + entregas
             revenue = revenue_products + revenue_deliveries
@@ -1978,10 +1978,23 @@ class ProfitReportsView(APIView):
                 float(d.delivery_expenses) for d in deliveries_in_month
             )
             
+            # Calcular gastos reales de compras PAGADAS en este mes
+            # Solo se consideran las compras con status PAGADO
+            paid_purchases_in_month = ShoppingReceip.objects.filter(
+                buy_date__gte=month_start,
+                buy_date__lte=month_end,
+                status_of_shopping='Pagado'
+            )
+            
+            # Gastos reales de compras = lo que se pagó efectivamente
+            paid_purchase_expenses = sum(
+                float(p.total_cost_of_purchase) for p in paid_purchases_in_month
+            )
+            
             # Calcular ganancias de agentes del mes usando el nuevo cálculo
             # Ganancia agente = peso × profit del agente
             agent_profits = sum(
-                float(d.agent_profit_calculated) for d in deliveries_in_month
+                float(d.manager_profit) for d in deliveries_in_month
             )
             
             # GANANCIA DEL SISTEMA POR ENTREGAS
@@ -1990,8 +2003,9 @@ class ProfitReportsView(APIView):
                 float(d.system_delivery_profit) for d in deliveries_in_month
             )
             
-            # Total de gastos del sistema (solo gastos reales, no se incluye purchase_operational_profit)
-            total_expenses = product_expenses + delivery_expenses
+            # Total de gastos del sistema (SOLO compras pagadas y entregas)
+            # NO se incluyen product_expenses porque son gastos estimados, no reales
+            total_expenses = paid_purchase_expenses + delivery_expenses
             
             # GANANCIA TOTAL DEL SISTEMA = suma de las 3 fuentes de ganancia
             # 1. Ganancia de productos (cobro - gastos)
@@ -2007,6 +2021,7 @@ class ProfitReportsView(APIView):
                 'product_expenses': float(product_expenses),
                 'product_profit': float(product_profit),
                 'purchase_operational_profit': float(purchase_operational_profit),
+                'paid_purchase_expenses': float(paid_purchase_expenses),
                 'delivery_expenses': float(delivery_expenses),
                 'agent_profits': float(agent_profits),
                 'system_delivery_profit': float(system_delivery_profit),
@@ -2031,7 +2046,7 @@ class ProfitReportsView(APIView):
             )
             
             total_profit = sum(
-                float(d.agent_profit_calculated) for d in agent_deliveries
+                float(d.manager_profit) for d in agent_deliveries
             )
             
             # Ganancias del mes actual
@@ -2043,7 +2058,7 @@ class ProfitReportsView(APIView):
             )
             
             current_month_profit = sum(
-                float(d.agent_profit_calculated) for d in current_month_deliveries
+                float(d.manager_profit) for d in current_month_deliveries
             )
             
             # Número de clientes asignados
@@ -2090,6 +2105,7 @@ class ProfitReportsView(APIView):
         total_expenses = sum(report['total_expenses'] for report in monthly_reports)
         total_product_expenses = sum(report['product_expenses'] for report in monthly_reports)
         total_purchase_operational_expenses = sum(report['purchase_operational_expenses'] for report in monthly_reports)
+        total_paid_purchase_expenses = sum(report['paid_purchase_expenses'] for report in monthly_reports)
         total_delivery_expenses = sum(report['delivery_expenses'] for report in monthly_reports)
         total_agent_profits = sum(report['agent_profits'] for report in monthly_reports)
         total_system_delivery_profit = sum(report['system_delivery_profit'] for report in monthly_reports)
@@ -2105,6 +2121,7 @@ class ProfitReportsView(APIView):
                     'total_expenses': float(total_expenses),
                     'total_product_expenses': float(total_product_expenses),
                     'total_purchase_operational_expenses': float(total_purchase_operational_expenses),
+                    'total_paid_purchase_expenses': float(total_paid_purchase_expenses),
                     'total_delivery_expenses': float(total_delivery_expenses),
                     'total_agent_profits': float(total_agent_profits),
                     'total_system_delivery_profit': float(total_system_delivery_profit),

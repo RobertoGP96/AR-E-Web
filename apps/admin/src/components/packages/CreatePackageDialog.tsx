@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Package, Truck, CheckCircle2 } from 'lucide-react';
+import { DatePicker } from '../utils/DatePicker';
 
 interface CreatePackageDialogProps {
   open: boolean;
@@ -126,18 +127,11 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
 
             {/* Fecha de Llegada */}
             <div className="grid gap-2">
-              <Label htmlFor="arrival_date">
-                Fecha de Llegada <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="arrival_date"
-                type="date"
-                value={formData.arrival_date}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, arrival_date: e.target.value }))
-                }
-                className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+              <DatePicker
+                value={formData.arrival_date ? new Date(formData.arrival_date) : undefined}
+                onChange={(date: Date | undefined) => setFormData({ ...formData, arrival_date: date?.toISOString() || '' })}
               />
+
             </div>
 
             {/* Estado del Paquete */}

@@ -252,7 +252,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                 </TableCell>
                 <TableCell>
                   <div>
-                    {"$ " + (delivery.total_cost_of_deliver || 0).toFixed(2)}
+                    {"$ " + (delivery.weight_cost|| 0).toFixed(2)}
                   </div>
                 </TableCell>
                 <TableCell>

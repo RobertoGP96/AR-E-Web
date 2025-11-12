@@ -153,7 +153,7 @@ def test_delivery_charges():
               f"{delivery.weight:<8.2f} "
               f"${delivery.client_charge:<11,.2f} "
               f"${delivery.delivery_expenses:<11,.2f} "
-              f"${delivery.agent_profit_calculated:<14,.2f}")
+              f"${delivery.manager_profit:<14,.2f}")
     
     print()
 

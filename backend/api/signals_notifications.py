@@ -351,7 +351,7 @@ def notify_delivery_created(sender, instance, created, **kwargs):
             recipient=instance.client,
             notification_type=NotificationType.PRODUCT_DELIVERED,
             title='¡Entrega registrada!',
-            message=f'Se ha registrado una entrega de {instance.weight:.2f} lb. Costo: ${instance.total_cost_of_deliver():.2f}',
+            message=f'Se ha registrado una entrega de {instance.weight:.2f} lb. Costo: ${instance.weight_cost():.2f}',
             priority=NotificationPriority.HIGH,
             related_object=instance,
             action_url=f'/deliveries/{instance.id}',

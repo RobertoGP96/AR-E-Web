@@ -24,9 +24,7 @@ export interface DeliverReceip {
   
   // Productos entregados en este delivery receipt
   products_delivered: ProductReceived[];
-  
-  // Método computado
-  total_cost_of_deliver: number;
+
 }
 
 // Tipos para crear/editar deliver receip

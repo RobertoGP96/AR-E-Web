@@ -952,13 +952,9 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
     )
     delivered_products = ProductDeliverySerializer(many=True, read_only=True)
 
-    total_cost_of_deliver = serializers.SerializerMethodField(read_only=True)
-    calculated_shipping_cost = serializers.SerializerMethodField(read_only=True)
-    
     # Nuevos campos calculados
     delivery_expenses = serializers.SerializerMethodField(read_only=True)
-    agent_profit_calculated = serializers.SerializerMethodField(read_only=True)
-    client_charge = serializers.SerializerMethodField(read_only=True)
+    
     system_delivery_profit = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -976,48 +972,21 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
             "status",
             "weight_cost",
             "manager_profit",
-            "total_cost_of_deliver",
-            "calculated_shipping_cost",
             # Nuevos campos calculados
             "delivery_expenses",
-            "agent_profit_calculated",
-            "client_charge",
             "system_delivery_profit",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
-    @extend_schema_field(float)
-    def get_total_cost_of_deliver(self, obj):
-        # Calcula el costo total de la entrega usando los campos del modelo
-        # Puedes ajustar la lógica según tu necesidad
-        # Ejemplo: suma de peso * costo por libra + ganancia del manager
-        if hasattr(obj, 'weight_cost') and hasattr(obj, 'manager_profit'):
-            return (obj.weight or 0) * (obj.weight_cost or 0) + (obj.manager_profit or 0)
-        return 0.0
-    
-    @extend_schema_field(float)
-    def get_calculated_shipping_cost(self, obj):
-        """Calcula el costo de envío basado en peso y categoría"""
-        if hasattr(obj, 'calculate_shipping_cost'):
-            return obj.calculate_shipping_cost()
-        return 0.0
+
     
     @extend_schema_field(float)
     def get_delivery_expenses(self, obj):
         """Retorna los gastos de la entrega (peso × costo por libra)"""
         return float(obj.delivery_expenses) if hasattr(obj, 'delivery_expenses') else 0.0
     
-    @extend_schema_field(float)
-    def get_agent_profit_calculated(self, obj):
-        """Retorna la ganancia del agente (peso × profit del agente)"""
-        return float(obj.agent_profit_calculated) if hasattr(obj, 'agent_profit_calculated') else 0.0
-    
-    @extend_schema_field(float)
-    def get_client_charge(self, obj):
-        """Retorna el cobro al cliente (peso × tarifa de cobro)"""
-        return float(obj.client_charge) if hasattr(obj, 'client_charge') else 0.0
     
     @extend_schema_field(float)
     def get_system_delivery_profit(self, obj):

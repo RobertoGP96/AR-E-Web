@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Truck, Package, CheckCircle2, Weight } from 'lucide-react';
 import type { DeliverReceip, DeliveryStatus } from '@/types';
+import { DatePicker } from '../utils/DatePicker';
 
 interface EditDeliveryDialogProps {
   open: boolean;
@@ -72,7 +73,7 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
   useEffect(() => {
     if (formData.category_id && formData.weight > 0) {
       const selectedCategory = categoryList.find(c => c.id === formData.category_id);
-      
+
       if (selectedCategory) {
         const calculatedCost = selectedCategory.client_shipping_charge * formData.weight;
         setFormData(prev => ({ ...prev, weight_cost: parseFloat(calculatedCost.toFixed(2)) }));
@@ -84,7 +85,7 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
   useEffect(() => {
     if (assignedAgent && formData.weight > 0) {
       const agentProfit = assignedAgent.agent_profit || 0;
-      
+
       if (agentProfit > 0) {
         const calculatedProfit = formData.weight * agentProfit;
         setFormData(prev => ({ ...prev, manager_profit: parseFloat(calculatedProfit.toFixed(2)) }));
@@ -274,18 +275,11 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
 
             {/* Fecha de Entrega */}
             <div className="grid gap-2">
-              <Label htmlFor="deliver_date">
-                Fecha de Entrega <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="deliver_date"
-                type="date"
-                value={formData.deliver_date}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, deliver_date: e.target.value }))
-                }
-                className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+              <DatePicker
+                value={formData.deliver_date ? new Date(formData.deliver_date) : undefined}
+                onChange={(date: Date | undefined) => setFormData({ ...formData, deliver_date: date?.toISOString() || '' })}
               />
+
             </div>
 
             {/* Estado del Delivery */}

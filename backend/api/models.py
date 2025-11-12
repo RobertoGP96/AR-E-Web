@@ -570,15 +570,6 @@ class DeliverReceip(models.Model):
         category_info = f" - {self.category.name}" if self.category else ""
         return f"Entrega - {client_info}{category_info} - {self.deliver_date.strftime('%Y-%m-%d')}"
 
-    def calculate_shipping_cost(self):
-        """Calculate shipping cost based on weight and category"""
-        if self.category and self.category.shipping_cost_per_pound:
-            return self.weight * float(self.category.shipping_cost_per_pound)
-        return self.weight_cost  # Fallback to manual weight_cost
-
-    def total_cost_of_deliver(self):
-        """Calculate total cost of delivery"""
-        return self.weight_cost + self.manager_profit
     
     @property
     def delivery_expenses(self):
@@ -590,27 +581,6 @@ class DeliverReceip(models.Model):
             return float(self.weight * self.category.shipping_cost_per_pound)
         return float(self.weight_cost)
     
-    @property
-    def agent_profit_calculated(self):
-        """
-        Ganancia del agente = peso × profit del agente.
-        Se calcula basado en el profit asignado al agente.
-        """
-        agent = self.client.assigned_agent
-        if agent and agent.agent_profit:
-            return float(self.weight * agent.agent_profit)
-        return float(self.manager_profit)
-    
-    @property
-    def client_charge(self):
-        """
-        Cobro al cliente = peso × tarifa de cobro al cliente.
-        Este es el ingreso que se recibe del cliente por el envío.
-        """
-        if self.category and self.category.client_shipping_charge:
-            return float(self.weight * self.category.client_shipping_charge)
-        # Si no hay categoría, retornar la suma de weight_cost + manager_profit
-        return float(self.weight_cost + self.manager_profit)
     
     @property
     def system_delivery_profit(self):
@@ -618,7 +588,7 @@ class DeliverReceip(models.Model):
         Ganancia del sistema en esta entrega = cobro al cliente - ganancia del agente - gastos.
         Representa la ganancia neta del sistema en el servicio de entrega.
         """
-        return float(self.client_charge - self.agent_profit_calculated - self.delivery_expenses)
+        return float(self.weight_cost - self.manager_profit - self.delivery_expenses)
 
     class Meta:
         ordering = ['-deliver_date']

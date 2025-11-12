@@ -116,7 +116,7 @@ def test_reports_calculation():
     # 5. GANANCIAS DE AGENTES
     print("\n5️⃣  GANANCIAS DE AGENTES")
     print("-" * 80)
-    agent_profits = sum(float(d.agent_profit_calculated) for d in deliveries_in_month)
+    agent_profits = sum(float(d.m) for d in deliveries_in_month)
     print(f"   💰 Ganancias de agentes: ${agent_profits:,.2f}")
     
     # 6. GANANCIA DEL SISTEMA

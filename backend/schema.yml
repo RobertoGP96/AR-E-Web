@@ -4212,16 +4212,11 @@ components:
           format: double
         status:
           $ref: '#/components/schemas/DeliverReceipStatusEnum'
-        total_cost_of_deliver:
-          type: number
-          format: double
-          readOnly: true
       required:
       - deliver_picture
       - delivered_products
       - id
       - order
-      - total_cost_of_deliver
       - weight
     DeliverReceipRequest:
       type: object

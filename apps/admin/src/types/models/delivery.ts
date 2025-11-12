@@ -23,14 +23,11 @@ export interface DeliverReceip {
   manager_profit: number;
   
   // Propiedades computadas
-  total_cost_of_deliver: number;
-  calculated_shipping_cost?: number; // Costo calculado basado en categoría
+
   delivered_products?: ProductDelivery[];
   
   // Nuevos campos calculados del sistema
   delivery_expenses: number;        // Gastos: peso × costo por libra
-  agent_profit_calculated: number;  // Ganancia agente: peso × profit del agente
-  client_charge: number;            // Cobro al cliente: peso × tarifa de cobro
   system_delivery_profit: number;   // Ganancia sistema: cobro - ganancia agente - gastos
   
   // Timestamps

@@ -177,7 +177,7 @@ export default function DeliveryDetail() {
             <div className="flex justify-between items-center">
               <span className="text-sm font-semibold">Total</span>
               <span className="text-lg font-bold text-green-600">
-                ${delivery.total_cost_of_deliver.toFixed(2)}
+                ${delivery.weight_cost.toFixed(2)}
               </span>
             </div>
           </CardContent>
