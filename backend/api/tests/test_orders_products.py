@@ -6,7 +6,8 @@ from django.test import TestCase
 from rest_framework import status
 from decimal import Decimal
 from api.tests import BaseAPITestCase, ModelTestCase
-from api.models import Order, Product, Shop
+from api.models import Order, Product, Shop, ProductBuyed, ProductReceived, ProductDelivery, ShoppingReceip
+from api.enums import ProductStatusEnum
 
 
 class OrderModelTest(ModelTestCase):
@@ -90,15 +91,16 @@ class ProductModelTest(ModelTestCase):
         self.assertEqual(self.product.order, self.order)
         self.assertEqual(self.product.total_cost, 20.0)
 
-    def test_product_amount_methods_default(self):
-        """Test product amount methods return 0 by default"""
-        self.assertEqual(self.product.amount_buyed(), 0)
-        self.assertEqual(self.product.amount_received(), 0)
-        self.assertEqual(self.product.amount_delivered(), 0)
+    def test_product_amount_fields_default(self):
+        """Test product amount fields are initialized correctly"""
+        self.assertEqual(self.product.amount_purchased, 0)
+        self.assertEqual(self.product.amount_received, 0)
+        self.assertEqual(self.product.amount_delivered, 0)
 
-    def test_product_cost_per_product_default(self):
-        """Test cost per product returns 0 when no buys"""
-        self.assertEqual(self.product.cost_per_product(), 0)
+    def test_product_pending_calculations(self):
+        """Test pending purchase and delivery calculations"""
+        self.assertEqual(self.product.pending_purchase, 5)  # 5 requested - 0 purchased
+        self.assertEqual(self.product.pending_delivery, 0)   # 0 purchased - 0 delivered
 
     def test_product_system_expenses_calculation(self):
         """Test that system_expenses includes added_taxes but NOT own_taxes"""
@@ -165,6 +167,157 @@ class ProductModelTest(ModelTestCase):
         
         # Verify that own_taxes increases profit
         self.assertAlmostEqual(profit_with - profit_without, 0.5, places=2)
+
+    def test_product_status_flow_encargado_to_comprado(self):
+        """Test product status changes from ENCARGADO to COMPRADO when purchased"""
+        # Initial status should be ENCARGADO
+        self.assertEqual(self.product.status, ProductStatusEnum.ENCARGADO.value)
+        self.assertEqual(self.product.amount_purchased, 0)
+        
+        # Create a purchase for the full amount requested (5)
+        ProductBuyed.objects.create(
+            original_product=self.product,
+            amount_buyed=5,
+            actual_cost_of_product=10.0,
+            real_cost_of_product=10.0
+        )
+        
+        # Refresh product from database
+        self.product.refresh_from_db()
+        
+        # Status should change to COMPRADO
+        self.assertEqual(self.product.amount_purchased, 5)
+        self.assertEqual(self.product.status, ProductStatusEnum.COMPRADO.value)
+    
+    def test_product_status_flow_comprado_to_recibido(self):
+        """Test product status changes from COMPRADO to RECIBIDO when received"""
+        # First, mark as COMPRADO
+        ProductBuyed.objects.create(
+            original_product=self.product,
+            amount_buyed=5,
+            actual_cost_of_product=10.0,
+            real_cost_of_product=10.0
+        )
+        
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.status, ProductStatusEnum.COMPRADO.value)
+        self.assertEqual(self.product.amount_received, 0)
+        
+        # Now receive the products (equal to amount_purchased)
+        ProductReceived.objects.create(
+            original_product=self.product,
+            amount_received=5
+        )
+        
+        # Refresh product from database
+        self.product.refresh_from_db()
+        
+        # Status should change to RECIBIDO when amount_received == amount_purchased
+        self.assertEqual(self.product.amount_received, 5)
+        self.assertEqual(self.product.status, ProductStatusEnum.RECIBIDO.value)
+    
+    def test_product_status_flow_recibido_to_entregado(self):
+        """Test product status changes from RECIBIDO to ENTREGADO when delivered"""
+        # First, purchase and receive
+        ProductBuyed.objects.create(
+            original_product=self.product,
+            amount_buyed=5,
+            actual_cost_of_product=10.0,
+            real_cost_of_product=10.0
+        )
+        
+        ProductReceived.objects.create(
+            original_product=self.product,
+            amount_received=5
+        )
+        
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.status, ProductStatusEnum.RECIBIDO.value)
+        self.assertEqual(self.product.amount_delivered, 0)
+        
+        # Now deliver the products (equal to amount_purchased)
+        ProductDelivery.objects.create(
+            original_product=self.product,
+            amount_delivered=5
+        )
+        
+        # Refresh product from database
+        self.product.refresh_from_db()
+        
+        # Status should change to ENTREGADO when amount_delivered == amount_purchased
+        self.assertEqual(self.product.amount_delivered, 5)
+        self.assertEqual(self.product.status, ProductStatusEnum.ENTREGADO.value)
+    
+    def test_product_status_partial_purchase(self):
+        """Test product status remains ENCARGADO with partial purchase"""
+        # Purchase only 3 out of 5 requested
+        ProductBuyed.objects.create(
+            original_product=self.product,
+            amount_buyed=3,
+            actual_cost_of_product=10.0,
+            real_cost_of_product=10.0
+        )
+        
+        self.product.refresh_from_db()
+        
+        # Status should remain ENCARGADO
+        self.assertEqual(self.product.amount_purchased, 3)
+        self.assertEqual(self.product.status, ProductStatusEnum.ENCARGADO.value)
+    
+    def test_product_status_partial_receipt(self):
+        """Test product status remains COMPRADO with partial receipt"""
+        # Purchase full amount
+        ProductBuyed.objects.create(
+            original_product=self.product,
+            amount_buyed=5,
+            actual_cost_of_product=10.0,
+            real_cost_of_product=10.0
+        )
+        
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.status, ProductStatusEnum.COMPRADO.value)
+        
+        # Receive only 3 out of 5 purchased
+        ProductReceived.objects.create(
+            original_product=self.product,
+            amount_received=3
+        )
+        
+        self.product.refresh_from_db()
+        
+        # Status should remain COMPRADO
+        self.assertEqual(self.product.amount_received, 3)
+        self.assertEqual(self.product.status, ProductStatusEnum.COMPRADO.value)
+    
+    def test_product_status_partial_delivery(self):
+        """Test product status remains RECIBIDO with partial delivery"""
+        # Purchase and receive full amount
+        ProductBuyed.objects.create(
+            original_product=self.product,
+            amount_buyed=5,
+            actual_cost_of_product=10.0,
+            real_cost_of_product=10.0
+        )
+        
+        ProductReceived.objects.create(
+            original_product=self.product,
+            amount_received=5
+        )
+        
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.status, ProductStatusEnum.RECIBIDO.value)
+        
+        # Deliver only 3 out of 5 purchased
+        ProductDelivery.objects.create(
+            original_product=self.product,
+            amount_delivered=3
+        )
+        
+        self.product.refresh_from_db()
+        
+        # Status should remain RECIBIDO
+        self.assertEqual(self.product.amount_delivered, 3)
+        self.assertEqual(self.product.status, ProductStatusEnum.RECIBIDO.value)
 
 
 class OrderAPITest(BaseAPITestCase):

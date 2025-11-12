@@ -29,5 +29,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src", "../admin/src/services/image/image-upload.tsx", "../admin/src/lib/imageUpload.ts"]
 }
