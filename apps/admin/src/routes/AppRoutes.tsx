@@ -28,6 +28,7 @@ import PurchaseProductsManagement from '@/pages/PurchaseProductsManagement';
 import PackageProductsManagement from '@/pages/PackageProductsManagement';
 import DeliveryProductsManagement from '@/pages/DeliveryProductsManagement';
 import Reports from '@/pages/Reports';
+import { ImageUploadExamples } from '@/pages/ImageUploadExamples';
 
 const AppRoutes = () => {
     return (
@@ -76,6 +77,10 @@ const AppRoutes = () => {
                 <Route path="profile" element={<Profile />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="categories" element={<Categories />} />
+                
+                <Route path="images" element={<ImageUploadExamples />} />
+
+
             </Route>
 
             {/* Ruta 404 */}
