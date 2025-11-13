@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ImageUploader } from '@/components/ImageUploader';
+import { ImageUploader } from '@/components/images/ImageUploader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Package, ShoppingCart, Truck } from 'lucide-react';

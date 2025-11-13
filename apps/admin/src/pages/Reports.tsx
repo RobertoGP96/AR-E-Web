@@ -10,7 +10,7 @@ import { TrendingUp, TrendingDown, DollarSign, Users, Trophy } from 'lucide-reac
 import axios from 'axios';
 import { formatUSD } from '@/lib/format-usd';
 import * as React from 'react';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import LoadingSpinner from '@/components/utils/LoadingSpinner';
 
 interface MonthlyReport {
   month: string;

@@ -13,7 +13,7 @@ import Settings from '@/pages/Settings';
 import Profile from '@/pages/Profile';
 import NotFound from '@/pages/NotFound';
 import LoginPage from '@/pages/LoginPage';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import ProtectedRoute from '@/components/utils/ProtectedRoute';
 import Categories from '@/pages/Categories';
 import ProductDetails from '@/components/products/product-details';
 import OrderDetails from '@/components/orders/order-details';

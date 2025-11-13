@@ -3,7 +3,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/context/AuthContext';
-import { ApiRedirectProvider } from '@/components/ApiRedirectProvider';
+import { ApiRedirectProvider } from '@/components/utils/ApiRedirectProvider';
 import { AppRoutes } from '@/routes';
 
 // Crear instancia del cliente de React Query
