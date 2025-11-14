@@ -5,6 +5,8 @@ import { Store, Tag, Package, Box, Truck, ShoppingBag } from 'lucide-react';
 import { parseTagsFromDescriptionBlock } from '@/lib/tags';
 import type { ProductBuyed } from '@/types/models/product-buyed';
 import QRLink from '../qr-link';
+import { RefundBadge } from './RefundBadge';
+import { RefundPopover } from './RefundPopover';
 
 interface ProductBuyedShoppingProps {
     product: ProductBuyed;
@@ -38,6 +40,12 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({ product }) =>
                                     {product.original_product_details.name}
                                 </h3>
                                 <QRLink link={product.original_product_details.link || 'https://arye-shipps.netlify.app'} />
+                                <RefundBadge
+                                    isRefunded={product.is_refunded}
+                                    refundDate={product.refund_date}
+                                    refundAmount={product.refund_amount}
+                                    refundNotes={product.refund_notes}
+                                />
                             </div>
                             {product.original_product_details.sku && (
                                 <Badge variant="secondary" className="text-xs">
@@ -93,17 +101,24 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({ product }) =>
 
                     {/* Cantidad y Costo total */}
                     <div className="flex flex-col items-end space-y-3">
+                        {/* Botón de reembolso */}
+                        <RefundPopover productBuyed={product} />
+                        
                         {/* Costos */}
-                        <div className=" flex flex-col justify-end items-center gap-2 ">
+                        <div className="flex flex-col justify-end items-center gap-2">
                             <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
                                 <Truck className="h-4 w-4" />
                                 <span>Envío: ${(product.original_product_details.shop_delivery_cost || 0).toFixed(2)}</span>
                             </div>
-                            <div className="flex items-center gap-1 text-lg font-semibold text-green-700">
+                            <div className={`flex items-center gap-1 text-lg font-semibold ${product.is_refunded ? 'text-gray-500 line-through' : 'text-green-700'}`}>
                                 <Store className="h-4 w-4" />
                                 <span>${(product.original_product_details.shop_cost || 0).toFixed(2)}</span>
                             </div>
-
+                            {product.is_refunded && product.refund_amount > 0 && (
+                                <div className="flex items-center gap-1 text-sm font-medium text-amber-700">
+                                    <span>Reembolsado: ${product.refund_amount.toFixed(2)}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

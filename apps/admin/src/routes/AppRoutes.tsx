@@ -27,8 +27,8 @@ import AddMultipleProductsToOrderPage from '@/components/orders/AddMultipleProdu
 import PurchaseProductsManagement from '@/pages/PurchaseProductsManagement';
 import PackageProductsManagement from '@/pages/PackageProductsManagement';
 import DeliveryProductsManagement from '@/pages/DeliveryProductsManagement';
-import Reports from '@/pages/Reports';
 import { ImageUploadExamples } from '@/pages/ImageUploadExamples';
+import Analytics from '@/pages/Analytics';
 
 const AppRoutes = () => {
     return (
@@ -70,7 +70,7 @@ const AppRoutes = () => {
                 <Route path="delivery/:id/remove-products" element={<RemoveProductsFromDeliveryPage />} />
                 
                 <Route path="orders" element={<Orders />} />
-                <Route path="reports" element={<Reports />} />
+                <Route path="/analitics" element={<Analytics />} />
                 <Route path="orders/:id" element={<OrderDetails />} />
                 <Route path="orders/:id/add-products" element={<AddMultipleProductsToOrderPage />} />
                 

@@ -73,7 +73,7 @@ const fetchProfitReports = async (): Promise<ProfitReportsData> => {
   return response.data.data;
 };
 
-export default function Reports() {
+export default function Analytics() {
   const [timeRange, setTimeRange] = React.useState("12m");
 
   const { data: reports, isLoading, error } = useQuery({

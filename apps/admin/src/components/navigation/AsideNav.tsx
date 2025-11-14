@@ -11,7 +11,8 @@ import {
   ShoppingBag,
   Truck,
   Tag,
-  ReceiptIcon
+  ReceiptIcon,
+  ChartColumn
 } from 'lucide-react';
 import { toast } from 'sonner';
 import logoSvg from '@/assets/logo/logo.svg';
@@ -75,8 +76,13 @@ const navigation = [
     icon: Truck
   },
   {
-    name: 'Reportes',
-    href: '/reports',
+    name: 'Analisis',
+    href: '/analitics',
+    icon: ChartColumn
+  },
+  {
+    name: 'Finanzas',
+    href: '/finasces',
     icon: ReceiptIcon
   },
   

@@ -527,12 +527,36 @@ class ShoppingReceip(models.Model):
         return float(total)
     
     @property
+    def total_cost_excluding_refunds(self):
+        """
+        Suma del costo total excluyendo productos reembolsados.
+        """
+        from django.db.models import Sum, Q
+        total = self.buyed_products.filter(
+            Q(is_refunded=False) | Q(is_refunded__isnull=True)
+        ).aggregate(
+            total=Sum('original_product__total_cost')
+        )['total'] or 0
+        return float(total)
+    
+    @property
+    def total_refunded(self):
+        """
+        Suma total de los montos reembolsados en esta compra.
+        """
+        from django.db.models import Sum
+        total = self.buyed_products.filter(is_refunded=True).aggregate(
+            total=Sum('refund_amount')
+        )['total'] or 0
+        return float(total)
+    
+    @property
     def operational_expenses(self):
         """
-        Gastos operativos de la compra = diferencia entre lo pagado y el costo total de productos.
+        Gastos operativos de la compra = diferencia entre lo pagado y el costo total de productos (sin reembolsos).
         Representa los gastos adicionales (shipping extra, fees, etc.) de esta compra específica.
         """
-        return float(self.total_cost_of_shopping - self.total_cost_of_purchase)
+        return float(self.total_cost_excluding_refunds - self.total_cost_of_purchase)
 
     class Meta:
         ordering = ['-buy_date']
@@ -646,6 +670,25 @@ class ProductBuyed(models.Model):
     amount_buyed = models.IntegerField()
     observation = models.TextField(max_length=200, null=True, blank=True)
     real_cost_of_product = models.FloatField(default=0)
+    is_refunded = models.BooleanField(
+        default=False,
+        help_text="Indica si este producto comprado ha sido reembolsado"
+    )
+    refund_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Fecha en que se realizó el reembolso"
+    )
+    refund_amount = models.FloatField(
+        default=0,
+        help_text="Monto del reembolso realizado"
+    )
+    refund_notes = models.TextField(
+        max_length=500,
+        null=True,
+        blank=True,
+        help_text="Notas sobre el reembolso"
+    )
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 

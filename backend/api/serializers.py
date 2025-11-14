@@ -673,6 +673,10 @@ class ProductBuyedSerializer(serializers.ModelSerializer):
             "buy_date",
             "observation",
             "real_cost_of_product",
+            "is_refunded",
+            "refund_date",
+            "refund_amount",
+            "refund_notes",
             "original_product_details",
         ]
         read_only_fields = ["id"]
@@ -722,16 +726,28 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
     buyed_products = ProductBuyedSerializer(many=True)
 
     total_cost_of_shopping = serializers.SerializerMethodField(read_only=True)
+    total_cost_excluding_refunds = serializers.SerializerMethodField(read_only=True)
+    total_refunded = serializers.SerializerMethodField(read_only=True)
     operational_expenses = serializers.SerializerMethodField(read_only=True)
 
     @extend_schema_field(float)
     def get_total_cost_of_shopping(self, obj):
         """Suma del costo total de todos los productos en esta compra"""
         return float(obj.total_cost_of_shopping) if hasattr(obj, 'total_cost_of_shopping') else 0.0
+    
+    @extend_schema_field(float)
+    def get_total_cost_excluding_refunds(self, obj):
+        """Suma del costo total excluyendo productos reembolsados"""
+        return float(obj.total_cost_excluding_refunds) if hasattr(obj, 'total_cost_excluding_refunds') else 0.0
+    
+    @extend_schema_field(float)
+    def get_total_refunded(self, obj):
+        """Suma total de los montos reembolsados"""
+        return float(obj.total_refunded) if hasattr(obj, 'total_refunded') else 0.0
 
     @extend_schema_field(float)
     def get_operational_expenses(self, obj):
-        """Gastos operativos de la compra (diferencia entre costo de compra y suma de productos)"""
+        """Gastos operativos de la compra (diferencia entre costo de compra y suma de productos sin reembolsos)"""
         return float(obj.operational_expenses) if hasattr(obj, 'operational_expenses') else 0.0
 
     class Meta:
@@ -744,6 +760,8 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
             "shop_of_buy",
             "total_cost_of_purchase",
             "total_cost_of_shopping",
+            "total_cost_excluding_refunds",
+            "total_refunded",
             "operational_expenses",
             "buy_date",
             "buyed_products",

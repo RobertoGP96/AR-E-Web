@@ -19,6 +19,10 @@ export interface ProductBuyed {
   amount_buyed: number;
   observation?: string;
   real_cost_of_product?: number;
+  is_refunded: boolean;
+  refund_date?: DateTime | null;
+  refund_amount: number;
+  refund_notes?: string | null;
   created_at: DateTime;
   updated_at: DateTime;
   original_product_details: Product;
@@ -27,7 +31,11 @@ export interface ProductBuyed {
 // Tipos para crear/editar producto comprado
 export interface CreateProductBuyedData {
   original_product: string; // Product ID
-  amount_buyed: number; 
+  amount_buyed: number;
+  is_refunded?: boolean;
+  refund_date?: DateTime | null;
+  refund_amount?: number;
+  refund_notes?: string | null;
 }
 
 export interface UpdateProductBuyedData extends Partial<CreateProductBuyedData> {

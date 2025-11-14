@@ -18,8 +18,10 @@ export interface ShoppingReceip {
   total_cost_of_purchase: number;  // Costo real pagado en la compra
   
   // Propiedades computadas
-  total_cost_of_shopping: number;  // Suma de total_cost de productos
-  operational_expenses: number;     // Gastos operativos: total_cost_of_purchase - total_cost_of_shopping
+  total_cost_of_shopping: number;       // Suma de total_cost de productos (incluye reembolsados)
+  total_cost_excluding_refunds: number; // Suma de total_cost excluyendo reembolsados
+  total_refunded: number;               // Suma total de montos reembolsados
+  operational_expenses: number;         // Gastos operativos: total_cost_excluding_refunds - total_cost_of_purchase
   buyed_products?: ProductBuyed[];
   
   // Timestamps
