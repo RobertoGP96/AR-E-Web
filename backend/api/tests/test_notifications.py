@@ -15,7 +15,7 @@ from rest_framework import status
 from django.contrib.contenttypes.models import ContentType
 
 from api.models import CustomUser, Order
-from api.models_notifications import (
+from api.notifications.models_notifications import (
     Notification,
     NotificationPreference,
     NotificationType,

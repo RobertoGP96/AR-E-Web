@@ -63,7 +63,7 @@ export const uploadToCloudinary = async (
 };
 
 export const deleteFromCloudinary = async (
-  publicId: string
+  _publicId: string
 ): Promise<boolean> => {
   try {
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;

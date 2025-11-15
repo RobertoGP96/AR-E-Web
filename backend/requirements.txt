@@ -1,34 +1,59 @@
-asgiref==3.8.1
-beautifulsoup4==4.12.2
-Brotli==1.1.0
-certifi==2024.12.14
-charset-normalizer==3.4.1
-cloudinary==1.41.0
-dj-database-url==2.3.0
+# Web Framework
 Django==5.1.1
-django-cloudinary-storage==0.3.0
-django-cors-headers==4.4.0
-django-debug-toolbar==4.4.6
 djangorestframework==3.15.2
+
+# Authentication & JWT
 djangorestframework-simplejwt==5.3.1
-gunicorn==23.0.0
-idna==3.10
-lxml>=5.1.0
-packaging==24.2
-pillow==11.0.0
-psycopg2-binary==2.9.10
 PyJWT==2.9.0
+
+# Database
+dj-database-url==2.3.0
+psycopg2-binary==2.9.10
+
+# CORS & Security
+django-cors-headers==4.4.0
+whitenoise==6.8.2
+
+# API Documentation
+drf-spectacular==0.27.2
+
+# Filtering & Pagination
+django-filter==24.3
+
+# Image Processing
+Pillow==11.0.0
+cloudinary==1.41.0
+django-cloudinary-storage==0.3.0
+
+# Web Scraping
+beautifulsoup4==4.12.2
+lxml>=5.1.0
+fake-useragent==1.5.1
+requests==2.32.3
+
+# Email
+resend
+
+# Configuration
 python-decouple==3.8
 python-dotenv==1.0.1
-requests==2.32.3
-resend
-six==1.17.0
+
+# Development Tools
+django-debug-toolbar==4.4.6
+
+# Production Server
+gunicorn==23.0.0
+
+# Core dependencies
+asgiref==3.8.1
 sqlparse==0.5.1
+packaging==24.2
 typing_extensions==4.12.2
 tzdata==2024.2
+six==1.17.0
+certifi==2024.12.14
+charset-normalizer==3.4.1
+idna==3.10
 urllib3==2.3.0
+Brotli==1.1.0
 user-agent==0.1.10
-whitenoise==6.8.2
-rest_framework_simplejwt
-drf-spectacular==0.27.2
-django-filter==24.3

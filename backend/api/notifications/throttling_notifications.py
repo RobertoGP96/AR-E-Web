@@ -11,7 +11,7 @@ from datetime import timedelta
 from typing import Optional, Tuple
 import hashlib
 
-from api.models_notifications import NotificationType, NotificationPriority
+from api.notifications.models_notifications import NotificationType, NotificationPriority
 
 
 class NotificationThrottle:

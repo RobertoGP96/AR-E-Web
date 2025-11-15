@@ -6,7 +6,7 @@ Este archivo detecta eventos en el sistema y crea notificaciones para los usuari
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from api.models import Order, Product, ProductBuyed, ProductReceived, Package, DeliverReceip, CustomUser
-from api.models_notifications import Notification, NotificationType, NotificationPriority
+from api.notifications.models_notifications import Notification, NotificationType, NotificationPriority
 
 
 # ============================================================================

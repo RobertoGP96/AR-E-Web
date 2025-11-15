@@ -64,13 +64,50 @@ interface ProfitReportsData {
 }
 
 const fetchProfitReports = async (): Promise<ProfitReportsData> => {
-  const token = localStorage.getItem('access_token');
-  const response = await axios.get(`${import.meta.env.VITE_API_URL}/api_data/reports/profits/`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return response.data.data;
+  try {
+    const token = localStorage.getItem('access_token');
+    console.log('Token encontrado:', !!token); // Debug: verificar si hay token
+    if (!token) {
+      throw new Error('No se encontró token de autenticación. Por favor, inicie sesión nuevamente.');
+    }
+
+    const apiUrl = import.meta.env.VITE_API_URL;
+    console.log('VITE_API_URL:', apiUrl); // Debug: verificar la URL
+    const fullUrl = `${apiUrl}/api_data/reports/profits/`;
+    console.log('URL completa:', fullUrl); // Debug: URL completa
+
+    const response = await axios.get(fullUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log('Respuesta de la API:', response); // Debug: respuesta completa
+    console.log('Datos de respuesta:', response.data); // Debug: datos
+
+    if (!response.data) {
+      throw new Error('No se pudieron cargar los reportes. La respuesta del servidor no contiene datos válidos.');
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Error en fetchProfitReports:', error); // Debug: error completo
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada. Por favor, inicie sesión nuevamente.');
+      } else if (error.response?.status === 403) {
+        throw new Error('No tiene permisos para acceder a los reportes.');
+      } else if (error.response?.status === 404) {
+        throw new Error('El endpoint de reportes no fue encontrado.');
+      } else if (error.response?.data?.message) {
+        throw new Error(`Error del servidor: ${error.response.data.message}`);
+      } else {
+        throw new Error(`Error de conexión: ${error.response?.status} ${error.response?.statusText}`);
+      }
+    } else {
+      throw new Error('Error desconocido al cargar los reportes. Verifique su conexión a internet.');
+    }
+  }
 };
 
 export default function Analytics() {

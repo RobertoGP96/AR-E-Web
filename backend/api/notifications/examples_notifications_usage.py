@@ -4,7 +4,7 @@ Ejemplos de uso del sistema de notificaciones mejorado.
 Este archivo muestra cómo usar las nuevas características implementadas.
 """
 
-from api.models_notifications import Notification, NotificationType, NotificationPriority
+from api.notifications.models_notifications import Notification, NotificationType, NotificationPriority
 from api.models import CustomUser, Order
 from datetime import timedelta
 from django.utils import timezone

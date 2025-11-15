@@ -12,8 +12,8 @@ from django.db.models import Q, Count
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
 
-from api.models_notifications import Notification, NotificationPreference, NotificationType, NotificationPriority
-from api.serializers_notifications import (
+from api.notifications.models_notifications import Notification, NotificationPreference, NotificationType, NotificationPriority
+from api.notifications.serializers_notifications import (
     NotificationSerializer,
     NotificationPreferenceSerializer,
     MarkAsReadSerializer,
@@ -21,8 +21,8 @@ from api.serializers_notifications import (
     NotificationGroupSerializer,
     GroupedNotificationsSerializer,
 )
-from api.throttling_notifications import NotificationThrottle
-from api.grouping_notifications import NotificationGrouper, NotificationGroup
+from api.notifications.throttling_notifications import NotificationThrottle
+from api.notifications.grouping_notifications import NotificationGrouper, NotificationGroup
 
 
 class NotificationViewSet(viewsets.ModelViewSet):

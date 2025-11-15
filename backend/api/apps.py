@@ -7,4 +7,4 @@ class ApiConfig(AppConfig):
     
     def ready(self):
         """Importar señales cuando la app esté lista"""
-        import api.signals_notifications  # noqa
+        import api.notifications.signals_notifications  # noqa

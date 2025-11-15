@@ -82,7 +82,7 @@ const navigation = [
   },
   {
     name: 'Finanzas',
-    href: '/finasces',
+    href: '/finances',
     icon: ReceiptIcon
   },
   

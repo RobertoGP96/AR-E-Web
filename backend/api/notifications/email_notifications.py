@@ -11,7 +11,7 @@ from django.utils import timezone
 from typing import Optional, List, Dict, Any
 import logging
 
-from api.models_notifications import Notification, NotificationPreference
+from api.notifications.models_notifications import Notification, NotificationPreference
 from api.models import CustomUser
 
 logger = logging.getLogger(__name__)

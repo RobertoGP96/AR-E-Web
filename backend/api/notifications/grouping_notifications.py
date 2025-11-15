@@ -17,7 +17,7 @@ from datetime import timedelta
 from typing import List, Optional, Dict, Any
 import json
 
-from api.models_notifications import Notification, NotificationType, NotificationPriority
+from api.notifications.models_notifications import Notification, NotificationType, NotificationPriority
 
 
 class NotificationGroup(models.Model):

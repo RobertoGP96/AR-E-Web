@@ -2,6 +2,7 @@
 
 from django.urls import include, path, re_path
 from api import views
+from api.views import views_expected_metrics
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
@@ -22,6 +23,7 @@ router.register(r"package", views.PackageViewSet)
 router.register(r"product_delivery", views.ProductDeliveryViewSet)
 router.register(r"evidence_images", views.EvidenceImagesViewSet)
 router.register(r"category", views.CategoryViewSet)
+router.register(r"expected_metrics", views_expected_metrics.ExpectedMetricsViewSet)
 
 urlpatterns = [
     path("api_data/", include(router.urls)),
@@ -37,10 +39,10 @@ urlpatterns = [
     path("image_upload/", views.ImageUploadApiView.as_view(), name="image_upload"),
     path("security/", views.Protection.as_view(), name="posting_management"),
     path("amazon/scrape/", views.AmazonScrapingView.as_view(), name="amazon_scraping"),
-    path("admin/create/", views.CreateAdminUserView.as_view(), name="create_admin_user"),
+    path("admin/create/", views.CreateAdminView.as_view(), name="create_admin_user"),
     path("api_data/dashboard/stats/", views.DashboardMetricsView.as_view(), name="dashboard_stats"),
     path("api_data/reports/profits/", views.ProfitReportsView.as_view(), name="profit_reports"),
     path("api_data/system/info/", views.SystemInfoView.as_view(), name="system_info"),
     # URLs de notificaciones (incluidas bajo el mismo prefijo `api_data/`)
-    path("api_data/", include("api.urls_notifications")),
+    path("api_data/", include("api.notifications.urls_notifications")),
 ]

@@ -38,7 +38,7 @@ export const RefundPopover: React.FC<RefundPopoverProps> = ({
 
   const refundMutation = useMutation({
     mutationFn: async (data: RefundData) => {
-      return await apiClient.patch<ProductBuyed>(`/api/products-buyed/${productBuyed.id}/`, data);
+      return await apiClient.patch<ProductBuyed>(`/api_data/buyed_product/${productBuyed.id}/`, data);
     },
     onSuccess: () => {
       toast.success('Reembolso registrado correctamente');

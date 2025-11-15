@@ -14,7 +14,7 @@ import time
 import logging
 from typing import Generator, Optional
 
-from api.models_notifications import Notification
+from api.notifications.models_notifications import Notification
 
 logger = logging.getLogger(__name__)
 
@@ -200,7 +200,7 @@ def send_realtime_notification(notification: Notification):
     Args:
         notification: Instancia de Notification a enviar
     """
-    from api.serializers_notifications import NotificationSerializer
+    from api.notifications.serializers_notifications import NotificationSerializer
     
     # Serializar notificación
     serializer = NotificationSerializer(notification)
@@ -235,7 +235,7 @@ def create_notification_with_realtime(
     Returns:
         Notification: La notificación creada
     """
-    from api.models_notifications import Notification
+    from api.notifications.models_notifications import Notification
     
     # Crear notificación
     notification = Notification.create_notification(

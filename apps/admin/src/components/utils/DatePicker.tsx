@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/popover"
 
 interface DatePickerProps {
+  id?: string
   value?: Date
   onChange?: (date: Date | undefined) => void
   label?: string
@@ -23,6 +24,7 @@ interface DatePickerProps {
 }
 
 export function DatePicker({
+  id,
   value,
   onChange,
   label = "Fecha",
@@ -32,10 +34,12 @@ export function DatePicker({
   className = "w-48",
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
+  const generatedId = React.useId()
+  const inputId = id ?? generatedId
 
   return (
     <div className="flex flex-col gap-3">
-      <Label htmlFor="date" className="px-1">
+      <Label htmlFor={inputId} className="px-1">
         {label}
         {required && <span className="text-red-500">*</span>}
       </Label>
@@ -43,7 +47,7 @@ export function DatePicker({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            id="date"
+            id={inputId}
             className={`justify-between font-normal ${className}`}
             disabled={disabled}
           >

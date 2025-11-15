@@ -4,8 +4,8 @@ URLs para el sistema de notificaciones.
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from api.views_notifications import NotificationViewSet, NotificationPreferenceViewSet
-from api.realtime_notifications import notification_sse_view
+from api.notifications.views_notifications import NotificationViewSet, NotificationPreferenceViewSet
+from api.notifications.realtime_notifications import notification_sse_view
 
 # Crear router para las vistas de notificaciones
 router = DefaultRouter()

@@ -29,6 +29,7 @@ import PackageProductsManagement from '@/pages/PackageProductsManagement';
 import DeliveryProductsManagement from '@/pages/DeliveryProductsManagement';
 import { ImageUploadExamples } from '@/pages/ImageUploadExamples';
 import Analytics from '@/pages/Analytics';
+import ExpectedMetrics from '@/pages/ExpectedMetrics';
 
 const AppRoutes = () => {
     return (
@@ -70,9 +71,12 @@ const AppRoutes = () => {
                 <Route path="delivery/:id/remove-products" element={<RemoveProductsFromDeliveryPage />} />
                 
                 <Route path="orders" element={<Orders />} />
+                <Route path="finances" element={<ExpectedMetrics />} />
                 <Route path="/analitics" element={<Analytics />} />
                 <Route path="orders/:id" element={<OrderDetails />} />
                 <Route path="orders/:id/add-products" element={<AddMultipleProductsToOrderPage />} />
+                
+                <Route path="expected-metrics" element={<ExpectedMetrics />} />
                 
                 <Route path="profile" element={<Profile />} />
                 <Route path="settings" element={<Settings />} />

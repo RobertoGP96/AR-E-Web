@@ -120,6 +120,17 @@ export type {
   UpdateProductDeliveryData
 } from './product-delivery';
 
+// Modelo de Métricas Esperadas
+export type {
+  ExpectedMetrics,
+  CreateExpectedMetricsData,
+  UpdateExpectedMetricsData,
+  ExpectedMetricsFilters,
+  ExpectedMetricsSummary,
+  CalculateActualsResponse,
+  ExpectedMetricsListItem
+} from './expected-metrics';
+
 // Estadísticas del dashboard
 export type {
   DashboardStats

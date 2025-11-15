@@ -11,7 +11,7 @@ Uso:
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
-from api.models_notifications import Notification
+from api.notifications.models_notifications import Notification
 
 
 class Command(BaseCommand):

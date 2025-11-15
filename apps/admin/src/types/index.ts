@@ -33,6 +33,7 @@ export type {
   ProductBuyed,
   ProductReceived,
   ProductDelivery,
+  ExpectedMetrics,
   
   // Tipos para crear/editar
   CreateUserData,
@@ -59,15 +60,21 @@ export type {
   UpdateProductReceivedData,
   CreateProductDeliveryData,
   UpdateProductDeliveryData,
+  CreateExpectedMetricsData,
+  UpdateExpectedMetricsData,
   
   // Filtros
   OrderFilters,
   ProductFilters,
   UserFilters,
+  ExpectedMetricsFilters,
   
   // Estadísticas
   DashboardStats,
   OrderStats,
+  ExpectedMetricsSummary,
+  CalculateActualsResponse,
+  ExpectedMetricsListItem,
   
   // Permisos
   UserPermissions

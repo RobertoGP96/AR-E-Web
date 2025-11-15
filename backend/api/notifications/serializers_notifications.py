@@ -4,7 +4,7 @@ Serializadores para el sistema de notificaciones.
 
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
-from api.models_notifications import Notification, NotificationPreference, NotificationType, NotificationPriority
+from api.notifications.models_notifications import Notification, NotificationPreference, NotificationType, NotificationPriority
 from api.serializers import UserSerializer
 
 

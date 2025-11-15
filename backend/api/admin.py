@@ -5,6 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 from .models import CustomUser, Order
+from .models.models_expected_metrics import ExpectedMetrics
 
 
 class CustomUserAdmin(UserAdmin):
@@ -69,3 +70,64 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Order)
+
+
+@admin.register(ExpectedMetrics)
+class ExpectedMetricsAdmin(admin.ModelAdmin):
+    """Admin interface for Expected Metrics"""
+    
+    list_display = (
+        'id',
+        'start_date',
+        'end_date',
+        'range_delivery_weight',
+        'range_profit',
+        'delivery_real_cost',
+        'real_profit',
+        'cost_difference',
+        'profit_difference',
+        'created_at',
+    )
+    
+    list_filter = (
+        'start_date',
+        'end_date',
+        'created_at',
+    )
+    
+    search_fields = ('notes',)
+    
+    readonly_fields = (
+        'cost_difference',
+        'profit_difference',
+        'profit_variance_percentage',
+        'created_at',
+        'updated_at',
+    )
+    
+    fieldsets = (
+        ('Rango de Fechas', {
+            'fields': ('start_date', 'end_date')
+        }),
+        ('Métricas Esperadas', {
+            'fields': ('range_delivery_weight', 'range_revenue', 'range_profit')
+        }),
+        ('Métricas Reales', {
+            'fields': ('delivery_real_cost', 'others_costs')
+        }),
+        ('Análisis de Varianza', {
+            'fields': (
+                'cost_difference',
+                'real_profit',
+                'profit_difference',
+                'profit_variance_percentage',
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Información Adicional', {
+            'fields': ('notes', 'created_at', 'updated_at')
+        }),
+    )
+    
+    ordering = ('-start_date', '-end_date')
+    date_hierarchy = 'start_date'
