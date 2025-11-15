@@ -10,8 +10,8 @@ export const useDashboardMetrics = () => {
     queryKey: ['dashboard-metrics'],
     queryFn: async (): Promise<DashboardMetrics> => {
       const response = await dashboardService.getDashboardStats();
-      if (!response.data) {
-        throw new Error('No se pudieron obtener las métricas del dashboard');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'No se pudieron obtener las métricas del dashboard');
       }
       return response.data;
     },
@@ -26,8 +26,15 @@ export const useDashboardMetrics = () => {
 export const useUserMetrics = () => {
   const { data: metrics, ...query } = useDashboardMetrics();
 
+  const userMetrics = metrics?.users;
+  const hasMetrics = !!userMetrics && Object.keys(userMetrics).length > 0;
+  const metricsKeys = userMetrics ? Object.keys(userMetrics) : [];
+
   return {
-    userMetrics: metrics?.users,
+    type: 'users',
+    userMetrics,
+    hasMetrics,
+    metricsKeys,
     ...query,
   };
 };

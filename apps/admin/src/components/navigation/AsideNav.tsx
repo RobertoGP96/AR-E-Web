@@ -12,7 +12,8 @@ import {
   Truck,
   Tag,
   ReceiptIcon,
-  ChartColumn
+  ChartColumn,
+  PlaneLandingIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import logoSvg from '@/assets/logo/logo.svg';
@@ -85,6 +86,11 @@ const navigation = [
     href: '/finances',
     icon: ReceiptIcon
   },
+  {
+    name: 'Envios',
+    href: '/shipments',
+    icon: PlaneLandingIcon
+  },
   
 ];
 
@@ -130,7 +136,7 @@ export function AsideNav() {
       <div className="flex-1 px-4 py-6 overflow-y-auto flex flex-col">
         {/* Main Navigation */}
         <div className="space-y-2">
-          <nav className="space-y-2">
+          <nav className="space-y-1">
             {navigation.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
@@ -162,7 +168,7 @@ export function AsideNav() {
 
         {/* Bottom Navigation */}
         <div className="space-y-2 pt-4 border-t border-gray-700/50">
-          <nav className="space-y-2">
+          <nav className="space-y-1">
             {bottomNavigation.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);

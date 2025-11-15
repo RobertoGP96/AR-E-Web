@@ -9,11 +9,7 @@ import { apiClient } from '../lib/api-client';
 import type { 
   ApiResponse, 
   PaginatedApiResponse,
-  AuthResponse,
-  LoginCredentials,
-  RegisterData,
   BaseFilters,
-  UserFilters,
   OrderFilters,
   ProductFilters,
   DashboardMetrics
@@ -33,120 +29,6 @@ import type {
   Package,
   DeliverReceip
 } from '../types';
-
-// =============================================================================
-// AUTENTICACIÓN
-// =============================================================================
-
-export const authService = {
-  /**
-   * Iniciar sesión
-   */
-  login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    return apiClient.login(credentials);
-  },
-
-  /**
-   * Registrar nuevo usuario
-   */
-  register: async (userData: RegisterData): Promise<ApiResponse<CustomUser>> => {
-    return apiClient.register(userData) as Promise<ApiResponse<CustomUser>>;
-  },
-
-  /**
-   * Cerrar sesión
-   */
-  logout: async (): Promise<void> => {
-    return apiClient.logout();
-  },
-
-  /**
-   * Obtener usuario actual
-   */
-  getCurrentUser: async (): Promise<ApiResponse<CustomUser>> => {
-    return apiClient.get('/user/');
-  },
-
-  /**
-   * Verificar usuario por email
-   */
-  verifyUser: async (verificationSecret: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.get(`/verify_user/${verificationSecret}`);
-  },
-
-  /**
-   * Refrescar token
-   */
-  refreshToken: async (refreshToken: string): Promise<AuthResponse> => {
-    const response = await apiClient.post('/auth/refresh/', { refresh: refreshToken }, { skipAuth: true });
-    return response as unknown as AuthResponse;
-  },
-};
-
-// =============================================================================
-// USUARIOS
-// =============================================================================
-
-export const userService = {
-  /**
-   * Obtener lista de usuarios con paginación
-   */
-  getUsers: async (filters?: UserFilters): Promise<PaginatedApiResponse<CustomUser>> => {
-    return apiClient.getPaginated('/api_data/user/', filters as BaseFilters);
-  },
-
-  /**
-   * Obtener usuario por ID
-   */
-  getUserById: async (id: number): Promise<ApiResponse<CustomUser>> => {
-    return apiClient.get(`/api_data/user/${id}/`);
-  },
-
-  /**
-   * Crear nuevo usuario
-   */
-  createUser: async (userData: Partial<CustomUser>): Promise<ApiResponse<CustomUser>> => {
-    return apiClient.post('/api_data/user/', userData);
-  },
-
-  /**
-   * Actualizar usuario
-   */
-  updateUser: async (id: number, userData: Partial<CustomUser>): Promise<ApiResponse<CustomUser>> => {
-    return apiClient.patch(`/api_data/user/${id}/`, userData);
-  },
-
-  /**
-   * Eliminar usuario
-   */
-  deleteUser: async (id: number): Promise<ApiResponse<void>> => {
-    return apiClient.delete(`/api_data/user/${id}/`);
-  },
-
-  /**
-   * Cambiar estado activo del usuario
-   */
-  toggleUserStatus: async (id: number, isActive: boolean): Promise<ApiResponse<CustomUser>> => {
-    return apiClient.patch(`/api_data/user/${id}/`, { is_active: isActive });
-  },
-
-  /**
-   * Cambiar rol del usuario
-   */
-  updateUserRole: async (id: number, roleData: {
-    is_agent?: boolean;
-    is_accountant?: boolean;
-    is_buyer?: boolean;
-    is_logistical?: boolean;
-    is_comunity_manager?: boolean;
-  }): Promise<ApiResponse<CustomUser>> => {
-    return apiClient.patch(`/api_data/user/${id}/`, roleData);
-  },
-};
-
-// =============================================================================
-// ÓRDENES
-// =============================================================================
 
 export const orderService = {
   /**
@@ -369,35 +251,6 @@ export const buyingAccountService = {
 // INFORMACIÓN COMÚN
 // =============================================================================
 
-export const commonInfoService = {
-  /**
-   * Obtener información común
-   */
-  getCommonInfo: async (filters?: BaseFilters): Promise<PaginatedApiResponse<CommonInformation>> => {
-    return apiClient.getPaginated('/api_data/common_information/', filters as BaseFilters);
-  },
-
-  /**
-   * Crear información común
-   */
-  createCommonInfo: async (data: Partial<CommonInformation>): Promise<ApiResponse<CommonInformation>> => {
-    return apiClient.post('/api_data/common_information/', data);
-  },
-
-  /**
-   * Actualizar información común
-   */
-  updateCommonInfo: async (id: number, data: Partial<CommonInformation>): Promise<ApiResponse<CommonInformation>> => {
-    return apiClient.patch(`/api_data/common_information/${id}/`, data);
-  },
-
-  /**
-   * Eliminar información común
-   */
-  deleteCommonInfo: async (id: number): Promise<ApiResponse<void>> => {
-    return apiClient.delete(`/api_data/common_information/${id}/`);
-  },
-};
 
 // =============================================================================
 // RECIBOS DE COMPRA
@@ -430,88 +283,6 @@ export const shoppingReceipService = {
    */
   deleteShoppingReceipt: async (id: number): Promise<ApiResponse<void>> => {
     return apiClient.delete(`/api_data/shopping_reciep/${id}/`);
-  },
-};
-
-// =============================================================================
-// PAQUETES
-// =============================================================================
-
-export const packageService = {
-  /**
-   * Obtener paquetes
-   */
-  getPackages: async (filters?: BaseFilters): Promise<PaginatedApiResponse<Package>> => {
-    return apiClient.getPaginated('/api_data/package/', filters as BaseFilters);
-  },
-
-  /**
-   * Obtener paquete por ID
-   */
-  getPackageById: async (id: number): Promise<ApiResponse<Package>> => {
-    return apiClient.get(`/api_data/package/${id}/`);
-  },
-
-  /**
-   * Crear paquete
-   */
-  createPackage: async (data: Partial<Package>): Promise<ApiResponse<Package>> => {
-    return apiClient.post('/api_data/package/', data);
-  },
-
-  /**
-   * Actualizar paquete
-   */
-  updatePackage: async (id: number, data: Partial<Package>): Promise<ApiResponse<Package>> => {
-    return apiClient.patch(`/api_data/package/${id}/`, data);
-  },
-
-  /**
-   * Eliminar paquete
-   */
-  deletePackage: async (id: number): Promise<ApiResponse<void>> => {
-    return apiClient.delete(`/api_data/package/${id}/`);
-  },
-
-  /**
-   * Actualizar estado del paquete
-   */
-  updatePackageStatus: async (id: number, status: string): Promise<ApiResponse<Package>> => {
-    return apiClient.patch(`/api_data/package/${id}/`, { status });
-  },
-};
-
-// =============================================================================
-// RECIBOS DE ENTREGA
-// =============================================================================
-
-export const deliveryReceipService = {
-  /**
-   * Obtener recibos de entrega
-   */
-  getDeliveryReceipts: async (filters?: BaseFilters): Promise<PaginatedApiResponse<DeliverReceip>> => {
-    return apiClient.getPaginated('/api_data/delivery_receips/', filters as BaseFilters);
-  },
-
-  /**
-   * Crear recibo de entrega
-   */
-  createDeliveryReceipt: async (data: Partial<DeliverReceip>): Promise<ApiResponse<DeliverReceip>> => {
-    return apiClient.post('/api_data/delivery_receips/', data);
-  },
-
-  /**
-   * Actualizar recibo de entrega
-   */
-  updateDeliveryReceipt: async (id: number, data: Partial<DeliverReceip>): Promise<ApiResponse<DeliverReceip>> => {
-    return apiClient.patch(`/api_data/delivery_receips/${id}/`, data);
-  },
-
-  /**
-   * Eliminar recibo de entrega
-   */
-  deleteDeliveryReceipt: async (id: number): Promise<ApiResponse<void>> => {
-    return apiClient.delete(`/api_data/delivery_receips/${id}/`);
   },
 };
 
@@ -560,39 +331,6 @@ export const dashboardService = {
 // UTILIDADES Y EXPORTACIONES
 // =============================================================================
 
-export const utilService = {
-  /**
-   * Exportar datos a CSV
-   */
-  exportToCsv: async (endpoint: string, filters?: Record<string, unknown>): Promise<void> => {
-    return apiClient.downloadFile(`${endpoint}export/csv/`, `export-${Date.now()}.csv`, {
-      params: filters,
-    });
-  },
-
-  /**
-   * Exportar datos a Excel
-   */
-  exportToExcel: async (endpoint: string, filters?: Record<string, unknown>): Promise<void> => {
-    return apiClient.downloadFile(`${endpoint}export/excel/`, `export-${Date.now()}.xlsx`, {
-      params: filters,
-    });
-  },
-
-  /**
-   * Subir archivo genérico
-   */
-  uploadFile: async (endpoint: string, file: File): Promise<unknown> => {
-    return apiClient.uploadFile(endpoint, file);
-  },
-
-  /**
-   * Verificar salud de la API
-   */
-  healthCheck: async (): Promise<{ status: string; timestamp: string }> => {
-    return apiClient.get('/health/', { skipAuth: true });
-  },
-};
 
 // =============================================================================
 // SERVICIO PRINCIPAL (LEGACY COMPATIBILITY)
@@ -602,20 +340,9 @@ export const utilService = {
  * Servicio API principal para compatibilidad con el código existente
  */
 export const apiService = {
-  // Auth
-  login: authService.login,
-  register: authService.register,
-  logout: authService.logout,
-  getCurrentUser: authService.getCurrentUser,
 
   // Dashboard
   getDashboardStats: dashboardService.getDashboardStats,
-
-  // Users
-  getUsers: userService.getUsers,
-  createUser: userService.createUser,
-  updateUser: userService.updateUser,
-  deleteUser: userService.deleteUser,
 
   // Products
   getProducts: productService.getProducts,

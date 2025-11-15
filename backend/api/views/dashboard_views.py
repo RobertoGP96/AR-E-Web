@@ -22,44 +22,105 @@ class DashboardMetricsView(APIView):
     )
     def get(self, request):
         user = request.user
-        now = timezone.now()
-        thirty_days_ago = now - timedelta(days=30)
 
-        # Métricas básicas
-        metrics = {
-            'total_users': CustomUser.objects.count(),
-            'active_users': CustomUser.objects.filter(is_active=True).count(),
-            'total_orders': Order.objects.count(),
-            'pending_orders': Order.objects.filter(status='pending').count(),
-            'completed_orders': Order.objects.filter(status='completed').count(),
-            'total_products': Product.objects.count(),
-            'total_deliveries': DeliverReceip.objects.count(),
+        # Solo administradores pueden ver métricas completas
+        if user.role != 'admin':
+            return Response({
+                'success': False,
+                'message': 'Solo administradores pueden ver métricas del dashboard',
+                'errors': [{'message': 'Solo administradores pueden ver métricas del dashboard'}]
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        now = timezone.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_start = today_start - timedelta(days=today_start.weekday())
+        month_start = today_start.replace(day=1)
+        last_month_start = (month_start - timedelta(days=1)).replace(day=1)
+        last_month_end = month_start - timedelta(days=1)
+
+        # Orders
+        orders = {
+            'total': Order.objects.count(),
+            'pending': Order.objects.filter(status='pending').count(),
+            'completed': Order.objects.filter(status='completed').count(),
+            'today': Order.objects.filter(created_at__gte=today_start).count(),
+            'this_week': Order.objects.filter(created_at__gte=week_start).count(),
+            'this_month': Order.objects.filter(created_at__gte=month_start).count(),
         }
 
-        # Filtros por rol
-        if user.role == 'agent':
-            agent_orders = Order.objects.filter(agent=user)
-            agent_products = Product.objects.filter(order__agent=user)
-            agent_deliveries = DeliverReceip.objects.filter(order__agent=user)
+        # Products
+        products = {
+            'total': Product.objects.count(),
+            'ordered': Product.objects.filter(order__isnull=False).count(),
+            'purchased': Product.objects.filter(status='Comprado').count(),
+            'received': Product.objects.filter(status='Recibido').count(),
+            'delivered': Product.objects.filter(status='Entregado').count(),
+            'by_category': list(
+                Product.objects.values('category__name')
+                .annotate(count=Count('id'))
+                .filter(category__name__isnull=False)
+                .order_by('-count')
+            ),
+        }
 
-            metrics.update({
-                'agent_orders': agent_orders.count(),
-                'agent_pending_orders': agent_orders.filter(status='pending').count(),
-                'agent_completed_orders': agent_orders.filter(status='completed').count(),
-                'agent_products': agent_products.count(),
-                'agent_deliveries': agent_deliveries.count(),
-                'agent_profit': user.agent_profit,
-            })
+        # Users
+        users = {
+            'total': CustomUser.objects.count(),
+            'active': CustomUser.objects.filter(is_active=True).count(),
+            'verified': CustomUser.objects.filter(is_verified=True).count(),
+            'agents': CustomUser.objects.filter(role='agent').count(),
+        }
 
-            # Métricas adicionales para admin
-            recent_orders = Order.objects.filter(created_at__gte=thirty_days_ago)
-            metrics.update({
-                'recent_orders': recent_orders.count(),
-                'total_revenue': Order.objects.aggregate(total=Sum('received_value_of_client'))['total'] or 0,
-                'recent_revenue': recent_orders.aggregate(total=Sum('received_value_of_client'))['total'] or 0,
-            })
+        # Revenue
+        revenue = {
+            'total': Order.objects.aggregate(Sum('received_value_of_client'))['received_value_of_client__sum'] or 0,
+            'today': Order.objects.filter(created_at__gte=today_start).aggregate(Sum('received_value_of_client'))['received_value_of_client__sum'] or 0,
+            'this_week': Order.objects.filter(created_at__gte=week_start).aggregate(Sum('received_value_of_client'))['received_value_of_client__sum'] or 0,
+            'this_month': Order.objects.filter(created_at__gte=month_start).aggregate(Sum('received_value_of_client'))['received_value_of_client__sum'] or 0,
+            'last_month': Order.objects.filter(created_at__gte=last_month_start, created_at__lte=last_month_end).aggregate(Sum('received_value_of_client'))['received_value_of_client__sum'] or 0,
+        }
 
-        return Response(metrics)
+        # Purchases (productos comprados)
+        purchases = {
+            'total': Product.objects.filter(status='Comprado').count(),
+            'today': Product.objects.filter(created_at__gte=today_start, status='Comprado').count(),
+            'this_week': Product.objects.filter(created_at__gte=week_start, status='Comprado').count(),
+            'this_month': Product.objects.filter(created_at__gte=month_start, status='Comprado').count(),
+        }
+
+        # Packages
+        packages = {
+            'total': Package.objects.count(),
+            'sent': Package.objects.filter(status_of_processing='Enviado').count(),
+            'in_transit': Package.objects.filter(status_of_processing='Recibido').count(),
+            'delivered': Package.objects.filter(status_of_processing='Procesado').count(),
+            'delayed': 0,  # No hay estado 'delayed' en el modelo
+        }
+
+        # Deliveries
+        deliveries = {
+            'total': DeliverReceip.objects.count(),
+            'today': DeliverReceip.objects.filter(created_at__gte=today_start).count(),
+            'this_week': DeliverReceip.objects.filter(created_at__gte=week_start).count(),
+            'this_month': DeliverReceip.objects.filter(created_at__gte=month_start).count(),
+            'pending': DeliverReceip.objects.filter(status='Pendiente').count(),
+            'in_transit': DeliverReceip.objects.filter(status='En transito').count(),
+            'delivered': DeliverReceip.objects.filter(status='Entregado').count(),
+        }
+
+        return Response({
+            'success': True,
+            'data': {
+                'orders': orders,
+                'products': products,
+                'users': users,
+                'revenue': revenue,
+                'purchases': purchases,
+                'packages': packages,
+                'deliveries': deliveries,
+            },
+            'message': 'Métricas del dashboard obtenidas exitosamente'
+        })
 
 
 class ProfitReportsView(APIView):
@@ -77,10 +138,11 @@ class ProfitReportsView(APIView):
         user = request.user
 
         if user.role != 'admin':
-            return Response(
-                {"error": "Solo administradores pueden ver reportes de ganancias"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({
+                'success': False,
+                'message': 'Solo administradores pueden ver reportes de ganancias',
+                'errors': [{'message': 'Solo administradores pueden ver reportes de ganancias'}]
+            }, status=status.HTTP_403_FORBIDDEN)
 
         from django.db.models.functions import TruncMonth
         from django.db.models import Sum, Count, Avg
@@ -203,9 +265,13 @@ class ProfitReportsView(APIView):
         }
 
         return Response({
-            'monthly_reports': monthly_reports,
-            'agent_reports': agent_reports,
-            'summary': summary,
+            'success': True,
+            'data': {
+                'monthly_reports': monthly_reports,
+                'agent_reports': agent_reports,
+                'summary': summary,
+            },
+            'message': 'Reportes de ganancias obtenidos exitosamente'
         })
 
 
@@ -224,10 +290,11 @@ class SystemInfoView(APIView):
         user = request.user
 
         if user.role != 'admin':
-            return Response(
-                {"error": "Solo administradores pueden ver información del sistema"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({
+                'success': False,
+                'message': 'Solo administradores pueden ver información del sistema',
+                'errors': [{'message': 'Solo administradores pueden ver información del sistema'}]
+            }, status=status.HTTP_403_FORBIDDEN)
 
         # Información del sistema
         system_info = {
@@ -258,4 +325,8 @@ class SystemInfoView(APIView):
         )
         system_info.update(financial_stats)
 
-        return Response(system_info)
+        return Response({
+            'success': True,
+            'data': system_info,
+            'message': 'Información del sistema obtenida exitosamente'
+        })

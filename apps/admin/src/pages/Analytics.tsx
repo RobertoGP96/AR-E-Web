@@ -85,11 +85,21 @@ const fetchProfitReports = async (): Promise<ProfitReportsData> => {
     console.log('Respuesta de la API:', response); // Debug: respuesta completa
     console.log('Datos de respuesta:', response.data); // Debug: datos
 
-    if (!response.data) {
+    // Verificar el formato de respuesta estandarizado
+    if (!response.data || !response.data.success) {
       throw new Error('No se pudieron cargar los reportes. La respuesta del servidor no contiene datos válidos.');
     }
 
-    return response.data;
+    if (!response.data.success) {
+      const errorMessage = response.data.message || 'Error desconocido del servidor';
+      throw new Error(`Error del servidor: ${errorMessage}`);
+    }
+
+    if (!response.data.data) {
+      throw new Error('No se pudieron cargar los reportes. Los datos están vacíos.');
+    }
+
+    return response.data.data;
   } catch (error) {
     console.error('Error en fetchProfitReports:', error); // Debug: error completo
     if (axios.isAxiosError(error)) {

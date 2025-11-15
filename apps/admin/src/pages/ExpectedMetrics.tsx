@@ -254,31 +254,8 @@ const ExpectedMetricsPage = () => {
     return `${num >= 0 ? '+' : ''}${num.toFixed(2)}%`;
   };
 
-  // Cálculos automáticos basados en los valores del formulario
-  const realWeight = parseFloat(formData.delivery_real_weight) || 0;
-  const expectedWeight = parseFloat(formData.range_delivery_weight) || 0;
-  const expectedRevenue = parseFloat(formData.range_revenue) || 0;
-  const realCost = parseFloat(formData.delivery_real_cost) || 0;
-  const expectedCost = parseFloat(formData.range_delivery_cost) || 0;
-  const others = parseFloat(formData.others_costs) || 0;
-  const expectedProfit = parseFloat(formData.range_profit) || 0;
-
-  const costDifference = realCost - expectedCost;
-  const weightDifference = realWeight - expectedWeight;
-  const projectedRevenue = expectedWeight > 0 ? expectedRevenue * (realWeight / expectedWeight) : expectedRevenue;
-  const projectedProfit = projectedRevenue - realCost - others;
-  const projectedProfitDifference = projectedProfit - expectedProfit;
-  const weightVariancePercentage = expectedWeight > 0 ? (weightDifference / expectedWeight) * 100 : 0;
-  const projectedProfitVariancePercentage = expectedProfit > 0 ? (projectedProfitDifference / expectedProfit) * 100 : 0;
-
-  const calculatedValues = {
-    cost_difference: costDifference,
-    weight_difference: weightDifference,
-    projected_profit: projectedProfit,
-    projected_profit_difference: projectedProfitDifference,
-    weight_variance_percentage: weightVariancePercentage,
-    projected_profit_variance_percentage: projectedProfitVariancePercentage,
-  };
+  // Cálculos automáticos basados en los valores del formulario usando el servicio
+  const calculatedValues = expectedMetricsService.calculateProjectedValues(formData);
 
   const metrics = metricsResponse?.results || [];
   const summary = summaryResponse?.data || null;
@@ -677,12 +654,7 @@ const ExpectedMetricsPage = () => {
                 </TableHeader>
                 <TableBody>
                   {metrics.map((metric) => {
-                    const costVariance = parseFloat(metric.delivery_real_cost) - parseFloat(metric.range_delivery_cost);
-                    const weightVariance = parseFloat(metric.delivery_real_weight) - parseFloat(metric.range_delivery_weight);
-                    const weightVariancePercentage = parseFloat(metric.range_delivery_weight) > 0 ? (weightVariance / parseFloat(metric.range_delivery_weight)) * 100 : 0;
-                    const projectedRevenue = parseFloat(metric.range_revenue) * (parseFloat(metric.delivery_real_weight) / parseFloat(metric.range_delivery_weight));
-                    const projectedProfit = projectedRevenue - parseFloat(metric.delivery_real_cost) - parseFloat(metric.others_costs);
-                    const projectedProfitVariance = parseFloat(metric.range_profit) > 0 ? ((projectedProfit - parseFloat(metric.range_profit)) / parseFloat(metric.range_profit)) * 100 : 0;
+                    const tableValues = expectedMetricsService.calculateTableValues(metric);
 
                     return (
                       <TableRow key={metric.id}>
@@ -707,15 +679,15 @@ const ExpectedMetricsPage = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <Badge
-                            variant={weightVariance > 0 ? 'destructive' : 'default'}
+                            variant={tableValues.weightVariance > 0 ? 'destructive' : 'default'}
                             className="gap-1"
                           >
-                            {weightVariance > 0 ? (
+                            {tableValues.weightVariance > 0 ? (
                               <TrendingUp className="h-3 w-3" />
                             ) : (
                               <TrendingDown className="h-3 w-3" />
                             )}
-                            {formatPercentage(weightVariancePercentage)}
+                            {formatPercentage(tableValues.weightVariancePercentage)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-medium">
@@ -732,31 +704,31 @@ const ExpectedMetricsPage = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <Badge
-                            variant={costVariance > 0 ? 'destructive' : 'default'}
+                            variant={tableValues.costVariance > 0 ? 'destructive' : 'default'}
                             className="gap-1"
                           >
-                            {costVariance > 0 ? (
+                            {tableValues.costVariance > 0 ? (
                               <TrendingUp className="h-3 w-3" />
                             ) : (
                               <TrendingDown className="h-3 w-3" />
                             )}
-                            {formatCurrency(costVariance)}
+                            {formatCurrency(tableValues.costVariance)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          {formatCurrency(projectedProfit)}
+                          {formatCurrency(tableValues.projectedProfit)}
                         </TableCell>
                         <TableCell className="text-right">
                           <Badge
-                            variant={projectedProfitVariance < 0 ? 'destructive' : 'default'}
+                            variant={tableValues.projectedProfitVariance < 0 ? 'destructive' : 'default'}
                             className="gap-1"
                           >
-                            {projectedProfitVariance > 0 ? (
+                            {tableValues.projectedProfitVariance > 0 ? (
                               <TrendingUp className="h-3 w-3" />
                             ) : (
                               <TrendingDown className="h-3 w-3" />
                             )}
-                            {formatPercentage(projectedProfitVariance)}
+                            {formatPercentage(tableValues.projectedProfitVariance)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
