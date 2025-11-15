@@ -35,6 +35,20 @@ export type {
   UserPermissions
 } from './user';
 
+// Modelo de Invoice
+export type {
+  Invoice,
+  Tag,
+  CreateInvoiceData,
+  UpdateInvoiceData,
+  CreateTagData,
+  UpdateTagData,
+  InvoiceFilters,
+  InvoiceResponse
+} from './invoice';
+
+export { invoiceUtils } from './invoice';
+
 // Modelo de Tienda
 export type {
   Shop,

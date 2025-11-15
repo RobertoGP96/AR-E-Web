@@ -1,0 +1,57 @@
+import { Plus, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '../ui/button';
+
+import type { CreateInvoiceData, UpdateInvoiceData } from '../../types/models/invoice';
+import { InvoiceForm } from './InvoiceForm';
+
+interface InvoicesFiltersProps {
+  searchTerm?: string;
+  onSearchChange?: (value: string) => void;
+  onCreateInvoice?: (data: CreateInvoiceData | UpdateInvoiceData) => void;
+  isCreatingInvoice?: boolean;
+  resultCount?: number;
+}
+
+export default function InvoicesFilters({
+  searchTerm,
+  onSearchChange,
+  onCreateInvoice,
+  isCreatingInvoice = false,
+  resultCount,
+}: InvoicesFiltersProps) {
+  return (
+    <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex-1">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Buscar por ID, fecha o total..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            className="pl-10 border-gray-200 focus:border-blue-300 focus:ring-blue-200 shadow-sm"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 text-sm text-gray-600">
+        {resultCount !== undefined && (
+          <span>{resultCount} facturas encontradas</span>
+        )}
+      </div>
+
+      <InvoiceForm
+        mode="create"
+        onSubmit={onCreateInvoice}
+        loading={isCreatingInvoice}
+        trigger={
+          <Button className="h-10">
+            <Plus className="h-4 w-4 mr-2" />
+            Nueva factura
+          </Button>
+        }
+      />
+    </div>
+  );
+}

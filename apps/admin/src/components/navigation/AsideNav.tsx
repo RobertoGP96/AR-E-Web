@@ -13,7 +13,7 @@ import {
   Tag,
   ReceiptIcon,
   ChartColumn,
-  PlaneLandingIcon
+  FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
 import logoSvg from '@/assets/logo/logo.svg';
@@ -106,10 +106,10 @@ const navigationGroups = [
         icon: Truck
       },
       {
-        name: 'Envios',
-        href: '/shipments',
-        icon: PlaneLandingIcon
-      }
+        name: 'Facturas',
+        href: '/invoices',
+        icon: FileText
+      },
     ]
   },
   {
@@ -158,12 +158,12 @@ export function AsideNav() {
     <Sidebar className='bg-gray-800'>
       {/* Header */}
       <SidebarHeader className="border-b border-border bg-gray-800">
-        <div className="flex h-20 items-center px-6">
+        <div className="flex h-20 items-center px-6 text-orange-400">
           <h1 className="text-md font-bold text-foreground flex justify-center items-center gap-2">
             <div className="w-10 h-10 bg-transparent rounded-lg flex items-center justify-center">
               <img src={logoSvg} alt="AR&E Shipps" className="w-12 h-12" />
             </div>
-            <span className="group-data-[collapsible=icon]:hidden">AR&E Shipps</span>
+            
           </h1>
           <Badge variant="secondary" className='group-data-[collapsible=icon]:hidden ml-2'>Admin</Badge>
         </div>

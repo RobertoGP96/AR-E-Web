@@ -6,6 +6,9 @@
 // Servicios de usuarios
 export * from './users';
 
+// Servicios de invoices
+export * from './invoices';
+
 // Servicios de autenticación
 export * from './auth';
 

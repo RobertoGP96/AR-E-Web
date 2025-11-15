@@ -29,6 +29,7 @@ import PackageProductsManagement from '@/pages/PackageProductsManagement';
 import DeliveryProductsManagement from '@/pages/DeliveryProductsManagement';
 import { ImageUploadExamples } from '@/pages/ImageUploadExamples';
 import Analytics from '@/pages/Analytics';
+import Invoices from '@/pages/Invoices';
 import ExpectedMetrics from '@/pages/ExpectedMetrics';
 
 const AppRoutes = () => {
@@ -49,6 +50,7 @@ const AppRoutes = () => {
                 <Route index element={<Dashboard />} />
                 
                 <Route path="users" element={<Users />} />
+                <Route path="invoices" element={<Invoices />} />
                 <Route path="shops" element={<Shops />} />
                 
                 <Route path="products" element={<Products />} />
@@ -75,8 +77,7 @@ const AppRoutes = () => {
                 <Route path="/analitics" element={<Analytics />} />
                 <Route path="orders/:id" element={<OrderDetails />} />
                 <Route path="orders/:id/add-products" element={<AddMultipleProductsToOrderPage />} />
-                
-                <Route path="expected-metrics" element={<ExpectedMetrics />} />
+
                 
                 <Route path="profile" element={<Profile />} />
                 <Route path="settings" element={<Settings />} />
