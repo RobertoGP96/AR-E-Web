@@ -6,6 +6,7 @@ from .shops import Shop, BuyingAccounts, ShoppingReceip
 from .products import Category, Product, ProductBuyed, ProductReceived, ProductDelivery
 from .deliveries import DeliverReceip, Package
 from .common import CommonInformation, EvidenceImages
+from .invoice import Invoice, Tag
 
 # Import existing models
 from ..notifications.models_notifications import Notification, NotificationPreference
@@ -26,6 +27,8 @@ __all__ = [
     'Package',
     'CommonInformation',
     'EvidenceImages',
+    'Invoice',
+    'Tag',
     'Notification',
     'NotificationPreference',
     'ExpectedMetrics',

@@ -3,7 +3,6 @@ import { Users, Package, ShoppingCart, DollarSign, TrendingUp, TrendingDown, Sho
 import { Badge } from '@/components/ui/badge';
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
 import { cn } from '@/lib/utils';
-import { Button } from '../ui/button';
 
 interface MetricData {
   label: string;
@@ -30,10 +29,9 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="border-2">
-            <CardContent className="p-4 ">
+            <CardContent className="p-4">
               <div className=" h-16 bg-gradient-to-r from-gray-100 to-gray-50 rounded-lg animate-pulse" />
             </CardContent>
-            
           </Card>
         ))}
       </div>
@@ -551,7 +549,6 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
           </Card>
         );
       })}
-      <Button variant="outline" size="sm" className="text-xs mt-2" onClick={()=>console.log(metrics)} >Data</Button>
     </div>
   );
 };

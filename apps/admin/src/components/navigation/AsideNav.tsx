@@ -26,72 +26,107 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
 import useAuth from '@/hooks/auth/useAuth';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
 
-const navigation = [
+const navigationGroups = [
   {
-    name: 'Dashboard',
-    href: '/',
-    icon: LayoutDashboard
+    title: 'Dashboard',
+    items: [
+      {
+        name: 'Dashboard',
+        href: '/',
+        icon: LayoutDashboard
+      }
+    ]
   },
   {
-    name: 'Usuarios',
-    href: '/users',
-    icon: Users
+    title: 'Gestión',
+    items: [
+      {
+        name: 'Usuarios',
+        href: '/users',
+        icon: Users
+      },
+      {
+        name: 'Tiendas',
+        href: '/shops',
+        icon: Store
+      },
+      {
+        name: 'Categorías',
+        href: '/categories',
+        icon: Tag
+      }
+    ]
   },
   {
-    name: 'Tiendas',
-    href: '/shops',
-    icon: Store
+    title: 'Órdenes y Productos',
+    items: [
+      {
+        name: 'Órdenes',
+        href: '/orders',
+        icon: ShoppingCart
+      },
+      {
+        name: 'Productos',
+        href: '/products',
+        icon: Package
+      },
+      {
+        name: 'Compras',
+        href: '/purchases',
+        icon: ShoppingBag
+      },
+      {
+        name: 'Paquetes',
+        href: '/packages',
+        icon: Package
+      }
+    ]
   },
   {
-    name: 'Categorías',
-    href: '/categories',
-    icon: Tag
+    title: 'Logística',
+    items: [
+      {
+        name: 'Entrega',
+        href: '/delivery',
+        icon: Truck
+      },
+      {
+        name: 'Envios',
+        href: '/shipments',
+        icon: PlaneLandingIcon
+      }
+    ]
   },
   {
-    name: 'Órdenes',
-    href: '/orders',
-    icon: ShoppingCart
-  },
-  {
-    name: 'Productos',
-    href: '/products',
-    icon: Package
-  },
-  {
-    name: 'Compras',
-    href: '/purchases',
-    icon: ShoppingBag
-  },
-  {
-    name: 'Paquetes',
-    href: '/packages',
-    icon: Package
-  },
-  {
-    name: 'Entrega',
-    href: '/delivery',
-    icon: Truck
-  },
-  {
-    name: 'Analisis',
-    href: '/analitics',
-    icon: ChartColumn
-  },
-  {
-    name: 'Finanzas',
-    href: '/finances',
-    icon: ReceiptIcon
-  },
-  {
-    name: 'Envios',
-    href: '/shipments',
-    icon: PlaneLandingIcon
-  },
-  
+    title: 'Análisis',
+    items: [
+      {
+        name: 'Analisis',
+        href: '/analitics',
+        icon: ChartColumn
+      },
+      {
+        name: 'Finanzas',
+        href: '/finances',
+        icon: ReceiptIcon
+      }
+    ]
+  }
 ];
 
 const bottomNavigation = [
@@ -105,7 +140,7 @@ const bottomNavigation = [
 export function AsideNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, user, } = useAuth();
+  const { logout, user } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -120,143 +155,140 @@ export function AsideNav() {
   };
 
   return (
-    <aside className="w-64 bg-gradient-to-b from-gray-900 to-gray-800 shadow-lg border-r border-gray-700 flex flex-col h-full">
+    <Sidebar className='bg-gray-800'>
       {/* Header */}
-      <div className="flex h-20 items-center px-6 border-b border-gray-700">
-        <h1 className="text-md font-bold text-white flex justify-center items-center gap-2">
-          <div className="w-10 h-10 bg-transparent rounded-lg flex items-center justify-center">
-            <img src={logoSvg} alt="AR&E Shipps" className="w-12 h-12" />
-          </div>
-          AR&E Shipps
-        </h1>
-        <Badge variant="default" className='bg-gray-800 text-gray-400'>Admin</Badge>
-      </div>
+      <SidebarHeader className="border-b border-border bg-gray-800">
+        <div className="flex h-20 items-center px-6">
+          <h1 className="text-md font-bold text-foreground flex justify-center items-center gap-2">
+            <div className="w-10 h-10 bg-transparent rounded-lg flex items-center justify-center">
+              <img src={logoSvg} alt="AR&E Shipps" className="w-12 h-12" />
+            </div>
+            <span className="group-data-[collapsible=icon]:hidden">AR&E Shipps</span>
+          </h1>
+          <Badge variant="secondary" className='group-data-[collapsible=icon]:hidden ml-2'>Admin</Badge>
+        </div>
+      </SidebarHeader>
 
       {/* Navigation */}
-      <div className="flex-1 px-4 py-6 overflow-y-auto flex flex-col">
-        {/* Main Navigation */}
-        <div className="space-y-2">
-          <nav className="space-y-1">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
+      <SidebarContent className="bg-gray-800">
+        {navigationGroups.map((group) => (
+          <SidebarGroup key={group.title}>
+            <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
+              {group.title}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.href);
 
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 hover:shadow-sm group",
-                    active
-                      ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25"
-                      : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                  )}
-                >
-                  <Icon className={cn(
-                    "h-5 w-5 flex-shrink-0",
-                    active ? "text-white" : "text-gray-400 group-hover:text-orange-400"
-                  )} />
-                  <span>{item.name}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Spacer to push bottom navigation to the bottom */}
-        <div className="flex-1"></div>
+                  return (
+                    <SidebarMenuItem key={item.name}>
+                      <SidebarMenuButton asChild isActive={active}>
+                        <Link to={item.href}>
+                          <Icon className="h-5 w-5" />
+                          <span>{item.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
 
         {/* Bottom Navigation */}
-        <div className="space-y-2 pt-4 border-t border-gray-700/50">
-          <nav className="space-y-1">
-            {bottomNavigation.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {bottomNavigation.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
 
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 hover:shadow-sm group",
-                    active
-                      ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25"
-                      : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                  )}
-                >
-                  <Icon className={cn(
-                    "h-5 w-5 flex-shrink-0",
-                    active ? "text-white" : "text-gray-400 group-hover:text-orange-400"
-                  )} />
-                  <span>{item.name}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-      </div>
+                return (
+                  <SidebarMenuItem key={item.name}>
+                    <SidebarMenuButton asChild isActive={active}>
+                      <Link to={item.href}>
+                        <Icon className="h-5 w-5" />
+                        <span>{item.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
       {/* Footer - User Menu */}
-      <div className="p-4 border-t border-gray-700">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-700/50 transition-all duration-200 group">
-              <Avatar className="h-10 w-10 rounded-xl ring-2 ring-orange-500/20">
-                <AvatarImage src="" alt="Administrador" />
-                <AvatarFallback className="rounded-xl bg-gradient-to-r from-orange-400 to-amber-500 text-gray-900 font-semibold">
-                  {user?.name.charAt(0).toUpperCase() +""+ user?.last_name.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 text-left">
-                <span className="block font-semibold text-base text-white">{user?.name+" "+ user?.last_name.charAt(0).toUpperCase()}</span>
-                <span className="block text-sm text-gray-400">{user?.phone_number}</span>
-              </div>
-              <div>
-                <Badge variant="default" className='bg-gray-600 text-[12px] text-orange-200'>{user?.role}</Badge>
-              </div>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-56 rounded-xl border-0 shadow-xl bg-white"
-            side="right"
-            align="end"
-            sideOffset={8}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-3 px-3 py-3 text-left text-sm">
-                <Avatar className="h-10 w-10 rounded-xl ring-2 ring-orange-500/20">
-                  <AvatarImage src="" alt="Administrador" />
-                  <AvatarFallback className="rounded-xl bg-gradient-to-r from-orange-400 to-amber-500 text-gray-900 font-semibold">AD</AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold text-base text-gray-800">{user?.name + " " + user?.last_name.charAt(0).toUpperCase()}</span>
-                  <span className="truncate text-sm text-gray-500">{user?.phone_number}</span>
-                </div>
-                <div>
-                  <Badge variant="default" className='bg-gray-100 text-gray-600'>{user?.role}</Badge>
-                </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-gray-100" />
-            <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer hover:bg-orange-50 group" onClick={() => navigate("/profile")}>
-              <User className="h-5 w-5 text-gray-500 group-hover:text-orange-600" />
-              <span className="group-hover:text-orange-700">Perfil</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer hover:bg-orange-50 group">
-              <Settings className="h-5 w-5 text-gray-500 group-hover:text-orange-600" />
-              <span className="group-hover:text-orange-700">Configuración</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-gray-100" />
-            <DropdownMenuItem
-              className="gap-3 px-3 py-3 text-base text-red-600 focus:text-red-600 cursor-pointer hover:bg-red-50"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-5 w-5" />
-              Cerrar sesión
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </aside>
+      <SidebarFooter className='bg-gray-800'>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                >
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarImage src="" alt="Administrador" />
+                    <AvatarFallback className="rounded-lg bg-gradient-to-r from-orange-400 to-amber-500 text-gray-900 font-semibold">
+                      {(user?.name?.charAt(0)?.toUpperCase() || '') + (user?.last_name?.charAt(0)?.toUpperCase() || '')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+                    <span className="truncate font-semibold">{user?.name + " " + user?.last_name.charAt(0).toUpperCase()}</span>
+                    <span className="truncate text-xs text-muted-foreground">{user?.phone_number}</span>
+                  </div>
+                  <Badge variant="secondary" className="group-data-[collapsible=icon]:hidden text-xs">
+                    {user?.role}
+                  </Badge>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                side="bottom"
+                align="end"
+                sideOffset={4}
+              >
+                <DropdownMenuLabel className="p-0 font-normal">
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                    <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarImage src="" alt="Administrador" />
+                      <AvatarFallback className="rounded-lg bg-gradient-to-r from-orange-400 to-amber-500 text-gray-900 font-semibold">
+                        {(user?.name?.charAt(0)?.toUpperCase() || '') + (user?.last_name?.charAt(0)?.toUpperCase() || '')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">{user?.name + " " + user?.last_name.charAt(0).toUpperCase()}</span>
+                      <span className="truncate text-xs text-muted-foreground">{user?.phone_number}</span>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {user?.role}
+                    </Badge>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <User className="h-4 w-4" />
+                  Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/settings")}>
+                  <Settings className="h-4 w-4" />
+                  Configuración
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                  <LogOut className="h-4 w-4" />
+                  Cerrar sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 }

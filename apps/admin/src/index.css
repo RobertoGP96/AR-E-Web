@@ -2,62 +2,65 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@custom-variant dark (&:is(.dark *));
+
 :root {
   --radius: 0.75rem;
-  
+
   /* 🎨 Tema Claro Profesional - Naranja, Gris y Blanco */
-  
+
   /* Fondos Base - Blancos y Grises Muy Claros */
   --background: oklch(99% 0 0); /* Blanco casi puro */
   --foreground: oklch(25% 0.01 270); /* Gris muy oscuro para texto */
-  
+
   /* Tarjetas y Superficies - Blanco Puro */
   --card: oklch(100% 0 0); /* Blanco puro para tarjetas */
   --card-foreground: oklch(25% 0.01 270);
   --popover: oklch(100% 0 0);
   --popover-foreground: oklch(25% 0.01 270);
-  
+
   /* Color Primario - Naranja Vibrante */
   --primary: oklch(65.714% 0.16341 44.35); /* Naranja profesional y vibrante */
   --primary-foreground: oklch(100% 0 0); /* Blanco para texto */
-  
+
   /* Color Secundario - Gris Medio */
   --secondary: oklch(92% 0.005 270); /* Gris muy claro con tinte neutro */
   --secondary-foreground: oklch(30% 0.01 270); /* Gris oscuro */
-  
+
   /* Elementos Silenciados - Grises Suaves */
   --muted: oklch(95% 0.005 270); /* Gris muy claro */
   --muted-foreground: oklch(50% 0.01 270); /* Gris medio para texto secundario */
-  
+
   /* Acentos - Naranja Claro */
   --accent: oklch(88% 0.08 45); /* Naranja muy claro para fondos de hover */
-  --accent-foreground: oklch(30% 0.01 270); /* Texto oscuro */
-  
+  --accent-foreground: oklch(51.454% 0.23348 263.582); /* Texto oscuro */
+
   /* Destructivos - Rojo Coral Claro */
   --destructive: oklch(58% 0.20 25); /* Rojo coral profesional */
   --destructive-foreground: oklch(100% 0 0);
-  
+
   /* Bordes y Inputs - Grises Sutiles */
   --border: oklch(87% 0.005 270); /* Borde gris claro */
   --input: oklch(96% 0.005 270); /* Input gris muy claro */
   --ring: oklch(62% 0.20 40); /* Ring naranja igual al primario */
-  
+
   /* Gráficos - Paleta Clara y Armoniosa */
   --chart-1: oklch(62% 0.20 40); /* Naranja primario */
   --chart-2: oklch(55% 0.18 30); /* Naranja oscuro */
   --chart-3: oklch(70% 0.15 50); /* Naranja claro */
   --chart-4: oklch(55% 0.01 270); /* Gris medio */
   --chart-5: oklch(75% 0.12 60); /* Ámbar suave */
-  
+
   /* Sidebar - Combinación Elegante */
-  --sidebar: oklch(97% 0.005 270); /* Gris casi blanco */
-  --sidebar-foreground: oklch(30% 0.01 270); /* Texto gris oscuro */
-  --sidebar-primary: oklch(62% 0.20 40); /* Naranja para activos */
-  --sidebar-primary-foreground: oklch(100% 0 0); /* Blanco */
-  --sidebar-accent: oklch(90% 0.08 45); /* Naranja claro para hover */
-  --sidebar-accent-foreground: oklch(30% 0.01 270);
-  --sidebar-border: oklch(90% 0.005 270); /* Borde gris claro */
-  --sidebar-ring: oklch(62% 0.20 40);
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsla(0, 0%, 41%, 0.679);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(31, 81%, 54%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+
 }
 
 @theme inline {
@@ -65,6 +68,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -89,6 +93,7 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
+
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
@@ -197,4 +202,3 @@
 ::-webkit-scrollbar-corner {
   background: var(--background);
 }
-

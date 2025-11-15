@@ -37,6 +37,10 @@ from .amazon_views import (
     AmazonScrapingView,
     CreateAdminView
 )
+from .invoice_views import (
+    InvoiceViewSet,
+    TagViewSet
+)
 
 __all__ = [
     # Auth views
@@ -81,4 +85,8 @@ __all__ = [
     # Amazon views
     'AmazonScrapingView',
     'CreateAdminView',
+
+    # Invoice views
+    'InvoiceViewSet',
+    'TagViewSet',
 ]
