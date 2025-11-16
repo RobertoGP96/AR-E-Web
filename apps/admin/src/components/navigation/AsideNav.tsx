@@ -158,7 +158,7 @@ export function AsideNav() {
     <Sidebar className='bg-gray-800'>
       {/* Header */}
       <SidebarHeader className="border-b border-border bg-gray-800">
-        <div className="flex h-20 items-center px-6 text-orange-400">
+        <div className="flex h-16 items-center px-6 text-orange-400">
           <h1 className="text-md font-bold text-foreground flex justify-center items-center gap-2">
             <div className="w-10 h-10 bg-transparent rounded-lg flex items-center justify-center">
               <img src={logoSvg} alt="AR&E Shipps" className="w-12 h-12" />

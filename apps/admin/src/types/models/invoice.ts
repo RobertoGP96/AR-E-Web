@@ -18,7 +18,7 @@ export interface Invoice {
 export interface Tag {
   id: ID;
   invoice: ID;
-  type: string;
+  type?: "pesaje" | "nominal";
   weight: number;
   cost_per_lb: number;
   fixed_cost: number;
@@ -40,7 +40,7 @@ export interface UpdateInvoiceData extends Partial<CreateInvoiceData> {
 
 // Tipos para crear/editar tag
 export interface CreateTagData {
-  type: string;
+  type?: "pesaje" | "nominal";
   weight: number;
   cost_per_lb: number;
   fixed_cost: number;

@@ -18,7 +18,6 @@ export default function InvoicesFilters({
   onSearchChange,
   onCreateInvoice,
   isCreatingInvoice = false,
-  resultCount,
 }: InvoicesFiltersProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4">
@@ -35,11 +34,7 @@ export default function InvoicesFilters({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        {resultCount !== undefined && (
-          <span>{resultCount} facturas encontradas</span>
-        )}
-      </div>
+      
 
       <InvoiceForm
         mode="create"

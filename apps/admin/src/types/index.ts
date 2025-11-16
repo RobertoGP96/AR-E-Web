@@ -216,3 +216,8 @@ export {
   getLocalStorageItem,
   removeLocalStorageItem
 } from './utils';
+
+
+export {
+  type CreateTagData
+} from './models/invoice'

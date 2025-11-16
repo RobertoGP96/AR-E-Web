@@ -33,7 +33,7 @@
 
   /* Acentos - Naranja Claro */
   --accent: oklch(88% 0.08 45); /* Naranja muy claro para fondos de hover */
-  --accent-foreground: oklch(51.454% 0.23348 263.582); /* Texto oscuro */
+  --accent-foreground: oklch(43.128% 0.00005 271.152); /* Texto oscuro */
 
   /* Destructivos - Rojo Coral Claro */
   --destructive: oklch(58% 0.20 25); /* Rojo coral profesional */
@@ -59,7 +59,7 @@
   --sidebar-accent: hsl(31, 81%, 54%);
   --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
   --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  --sidebar-ring: hsl(29, 95%, 64%);
 
 }
 
