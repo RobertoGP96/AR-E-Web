@@ -6,7 +6,8 @@ export const tagSchema = z.object({
   weight: z.number().optional(),
   cost_per_lb: z.number().optional(),
   fixed_cost: z.number().optional(),
-  subtotal: z.number().min(0.01, 'Subtotal debe ser mayor a 0'),
+  subtotal: z.number().min(0.01, 'Subtotal debe ser mayor a 0')
+    .refine((v) => Number(v.toFixed(2)) === v, { message: 'Ensure that there are no more than 2 decimal places.' }),
 }).superRefine((data, ctx) => {
   if (data.type === 'pesaje') {
     if (data.weight === undefined || data.weight <= 0) {
@@ -37,7 +38,8 @@ export const tagSchema = z.object({
 // Schema para crear invoice con tags
 export const createInvoiceSchema = z.object({
   date: z.string().min(1, 'Fecha requerida'),
-  total: z.number().min(0, 'Total debe ser positivo'),
+  total: z.number().min(0, 'Total debe ser positivo')
+    .refine((v) => Number(v.toFixed(2)) === v, { message: 'Ensure that there are no more than 2 decimal places.' }),
   tags: z.array(tagSchema).min(1, 'Debe agregar al menos una tag'),
 });
 

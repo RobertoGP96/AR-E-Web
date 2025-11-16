@@ -23,6 +23,8 @@ interface TagItemProps {
   remove: UseFieldArrayRemove;
   updateTagSubtotal: (index: number, onUpdate?: () => void) => void;
   errors: FieldErrors<CreateInvoiceFormData | EditInvoiceFormData>;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function TagItem({
@@ -32,8 +34,15 @@ export function TagItem({
   remove,
   updateTagSubtotal,
   errors,
+  open,
+  onOpenChange,
 }: TagItemProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const effectiveOpen = typeof open === 'boolean' ? open : internalOpen;
+  const setEffectiveOpen = (val: boolean) => {
+    if (typeof open !== 'boolean') setInternalOpen(val);
+    onOpenChange?.(val);
+  };
   // Debounce para actualizar subtotal mientras el usuario escribe
   const debounceRef = useRef<number | null>(null);
 
@@ -41,17 +50,19 @@ export function TagItem({
   const subtotal = watch(`tags.${index}.subtotal` as const) || 0;
 
   const saveAndClose = () => {
-    updateTagSubtotal(index, () => setOpen(false));
+    // Calcular subtotal y cerrar el popover inmediatamente
+    updateTagSubtotal(index, () => setEffectiveOpen(false));
   };
 
+  // Actualizar el subtotal inmediatamente cuando el usuario modifica campos
   const scheduleUpdate = () => {
+    // Si el input se está tecleando, limpiamos cualquier debounce
     if (debounceRef.current) {
       window.clearTimeout(debounceRef.current);
-    }
-    debounceRef.current = window.setTimeout(() => {
-      updateTagSubtotal(index);
       debounceRef.current = null;
-    }, 250);
+    }
+    // Actualizar sin demora para reflejar el cambio en el total del invoice
+    updateTagSubtotal(index);
   };
 
   const renderForm = (
@@ -217,17 +228,17 @@ export function TagItem({
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setOpen(false)}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEffectiveOpen(false)}
           className="h-9"
         >
           Cancel
         </Button>
-        <Button
-          type="button"
-          onClick={saveAndClose}
+          <Button
+            type="button"
+            onClick={saveAndClose}
           className="h-9 bg-orange-400 text-white hover:bg-orange-500"
         >
           <Check className="mr-2 h-4 w-4" />
@@ -238,9 +249,9 @@ export function TagItem({
   );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={effectiveOpen} onOpenChange={setEffectiveOpen}>
       <PopoverTrigger asChild>
-        <Card className={`border-l-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer ${type === 'pesaje' ? 'border-l-orange-400 ' : 'border-l-gray-300'
+        <Card className={`py-2.5 border-l-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer ${type === 'pesaje' ? 'border-l-orange-400 ' : 'border-l-gray-300'
           }`}>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -260,7 +271,7 @@ export function TagItem({
               <div className="text-right flex flex-row items-center justify-center gap-2">
                 <div className="text-lg font-bold text-gray-500">${subtotal.toFixed(2)}</div>
                 <div className="flex items-center gap">
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(true)}>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setEffectiveOpen(true)}>
                     <Edit2 className="h-4 w-4" />
                   </Button>
                   <Button
@@ -279,7 +290,7 @@ export function TagItem({
         </Card>
       </PopoverTrigger>
 
-      <PopoverContent className="!w-auto p-4">
+      <PopoverContent  className="!w-auto p-4">
         {renderForm}
       </PopoverContent>
     </Popover>

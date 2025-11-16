@@ -1,5 +1,6 @@
-import { Edit, Trash2, MoreHorizontal, Eye, Calendar, DollarSign, FileText } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Eye, Calendar, DollarSign, FileText, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -9,6 +10,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { useDeleteInvoice } from '@/hooks/invoice';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import LoadingSpinner from '../utils/LoadingSpinner';
 
 interface InvoicesTableProps {
   invoices?: Invoice[];
@@ -71,10 +73,7 @@ export default function InvoicesTable({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Cargando facturas...</p>
-        </div>
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -109,9 +108,8 @@ export default function InvoicesTable({
               <TableHead>ID</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Total</TableHead>
-              <TableHead>Tags</TableHead>
+              <TableHead>Conceptos</TableHead>
               <TableHead>Creado</TableHead>
-              <TableHead>Actualizado</TableHead>
               <TableHead className="w-[70px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -139,18 +137,45 @@ export default function InvoicesTable({
                 </TableCell>
                 <TableCell>
                   {invoice.tags && invoice.tags.length > 0 ? (
-                    <Badge variant="secondary">
-                      {invoice.tags.length} tag{invoice.tags.length !== 1 ? 's' : ''}
-                    </Badge>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" className="h-6 p-0" onClick={(e) => e.stopPropagation()}>
+                          <Badge variant="secondary" className="cursor-pointer py-1">
+                            <Receipt className="h-4 w-4 mr-1" />
+                            {invoice.tags.length}
+                          </Badge>
+                        </Button>
+                      </PopoverTrigger>
+
+                      <PopoverContent className="!w-auto p-3">
+                        <div className="flex flex-col gap-2 max-w-[280px]">
+                          {invoice.tags.map((tag) => (
+                            <div key={tag.id} className="flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-3">
+                                <Badge variant="outline" className="text-xs">
+                                  {tag.type === 'pesaje' ? 'Pesaje' : 'Nominal'}
+                                </Badge>
+                                {tag.type === 'pesaje' && (
+                                  <div className="text-sm text-gray-500">
+                                    {tag.type === 'pesaje' ? `${tag.weight} lb x $${tag.cost_per_lb}` : `$${tag.fixed_cost}`}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="text-sm text-gray-800 font-bold">
+                                {invoiceUtils.formatTotal(tag.subtotal)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   ) : (
                     <Badge variant="outline">Sin tags</Badge>
                   )}
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">
                   {invoiceUtils.formatDateTime(invoice.created_at)}
-                </TableCell>
-                <TableCell className="text-sm text-gray-600">
-                  {invoiceUtils.formatDateTime(invoice.updated_at)}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>

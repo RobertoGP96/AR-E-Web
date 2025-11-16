@@ -30,7 +30,15 @@ class TagViewSet(viewsets.ModelViewSet):
         tags=["Tags"]
     )
     def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+        # Use InvoiceCreateSerializer to validate and save (handles nested tags),
+        # but return the created invoice using InvoiceSerializer so the response
+        # includes related tags.
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        invoice = serializer.save()
+        # Return the invoice serialized with InvoiceSerializer to include tags
+        output_serializer = InvoiceSerializer(invoice, context={'request': request})
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         summary="Obtener tag",

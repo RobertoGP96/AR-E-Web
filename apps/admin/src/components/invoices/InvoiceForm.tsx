@@ -1,7 +1,11 @@
 import React, { useMemo } from 'react';
 import type { Invoice, CreateInvoiceData, UpdateInvoiceData } from '../../types/models/invoice';
 import { useInvoiceForm } from '../../hooks/useInvoiceForm';
+import { useQueryClient } from '@tanstack/react-query';
+import { invoiceKeys } from '@/hooks/invoice';
 import { TagItem } from './TagItem';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { NewTagForm } from './NewTagForm';
 import { InvoiceSummary } from './InvoiceSummary';
 import {
   Dialog,
@@ -12,12 +16,11 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/utils/DatePicker';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Save, Loader2, FileText, TriangleAlert } from 'lucide-react';
-import { toast } from 'sonner';
 import { /*createInvoiceSchema, editInvoiceSchema*/ } from '../../schemas/invoiceSchemas';
 import type { CreateInvoiceFormData, EditInvoiceFormData } from '../../schemas/invoiceSchemas';
 import type { SubmitHandler } from 'react-hook-form';
@@ -42,7 +45,7 @@ export function InvoiceForm({
   trigger,
 }: InvoiceFormProps) {
   const {
-    register,
+    // register provided by useInvoiceForm but not required here (we use controlled DatePicker)
     handleSubmit,
     errors,
     reset,
@@ -50,11 +53,15 @@ export function InvoiceForm({
     watch,
     fields,
     remove,
-    addTag,
+    append,
     updateTagSubtotal,
     isOpen,
     handleOpenChange,
   } = useInvoiceForm(mode, invoice);
+  const [openTagIndex, setOpenTagIndex] = React.useState<number | null>(null);
+  const [showNewTagPopover, setShowNewTagPopover] = React.useState(false);
+
+  const queryClient = useQueryClient();
 
   // Calcular el total de la factura basado en los subtotales de las tags
   const watchedTags = watch('tags');
@@ -72,9 +79,18 @@ export function InvoiceForm({
     // Redondeamos a 2 decimales y forzamos validación para que Zod muestre errores si los hay.
     const rounded = Math.round(calculatedTotal * 100) / 100;
     setValue('total' as const, rounded as number, { shouldValidate: true, shouldDirty: true });
-  }, [calculatedTotal, setValue]);
+    if (mode === 'edit' && invoice && invoice.id && isOpen) {
+      try {
+        queryClient.setQueryData<Invoice | undefined>(invoiceKeys.detail(invoice.id), (old) => {
+          if (!old) return old;
+          return { ...old, total: rounded } as Invoice;
+        });
+      } catch (err) {
+        console.warn('No fue posible actualizar cache de invoices', err);
+      }
+    }
+  }, [calculatedTotal, setValue, invoice, mode, queryClient, isOpen]);
 
-  // Pasamos directamente `updateTagSubtotal` a TagItem (acepta callback opcional)
   React.useEffect(() => {
     if (open !== undefined) {
       handleOpenChange(open, onOpenChange);
@@ -84,12 +100,8 @@ export function InvoiceForm({
 
   const onFormSubmit: SubmitHandler<CreateInvoiceFormData | EditInvoiceFormData> = async (data) => {
     try {
-      // Incluir el total calculado en los datos
       const dataWithTotal = { ...data, total: calculatedTotal };
-
-      // Ya actualizamos `total` en el formulario con `setValue`; useForm + zodResolver realizará
-      // la validación automáticamente antes de llegar aquí. No es necesario volver a validar.
-
+      
       const submitData = mode === 'create'
         ? { ...dataWithTotal, date: new Date((data as CreateInvoiceFormData).date).toISOString() }
         : { ...dataWithTotal, id: invoice!.id, date: new Date((data as EditInvoiceFormData).date).toISOString() };
@@ -99,13 +111,11 @@ export function InvoiceForm({
       if (mode === 'create') {
         reset();
         handleOpenChange(false, onOpenChange);
-        toast.success('Factura creada correctamente');
-      } else {
-        toast.success('Factura actualizada correctamente');
       }
     } catch (error) {
       console.error('Error al guardar factura:', error);
-      toast.error('Error al guardar la factura');
+      // Re-lanzamos para que el componente padre (hook de mutación) maneje el error y muestre toasts
+      throw error;
     }
   };
 
@@ -118,12 +128,13 @@ export function InvoiceForm({
             <Label htmlFor="date" className="text-sm font-semibold text-gray-700">
               Fecha
             </Label>
-            <Input
+            <DatePicker
               id="date"
-              type="date"
-              {...register('date')}
-              className={`h-11 ${errors.date ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200 focus:border-blue-400'}`}
+              value={watch('date') ? new Date(watch('date') as string) : undefined}
+              onChange={(date) => setValue('date' as const, date ? date.toISOString().split('T')[0] : '', { shouldValidate: true, shouldDirty: true })}
+              placeholder="Selecciona la fecha"
             />
+            
             {errors.date && (
               <p className="text-sm text-red-600 flex items-center gap-1">
                 <span className="text-xs">⚠️</span> {errors.date.message}
@@ -146,15 +157,29 @@ export function InvoiceForm({
                 Agrega los diferentes conceptos que componen esta factura
               </p>
             </div>
-            <Button
-              type="button"
-              onClick={addTag}
-              size="sm"
-              className="h-9 px-4 bg-orange-400 hover:bg-orange-500 text-white font-medium shadow-sm"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar Concepto
-            </Button>
+            <Popover open={showNewTagPopover} onOpenChange={(open) => setShowNewTagPopover(open)}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  onClick={() => setShowNewTagPopover(true)}
+                  size="sm"
+                  className="h-9 px-4 bg-orange-400 hover:bg-orange-500 text-white font-medium shadow-sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar Concepto
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="!w-auto p-4 max-w-[380px]">
+                  <NewTagForm
+                  onCancel={() => setShowNewTagPopover(false)}
+                  onSave={(t) => {
+                    // Asegurarse de que el subtotal se almacene con 2 decimales
+                    append({ ...t, subtotal: Number((t.subtotal).toFixed(2)) });
+                    setShowNewTagPopover(false);
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </CardHeader>
 
@@ -177,9 +202,18 @@ export function InvoiceForm({
                   index={index}
                   watch={watch}
                   setValue={setValue}
-                  remove={remove}
+                  remove={(idx) => {
+                    remove(idx);
+                    // Cerrar el popover si estaba abierto para esta tag
+                    if (openTagIndex === idx) setOpenTagIndex(null);
+                  }}
                   updateTagSubtotal={updateTagSubtotal}
                   errors={errors}
+                  open={openTagIndex === index}
+                  onOpenChange={(open) => {
+                    if (!open && openTagIndex === index) setOpenTagIndex(null);
+                    if (open) setOpenTagIndex(index);
+                  }}
                 />
               ))}
 
@@ -187,6 +221,8 @@ export function InvoiceForm({
               
             </div>
           )}
+
+          {/* NewTagForm ahora se integra dentro del Popover del botón de Agregar Concepto */}
 
           {errors.tags && typeof errors.tags === 'object' && 'message' in errors.tags && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">

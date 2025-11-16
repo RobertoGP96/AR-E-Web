@@ -41,16 +41,6 @@ export function useInvoiceForm(mode: 'create' | 'edit', invoice?: Invoice) {
 
   // No calcular total aquí, se hace en el componente
 
-  // Función para agregar una nueva tag
-  const addTag = () => {
-    append({
-      type: 'pesaje',
-      weight: 0,
-      cost_per_lb: 0,
-      fixed_cost: 0,
-      subtotal: 0,
-    });
-  };
 
   // Función para actualizar el subtotal de una tag específica
   const updateTagSubtotal = (index: number, onUpdate?: () => void) => {
@@ -65,8 +55,9 @@ export function useInvoiceForm(mode: 'create' | 'edit', invoice?: Invoice) {
         subtotal = tag.fixed_cost || 0;
       }
 
-      // Actualizar subtotal de la tag
-      setValue(`tags.${index}.subtotal` as `tags.${number}.subtotal`, subtotal);
+      // Redondear subtotal a 2 decimales y actualizar la tag para evitar validación fallida
+      const roundedSubtotal = Number(subtotal.toFixed(2));
+      setValue(`tags.${index}.subtotal` as `tags.${number}.subtotal`, roundedSubtotal);
 
       // Nota: el cálculo del total se realiza en el componente `InvoiceForm`
       // para mantener una sola fuente de la verdad. Aquí solo actualizamos el subtotal
@@ -93,7 +84,6 @@ export function useInvoiceForm(mode: 'create' | 'edit', invoice?: Invoice) {
     fields,
     append,
     remove,
-    addTag,
     updateTagSubtotal,
     isOpen,
     setIsOpen,
