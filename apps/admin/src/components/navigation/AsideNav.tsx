@@ -85,6 +85,12 @@ const navigationGroups = [
         href: '/products',
         icon: Package
       },
+      
+    ]
+  },
+  {
+    title: 'Logística',
+    items: [
       {
         name: 'Compras',
         href: '/purchases',
@@ -94,22 +100,13 @@ const navigationGroups = [
         name: 'Paquetes',
         href: '/packages',
         icon: Package
-      }
-    ]
-  },
-  {
-    title: 'Logística',
-    items: [
+      },
       {
         name: 'Entrega',
         href: '/delivery',
         icon: Truck
-      },
-      {
-        name: 'Facturas',
-        href: '/invoices',
-        icon: FileText
-      },
+      }
+      
     ]
   },
   {
@@ -119,6 +116,11 @@ const navigationGroups = [
         name: 'Analisis',
         href: '/analitics',
         icon: ChartColumn
+      },
+      {
+        name: 'Facturas',
+        href: '/invoices',
+        icon: FileText
       },
       {
         name: 'Finanzas',
@@ -155,16 +157,16 @@ export function AsideNav() {
   };
 
   return (
-    <Sidebar className='bg-gray-800'>
+    <Sidebar className=''>
       {/* Header */}
-      <SidebarHeader className="border-b  border-orange-400 bg-gray-800">
+      <SidebarHeader className="border-b  border-orange-400 ">
         <div className="w-full flex h-16 items-center justify-center p-4 text-orange-400">
           <img src={logoSvg} alt="AR&E Shipps" className="h-15 aspect-auto" />
         </div>
       </SidebarHeader>
 
       {/* Navigation */}
-      <SidebarContent className="pl-4 bg-gray-800">
+      <SidebarContent className="pl-4 ">
         {navigationGroups.map((group) => (
           <SidebarGroup key={group.title}>
             <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-[14px] uppercase text-gray-400/75 font-semibold">
@@ -177,10 +179,10 @@ export function AsideNav() {
                   const active = isActive(item.href);
 
                   return (
-                    <SidebarMenuItem key={item.name} >
-                      <SidebarMenuButton asChild isActive={active}>
-                        <Link to={item.href}>
-                          <Icon className="h-7 w-7" />
+                    <SidebarMenuItem key={item.name}  >
+                      <SidebarMenuButton asChild isActive={active} >
+                        <Link to={item.href} >
+                          <Icon className="h-7 w-7 " />
                           <span className='text-[15px]'>{item.name}</span>
                         </Link>
                       </SidebarMenuButton>
@@ -217,7 +219,7 @@ export function AsideNav() {
       </SidebarContent>
 
       {/* Footer - User Menu */}
-      <SidebarFooter className='bg-gray-800 border-t border-orange-400'>
+      <SidebarFooter className=' border-t border-orange-400'>
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>

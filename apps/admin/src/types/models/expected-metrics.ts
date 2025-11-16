@@ -38,6 +38,7 @@ export interface CreateExpectedMetricsData {
   range_delivery_cost: number | undefined;
   range_revenue: number | undefined;
   range_profit: number | undefined;
+  delivery_real_weight?: number | undefined;
   delivery_real_cost?: number | undefined;
   others_costs?: number | undefined;
   notes?: string;
@@ -50,6 +51,8 @@ export interface UpdateExpectedMetricsData {
   start_date?: string;
   end_date?: string;
   range_delivery_weight?: number | string;
+  range_delivery_cost?: number | string;
+  delivery_real_weight?: number | string;
   range_revenue?: number | string;
   range_profit?: number | string;
   delivery_real_cost?: number | string;

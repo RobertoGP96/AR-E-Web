@@ -131,11 +131,13 @@ export const expectedMetricsService = {
    * Calcular valores para mostrar en la tabla de métricas
    */
   calculateTableValues: (metric: ExpectedMetrics) => {
-    const costVariance = parseFloat(metric.delivery_real_cost) - parseFloat(metric.range_delivery_cost);
-    const weightVariance = parseFloat(metric.delivery_real_weight) - parseFloat(metric.range_delivery_weight);
+    const costVariance = (parseFloat(metric.delivery_real_cost) || 0) - (parseFloat(metric.range_delivery_cost) || 0);
+    const weightVariance = (parseFloat(metric.delivery_real_weight) || 0) - (parseFloat(metric.range_delivery_weight) || 0);
     const weightVariancePercentage = parseFloat(metric.range_delivery_weight) > 0 ? (weightVariance / parseFloat(metric.range_delivery_weight)) * 100 : 0;
-    const projectedRevenue = parseFloat(metric.range_revenue) * (parseFloat(metric.delivery_real_weight) / parseFloat(metric.range_delivery_weight));
-    const projectedProfit = projectedRevenue - parseFloat(metric.delivery_real_cost) - parseFloat(metric.others_costs);
+    const rangeWeight = parseFloat(metric.range_delivery_weight) || 0;
+    const deliveryRealWeight = parseFloat(metric.delivery_real_weight) || 0;
+    const projectedRevenue = rangeWeight > 0 ? parseFloat(metric.range_revenue) * (deliveryRealWeight / rangeWeight) : parseFloat(metric.range_revenue) || 0;
+    const projectedProfit = projectedRevenue - (parseFloat(metric.delivery_real_cost) || 0) - (parseFloat(metric.others_costs) || 0);
     const projectedProfitVariance = parseFloat(metric.range_profit) > 0 ? ((projectedProfit - parseFloat(metric.range_profit)) / parseFloat(metric.range_profit)) * 100 : 0;
 
     return {

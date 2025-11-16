@@ -12,7 +12,7 @@
     "preview": "vite preview --port 4174",
     "preview:cloudflare": "vite preview --port 4174 --mode production",
     "type-check": "tsc --noEmit",
-    "test": "echo \"No tests configured yet\"",
+    "test": "vitest",
     "clean": "rm -rf dist node_modules",
     "deploy:cloudflare": "node deploy-cloudflare.js",
     "analyze": "npx vite-bundle-analyzer dist/stats.html"
@@ -78,6 +78,7 @@
     "terser": "^5.36.0",
     "tw-animate-css": "^1.3.6",
     "typescript": "~5.8.3",
+    "vitest": "^1.1.4",
     "typescript-eslint": "^8.39.0",
     "vite": "^7.1.0"
   }

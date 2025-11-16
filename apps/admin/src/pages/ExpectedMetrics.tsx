@@ -7,6 +7,7 @@ import {
   TrendingDown,
   Calendar,
   DollarSign,
+  Scale,
   AlertCircle,
   Loader2,
   Trash2,
@@ -39,6 +40,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { expectedMetricsService } from '@/services';
+import ValueWithUnit from '@/components/utils/ValueWithUnit';
 import type {
   ExpectedMetrics,
   CreateExpectedMetricsData,
@@ -201,6 +203,9 @@ const ExpectedMetricsPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate the form fields (basic validations)
+    if (!validateFormData()) return;
+
     const data: CreateExpectedMetricsData = {
       ...formData,
       range_delivery_weight: parseFloat(formData.range_delivery_weight) || 0,
@@ -208,6 +213,7 @@ const ExpectedMetricsPage = () => {
       range_revenue: parseFloat(formData.range_revenue) || 0,
       range_profit: parseFloat(formData.range_profit) || 0,
       delivery_real_cost: parseFloat(formData.delivery_real_cost) || 0,
+      delivery_real_weight: parseFloat(formData.delivery_real_weight) || 0,
       others_costs: parseFloat(formData.others_costs) || 0,
     };
 
@@ -248,6 +254,24 @@ const ExpectedMetricsPage = () => {
       currency: 'USD',
     }).format(num);
   };
+
+  // Small validation helper
+  const validateFormData = () => {
+    const revenue = parseFloat(formData.range_revenue) || 0;
+    const profit = parseFloat(formData.range_profit) || 0;
+
+    if (formData.start_date && formData.end_date && new Date(formData.end_date) < new Date(formData.start_date)) {
+      toast.error('La fecha de fin debe ser posterior a la fecha de inicio');
+      return false;
+    }
+
+    if (revenue < profit) {
+      toast.error('Los ingresos esperados deben ser mayores o iguales a la ganancia esperada');
+      return false;
+    }
+    return true;
+  };
+    // the form validation is triggered on submit
 
   const formatPercentage = (value: string | number) => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -431,9 +455,9 @@ const ExpectedMetricsPage = () => {
 
                 <div className='grid grid-cols-2 gap-4'>
                   <div className="space-y-2">
-                    <Label htmlFor="range_delivery_weight">Peso Real (Lb)</Label>
+                    <Label htmlFor="delivery_real_weight">Peso Real (Lb)</Label>
                     <Input
-                      id="range_delivery_weight"
+                      id="delivery_real_weight"
                       type="number"
                       step="0.01"
                       min="0"
@@ -559,11 +583,11 @@ const ExpectedMetricsPage = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Peso de Entrega Esperado Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <Scale className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(summary?.total_range_delivery_weight || 0)}
+                <ValueWithUnit value={summary?.total_range_delivery_weight || 0} unit="Lb" />
               </div>
             </CardContent>
           </Card>
@@ -672,10 +696,10 @@ const ExpectedMetricsPage = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(metric.range_delivery_weight)}
+                          <ValueWithUnit value={metric.range_delivery_weight} unit="Lb" />
                         </TableCell>
                         <TableCell className="text-right">
-                          {formatCurrency(metric.delivery_real_weight)}
+                          <ValueWithUnit value={metric.delivery_real_weight} unit="Lb" />
                         </TableCell>
                         <TableCell className="text-right">
                           <Badge
