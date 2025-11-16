@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Save, Loader2, FileText, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
-import { createInvoiceSchema, editInvoiceSchema } from '../../schemas/invoiceSchemas';
+import { /*createInvoiceSchema, editInvoiceSchema*/ } from '../../schemas/invoiceSchemas';
 import type { CreateInvoiceFormData, EditInvoiceFormData } from '../../schemas/invoiceSchemas';
 import type { SubmitHandler } from 'react-hook-form';
 
@@ -66,6 +66,14 @@ export function InvoiceForm({
     return 0;
   }, [watchedTags]);
 
+  // Mantener el total calculado sincronizado con el formulario para que el zodResolver lo valide
+  React.useEffect(() => {
+    // `total` es parte del schema y no está en el form por defecto; lo actualizamos aquí.
+    // Redondeamos a 2 decimales y forzamos validación para que Zod muestre errores si los hay.
+    const rounded = Math.round(calculatedTotal * 100) / 100;
+    setValue('total' as const, rounded as number, { shouldValidate: true, shouldDirty: true });
+  }, [calculatedTotal, setValue]);
+
   // Pasamos directamente `updateTagSubtotal` a TagItem (acepta callback opcional)
   React.useEffect(() => {
     if (open !== undefined) {
@@ -79,18 +87,8 @@ export function InvoiceForm({
       // Incluir el total calculado en los datos
       const dataWithTotal = { ...data, total: calculatedTotal };
 
-      // Validar los datos con el esquema correspondiente
-      const schema = mode === 'create' ? createInvoiceSchema : editInvoiceSchema;
-      const validationResult = schema.safeParse(dataWithTotal);
-
-      if (!validationResult.success) {
-        console.error('Errores de validación:', validationResult.error.issues);
-        // Mostrar errores específicos
-        validationResult.error.issues.forEach(issue => {
-          toast.error(`Error en ${issue.path.join('.')}: ${issue.message}`);
-        });
-        return;
-      }
+      // Ya actualizamos `total` en el formulario con `setValue`; useForm + zodResolver realizará
+      // la validación automáticamente antes de llegar aquí. No es necesario volver a validar.
 
       const submitData = mode === 'create'
         ? { ...dataWithTotal, date: new Date((data as CreateInvoiceFormData).date).toISOString() }

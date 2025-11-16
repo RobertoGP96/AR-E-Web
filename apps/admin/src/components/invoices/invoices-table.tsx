@@ -91,7 +91,7 @@ export default function InvoicesTable({
 
   if (invoices.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-64 rounded-lg border border-muted bg-background shadow">
         <div className="text-center">
           <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600">No hay facturas registradas</p>
@@ -102,7 +102,7 @@ export default function InvoicesTable({
 
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-lg border border-muted bg-background shadow">
         <Table>
           <TableHeader>
             <TableRow>

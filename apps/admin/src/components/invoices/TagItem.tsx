@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { UseFormWatch, UseFormSetValue, UseFieldArrayRemove, FieldErrors } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import {
@@ -34,12 +34,24 @@ export function TagItem({
   errors,
 }: TagItemProps) {
   const [open, setOpen] = useState(false);
+  // Debounce para actualizar subtotal mientras el usuario escribe
+  const debounceRef = useRef<number | null>(null);
 
   const type = watch(`tags.${index}.type` as const);
   const subtotal = watch(`tags.${index}.subtotal` as const) || 0;
 
   const saveAndClose = () => {
     updateTagSubtotal(index, () => setOpen(false));
+  };
+
+  const scheduleUpdate = () => {
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = window.setTimeout(() => {
+      updateTagSubtotal(index);
+      debounceRef.current = null;
+    }, 250);
   };
 
   const renderForm = (
@@ -110,7 +122,17 @@ export function TagItem({
                 step="0.01"
                 min="0"
                 value={watch(`tags.${index}.weight` as const) || ''}
-                onChange={(e) => setValue(`tags.${index}.weight` as const, parseFloat(e.target.value) || 0)}
+                onChange={(e) => {
+                  setValue(`tags.${index}.weight` as const, parseFloat(e.target.value) || 0);
+                  scheduleUpdate();
+                }}
+                onBlur={() => {
+                  if (debounceRef.current) {
+                    window.clearTimeout(debounceRef.current);
+                    debounceRef.current = null;
+                  }
+                  updateTagSubtotal(index);
+                }}
                 placeholder="0.00"
                 className={`h-10 ${errors.tags?.[index]?.weight
                   ? 'border-red-500 focus:ring-red-200'
@@ -132,7 +154,17 @@ export function TagItem({
                 step="0.01"
                 min="0"
                 value={watch(`tags.${index}.cost_per_lb` as const) || ''}
-                onChange={(e) => setValue(`tags.${index}.cost_per_lb` as const, parseFloat(e.target.value) || 0)}
+                onChange={(e) => {
+                  setValue(`tags.${index}.cost_per_lb` as const, parseFloat(e.target.value) || 0);
+                  scheduleUpdate();
+                }}
+                onBlur={() => {
+                  if (debounceRef.current) {
+                    window.clearTimeout(debounceRef.current);
+                    debounceRef.current = null;
+                  }
+                  updateTagSubtotal(index);
+                }}
                 placeholder="0.00"
                 className={`h-10 ${errors.tags?.[index]?.cost_per_lb
                   ? 'border-red-500 focus:ring-red-200'
@@ -158,7 +190,17 @@ export function TagItem({
               step="0.01"
               min="0"
               value={watch(`tags.${index}.fixed_cost` as const) || ''}
-              onChange={(e) => setValue(`tags.${index}.fixed_cost` as const, parseFloat(e.target.value) || 0)}
+              onChange={(e) => {
+                setValue(`tags.${index}.fixed_cost` as const, parseFloat(e.target.value) || 0);
+                scheduleUpdate();
+              }}
+              onBlur={() => {
+                if (debounceRef.current) {
+                  window.clearTimeout(debounceRef.current);
+                  debounceRef.current = null;
+                }
+                updateTagSubtotal(index);
+              }}
               placeholder="0.00"
               className={`h-10 pl-8 pr-3 w-full border rounded-md ${errors.tags?.[index]?.fixed_cost
                 ? 'border-red-500 focus:ring-red-200'

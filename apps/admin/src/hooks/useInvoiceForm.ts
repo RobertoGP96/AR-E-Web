@@ -65,7 +65,12 @@ export function useInvoiceForm(mode: 'create' | 'edit', invoice?: Invoice) {
         subtotal = tag.fixed_cost || 0;
       }
 
+      // Actualizar subtotal de la tag
       setValue(`tags.${index}.subtotal` as `tags.${number}.subtotal`, subtotal);
+
+      // Nota: el cálculo del total se realiza en el componente `InvoiceForm`
+      // para mantener una sola fuente de la verdad. Aquí solo actualizamos el subtotal
+      // de la tag específica.
       onUpdate?.();
     }
   };
