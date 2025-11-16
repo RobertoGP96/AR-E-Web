@@ -570,18 +570,18 @@ const Settings = () => {
                           <dt className="text-sm font-medium text-gray-500 mb-1">Versión</dt>
                           <dd className="text-sm text-gray-900 font-semibold">
                             <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">
-                              v{systemInfo.application.version}
+                              {systemInfo.application?.version ? `v${systemInfo.application.version}` : 'vN/A'}
                             </Badge>
                           </dd>
                         </div>
                         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <dt className="text-sm font-medium text-gray-500 mb-1">Última actualización</dt>
-                          <dd className="text-sm text-gray-900 font-semibold">{systemInfo.application.last_updated}</dd>
+                            <dd className="text-sm text-gray-900 font-semibold">{systemInfo.application?.last_updated ?? 'N/A'}</dd>
                         </div>
                         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <dt className="text-sm font-medium text-gray-500 mb-1">Entorno</dt>
                           <dd className="text-sm text-gray-900 font-semibold capitalize">
-                            {systemInfo.application.environment}
+                            {systemInfo.application?.environment ?? 'N/A'}
                           </dd>
                         </div>
                       </div>
@@ -597,25 +597,25 @@ const Settings = () => {
                         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <dt className="text-sm font-medium text-gray-700 mb-1">Motor de Base de Datos</dt>
                           <dd className="text-sm text-gray-900 font-semibold">
-                            {systemInfo.technology.database_type}
+                            {systemInfo.technology?.database_type ?? 'N/A'}
                           </dd>
                         </div>
                         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <dt className="text-sm font-medium text-gray-700 mb-1">Tamaño de BD</dt>
                           <dd className="text-sm text-gray-900 font-semibold">
-                            {systemInfo.database.size_mb.toFixed(2)} MB
+                            {typeof systemInfo.database?.size_mb === 'number' ? `${systemInfo.database.size_mb.toFixed(2)} MB` : 'N/A'}
                           </dd>
                         </div>
                         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <dt className="text-sm font-medium text-gray-700 mb-1">Número de Tablas</dt>
                           <dd className="text-sm text-gray-900 font-semibold">
-                            {systemInfo.database.tables_count}
+                            {systemInfo.database?.tables_count ?? 'N/A'}
                           </dd>
                         </div>
                         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <dt className="text-sm font-medium text-gray-700 mb-1">Total de Registros</dt>
                           <dd className="text-sm text-gray-900 font-semibold">
-                            {systemInfo.database.total_records.toLocaleString()}
+                            {typeof systemInfo.database?.total_records === 'number' ? systemInfo.database.total_records.toLocaleString() : 'N/A'}
                           </dd>
                         </div>
                       </div>
@@ -629,16 +629,16 @@ const Settings = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 ">
                         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <dt className="text-sm font-medium text-gray-500 mb-1">Django</dt>
-                          <dd className="text-sm text-gray-900 font-semibold">v{systemInfo.technology.django_version}</dd>
+                          <dd className="text-sm text-gray-900 font-semibold">v{systemInfo.technology?.django_version ?? 'N/A'}</dd>
                         </div>
                         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <dt className="text-sm font-medium text-gray-500 mb-1">Python</dt>
-                          <dd className="text-sm text-gray-900 font-semibold">v{systemInfo.technology.python_version}</dd>
+                          <dd className="text-sm text-gray-900 font-semibold">v{systemInfo.technology?.python_version ?? 'N/A'}</dd>
                         </div>
                         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <dt className="text-sm font-medium text-gray-500 mb-1">Sistema Operativo</dt>
                           <dd className="text-sm text-gray-900 font-semibold">
-                            {systemInfo.server.os} {systemInfo.server.os_version}
+                            {systemInfo.server?.os ?? 'N/A'} {systemInfo.server?.os_version ?? ''}
                           </dd>
                         </div>
                       </div>

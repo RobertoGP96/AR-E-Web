@@ -2,12 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
 export interface SystemInfo {
-  application: {
+  application?: {
     version: string;
     last_updated: string;
     environment: string;
   };
-  database: {
+  database?: {
     engine: string;
     size_mb: number;
     tables_count: number;
@@ -21,12 +21,12 @@ export interface SystemInfo {
     };
     total_records: number;
   };
-  server: {
+  server?: {
     os: string;
     os_version: string;
     architecture: string;
   };
-  technology: {
+  technology?: {
     django_version: string;
     python_version: string;
     database_type: string;

@@ -4,6 +4,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 from django.db.models import Q, Count, Sum, Avg
+from django.conf import settings
+import platform
+from django.db import connection
 from django.utils import timezone
 from datetime import timedelta
 from api.models import Order, Product, DeliverReceip, Package, CustomUser
@@ -325,6 +328,70 @@ class SystemInfoView(APIView):
         )
         system_info.update(financial_stats)
 
+        # Add application metadata (from Django settings) if available
+        application_meta = {
+            'version': getattr(settings, 'APP_VERSION', None),
+            'last_updated': getattr(settings, 'LAST_UPDATED', None),
+            'environment': getattr(settings, 'ENVIRONMENT', None),
+        }
+
+        # Technology info
+        try:
+            from django import get_version as get_django_version
+            django_version = get_django_version()
+        except Exception:
+            django_version = None
+
+        technology_info = {
+            'django_version': django_version,
+            'python_version': platform.python_version(),
+            'database_type': connection.vendor if hasattr(connection, 'vendor') else None,
+        }
+
+        # Server information
+        server_info = {
+            'os': platform.system(),
+            'os_version': platform.version(),
+            'architecture': platform.machine(),
+        }
+
+        # Database details: tables count and approximate size if PostgreSQL
+        try:
+            with connection.cursor() as cursor:
+                table_names = connection.introspection.table_names()
+                tables_count = len(table_names)
+                size_mb = None
+                if connection.vendor == 'postgresql':
+                    cursor.execute("SELECT pg_database_size(current_database())")
+                    size_bytes = cursor.fetchone()[0]
+                    size_mb = round(size_bytes / 1024 / 1024, 2)
+        except Exception:
+            tables_count = None
+            size_mb = None
+
+        database_info = {
+            'engine': connection.settings_dict.get('ENGINE') if hasattr(connection, 'settings_dict') else None,
+            'size_mb': size_mb,
+            'tables_count': tables_count,
+            # existing per-model stats are already included in system_info
+            'record_counts': {
+                'users': system_info.get('total_users'),
+                'orders': system_info.get('total_orders'),
+                'products': system_info.get('total_products'),
+                'packages': system_info.get('total_deliveries'),
+                'shops': None,
+                'categories': None,
+            },
+            'total_records': system_info.get('total_products') + system_info.get('total_orders', 0) if isinstance(system_info.get('total_products'), int) else None,
+        }
+
+        # Attach new keys to the original system_info so existing consumers keep working
+        system_info.update({
+                'application': application_meta,
+                'server': server_info,
+                'technology': technology_info,
+                'database': database_info,
+            })
         return Response({
             'success': True,
             'data': system_info,
