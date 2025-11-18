@@ -1,7 +1,7 @@
 """Serializers for Expected Metrics"""
 
 from rest_framework import serializers
-from api.models.models_expected_metrics import ExpectedMetrics
+from api.models.expected_metrics import ExpectedMetrics
 from decimal import Decimal
 
 
@@ -120,31 +120,24 @@ class ExpectedMetricsListSerializer(serializers.ModelSerializer):
     Lightweight serializer for listing expected metrics.
     Includes only essential fields for performance.
     """
-    
-    cost_difference = serializers.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        read_only=True
-    )
-    profit_difference = serializers.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        read_only=True
-    )
-    
+    cost_difference = serializers.SerializerMethodField()
+    weight_difference = serializers.SerializerMethodField()
+    real_profit = serializers.SerializerMethodField()
+    profit_difference = serializers.SerializerMethodField()
+    profit_variance_percentage = serializers.SerializerMethodField()
+
     class Meta:
         model = ExpectedMetrics
         fields = [
             'id',
             'start_date',
             'end_date',
-            'range_delivery_weight',
-            'range_revenue',
-            'range_profit',
-            'delivery_real_cost',
-            'delivery_real_weight',
-            'range_delivery_cost',
-            'others_costs',
+            'registered_weight',
+            'registered_cost',
+            'registered_revenue',
+            'registered_profit',
+            'invoice_weight',
+            'invoice_cost',
             'cost_difference',
             'weight_difference',
             'real_profit',
@@ -153,3 +146,30 @@ class ExpectedMetricsListSerializer(serializers.ModelSerializer):
             'created_at',
         ]
         read_only_fields = ['id', 'created_at', 'cost_difference', 'weight_difference', 'real_profit', 'profit_difference', 'profit_variance_percentage']
+
+    def get_cost_difference(self, obj):
+        invoice = _to_decimal(getattr(obj, 'invoice_cost', None))
+        registered = _to_decimal(getattr(obj, 'registered_cost', None))
+        return invoice - registered
+
+    def get_weight_difference(self, obj):
+        invoice = _to_decimal(getattr(obj, 'invoice_weight', None))
+        registered = _to_decimal(getattr(obj, 'registered_weight', None))
+        return invoice - registered
+
+    def get_real_profit(self, obj):
+        revenue = _to_decimal(getattr(obj, 'registered_revenue', None))
+        invoice = _to_decimal(getattr(obj, 'invoice_cost', None))
+        return revenue - invoice
+
+    def get_profit_difference(self, obj):
+        real = _to_decimal(self.get_real_profit(obj))
+        expected = _to_decimal(getattr(obj, 'registered_profit', None))
+        return real - expected
+
+    def get_profit_variance_percentage(self, obj):
+        expected = _to_decimal(getattr(obj, 'registered_profit', None))
+        if expected == 0:
+            return Decimal('0.00')
+        diff = _to_decimal(self.get_profit_difference(obj))
+        return (diff / expected) * 100

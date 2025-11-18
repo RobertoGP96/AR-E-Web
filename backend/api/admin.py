@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 from .models import CustomUser, Order
-from .models.models_expected_metrics import ExpectedMetrics
+from .models.expected_metrics import ExpectedMetrics
 from decimal import Decimal
 
 

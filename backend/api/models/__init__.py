@@ -10,7 +10,7 @@ from .invoice import Invoice, Tag
 
 # Import existing models
 from ..notifications.models_notifications import Notification, NotificationPreference
-from .models_expected_metrics import ExpectedMetrics
+from .expected_metrics import ExpectedMetrics
 
 __all__ = [
     'CustomUser',

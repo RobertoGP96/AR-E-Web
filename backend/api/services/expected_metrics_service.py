@@ -6,7 +6,7 @@ from datetime import datetime, date
 from typing import Dict, Any, Optional, Tuple
 from decimal import Decimal
 
-from api.models.models_expected_metrics import ExpectedMetrics
+from api.models.expected_metrics import ExpectedMetrics
 from api.models import Order, ProductBuyed, DeliverReceip
 
 

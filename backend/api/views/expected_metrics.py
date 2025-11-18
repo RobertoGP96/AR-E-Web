@@ -7,8 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
-from api.models.models_expected_metrics import ExpectedMetrics
-from api.serializers.serializers_expected_metrics import (
+from api.models.expected_metrics import ExpectedMetrics
+from api.serializers.expected_metrics import (
     ExpectedMetricsSerializer,
     ExpectedMetricsListSerializer
 )
