@@ -73,11 +73,6 @@ export type {
   ProductFilters
 } from './product';
 
-// Modelo de Imágenes de evidencia
-export type {
-  EvidenceImage,
-  CreateEvidenceImageData
-} from './evidence';
 
 // Modelo de Cuenta de compra
 export type {

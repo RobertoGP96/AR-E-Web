@@ -170,7 +170,7 @@ const PackageDetails: React.FC = () => {
                                                 className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-400 transition-all cursor-pointer group"
                                             >
                                                 <img
-                                                    src={image.picture || '/placeholder-image.png'}
+                                                    src={(typeof image === 'string' ? image : image.picture) || '/placeholder-image.png'}
                                                     alt={`Evidencia ${index + 1}`}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                                 />

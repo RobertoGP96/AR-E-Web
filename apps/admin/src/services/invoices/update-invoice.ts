@@ -3,7 +3,7 @@
  */
 
 import { apiClient } from '../../lib/api-client';
-import type { UpdateInvoiceData, Invoice } from '../../types';
+import type { UpdateInvoiceData, Invoice } from '@/types/models';
 
 /**
  * Actualiza un invoice existente

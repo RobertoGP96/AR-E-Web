@@ -120,7 +120,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
   const handleImageUploaded = async (product: any, url: string) => {
     try {
-      const existing = product?.product_pictures?.map((i: any) => i.image_url) ?? [];
+      const existing = product?.product_pictures?.map((i: any) => (typeof i === 'string' ? i : i.image_url || i.picture)) ?? [];
       const newUrls = [...existing, url];
 
       await updateProductMutation.mutateAsync({ id: product.id, product_pictures: newUrls });
@@ -315,7 +315,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                                         title="Ver imágenes"
                                       >
                                         <img
-                                          src={product.original_product.product_pictures[0].image_url || product.original_product.image_url}
+                                          src={(Array.isArray(product.original_product.product_pictures) && (typeof product.original_product.product_pictures[0] === 'string' ? product.original_product.product_pictures[0] : product.original_product.product_pictures[0].image_url)) || product.original_product.image_url}
                                           alt={product.original_product.name}
                                           className="w-full h-full object-cover"
                                         />
@@ -634,7 +634,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
             {imageDialogProduct ? (
               <QuickImageUpload
                 entityType="products"
-                currentImage={imageDialogProduct?.product_pictures && imageDialogProduct.product_pictures.length > 0 ? imageDialogProduct.product_pictures[0].image_url : imageDialogProduct.image_url}
+                currentImage={imageDialogProduct?.product_pictures && imageDialogProduct.product_pictures.length > 0 ? (typeof imageDialogProduct.product_pictures[0] === 'string' ? imageDialogProduct.product_pictures[0] : imageDialogProduct.product_pictures[0].image_url) : imageDialogProduct.image_url}
                 onImageUploaded={(url: string) => handleImageUploaded(imageDialogProduct, url)}
                 folder={undefined}
               />

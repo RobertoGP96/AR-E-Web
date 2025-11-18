@@ -32,9 +32,11 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         # Filtros por rol
         if user.role == 'agent':
-            queryset = queryset.filter(order__agent=user)
-        elif user.role == 'buyer':
-            queryset = queryset.filter(order__buyer=user)
+            # El campo real en Order es 'sales_manager'
+            queryset = queryset.filter(order__sales_manager=user)
+        elif user.role == 'client':
+            # Los clientes están relacionados en Order vía 'client'
+            queryset = queryset.filter(order__client=user)
 
         # Filtros adicionales
         order_id = self.request.query_params.get('order_id')
@@ -111,10 +113,11 @@ class ProductBuyedViewSet(viewsets.ModelViewSet):
         queryset = ProductBuyed.objects.all().order_by('-created_at')
         user = self.request.user
 
-        if user.role == 'buyer':
-            queryset = queryset.filter(buyer=user)
-        elif user.role == 'agent':
-            queryset = queryset.filter(product__order__agent=user)
+        # Filtrar ProductBuyed por relaciones existentes en el modelo
+        if user.role == 'agent':
+            queryset = queryset.filter(original_product__order__sales_manager=user)
+        elif user.role == 'client':
+            queryset = queryset.filter(original_product__order__client=user)
 
         return queryset
 
@@ -145,10 +148,9 @@ class ProductReceivedViewSet(viewsets.ModelViewSet):
         queryset = ProductReceived.objects.all().order_by('-created_at')
         user = self.request.user
 
-        if user.role == 'logistical':
-            queryset = queryset.filter(logistical=user)
-        elif user.role == 'agent':
-            queryset = queryset.filter(product__order__agent=user)
+        # Filtrar ProductReceived por relaciones existentes
+        if user.role == 'agent':
+            queryset = queryset.filter(original_product__order__sales_manager=user)
 
         return queryset
 
@@ -179,12 +181,11 @@ class ProductDeliveryViewSet(viewsets.ModelViewSet):
         queryset = ProductDelivery.objects.all().order_by('-created_at')
         user = self.request.user
 
-        if user.role == 'logistical':
-            queryset = queryset.filter(logistical=user)
-        elif user.role == 'client':
-            queryset = queryset.filter(product__order__client=user)
+        # Filtrar ProductDelivery por relaciones existentes
+        if user.role == 'client':
+            queryset = queryset.filter(original_product__order__client=user)
         elif user.role == 'agent':
-            queryset = queryset.filter(product__order__agent=user)
+            queryset = queryset.filter(original_product__order__sales_manager=user)
 
         return queryset
 

@@ -2,12 +2,9 @@
  * Servicio para obtener invoices
  */
 
-import { apiClient } from '../../lib/api-client';
-import type {
-  Invoice,
-  InvoiceResponse,
-  InvoiceFilters
-} from '../../types';
+import type { Invoice, InvoiceFilters, InvoiceResponse } from '@/types/models';
+import { apiClient } from '@/lib/api-client';
+
 
 /**
  * Obtiene lista paginada de invoices

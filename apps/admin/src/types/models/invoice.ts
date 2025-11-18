@@ -2,6 +2,7 @@
  * Tipos para el modelo Invoice
  */
 
+import type { BaseFilters } from '../api';
 import type { ID, DateTime } from './base';
 
 // Modelo principal de Invoice
@@ -52,7 +53,7 @@ export interface UpdateTagData extends Partial<CreateTagData> {
 }
 
 // Filtros para invoices
-export interface InvoiceFilters {
+export interface InvoiceFilters extends BaseFilters {
   search?: string;
   date_from?: string;
   date_to?: string;

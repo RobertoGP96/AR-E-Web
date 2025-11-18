@@ -15,7 +15,8 @@ export interface DeliverReceip {
   weight: number;
   status: DeliveryStatus;
   deliver_date: DateTime;
-  deliver_picture: string;
+  // Las imágenes de entrega son un array de URLs (strings)
+  deliver_picture?: string[];
   
   // Costos (del backend)
   weight_cost: number;

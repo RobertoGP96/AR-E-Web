@@ -31,11 +31,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         # Filtros por rol
         if user.role == 'agent':
-            queryset = queryset.filter(agent=user)
-        elif user.role == 'buyer':
-            queryset = queryset.filter(buyer=user)
-        elif user.role == 'logistical':
-            queryset = queryset.filter(logistical=user)
+            # Campo real en el modelo Order
+            queryset = queryset.filter(sales_manager=user)
         elif user.role == 'client':
             queryset = queryset.filter(client=user)
 
@@ -141,19 +138,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Validar permisos por rol
+        # Validar permisos por rol (solo comprobación para agents -> sales_manager)
         user = request.user
-        if user.role == 'agent' and order.agent != user:
-            return Response(
-                {"error": "No tienes permiso para cambiar esta orden"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        elif user.role == 'buyer' and order.buyer != user:
-            return Response(
-                {"error": "No tienes permiso para cambiar esta orden"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        elif user.role == 'logistical' and order.logistical != user:
+        if user.role == 'agent' and order.sales_manager != user:
             return Response(
                 {"error": "No tienes permiso para cambiar esta orden"},
                 status=status.HTTP_403_FORBIDDEN
@@ -185,14 +172,14 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
 
         if role == 'agent':
-            order.agent = user
-        elif role == 'buyer':
-            order.buyer = user
-        elif role == 'logistical':
-            order.logistical = user
+            # Asignar agente como sales_manager en el modelo Order
+            order.sales_manager = user
+        elif role == 'client':
+            # Permitir reasignar el cliente de la orden
+            order.client = user
         else:
             return Response(
-                {"error": "Rol inválido"},
+                {"error": "Rol no soportado para asignación"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 

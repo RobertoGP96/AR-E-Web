@@ -140,6 +140,29 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     Serializador para crear órdenes.
     """
 
+    # Definir explícitamente los campos write-only para validar correctamente
+    client_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(),
+        write_only=True,
+        source='client',
+        error_messages={
+            "does_not_exist": "El cliente con ID {value} no existe.",
+            "invalid": "El valor proporcionado para el cliente no es válido.",
+        },
+    )
+
+    sales_manager_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(),
+        write_only=True,
+        source='sales_manager',
+        allow_null=True,
+        required=False,
+        error_messages={
+            "does_not_exist": "El agente con ID {value} no existe.",
+            "invalid": "El valor proporcionado para el agente no es válido.",
+        },
+    )
+
     class Meta:
         model = Order
         fields = [

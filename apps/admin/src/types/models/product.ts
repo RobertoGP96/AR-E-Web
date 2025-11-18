@@ -25,7 +25,8 @@ export interface Product {
   
   order: number | Order;
   status: ProductStatus;
-  product_pictures: string;
+  // Puede ser un array de URLs o un array de objetos con la propiedad image_url
+  product_pictures?: (string | { image_url?: string; picture?: string })[];
   
   // Precios
   shop_cost: number;
@@ -79,6 +80,7 @@ export interface CreateProductData {
   own_taxes?: number;
   added_taxes?: number;
   total_cost?: number;
+  product_pictures?: string[];
 }
 
 export interface UpdateProductData extends Partial<CreateProductData> {

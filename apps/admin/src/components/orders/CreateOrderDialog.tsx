@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useCreateOrder } from '@/hooks/order';
-import { useUsers } from '@/hooks/user';
+import { useUsersByRole } from '@/hooks/user';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -31,9 +31,9 @@ interface CreateOrderDialogProps {
 export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps) {
   const createOrderMutation = useCreateOrder();
   
-  // Obtener usuarios (clientes y agentes)
-  const { data: clientsData } = useUsers({ role: 'client' });
-  const { data: agentsData } = useUsers({ role: 'agent' });
+  // Obtener usuarios (clientes y agentes) usando hooks específicos por rol
+  const { data: clientsData } = useUsersByRole('client');
+  const { data: agentsData } = useUsersByRole('agent');
   
   const agents = agentsData?.results || [];
 
@@ -159,9 +159,9 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="0">
-                    <span className="text-muted-foreground">Todos los clientes</span>
+                    <span className="text-muted-foreground">Todos agentes</span>
                   </SelectItem>
-                  {agents.map((agent: CustomUser) => (
+                  {agents.filter(agent => agent.role === 'agent').map((agent: CustomUser) => (
                     <SelectItem key={agent.id} value={agent.id.toString()}>
                       {agent.full_name}
                     </SelectItem>

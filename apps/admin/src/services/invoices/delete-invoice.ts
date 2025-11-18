@@ -2,7 +2,7 @@
  * Servicio para eliminar invoices
  */
 
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '@/lib/api-client';
 
 /**
  * Elimina un invoice por ID

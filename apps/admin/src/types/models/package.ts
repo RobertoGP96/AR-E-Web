@@ -12,7 +12,8 @@ export interface Package {
   number_of_tracking: string;
   status_of_processing: PackageStatus;
   arrival_date: string;
-  package_picture: string;
+  // Puede ser un array de URLs o un array de objetos con la propiedad picture
+  package_picture?: (string | { picture?: string })[];
   contained_products?: ProductReceived[]; // Productos contenidos en el paquete
   created_at: string;
   updated_at: string;

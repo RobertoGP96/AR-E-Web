@@ -12,7 +12,9 @@ class Order(models.Model):
         'api.CustomUser', on_delete=models.CASCADE, related_name="orders"
     )
     sales_manager = models.ForeignKey(
-        'api.CustomUser', on_delete=models.CASCADE, related_name="managed_orders"
+        'api.CustomUser', on_delete=models.CASCADE, related_name="managed_orders",
+        null=True,
+        blank=True,
     )
     status = models.CharField(
         max_length=100,

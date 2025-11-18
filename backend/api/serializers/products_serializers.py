@@ -404,12 +404,30 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     """
     Serializador para crear productos.
     """
-
     class Meta:
         model = Product
+        # Ajustar los campos al modelo Product tal como está definido
         fields = [
-            'order', 'shop', 'name', 'description', 'url', 'price', 'amount_requested',
-            'category', 'tracking_number', 'status', 'notes', 'images'
+            'order',
+            'shop',
+            'name',
+            'description',
+            'link',
+            'sku',
+            'amount_requested',
+            'category',
+            'status',
+            'observation',
+            'product_pictures',
+            'shop_cost',
+            'shop_delivery_cost',
+            'shop_taxes',
+            'charge_iva',
+            'base_tax',
+            'shop_tax_amount',
+            'own_taxes',
+            'added_taxes',
+            'total_cost',
         ]
 
     def validate_amount_requested(self, value):
@@ -417,22 +435,56 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La cantidad solicitada debe ser un número positivo.")
         return value
 
-    def validate_price(self, value):
-        if value <= 0:
-            raise serializers.ValidationError("El precio debe ser un número positivo.")
+    def validate_shop_cost(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError("El costo de la tienda no puede ser negativo.")
         return value
+
+    def create(self, validated_data):
+        # Serializar product_pictures si viene como lista
+        pics = validated_data.get('product_pictures')
+        if isinstance(pics, list):
+            try:
+                validated_data['product_pictures'] = json.dumps(pics)
+            except Exception:
+                validated_data['product_pictures'] = '[]'
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        pics = validated_data.get('product_pictures')
+        if isinstance(pics, list):
+            try:
+                validated_data['product_pictures'] = json.dumps(pics)
+            except Exception:
+                validated_data['product_pictures'] = getattr(instance, 'product_pictures', '[]')
+        return super().update(instance, validated_data)
 
 
 class ProductUpdateSerializer(serializers.ModelSerializer):
     """
     Serializador para actualizar productos.
     """
-
     class Meta:
         model = Product
         fields = [
-            'name', 'description', 'url', 'price', 'amount_requested',
-            'category', 'tracking_number', 'status', 'notes', 'images'
+            'name',
+            'description',
+            'link',
+            'sku',
+            'shop_cost',
+            'shop_delivery_cost',
+            'shop_taxes',
+            'charge_iva',
+            'base_tax',
+            'shop_tax_amount',
+            'own_taxes',
+            'added_taxes',
+            'total_cost',
+            'amount_requested',
+            'category',
+            'status',
+            'observation',
+            'product_pictures',
         ]
 
     def validate_amount_requested(self, value):
@@ -440,7 +492,16 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La cantidad solicitada debe ser un número positivo.")
         return value
 
-    def validate_price(self, value):
-        if value <= 0:
-            raise serializers.ValidationError("El precio debe ser un número positivo.")
+    def validate_shop_cost(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError("El costo de la tienda no puede ser negativo.")
         return value
+    
+    def update(self, instance, validated_data):
+        pics = validated_data.get('product_pictures')
+        if isinstance(pics, list):
+            try:
+                validated_data['product_pictures'] = json.dumps(pics)
+            except Exception:
+                validated_data['product_pictures'] = getattr(instance, 'product_pictures', '[]')
+        return super().update(instance, validated_data)

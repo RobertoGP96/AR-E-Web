@@ -2,7 +2,7 @@ import DeliveryStatusBadge from './DeliveryStatusBadge';
 import EditDeliveryDialog from './EditDeliveryDialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import type { DeliverReceip, DeliveryStatus, EvidenceImage } from '@/types';
+import type { DeliverReceip, DeliveryStatus } from '@/types';
 import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Truck, Package, CheckCircle2, Weight, Boxes } from 'lucide-react';
 import { formatDeliveryDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
@@ -188,7 +188,8 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
 
   const handleCaptureUploaded = async (delivery: DeliverReceip, url: string) => {
     try {
-      const existing = (delivery.deliver_picture && (delivery.deliver_picture as EvidenceImage[]).map((i) => i.image_url)) ?? [];
+      // deliver_picture from backend is an array of image URLs (string[]), so cast accordingly
+      const existing = (delivery.deliver_picture && (delivery.deliver_picture as string[])) ?? [];
       const newUrls = [...existing, url];
 
       await updateDeliveryMutation.mutateAsync({ id: delivery.id, data: { id: delivery.id, deliver_picture: newUrls } });
@@ -199,6 +200,21 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
       console.error('Error actualizando imagen de la entrega:', err);
       toast.error('Error al guardar la imagen de la entrega');
     }
+  };
+
+  // Helper para obtener la URL de imagen del producto con tolerancia a tipos
+  const getProductImageUrl = (product: { product_pictures?: unknown; image_url?: string } | null | undefined): string | undefined => {
+    if (!product) return undefined;
+    // product_pictures puede ser array de objetos { image_url } o array de strings o string
+    const pics = product.product_pictures as unknown;
+    if (Array.isArray(pics) && pics.length > 0) {
+      const item = pics[0];
+      if (!item) return product.image_url;
+      if (typeof item === 'string') return item;
+      return item.image_url || product.image_url;
+    }
+    if (typeof pics === 'string' && pics) return pics;
+    return product.image_url;
   };
 
   if (isLoading) {
@@ -317,7 +333,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                                     {product.original_product?.product_pictures && product.original_product.product_pictures.length > 0 ? (
                                       <div className="rounded-md overflow-hidden w-14 h-14 bg-muted border border-muted-foreground/10" title="Imagen del producto">
                                         <img
-                                          src={product.original_product.product_pictures[0].image_url || product.original_product.image_url}
+                                          src={getProductImageUrl(product.original_product) || ''}
                                           alt={product.original_product.name}
                                           className="w-full h-full object-cover"
                                         />
@@ -370,7 +386,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                     >
                       {delivery.deliver_picture && delivery.deliver_picture.length > 0 ? (
                         <img
-                          src={((delivery.deliver_picture as EvidenceImage[])[0] || {}).image_url}
+                          src={((delivery.deliver_picture as string[])[0] || '')}
                           alt={`Entrega ${delivery.id}`}
                           className="h-8 w-8 object-cover rounded-md"
                         />
@@ -632,7 +648,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
             {captureDelivery ? (
               <QuickImageUpload
                 entityType="deliveries"
-                currentImage={captureDelivery?.deliver_picture && captureDelivery.deliver_picture.length > 0 ? (captureDelivery.deliver_picture as EvidenceImage[])[0].image_url : undefined}
+                currentImage={captureDelivery?.deliver_picture && captureDelivery.deliver_picture.length > 0 ? (captureDelivery.deliver_picture as string[])[0] : undefined}
                 onImageUploaded={(url: string) => handleCaptureUploaded(captureDelivery, url)}
                 folder={undefined}
                 label="Subir/Actualizar imagen de entrega"

@@ -2,8 +2,8 @@
  * Servicio para crear invoices
  */
 
-import { apiClient } from '../../lib/api-client';
-import type { CreateInvoiceData, Invoice } from '../../types';
+import type { CreateInvoiceData, Invoice } from '@/types/models';
+import { apiClient } from '@/lib/api-client';
 
 /**
  * Crea un nuevo invoice
