@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from api.models import DeliverReceip, Package, CustomUser, Category, EvidenceImages, ProductReceived
+from api.models import DeliverReceip, Package, CustomUser, Category, ProductReceived
+import json
 from .users_serializers import UserSerializer
 from .products_serializers import CategorySerializer, ProductReceivedSerializer
 from .products_serializers import ProductDeliverySerializer
@@ -44,16 +45,10 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
     # Categoría para lectura
     category = CategorySerializer(read_only=True)
 
-    deliver_picture = serializers.SlugRelatedField(
-        queryset=EvidenceImages.objects.all(),
-        many=True,
-        slug_field="image_url",
+    deliver_picture = serializers.ListField(
+        child=serializers.URLField(),
         required=False,
         allow_empty=True,
-        error_messages={
-            "does_not_exist": "La imagen {value} no existe.",
-            "invalid": "El valor proporcionado para la imagen no es válido.",
-        },
     )
     delivered_products = ProductDeliverySerializer(many=True, read_only=True)
 
@@ -86,6 +81,36 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
+    def create(self, validated_data):
+        """Handle deliver_picture list input and store it as JSON text on the model."""
+        deliver_picture_data = validated_data.pop('deliver_picture', [])
+        # Create the delivery receipt without picture data
+        delivery = DeliverReceip.objects.create(**validated_data)
+
+        # Store the list of URLs as a JSON string
+        try:
+            delivery.deliver_picture = json.dumps(deliver_picture_data or [])
+        except Exception:
+            delivery.deliver_picture = '[]'
+        delivery.save(update_fields=['deliver_picture', 'updated_at'])
+
+        return delivery
+
+    def to_representation(self, instance):
+        """Ensure deliver_picture is returned as a list (parsed from JSON text)."""
+        ret = super().to_representation(instance)
+        raw = getattr(instance, 'deliver_picture', None)
+        if raw:
+            try:
+                ret['deliver_picture'] = json.loads(raw)
+            except Exception:
+                # If not valid JSON, return empty list
+                ret['deliver_picture'] = []
+        else:
+            ret['deliver_picture'] = []
+        return ret
+
+
 
     @extend_schema_field(float)
     def get_delivery_expenses(self, obj):
@@ -105,15 +130,9 @@ class PackageSerializer(serializers.ModelSerializer):
     """
     """Package Serializer"""
 
-    package_picture = serializers.SlugRelatedField(
-        queryset=EvidenceImages.objects.all(),
-        many=True,
-        slug_field="image_url",
+    package_picture = serializers.ListField(
+        child=serializers.URLField(),
         required=False,
-        error_messages={
-            "does_not_exist": "El pedido {value} no existe.",
-            "invalid": "El valor proporcionado para el pedido no es válido.",
-        },
     )
     contained_products = ProductReceivedSerializer(
         many=True,
@@ -141,12 +160,27 @@ class PackageSerializer(serializers.ModelSerializer):
         contained_products_data = validated_data.pop('package_products', [])
         package = Package.objects.create(**validated_data)
 
-        # Asignar imágenes si se proporcionaron
-        if package_picture_data:
-            images = EvidenceImages.objects.filter(image_url__in=package_picture_data)
-            package.package_picture.set(images)
+        # Store package pictures as JSON string
+        try:
+            package.package_picture = json.dumps(package_picture_data or [])
+        except Exception:
+            package.package_picture = '[]'
+        package.save(update_fields=['package_picture', 'updated_at'])
 
         # Crear productos contenidos si se proporcionaron
         for product_data in contained_products_data:
             ProductReceived.objects.create(package=package, **product_data)
         return package
+
+    def to_representation(self, instance):
+        """Ensure package_picture is returned as a list (parsed from JSON text)."""
+        ret = super().to_representation(instance)
+        raw = getattr(instance, 'package_picture', None)
+        if raw:
+            try:
+                ret['package_picture'] = json.loads(raw)
+            except Exception:
+                ret['package_picture'] = []
+        else:
+            ret['package_picture'] = []
+        return ret

@@ -7,6 +7,7 @@ from datetime import date, timedelta
 
 from api.services.expected_metrics_service import ExpectedMetricsService
 from api.models_expected_metrics import ExpectedMetrics
+from api.models import DeliverReceip, Order, ProductBuyed, CustomUser
 
 
 class ExpectedMetricsServiceTest(TestCase):
@@ -124,6 +125,45 @@ class ExpectedMetricsServiceTest(TestCase):
         self.assertFalse(result['success'])
         self.assertIn('Invalid date format', result['error'])
 
+    def test_calculate_range_data_aggregates_values(self):
+        """Test that calculate_range_data correctly aggregates deliveries, orders and purchases"""
+        from api.models import CustomUser
+
+        client = CustomUser.objects.create_user(
+            phone_number='0987654321',
+            name='Client2',
+            last_name='Test',
+            home_address='There',
+            password='test',
+            role='client'
+        )
+
+        # Create deliveries in range
+        DeliverReceip.objects.create(
+            client=client,
+            weight=10.0,
+            weight_cost=5.0,
+            deliver_date=self.yesterday
+        )
+
+        # Create order
+        order = Order.objects.create(
+            client=client,
+            sales_manager=client,
+            received_value_of_client=50.0
+        )
+
+
+        result = ExpectedMetricsService.calculate_range_data(
+            self.yesterday.strftime('%Y-%m-%d'),
+            self.tomorrow.strftime('%Y-%m-%d')
+        )
+
+        self.assertTrue(result['success'])
+        self.assertEqual(result['orders_count'], 1)
+        self.assertEqual(result['deliveries_count'], 1)
+        self.assertEqual(result['products_bought_count'], 0)
+
     def test_calculate_actuals_for_metric(self):
         """Test calculating actuals for a metric"""
         # Note: This test would require actual Order and ProductBuyed data
@@ -136,3 +176,67 @@ class ExpectedMetricsServiceTest(TestCase):
         self.assertEqual(result['actual_cost'], Decimal('0'))
         self.assertEqual(result['orders_count'], 0)
         self.assertEqual(result['products_bought_count'], 0)
+
+    def test_calculate_actuals_updates_delivery_weight_and_cost(self):
+        """Test that calculate_actuals_for_metric aggregates delivery weight and costs"""
+        # Create a client to attach deliveries to
+        from api.models import CustomUser
+
+        client = CustomUser.objects.create_user(
+            phone_number='1234567890',
+            name='Client',
+            last_name='Test',
+            home_address='Nowhere',
+            password='test',
+            role='client'
+        )
+
+        # Create a delivery within the metric date range
+        DeliverReceip.objects.create(
+            client=client,
+            weight=Decimal('12.50'),
+            weight_cost=Decimal('7.50'),
+            deliver_date=self.yesterday
+        )
+
+        # Create shopping receipt and purchase inside the date range so that purchases are included
+        from api.models import Shop, BuyingAccounts, ShoppingReceip, Product
+
+        shop = Shop.objects.create(name='ShopTest', link='https://example.com')
+        account = BuyingAccounts.objects.create(account_name='Acct1', shop=shop)
+        shop_receip = ShoppingReceip.objects.create(shopping_account=account, shop_of_buy=shop, buy_date=self.yesterday)
+
+        order = Order.objects.create(client=client, sales_manager=client, received_value_of_client=100.0)
+
+        product = Product.objects.create(
+            name='TestProd',
+            shop=shop,
+            amount_requested=1,
+            shop_cost=10.0,
+            order=order
+        )
+
+        # Create the purchase
+        ProductBuyed.objects.create(
+            original_product=product,
+            actual_cost_of_product=0.0,
+            shop_discount=0,
+            offer_discount=0,
+            shoping_receip=shop_receip,
+            amount_buyed=1,
+            real_cost_of_product=20.0,
+            buy_date=self.yesterday,
+        )
+
+        # Call the method
+        result = ExpectedMetricsService.calculate_actuals_for_metric(self.metric)
+
+        # Confirm delivery aggregates are returned and metric updated
+        self.assertTrue(result['success'])
+        # delivery_cost should include purchases now (7.5 + 20.0)
+        self.assertEqual(result['delivery_cost_including_purchases'], Decimal('27.50'))
+        self.assertEqual(result['delivery_weight'], Decimal('12.50'))
+        # Check that metric object persisted the values
+        metric = ExpectedMetrics.objects.get(id=self.metric.id)
+        self.assertEqual(metric.delivery_real_cost, Decimal('27.50'))
+        self.assertEqual(metric.delivery_real_weight, Decimal('12.50'))

@@ -62,21 +62,6 @@ class CommonInformation(models.Model):
         verbose_name_plural = "Información Común"
 
 
-class EvidenceImages(models.Model):
-    """Images for products"""
-
-    public_id = models.CharField(max_length=200, null=True, blank=True)
-    image_url = models.URLField()
-    description = models.CharField(max_length=255, blank=True, null=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    objects = models.Manager()
-
-    def __str__(self):
-        return f"Image: {self.public_id or 'No ID'}"
-
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = "Evidence Image"
-        verbose_name_plural = "Evidence Images"
+# NOTE: The EvidenceImages model was removed. Image references are now stored
+# as plain text fields (JSON encoded lists of URLs) on related models. Keep
+# CommonInformation here as the module's main shared model.

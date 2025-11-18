@@ -33,7 +33,6 @@ from .deliveries_serializers import (
 )
 from .common_serializers import (
     CommonInformationSerializer,
-    EvidenceImagesSerializer,
     ImageUploadSerializer
 )
 from .amazon_serializers import (
@@ -86,7 +85,6 @@ __all__ = [
 
     # Common
     'CommonInformationSerializer',
-    'EvidenceImagesSerializer',
     'ImageUploadSerializer',
 
     # Amazon

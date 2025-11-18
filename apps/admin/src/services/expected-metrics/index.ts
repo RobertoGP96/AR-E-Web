@@ -4,10 +4,9 @@
  */
 
 import { apiClient } from '../../lib/api-client';
-import type { 
-  ApiResponse, 
+import type {
   PaginatedApiResponse,
-  BaseFilters
+  BaseFilters,
 } from '../../types/api';
 import type {
   ExpectedMetrics,
@@ -31,21 +30,21 @@ export const expectedMetricsService = {
   /**
    * Obtener una métrica por ID
    */
-  getMetricById: async (id: number): Promise<ApiResponse<ExpectedMetrics>> => {
+  getMetricById: async (id: number): Promise<ExpectedMetrics> => {
     return apiClient.get(`${BASE_PATH}/${id}/`);
   },
 
   /**
    * Crear una nueva métrica esperada
    */
-  createMetric: async (data: CreateExpectedMetricsData): Promise<ApiResponse<ExpectedMetrics>> => {
+  createMetric: async (data: CreateExpectedMetricsData): Promise<ExpectedMetrics> => {
     return apiClient.post(BASE_PATH + '/', data);
   },
 
   /**
    * Actualizar una métrica existente
    */
-  updateMetric: async (id: number, data: UpdateExpectedMetricsData): Promise<ApiResponse<ExpectedMetrics>> => {
+  updateMetric: async (id: number, data: UpdateExpectedMetricsData): Promise<ExpectedMetrics> => {
     return apiClient.patch(`${BASE_PATH}/${id}/`, data);
   },
 
@@ -59,21 +58,21 @@ export const expectedMetricsService = {
   /**
    * Calcular valores reales desde los datos del sistema
    */
-  calculateActuals: async (id: number): Promise<ApiResponse<CalculateActualsResponse>> => {
+  calculateActuals: async (id: number): Promise<CalculateActualsResponse> => {
     return apiClient.post(`${BASE_PATH}/${id}/calculate-actuals/`, {});
   },
 
   /**
    * Obtener resumen de todas las métricas
    */
-  getSummary: async (): Promise<ApiResponse<ExpectedMetricsSummary>> => {
+  getSummary: async (): Promise<ExpectedMetricsSummary> => {
     return apiClient.get(`${BASE_PATH}/summary/`);
   },
 
   /**
    * Calcular datos reales para un rango de fechas
    */
-  calculateRangeData: async (start: string, end: string): Promise<ApiResponse<{
+  calculateRangeData: async (start: string, end: string): Promise<{
     start_date: string;
     end_date: string;
     total_weight: number;
@@ -83,7 +82,7 @@ export const expectedMetricsService = {
     orders_count: number;
     deliveries_count: number;
     products_bought_count: number;
-  }>> => {
+  }> => {
     return apiClient.get(`${BASE_PATH}/calculate-range-data/`, {
       params: { start, end }
     });

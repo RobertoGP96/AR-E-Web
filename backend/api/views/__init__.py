@@ -25,7 +25,6 @@ from .shop_views import (
 from .common_views import (
     CategoryViewSet,
     CommonInformationViewSet,
-    EvidenceImagesViewSet,
     ImageUploadApiView
 )
 from .dashboard_views import (
@@ -74,7 +73,6 @@ __all__ = [
     # Common views
     'CategoryViewSet',
     'CommonInformationViewSet',
-    'EvidenceImagesViewSet',
     'ImageUploadApiView',
 
     # Dashboard views

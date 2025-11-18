@@ -5,7 +5,7 @@ from .orders import Order
 from .shops import Shop, BuyingAccounts, ShoppingReceip
 from .products import Category, Product, ProductBuyed, ProductReceived, ProductDelivery
 from .deliveries import DeliverReceip, Package
-from .common import CommonInformation, EvidenceImages
+from .common import CommonInformation
 from .invoice import Invoice, Tag
 
 # Import existing models
@@ -26,7 +26,6 @@ __all__ = [
     'DeliverReceip',
     'Package',
     'CommonInformation',
-    'EvidenceImages',
     'Invoice',
     'Tag',
     'Notification',

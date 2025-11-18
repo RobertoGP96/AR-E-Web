@@ -32,8 +32,8 @@ export interface ExpectedMetrics {
  * Datos para crear una nueva métrica esperada
  */
 export interface CreateExpectedMetricsData {
-  start_date: string; // Formato: YYYY-MM-DD
-  end_date: string; // Formato: YYYY-MM-DD
+  start_date: string | undefined; // Formato: YYYY-MM-DD
+  end_date: string | undefined; // Formato: YYYY-MM-DD
   range_delivery_weight: number | undefined;
   range_delivery_cost: number | undefined;
   range_revenue: number | undefined;

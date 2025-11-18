@@ -37,9 +37,10 @@ class ExpectedMetricsService:
             # Calculate actual profits from orders (received_value - total_cost)
             # Since profit is calculated as received_value_of_client - total_cost(),
             # and total_cost is a method, we need to calculate it differently
-            total_received = orders.aggregate(
+            total_received_raw = orders.aggregate(
                 total_received=Sum('received_value_of_client')
-            )['total_received'] or Decimal('0')
+            )['total_received'] or 0
+            total_received = Decimal(str(total_received_raw)) if total_received_raw is not None else Decimal('0')
 
             # For simplicity, we'll calculate profit as total_received - total_cost
             # This requires getting all orders and calculating their total_cost
@@ -58,16 +59,38 @@ class ExpectedMetricsService:
             actual_cost_data = products_bought.aggregate(
                 total_cost=Sum('real_cost_of_product')
             )
-            actual_cost = actual_cost_data['total_cost'] or Decimal('0')
+            actual_cost_raw = actual_cost_data['total_cost'] or 0
+            actual_cost = Decimal(str(actual_cost_raw)) if actual_cost_raw is not None else Decimal('0')
 
-            # Update the metric with calculated values
-            metric.delivery_real_cost = actual_cost
+            # Calculate delivery totals in the metric range
+            deliveries = DeliverReceip.objects.filter(
+                deliver_date__date__gte=metric.start_date,
+                deliver_date__date__lte=metric.end_date
+            )
+
+            delivery_data = deliveries.aggregate(
+                total_weight=Sum('weight'),
+                total_delivery_cost=Sum('weight_cost')
+            )
+
+            total_delivery_weight_raw = delivery_data['total_weight'] or 0
+            total_delivery_cost_raw = delivery_data['total_delivery_cost'] or 0
+            total_delivery_weight = Decimal(str(total_delivery_weight_raw)) if total_delivery_weight_raw is not None else Decimal('0')
+            total_delivery_cost = Decimal(str(total_delivery_cost_raw)) if total_delivery_cost_raw is not None else Decimal('0')
+
+            # Update the metric with calculated delivery weight and combined delivery+purchase cost
+            metric.delivery_real_cost = total_delivery_cost + actual_cost
+            metric.delivery_real_weight = total_delivery_weight
             metric.save()
 
             return {
                 'success': True,
                 'actual_profit': actual_profit,
                 'actual_cost': actual_cost,
+                'delivery_cost': total_delivery_cost,
+                'purchase_cost': actual_cost,
+                'delivery_cost_including_purchases': total_delivery_cost + actual_cost,
+                'delivery_weight': total_delivery_weight,
                 'orders_count': orders.count(),
                 'products_bought_count': products_bought.count(),
                 'metric': metric
@@ -107,8 +130,10 @@ class ExpectedMetricsService:
                 total_delivery_cost=Sum('weight_cost')
             )
 
-            total_weight = delivery_data['total_weight'] or Decimal('0')
-            total_delivery_cost = delivery_data['total_delivery_cost'] or Decimal('0')
+            total_weight_raw = delivery_data['total_weight'] or 0
+            total_delivery_cost_raw = delivery_data['total_delivery_cost'] or 0
+            total_weight = Decimal(str(total_weight_raw)) if total_weight_raw is not None else Decimal('0')
+            total_delivery_cost = Decimal(str(total_delivery_cost_raw)) if total_delivery_cost_raw is not None else Decimal('0')
 
             # Calculate orders data
             orders = Order.objects.filter(
@@ -120,7 +145,8 @@ class ExpectedMetricsService:
                 total_revenue=Sum('received_value_of_client')
             )
 
-            total_revenue = orders_data['total_revenue'] or Decimal('0')
+            total_revenue_raw = orders_data['total_revenue'] or 0
+            total_revenue = Decimal(str(total_revenue_raw)) if total_revenue_raw is not None else Decimal('0')
 
             # Calculate total profit as revenue - cost for each order
             total_order_profit = Decimal('0')
@@ -136,12 +162,12 @@ class ExpectedMetricsService:
             purchase_data = products_bought.aggregate(
                 total_purchase_cost=Sum('real_cost_of_product')
             )
-
-            total_purchase_cost = purchase_data['total_purchase_cost'] or Decimal('0')
+            total_purchase_cost_raw = purchase_data['total_purchase_cost'] or 0
+            total_purchase_cost = Decimal(str(total_purchase_cost_raw)) if total_purchase_cost_raw is not None else Decimal('0')
 
             # Calculate totals
             total_cost = total_delivery_cost + total_purchase_cost
-            total_profit = float(total_order_profit)
+            total_profit = total_order_profit
 
             return {
                 'success': True,

@@ -4,7 +4,6 @@ import {
   Plus,
   Calculator,
   TrendingUp,
-  TrendingDown,
   Calendar,
   DollarSign,
   Scale,
@@ -15,7 +14,6 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DatePicker } from '@/components/utils/DatePicker';
@@ -36,11 +34,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { expectedMetricsService } from '@/services';
+import { expectedMetricsService, calculateInvoiceRangeData } from '@/services';
+import ComparisonCards from '@/components/utils/ComparisonCards';
 import ValueWithUnit from '@/components/utils/ValueWithUnit';
+import LoadingSpinner from '@/components/utils/LoadingSpinner';
+import EmptyCalculation from '@/components/utils/EmptyCalculation';
 import type {
   ExpectedMetrics,
   CreateExpectedMetricsData,
@@ -48,8 +48,8 @@ import type {
 } from '@/types';
 
 type FormDataState = {
-  start_date: string;
-  end_date: string;
+  start_date: string | undefined;
+  end_date: string | undefined;
   range_delivery_weight: string;
   range_delivery_cost: string;
   range_revenue: string;
@@ -58,6 +58,18 @@ type FormDataState = {
   delivery_real_cost: string;
   others_costs: string;
   notes: string;
+};
+
+type RangeData = {
+  start_date: string;
+  end_date: string;
+  total_weight: number;
+  total_cost: number;
+  total_profit: number;
+  total_revenue: number;
+  orders_count: number;
+  deliveries_count: number;
+  products_bought_count: number;
 };
 
 const formatDateYYYYMMDD = (date: Date) => {
@@ -72,8 +84,8 @@ const ExpectedMetricsPage = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingMetric, setEditingMetric] = useState<ExpectedMetrics | null>(null);
   const [formData, setFormData] = useState<FormDataState>({
-    start_date: '',
-    end_date: '',
+    start_date: undefined,
+    end_date: undefined,
     range_delivery_weight: '',
     range_delivery_cost: '',
     range_revenue: '',
@@ -96,8 +108,12 @@ const ExpectedMetricsPage = () => {
     queryFn: () => expectedMetricsService.getSummary(),
   });
 
-  // Query para calcular datos del rango de fechas
-  const { data: rangeDataResponse, isLoading: isLoadingRangeData } = useQuery({
+  // Query para calcular datos del rango de fechas (solo se ejecuta manualmente con refetch)
+  const {
+    data: rangeDataResponse,
+    isFetching: isFetchingRangeData,
+    refetch: refetchRangeData,
+  } = useQuery<RangeData | null>({
     queryKey: ['expected-metrics-range-data', formData.start_date, formData.end_date],
     queryFn: () => {
       if (formData.start_date && formData.end_date) {
@@ -105,24 +121,51 @@ const ExpectedMetricsPage = () => {
       }
       return null;
     },
-    enabled: !!(formData.start_date && formData.end_date && !editingMetric), // Solo cuando hay fechas y no estamos editando
+    enabled: false, // deshabilitada por defecto; se ejecuta manualmente al presionar el botón
   });
+
+  // Query para obtener datos de invoices para el mismo rango (comparación) - manual
+  const {
+    data: invoiceRangeDataResponse,
+    isFetching: isFetchingInvoiceRange,
+    refetch: refetchInvoiceRangeData,
+  } = useQuery<import('@/types/models/invoice').InvoiceRangeData | null>({
+    queryKey: ['invoices-range-data', formData.start_date, formData.end_date],
+    queryFn: () => {
+      if (formData.start_date && formData.end_date) {
+        return calculateInvoiceRangeData(formData.start_date, formData.end_date);
+      }
+      return null;
+    },
+    enabled: false, // deshabilitada por defecto; se ejecuta manualmente al presionar el botón
+  });
+
+  // Keep previous results to avoid UI flashing while fetching
+  const [prevRangeData, setPrevRangeData] = useState<RangeData | null>(null);
+  const [prevInvoiceData, setPrevInvoiceData] = useState<import('@/types/models/invoice').InvoiceRangeData | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   // Efecto para actualizar el formulario con los datos calculados
   useEffect(() => {
-    if (rangeDataResponse?.data && !editingMetric) {
-      const data = rangeDataResponse.data;
+    // `apiClient.get` devuelve directamente el objeto (no envuelto en { data })
+    if (rangeDataResponse && !editingMetric) {
+      const data = rangeDataResponse;
       setFormData(prev => ({
         ...prev,
-        range_delivery_weight: data.total_weight.toString(),
-        range_delivery_cost: data.total_cost.toString(),
-        range_revenue: data.total_revenue.toString(),
-        range_profit: data.total_profit.toString(),
-        delivery_real_weight: data.total_weight.toString(),
-        delivery_real_cost: data.total_cost.toString(),
+        range_delivery_weight: (data.total_weight ?? 0).toString(),
+        range_delivery_cost: (data.total_cost ?? 0).toString(),
+        range_revenue: (data.total_revenue ?? 0).toString(),
+        range_profit: (data.total_profit ?? 0).toString(),
+        delivery_real_weight: (data.total_weight ?? 0).toString(),
+        delivery_real_cost: (data.total_cost ?? 0).toString(),
       }));
     }
   }, [rangeDataResponse, editingMetric]);
+
+  // Efecto ligero para mantener re-render cuando lleguen datos de invoices
+  useEffect(() => {
+    // no-op: trigger render cuando cambian los datos de invoices
+  }, [invoiceRangeDataResponse, editingMetric]);
 
   // Mutation para crear métrica
   const createMutation = useMutation({
@@ -187,8 +230,8 @@ const ExpectedMetricsPage = () => {
 
   const resetForm = () => {
     setFormData({
-      start_date: '',
-      end_date: '',
+      start_date: undefined,
+      end_date: undefined,
       range_delivery_weight: '',
       range_delivery_cost: '',
       range_revenue: '',
@@ -208,13 +251,13 @@ const ExpectedMetricsPage = () => {
 
     const data: CreateExpectedMetricsData = {
       ...formData,
-      range_delivery_weight: parseFloat(formData.range_delivery_weight) || 0,
-      range_delivery_cost: parseFloat(formData.range_delivery_cost) || 0,
-      range_revenue: parseFloat(formData.range_revenue) || 0,
-      range_profit: parseFloat(formData.range_profit) || 0,
-      delivery_real_cost: parseFloat(formData.delivery_real_cost) || 0,
-      delivery_real_weight: parseFloat(formData.delivery_real_weight) || 0,
-      others_costs: parseFloat(formData.others_costs) || 0,
+      range_delivery_weight: formData.range_delivery_weight ? parseFloat(formData.range_delivery_weight) : undefined,
+      range_delivery_cost: formData.range_delivery_cost ? parseFloat(formData.range_delivery_cost) : undefined,
+      range_revenue: formData.range_revenue ? parseFloat(formData.range_revenue) : undefined,
+      range_profit: formData.range_profit ? parseFloat(formData.range_profit) : undefined,
+      delivery_real_cost: formData.delivery_real_cost ? parseFloat(formData.delivery_real_cost) : undefined,
+      delivery_real_weight: formData.delivery_real_weight ? parseFloat(formData.delivery_real_weight) : undefined,
+      others_costs: formData.others_costs ? parseFloat(formData.others_costs) : undefined,
     };
 
     if (editingMetric) {
@@ -271,18 +314,12 @@ const ExpectedMetricsPage = () => {
     }
     return true;
   };
-    // the form validation is triggered on submit
+  // the form validation is triggered on submit
 
-  const formatPercentage = (value: string | number) => {
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    return `${num >= 0 ? '+' : ''}${num.toFixed(2)}%`;
-  };
-
-  // Cálculos automáticos basados en los valores del formulario usando el servicio
-  const calculatedValues = expectedMetricsService.calculateProjectedValues(formData);
 
   const metrics = metricsResponse?.results || [];
-  const summary = summaryResponse?.data || null;
+  // `getSummary` devuelve directamente el objeto summary (no envuelto en { data })
+  const summary = summaryResponse || null;
 
   return (
     <div className="space-y-6 pb-8">
@@ -350,16 +387,23 @@ const ExpectedMetricsPage = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      // Invalidar la query para forzar recálculo
-                      queryClient.invalidateQueries({
-                        queryKey: ['expected-metrics-range-data', formData.start_date, formData.end_date]
-                      });
+                    onClick={async () => {
+                      if (!formData.start_date || !formData.end_date) return;
+                      setIsCalculating(true);
+                      try {
+                        const [rangeRes, invoiceRes] = await Promise.all([refetchRangeData(), refetchInvoiceRangeData()]);
+                        if (rangeRes?.data) setPrevRangeData(rangeRes.data);
+                        if (invoiceRes?.data) setPrevInvoiceData(invoiceRes.data);
+                      } catch (error) {
+                        console.error(error);
+                      } finally {
+                        setIsCalculating(false);
+                      }
                     }}
-                    disabled={!formData.start_date || !formData.end_date || isLoadingRangeData}
+                    disabled={!formData.start_date || !formData.end_date || isFetchingRangeData || isFetchingInvoiceRange}
                     className="w-full"
                   >
-                    {isLoadingRangeData ? (
+                    {(isFetchingRangeData || isFetchingInvoiceRange || isCalculating) ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Calculando...
@@ -380,164 +424,27 @@ const ExpectedMetricsPage = () => {
                 <Separator />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="range_delivery_weight">Peso (Lb)</Label>
-                  <div className="relative">
-                    <Input
-                      id="range_delivery_weight"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder='0.00'
-                      value={formData.range_delivery_weight}
-                      onChange={(e) => setFormData({ ...formData, range_delivery_weight: e.target.value })}
-                      required
-                      disabled={isLoadingRangeData}
-                    />
-                    {isLoadingRangeData && (
-                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
-                    )}
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="range_delivery_cost">Costo($)</Label>
-                  <Input
-                    id="range_delivery_cost"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder='0.00'
-                    value={formData.range_delivery_cost}
-                    onChange={(e) => setFormData({ ...formData, range_delivery_cost: e.target.value })}
-                    required
-                  />
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="range_revenue">Ingresos Generados ($)</Label>
-                  <Input
-                    id="range_revenue"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder='0.00'
-                    value={formData.range_revenue}
-                    onChange={(e) => setFormData({ ...formData, range_revenue: e.target.value })}
-                    required
+              {/* Comparación visual mejorada */}
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Comparación resumida</h4>
+                {(!formData.start_date || !formData.end_date) ? (
+                  <EmptyCalculation />
+                ) : (isFetchingInvoiceRange || isFetchingRangeData || isCalculating) ? (
+                  <LoadingSpinner text='Calculando ...' />
+                ) : (
+                  <ComparisonCards
+                    expected={(rangeDataResponse ?? prevRangeData) ?? undefined}
+                    invoices={(invoiceRangeDataResponse ?? prevInvoiceData) ?? undefined}
+                    loading={isFetchingInvoiceRange || isFetchingRangeData || isCalculating}
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="range_profit">Ganancia Generada ($)</Label>
-                  <Input
-                    id="range_profit"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder='0.00'
-                    value={formData.range_profit}
-                    onChange={(e) => setFormData({ ...formData, range_profit: e.target.value })}
-                    required
-                  />
-                </div>
+                )}
               </div>
 
-              <div className="relative my-4 flex items-center justify-center overflow-hidden">
-                <Separator />
-                <div className="px-2 text-center flex flex-row nowrap text-sm min-w-24">
-                    Datos Reales
-                </div>
-                <Separator />
-              </div>
-              <div className="grid grid-cols gap-4">
-
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className="space-y-2">
-                    <Label htmlFor="delivery_real_weight">Peso Real (Lb)</Label>
-                    <Input
-                      id="delivery_real_weight"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder='0.00'
-                      value={formData.delivery_real_weight}
-                      onChange={(e) => setFormData({ ...formData, delivery_real_weight: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="delivery_real_cost">Costo Real de Entrega ($)</Label>
-                    <Input
-                      id="delivery_real_cost"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder='0.00'
-                      value={formData.delivery_real_cost}
-                      onChange={(e) => setFormData({ ...formData, delivery_real_cost: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2 col-span-2">
-                    <Label htmlFor="others_costs">Otros Costos ($)</Label>
-                    <Input
-                      id="others_costs"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder='0.00'
-                      value={formData.others_costs}
-                      onChange={(e) => setFormData({ ...formData, others_costs: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
 
               <Separator />
 
-              {/* Sección de cálculos automáticos */}
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-muted-foreground">Vista Previa de Cálculos</h4>
-                <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Diferencia de Costo</Label>
-                    <div className={`text-sm font-medium ${calculatedValues.cost_difference >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {formatCurrency(calculatedValues.cost_difference)}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Diferencia de Peso</Label>
-                    <div className={`text-sm font-medium ${calculatedValues.weight_difference >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {(calculatedValues.weight_difference).toFixed(2)} Lb
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Ganancia Proyectada</Label>
-                    <div className={`text-sm font-medium ${calculatedValues.projected_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(calculatedValues.projected_profit)}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Dif. Ganancia Proyectada</Label>
-                    <div className={`text-sm font-medium ${calculatedValues.projected_profit_difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(calculatedValues.projected_profit_difference)}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Varianza de Peso (%)</Label>
-                    <div className={`text-sm font-medium ${calculatedValues.weight_variance_percentage >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {formatPercentage(calculatedValues.weight_variance_percentage)}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Var. Ganancia Proy. (%)</Label>
-                    <div className={`text-sm font-medium ${calculatedValues.projected_profit_variance_percentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatPercentage(calculatedValues.projected_profit_variance_percentage)}
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="notes">Notas (Opcional)</Label>
@@ -658,35 +565,29 @@ const ExpectedMetricsPage = () => {
               </p>
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
+            <div className="rounded-md border overflow-hidden">
+              <Table className=''>
+                <TableHeader className='bg-gray-100'>
                   <TableRow>
-                    <TableHead>Periodo</TableHead>
-                    <TableHead className="text-right">Peso Entrega Esperado</TableHead>
-                    <TableHead className="text-right">Peso Real</TableHead>
-                    <TableHead className="text-right">Var. Peso</TableHead>
-                    <TableHead className="text-right">Ingresos Esperados</TableHead>
-                    <TableHead className="text-right">Ganancia Esperada</TableHead>
-                    <TableHead className="text-right">Costo Real</TableHead>
-                    <TableHead className="text-right">Otros Costos</TableHead>
-                    <TableHead className="text-right">Var. Costo</TableHead>
-                    <TableHead className="text-right">Ganancia Proyectada</TableHead>
-                    <TableHead className="text-right">Var. Ganancia</TableHead>
+                    <TableHead>Período</TableHead>
+                    <TableHead className="text-right">Dif. Peso</TableHead>
+                    <TableHead className="text-right">Dif. Costo</TableHead>
+                    <TableHead className="text-right">Ganacia Registrada</TableHead>
+                    <TableHead className="text-right">Ganancia Real</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {metrics.map((metric) => {
-                    const tableValues = expectedMetricsService.calculateTableValues(metric);
+                   
 
                     return (
                       <TableRow key={metric.id}>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="font-medium">
+                            <div className='flex flex-row gap-1'>
+                              <div className="font-medium text-sm">
                                 {new Date(metric.start_date).toLocaleDateString('es-ES')}
                               </div>
                               <div className="text-sm text-muted-foreground">
@@ -696,65 +597,23 @@ const ExpectedMetricsPage = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          <ValueWithUnit value={metric.range_delivery_weight} unit="Lb" />
+                          <ValueWithUnit value={Number(metric.range_delivery_weight) - Number(metric.delivery_real_weight)} unit="Lb" />
                         </TableCell>
+
+
+
                         <TableCell className="text-right">
-                          <ValueWithUnit value={metric.delivery_real_weight} unit="Lb" />
+                          {formatCurrency(Number(metric.range_delivery_cost) - Number(metric.delivery_real_cost))}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <Badge
-                            variant={tableValues.weightVariance > 0 ? 'destructive' : 'default'}
-                            className="gap-1"
-                          >
-                            {tableValues.weightVariance > 0 ? (
-                              <TrendingUp className="h-3 w-3" />
-                            ) : (
-                              <TrendingDown className="h-3 w-3" />
-                            )}
-                            {formatPercentage(tableValues.weightVariancePercentage)}
-                          </Badge>
-                        </TableCell>
+
                         <TableCell className="text-right font-medium">
                           {formatCurrency(metric.range_revenue)}
                         </TableCell>
+
                         <TableCell className="text-right font-medium">
                           {formatCurrency(metric.range_profit)}
                         </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(metric.delivery_real_cost)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(metric.others_costs)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge
-                            variant={tableValues.costVariance > 0 ? 'destructive' : 'default'}
-                            className="gap-1"
-                          >
-                            {tableValues.costVariance > 0 ? (
-                              <TrendingUp className="h-3 w-3" />
-                            ) : (
-                              <TrendingDown className="h-3 w-3" />
-                            )}
-                            {formatCurrency(tableValues.costVariance)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(tableValues.projectedProfit)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge
-                            variant={tableValues.projectedProfitVariance < 0 ? 'destructive' : 'default'}
-                            className="gap-1"
-                          >
-                            {tableValues.projectedProfitVariance > 0 ? (
-                              <TrendingUp className="h-3 w-3" />
-                            ) : (
-                              <TrendingDown className="h-3 w-3" />
-                            )}
-                            {formatPercentage(tableValues.projectedProfitVariance)}
-                          </Badge>
-                        </TableCell>
+
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             <Button

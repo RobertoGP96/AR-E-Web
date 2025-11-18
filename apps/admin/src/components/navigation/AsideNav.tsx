@@ -169,7 +169,7 @@ export function AsideNav() {
       <SidebarContent className="pl-4 ">
         {navigationGroups.map((group) => (
           <SidebarGroup key={group.title}>
-            <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-[14px] uppercase text-gray-400/75 font-semibold">
+            <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-[14px] uppercase text-orange-400/85 font-semibold">
               {group.title}
             </SidebarGroupLabel>
             <SidebarGroupContent>

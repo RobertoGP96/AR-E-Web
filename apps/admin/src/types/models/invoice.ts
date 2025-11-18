@@ -68,6 +68,21 @@ export interface InvoiceResponse {
   results: Invoice[];
 }
 
+// Tipo para la respuesta agregada del cálculo por rango de invoices
+export interface InvoiceRangeData {
+  success: boolean;
+  start_date: string; // YYYY-MM-DD
+  end_date: string; // YYYY-MM-DD
+  invoices_count: number;
+  total_invoices_amount: number;
+  tags_count: number;
+  total_tag_weight: number;
+  total_fixed_cost: number;
+  total_tag_subtotal: number;
+  total_shipping_cost: number;
+  total_tag_costs: number;
+}
+
 // Funciones de utilidad
 export const invoiceUtils = {
   formatTotal: (total: number): string => {

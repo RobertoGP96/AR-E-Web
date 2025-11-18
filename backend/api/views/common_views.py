@@ -7,10 +7,10 @@ from drf_spectacular.utils import extend_schema
 from django.db.models import Q, Count, Sum, Avg
 from django.utils import timezone
 from datetime import timedelta
-from api.models import Category, CommonInformation, EvidenceImages
+from api.models import Category, CommonInformation
 from api.serializers import (
     CategorySerializer, CommonInformationSerializer,
-    EvidenceImagesSerializer, ImageUploadSerializer
+    ImageUploadSerializer
 )
 from api.permissions.permissions import ReadOnly, AdminPermission
 import cloudinary.uploader
@@ -130,91 +130,7 @@ class CommonInformationViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
 
-class EvidenceImagesViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet para imágenes de evidencia.
-    """
-    queryset = EvidenceImages.objects.all().order_by('-created_at')
-    serializer_class = EvidenceImagesSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        queryset = EvidenceImages.objects.all().order_by('-created_at')
-        user = self.request.user
-
-        # Filtros por rol y permisos
-        if user.role == 'agent':
-            queryset = queryset.filter(
-                Q(order__agent=user) |
-                Q(delivery__order__agent=user) |
-                Q(product__order__agent=user)
-            )
-        elif user.role == 'buyer':
-            queryset = queryset.filter(
-                Q(order__buyer=user) |
-                Q(product_buyed__buyer=user)
-            )
-        elif user.role == 'logistical':
-            queryset = queryset.filter(
-                Q(delivery__logistical=user) |
-                Q(product_received__logistical=user) |
-                Q(deliver_receip__delivery__logistical=user)
-            )
-        elif user.role == 'client':
-            queryset = queryset.filter(
-                Q(order__client=user) |
-                Q(delivery__order__client=user)
-            )
-
-        return queryset
-
-    @extend_schema(
-        summary="Listar imágenes de evidencia",
-        description="Obtiene una lista de imágenes de evidencia.",
-        tags=["Imágenes de Evidencia"]
-    )
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
-    @extend_schema(
-        summary="Crear imagen de evidencia",
-        description="Crea una nueva imagen de evidencia.",
-        tags=["Imágenes de Evidencia"]
-    )
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-
-    @extend_schema(
-        summary="Obtener imagen de evidencia",
-        description="Obtiene los detalles de una imagen de evidencia específica.",
-        tags=["Imágenes de Evidencia"]
-    )
-    def retrieve(self, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
-
-    @extend_schema(
-        summary="Actualizar imagen de evidencia",
-        description="Actualiza completamente una imagen de evidencia.",
-        tags=["Imágenes de Evidencia"]
-    )
-    def update(self, request, *args, **kwargs):
-        return super().update(request, *args, **kwargs)
-
-    @extend_schema(
-        summary="Actualizar imagen de evidencia parcialmente",
-        description="Actualiza parcialmente una imagen de evidencia.",
-        tags=["Imágenes de Evidencia"]
-    )
-    def partial_update(self, request, *args, **kwargs):
-        return super().partial_update(request, *args, **kwargs)
-
-    @extend_schema(
-        summary="Eliminar imagen de evidencia",
-        description="Elimina una imagen de evidencia.",
-        tags=["Imágenes de Evidencia"]
-    )
-    def destroy(self, request, *args, **kwargs):
-        return super().destroy(request, *args, **kwargs)
+# EvidenceImagesViewSet removed: images are now stored as URL lists on related models.
 
 
 @extend_schema(

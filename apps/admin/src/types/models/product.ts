@@ -4,7 +4,6 @@
 
 import type { ID, UUID, ProductStatus, DateTime } from './base';
 import type { Order } from './order';
-import type { EvidenceImage } from './evidence';
 
 // Modelo principal
 export interface Product {
@@ -26,7 +25,7 @@ export interface Product {
   
   order: number | Order;
   status: ProductStatus;
-  product_pictures: EvidenceImage[];
+  product_pictures: string;
   
   // Precios
   shop_cost: number;

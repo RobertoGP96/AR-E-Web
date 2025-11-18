@@ -54,7 +54,8 @@ class Product(models.Model):
         choices=[(tag.value, tag.value) for tag in ProductStatusEnum],
         default=ProductStatusEnum.ENCARGADO.value
     )
-    product_pictures = models.ManyToManyField('api.EvidenceImages', blank=True)    # Product prices
+    # Antes: M2M con EvidenceImages; ahora almacenamos las URLs reales en texto (JSON list)
+    product_pictures = models.TextField(blank=True, null=True, help_text='JSON array of image URLs')
     shop_cost = models.FloatField()
     shop_delivery_cost = models.FloatField(default=0)
     shop_taxes = models.FloatField(default=0)

@@ -11,7 +11,10 @@ import {
   Settings, 
   UserCircle, 
   FolderTree,
-  type LucideIcon
+  type LucideIcon,
+  TrendingUp,
+  Receipt,
+  FileText
 } from 'lucide-react';
 
 // Mapeo de rutas a iconos
@@ -26,6 +29,9 @@ const routeIcons: Record<string, LucideIcon> = {
   '/settings': Settings,
   '/profile': UserCircle,
   '/categories': FolderTree,
+  '/invoices': FileText,
+  '/analitics': TrendingUp,
+  '/finances': Receipt,
 };
 
 // Mapeo de rutas a nombres legibles
@@ -41,6 +47,9 @@ const routeNames: Record<string, string> = {
   '/settings': 'Configuración',
   '/profile': 'Mi Perfil',
   '/categories': 'Categorías',
+  '/invoices': 'Facturas',
+  '/analitics': 'Análisis',
+  '/finances': 'Finanzas',
 };
 
 // Mapeo para rutas con detalles
@@ -82,12 +91,12 @@ export function BreadcrumbNavigation() {
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="flex mb-2">
-      <ol role="list" className="flex items-center space-x-4">
+    <nav aria-label="Breadcrumb" className="flex ml-2">
+      <ol role="list" className="flex flex-row items-center justify-center space-x-4">
         <li>
-          <div>
+          <div className="flex items-center">
             <Link to="/" className="text-gray-400 hover:text-gray-500">
-              <Home aria-hidden="true" className="size-5 shrink-0" />
+              <Home aria-hidden="true" className="size-5 text-orange-400 shrink-0" />
               <span className="sr-only">Home</span>
             </Link>
           </div>
@@ -101,7 +110,7 @@ export function BreadcrumbNavigation() {
                   fill="currentColor" 
                   viewBox="0 0 20 20" 
                   aria-hidden="true" 
-                  className="size-5 shrink-0 text-gray-300"
+                  className="size-5 text-orange-400 shrink-0"
                 >
                   <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z" />
                 </svg>
@@ -110,7 +119,7 @@ export function BreadcrumbNavigation() {
                   aria-current={page.current ? 'page' : undefined}
                   className="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700 flex items-center gap-2"
                 >
-                  {Icon && <Icon className="size-4 shrink-0" />}
+                  {Icon && <Icon className="size-4 text-orange-400 shrink-0" />}
                   {page.name}
                 </Link>
               </div>

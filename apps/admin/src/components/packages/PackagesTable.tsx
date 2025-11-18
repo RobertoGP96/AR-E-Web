@@ -28,6 +28,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { QuickImageUpload } from '@/components/images/QuickImageUpload';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useUpdateProduct } from '@/hooks/product/useUpdateProduct';
 
 interface PackagesTableProps {
   packages: PackageType[];
@@ -49,6 +52,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   const [dialogState, setDialogState] = useState<{ type: 'delete' | null; pkg: PackageType | null }>({ type: null, pkg: null });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null);
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [imageDialogProduct, setImageDialogProduct] = useState<any | null>(null);
 
   const deletePackageMutation = useDeletePackage();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -108,6 +113,24 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     }
 
     return pages;
+  };
+
+  // Hook para actualizar producto (imagenes)
+  const updateProductMutation = useUpdateProduct();
+
+  const handleImageUploaded = async (product: any, url: string) => {
+    try {
+      const existing = product?.product_pictures?.map((i: any) => i.image_url) ?? [];
+      const newUrls = [...existing, url];
+
+      await updateProductMutation.mutateAsync({ id: product.id, product_pictures: newUrls });
+      toast.success('Imagen añadida correctamente');
+      setShowImageDialog(false);
+      setImageDialogProduct(null);
+    } catch (err) {
+      console.error('Error actualizando imagen del producto:', err);
+      toast.error('Error al guardar la imagen');
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -279,6 +302,39 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                                 className="flex items-start justify-between p-2 rounded-md hover:bg-gray-50 border border-gray-100"
                               >
                                 <div className="flex-1">
+                                  {/* Thumbnail / botón para subir imagen */}
+                                  <div className="flex items-center gap-3 mb-2">
+                                    {product.original_product?.product_pictures && product.original_product.product_pictures.length > 0 ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setImageDialogProduct(product.original_product);
+                                          setShowImageDialog(true);
+                                        }}
+                                        className="rounded-md overflow-hidden w-14 h-14 bg-muted border border-muted-foreground/10"
+                                        title="Ver imágenes"
+                                      >
+                                        <img
+                                          src={product.original_product.product_pictures[0].image_url || product.original_product.image_url}
+                                          alt={product.original_product.name}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </button>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          setImageDialogProduct(product.original_product);
+                                          setShowImageDialog(true);
+                                        }}
+                                      >
+                                        <Camera className="h-4 w-4 mr-2" />
+                                        Agregar imagen
+                                      </Button>
+                                    )}
+                                  </div>
+
                                   <p className="text-sm font-medium text-gray-900">
                                     {product.original_product.name}
                                   </p>
@@ -567,6 +623,27 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
         onOpenChange={setEditDialogOpen}
         package={selectedPackage}
       />
+      {/* Diálogo para ver/subir imágenes del producto */}
+      <Dialog open={showImageDialog} onOpenChange={(open) => { if (!open) { setShowImageDialog(false); setImageDialogProduct(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Imágenes del producto {imageDialogProduct ? `- ${imageDialogProduct.name}` : ''}</DialogTitle>
+          </DialogHeader>
+
+          <div className="py-2">
+            {imageDialogProduct ? (
+              <QuickImageUpload
+                entityType="products"
+                currentImage={imageDialogProduct?.product_pictures && imageDialogProduct.product_pictures.length > 0 ? imageDialogProduct.product_pictures[0].image_url : imageDialogProduct.image_url}
+                onImageUploaded={(url: string) => handleImageUploaded(imageDialogProduct, url)}
+                folder={undefined}
+              />
+            ) : (
+              <div className="p-4 text-sm text-gray-500">Producto no seleccionado</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

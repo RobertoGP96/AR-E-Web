@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from api.models import Product, Category, ProductBuyed, ProductReceived, ProductDelivery, Shop, Order, ShoppingReceip, EvidenceImages, Package, DeliverReceip
+from api.models import Product, Category, ProductBuyed, ProductReceived, ProductDelivery, Shop, Order, ShoppingReceip, Package, DeliverReceip
+import json
 from drf_spectacular.utils import extend_schema_field
 
 
@@ -35,14 +36,10 @@ class ProductSerializer(serializers.ModelSerializer):
             "invalid": "El valor proporcionado para la categoría no es válido.",
         },
     )
-    product_pictures = serializers.SlugRelatedField(
-        queryset=EvidenceImages.objects.all(),
-        many=True,
-        slug_field="image_url",
-        error_messages={
-            "does_not_exist": "El pedido {value} no existe.",
-            "invalid": "El valor proporcionado para el pedido no es válido.",
-        },
+    product_pictures = serializers.ListField(
+        child=serializers.URLField(),
+        required=False,
+        allow_empty=True,
     )
     status = serializers.SerializerMethodField(read_only=True)
     total_cost = serializers.FloatField(required=True)
@@ -91,6 +88,19 @@ class ProductSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def to_representation(self, instance):
+        """Ensure product_pictures returned as a list parsed from JSON text."""
+        ret = super().to_representation(instance)
+        raw = getattr(instance, 'product_pictures', None)
+        if raw:
+            try:
+                ret['product_pictures'] = json.loads(raw)
+            except Exception:
+                ret['product_pictures'] = []
+        else:
+            ret['product_pictures'] = []
+        return ret
 
     @extend_schema_field(str)
     def get_status(self, obj):

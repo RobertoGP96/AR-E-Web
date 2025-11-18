@@ -2,13 +2,13 @@ import DeliveryStatusBadge from './DeliveryStatusBadge';
 import EditDeliveryDialog from './EditDeliveryDialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import type { DeliverReceip, DeliveryStatus } from '@/types';
+import type { DeliverReceip, DeliveryStatus, EvidenceImage } from '@/types';
 import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Truck, Package, CheckCircle2, Weight, Boxes } from 'lucide-react';
 import { formatDeliveryDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useDeleteDelivery } from '@/hooks/delivery/useDeleteDelivery';
 import { useUpdateDeliveryStatus } from '@/hooks/delivery/useUpdateDelivery';
 import { toast } from 'sonner';
@@ -28,6 +28,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { QuickImageUpload } from '@/components/images/QuickImageUpload';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useUpdateDelivery } from '@/hooks/delivery/useUpdateDelivery';
 
 interface DeliveryTableProps {
   deliveries: DeliverReceip[];
@@ -49,6 +52,10 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
   const [dialogState, setDialogState] = useState<{ type: 'delete' | null; delivery: DeliverReceip | null }>({ type: null, delivery: null });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedDelivery, setSelectedDelivery] = useState<DeliverReceip | null>(null);
+
+  // States for capture image dialog
+  const [showCaptureDialog, setShowCaptureDialog] = useState(false);
+  const [captureDelivery, setCaptureDelivery] = useState<DeliverReceip | null>(null);
 
   const deleteDeliveryMutation = useDeleteDelivery();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -177,6 +184,23 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
     }
   };
 
+  const updateDeliveryMutation = useUpdateDelivery();
+
+  const handleCaptureUploaded = async (delivery: DeliverReceip, url: string) => {
+    try {
+      const existing = (delivery.deliver_picture && (delivery.deliver_picture as EvidenceImage[]).map((i) => i.image_url)) ?? [];
+      const newUrls = [...existing, url];
+
+      await updateDeliveryMutation.mutateAsync({ id: delivery.id, data: { id: delivery.id, deliver_picture: newUrls } });
+      toast.success('Imagen de entrega añadida correctamente');
+      setShowCaptureDialog(false);
+      setCaptureDelivery(null);
+    } catch (err) {
+      console.error('Error actualizando imagen de la entrega:', err);
+      toast.error('Error al guardar la imagen de la entrega');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
@@ -289,6 +313,22 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                                 className="flex items-start justify-between p-2 rounded-md hover:bg-gray-50 border border-gray-100"
                               >
                                 <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    {product.original_product?.product_pictures && product.original_product.product_pictures.length > 0 ? (
+                                      <div className="rounded-md overflow-hidden w-14 h-14 bg-muted border border-muted-foreground/10" title="Imagen del producto">
+                                        <img
+                                          src={product.original_product.product_pictures[0].image_url || product.original_product.image_url}
+                                          alt={product.original_product.name}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div className="rounded-md w-14 h-14 bg-gray-50 border border-gray-100 flex items-center justify-center text-xs text-gray-400">
+                                        Sin imagen
+                                      </div>
+                                    )}
+                                  </div>
+
                                   <p className="text-sm font-medium text-gray-900">
                                     {product.original_product.name}
                                   </p>
@@ -319,12 +359,25 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                 </TableCell>
                 <TableCell>
                   <div className='flex flex-row gap-2'>
-                    <Button
-                      className=' text-gray-600 cursor-pointer bg-gray-200'
-                      onClick={() => onCapture?.(delivery)}
+                    <button
+                      type="button"
+                      className='text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50'
+                      onClick={() => {
+                        setCaptureDelivery(delivery);
+                        setShowCaptureDialog(true);
+                      }}
+                      title={delivery.deliver_picture && delivery.deliver_picture.length > 0 ? 'Ver imagen de entrega' : 'Subir imagen de entrega'}
                     >
-                      <Camera className='h-5 w-5' />
-                    </Button>
+                      {delivery.deliver_picture && delivery.deliver_picture.length > 0 ? (
+                        <img
+                          src={((delivery.deliver_picture as EvidenceImage[])[0] || {}).image_url}
+                          alt={`Entrega ${delivery.id}`}
+                          className="h-8 w-8 object-cover rounded-md"
+                        />
+                      ) : (
+                        <Camera className='h-5 w-5' />
+                      )}
+                    </button>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -567,6 +620,29 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
         onOpenChange={setEditDialogOpen}
         delivery={selectedDelivery}
       />
+
+      {/* Diálogo para ver/subir imagen de la entrega (captura) */}
+      <Dialog open={showCaptureDialog} onOpenChange={(open) => { if (!open) { setShowCaptureDialog(false); setCaptureDelivery(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Imagen de la entrega {captureDelivery ? `- #${captureDelivery.id}` : ''}</DialogTitle>
+          </DialogHeader>
+
+          <div className="py-2">
+            {captureDelivery ? (
+              <QuickImageUpload
+                entityType="deliveries"
+                currentImage={captureDelivery?.deliver_picture && captureDelivery.deliver_picture.length > 0 ? (captureDelivery.deliver_picture as EvidenceImage[])[0].image_url : undefined}
+                onImageUploaded={(url: string) => handleCaptureUploaded(captureDelivery, url)}
+                folder={undefined}
+                label="Subir/Actualizar imagen de entrega"
+              />
+            ) : (
+              <div className="p-4 text-sm text-gray-500">Entrega no seleccionada</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

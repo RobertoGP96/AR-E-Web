@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema
 from api.models import Invoice, Tag
 from api.serializers import InvoiceSerializer, TagSerializer, InvoiceCreateSerializer
+from api.services.invoice_service import InvoiceService
 from api.permissions.permissions import ReadOnly, AdminPermission
 
 
@@ -72,6 +73,20 @@ class TagViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
+    @action(detail=False, methods=['get'], url_path='calculate-range-data')
+    def calculate_range_data(self, request):
+        start_date = request.query_params.get('start')
+        end_date = request.query_params.get('end')
+
+        if not start_date or not end_date:
+            return Response({'error': 'Se requieren parámetros start y end'}, status=status.HTTP_400_BAD_REQUEST)
+
+        result = InvoiceService.calculate_range_data(start_date, end_date)
+
+        if result.get('success'):
+            return Response(result, status=status.HTTP_200_OK)
+        return Response({'error': result.get('error')}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class InvoiceViewSet(viewsets.ModelViewSet):
     """
@@ -132,6 +147,25 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=False, methods=['get'], url_path='calculate_range_data')
+    @extend_schema(
+        summary="Calcular agregados por rango",
+        description="Calcula agregados (totales, pesos, costos) de invoices en un rango de fechas.",
+        tags=["Invoices"]
+    )
+    def calculate_range_data(self, request):
+        start_date = request.query_params.get('start')
+        end_date = request.query_params.get('end')
+
+        if not start_date or not end_date:
+            return Response({'error': 'Se requieren parámetros start y end'}, status=status.HTTP_400_BAD_REQUEST)
+
+        result = InvoiceService.calculate_range_data(start_date, end_date)
+
+        if result.get('success'):
+            return Response(result, status=status.HTTP_200_OK)
+        return Response({'error': result.get('error')}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['get'])
     @extend_schema(

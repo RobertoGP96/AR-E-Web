@@ -4,7 +4,6 @@
 
 import type { ID, DateTime, DeliveryStatus } from './base';
 import type { CustomUser } from './user';
-import type { EvidenceImage } from './evidence';
 import type { ProductDelivery } from './product-delivery';
 import type { Category } from './category';
 
@@ -16,7 +15,7 @@ export interface DeliverReceip {
   weight: number;
   status: DeliveryStatus;
   deliver_date: DateTime;
-  deliver_picture: EvidenceImage[];
+  deliver_picture: string;
   
   // Costos (del backend)
   weight_cost: number;

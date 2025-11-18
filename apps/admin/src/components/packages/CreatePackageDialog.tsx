@@ -128,9 +128,13 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
             {/* Fecha de Llegada */}
             <div className="grid gap-2">
               <DatePicker
-                value={formData.arrival_date ? new Date(formData.arrival_date) : undefined}
-                onChange={(date: Date | undefined) => setFormData({ ...formData, arrival_date: date?.toISOString() || '' })}
-              />
+                  value={formData.arrival_date ? new Date(formData.arrival_date) : undefined}
+                  onChange={(date: Date | undefined) => {
+                    // Backend expects YYYY-MM-DD
+                    const formatted = date ? date.toISOString().slice(0, 10) : '';
+                    setFormData({ ...formData, arrival_date: formatted });
+                  }}
+                />
 
             </div>
 

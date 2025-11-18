@@ -17,7 +17,7 @@ export function AppSidebarWrapper({ children }: AppSidebarWrapperProps) {
         {/* Área principal */}
         <div className="flex-1 flex flex-col min-h-0">
           {/* Header */}
-          <header className="flex h-20 shrink-0 items-center gap-4 px-6 bg-background/95 backdrop-blur-sm shadow-sm border-0 w-full border-b border-border">
+          <header className="flex h-20 shrink-0  items-center gap-4 px-6 bg-background/95 backdrop-blur-sm shadow-sm border-0 w-full border-b border-border">
             {/* Trigger del sidebar */}
             <SidebarTrigger className="-ml-1" />
 

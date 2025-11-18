@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import CommonInformation, EvidenceImages
+from api.models import CommonInformation
 
 
 class CommonInformationSerializer(serializers.ModelSerializer):
@@ -30,28 +30,8 @@ class CommonInformationSerializer(serializers.ModelSerializer):
         return value
 
 
-class EvidenceImagesSerializer(serializers.ModelSerializer):
-    """
-    Serializador para imágenes de evidencia.
-    """
-
-    class Meta:
-        model = EvidenceImages
-        fields = [
-            "id",
-            "public_id",
-            "image_url",
-            "description",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["id", "created_at", "updated_at"]
-
-    def validate_image_url(self, value):
-        """Validar que la URL de la imagen sea válida"""
-        if not value:
-            raise serializers.ValidationError("La URL de la imagen es requerida.")
-        return value
+# EvidenceImages model removed: image upload API returns direct URLs. Keep
+# ImageUploadSerializer below for handling uploads to external service.
 
 
 class ImageUploadSerializer(serializers.Serializer):

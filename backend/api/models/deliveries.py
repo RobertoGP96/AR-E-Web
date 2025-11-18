@@ -28,7 +28,8 @@ class DeliverReceip(models.Model):
         default=DeliveryStatusEnum.PENDIENTE.value
     )
     deliver_date = models.DateTimeField(default=timezone.now)
-    deliver_picture = models.ManyToManyField('api.EvidenceImages', blank=True)
+    # Antes: ManyToManyField a EvidenceImages. Ahora almacenamos las URLs como texto (JSON list).
+    deliver_picture = models.TextField(blank=True, null=True, help_text='JSON array of image URLs')
     weight_cost = models.FloatField(default=0)
     manager_profit = models.FloatField(default=0)
 
@@ -77,7 +78,8 @@ class Package(models.Model):
         default=PackageStatusEnum.ENVIADO.value
     )
     arrival_date = models.DateField(default=timezone.now, help_text="Fecha de llegada del paquete")
-    package_picture = models.ManyToManyField('api.EvidenceImages', blank=True)
+    # Antes: ManyToManyField a EvidenceImages. Ahora almacenamos las URLs como texto (JSON list).
+    package_picture = models.TextField(blank=True, null=True, help_text='JSON array of image URLs')
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
