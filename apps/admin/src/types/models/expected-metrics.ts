@@ -12,12 +12,12 @@ export interface ExpectedMetrics {
   id: ID;
   start_date: string; // Formato: YYYY-MM-DD
   end_date: string; // Formato: YYYY-MM-DD
-  range_delivery_weight: string; // Decimal como string (antes expected_cost)
-  range_delivery_cost: string; // Decimal como string (antes expected_cost)
-  range_revenue: string; // Decimal como string (nuevo)
-  range_profit: string; // Decimal como string (antes expected_profit)
-  delivery_real_cost: string; // Decimal como string (antes actual_cost)
-  delivery_real_weight: string; // Decimal como string (antes actual_cost)
+  registered_weight: string; // Decimal como string (peso esperado dentro del periodo)
+  registered_cost: string; // Decimal como string (costo esperado dentro del periodo)
+  registered_revenue: string; // Decimal como string (ingresos esperados)
+  registered_profit: string; // Decimal como string (ganancia esperada)
+  invoice_cost: string; // Decimal como string (costo real según facturas)
+  invoice_weight: string; // Decimal como string (peso real según facturas)
   others_costs: string; // Decimal como string (nuevo)
   cost_difference: string; // Decimal como string (calculado, antes cost_variance)
   real_profit: string; // Decimal como string (calculado)
@@ -34,12 +34,12 @@ export interface ExpectedMetrics {
 export interface CreateExpectedMetricsData {
   start_date: string | undefined; // Formato: YYYY-MM-DD
   end_date: string | undefined; // Formato: YYYY-MM-DD
-  range_delivery_weight: number | undefined;
-  range_delivery_cost: number | undefined;
-  range_revenue: number | undefined;
-  range_profit: number | undefined;
-  delivery_real_weight?: number | undefined;
-  delivery_real_cost?: number | undefined;
+  registered_weight?: number | undefined;
+  registered_cost?: number | undefined;
+  registered_revenue?: number | undefined;
+  registered_profit?: number | undefined;
+  invoice_weight?: number | undefined;
+  invoice_cost?: number | undefined;
   others_costs?: number | undefined;
   notes?: string;
 }
@@ -50,12 +50,12 @@ export interface CreateExpectedMetricsData {
 export interface UpdateExpectedMetricsData {
   start_date?: string;
   end_date?: string;
-  range_delivery_weight?: number | string;
-  range_delivery_cost?: number | string;
-  delivery_real_weight?: number | string;
-  range_revenue?: number | string;
-  range_profit?: number | string;
-  delivery_real_cost?: number | string;
+  registered_weight?: number | string;
+  registered_cost?: number | string;
+  invoice_weight?: number | string;
+  registered_revenue?: number | string;
+  registered_profit?: number | string;
+  invoice_cost?: number | string;
   others_costs?: number | string;
   notes?: string;
 }
@@ -74,11 +74,12 @@ export interface ExpectedMetricsFilters {
  * Resumen de métricas esperadas
  */
 export interface ExpectedMetricsSummary {
-  total_range_delivery_weight: number;
-  total_range_revenue: number;
-  total_range_profit: number;
-  total_delivery_real_cost: number;
-  total_others_costs: number;
+  total_registered_weight: number;
+  total_registered_cost: number;
+  total_registered_revenue: number;
+  total_registered_profit: number;
+  total_invoice_cost: number;
+  total_invoice_weight: number;
   total_cost_variance: number;
   total_profit_variance: number;
   metrics_count: number;
@@ -103,10 +104,10 @@ export interface ExpectedMetricsListItem {
   id: ID;
   start_date: string;
   end_date: string;
-  range_delivery_weight: string;
-  range_revenue: string;
-  range_profit: string;
-  delivery_real_cost: string;
+  registered_weight: string;
+  registered_revenue: string;
+  registered_profit: string;
+  invoice_cost: string;
   others_costs: string;
   cost_difference: string;
   profit_difference: string;

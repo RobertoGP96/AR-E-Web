@@ -5,37 +5,24 @@ from api.models.models_expected_metrics import ExpectedMetrics
 from decimal import Decimal
 
 
+def _to_decimal(value):
+    try:
+        return Decimal(str(value)) if value is not None else Decimal('0')
+    except Exception:
+        return Decimal('0')
+
+
 class ExpectedMetricsSerializer(serializers.ModelSerializer):
     """
     Serializer for ExpectedMetrics model.
     Includes calculated fields for variance analysis.
     """
     
-    # Read-only calculated fields
-    cost_difference = serializers.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        read_only=True,
-        help_text="Diferencia entre costo real y esperado"
-    )
-    real_profit = serializers.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        read_only=True,
-        help_text="Ganancia real calculada"
-    )
-    profit_difference = serializers.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        read_only=True,
-        help_text="Diferencia entre ganancia esperada y real"
-    )
-    profit_variance_percentage = serializers.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        read_only=True,
-        help_text="Porcentaje de variación de la ganancia"
-    )
+    # Read-only calculated fields (computed from model's registered_*/invoice_* fields)
+    cost_difference = serializers.SerializerMethodField()
+    real_profit = serializers.SerializerMethodField()
+    profit_difference = serializers.SerializerMethodField()
+    profit_variance_percentage = serializers.SerializerMethodField()
     
     class Meta:
         model = ExpectedMetrics
@@ -43,13 +30,12 @@ class ExpectedMetricsSerializer(serializers.ModelSerializer):
             'id',
             'start_date',
             'end_date',
-            'range_delivery_weight',
-            'range_delivery_cost',
-            'range_revenue',
-            'range_profit',
-            'delivery_real_cost',
-            'delivery_real_weight',
-            'others_costs',
+            'registered_weight',
+            'registered_cost',
+            'registered_revenue',
+            'registered_profit',
+            'invoice_weight',
+            'invoice_cost',
             'cost_difference',
             'weight_difference',
             'real_profit',
@@ -93,6 +79,7 @@ class ExpectedMetricsSerializer(serializers.ModelSerializer):
     
     def validate_delivery_real_cost(self, value):
         """Validate delivery_real_cost is non-negative"""
+        # This serializer uses `invoice_cost`/`invoice_weight` fields in the model.
         if value < Decimal('0.00'):
             raise serializers.ValidationError('El costo real de entrega no puede ser negativo')
         return value
@@ -102,6 +89,30 @@ class ExpectedMetricsSerializer(serializers.ModelSerializer):
         if value < Decimal('0.00'):
             raise serializers.ValidationError('Los otros costos no pueden ser negativos')
         return value
+
+    def get_cost_difference(self, obj):
+        # invoice_cost - registered_cost
+        invoice = _to_decimal(getattr(obj, 'invoice_cost', None))
+        registered = _to_decimal(getattr(obj, 'registered_cost', None))
+        return invoice - registered
+
+    def get_real_profit(self, obj):
+        # Try to compute real profit as registered_revenue - invoice_cost
+        revenue = _to_decimal(getattr(obj, 'registered_revenue', None))
+        invoice = _to_decimal(getattr(obj, 'invoice_cost', None))
+        return revenue - invoice
+
+    def get_profit_difference(self, obj):
+        real = _to_decimal(self.get_real_profit(obj))
+        expected = _to_decimal(getattr(obj, 'registered_profit', None))
+        return real - expected
+
+    def get_profit_variance_percentage(self, obj):
+        expected = _to_decimal(getattr(obj, 'registered_profit', None))
+        if expected == 0:
+            return Decimal('0.00')
+        diff = _to_decimal(self.get_profit_difference(obj))
+        return (diff / expected) * 100
 
 
 class ExpectedMetricsListSerializer(serializers.ModelSerializer):

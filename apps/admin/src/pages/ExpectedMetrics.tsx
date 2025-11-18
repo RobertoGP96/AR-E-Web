@@ -50,12 +50,12 @@ import type {
 type FormDataState = {
   start_date: string | undefined;
   end_date: string | undefined;
-  range_delivery_weight: string;
-  range_delivery_cost: string;
-  range_revenue: string;
-  range_profit: string;
-  delivery_real_weight: string;
-  delivery_real_cost: string;
+  registered_weight: string;
+  registered_cost: string;
+  registered_revenue: string;
+  registered_profit: string;
+  invoice_weight: string;
+  invoice_cost: string;
   others_costs: string;
   notes: string;
 };
@@ -86,12 +86,12 @@ const ExpectedMetricsPage = () => {
   const [formData, setFormData] = useState<FormDataState>({
     start_date: undefined,
     end_date: undefined,
-    range_delivery_weight: '',
-    range_delivery_cost: '',
-    range_revenue: '',
-    range_profit: '',
-    delivery_real_weight: '',
-    delivery_real_cost: '',
+    registered_weight: '',
+    registered_cost: '',
+    registered_revenue: '',
+    registered_profit: '',
+    invoice_weight: '',
+    invoice_cost: '',
     others_costs: '',
     notes: '',
   });
@@ -152,15 +152,25 @@ const ExpectedMetricsPage = () => {
       const data = rangeDataResponse;
       setFormData(prev => ({
         ...prev,
-        range_delivery_weight: (data.total_weight ?? 0).toString(),
-        range_delivery_cost: (data.total_cost ?? 0).toString(),
-        range_revenue: (data.total_revenue ?? 0).toString(),
-        range_profit: (data.total_profit ?? 0).toString(),
-        delivery_real_weight: (data.total_weight ?? 0).toString(),
-        delivery_real_cost: (data.total_cost ?? 0).toString(),
+        registered_weight: (data.total_weight ?? 0).toString(),
+        registered_cost: (data.total_cost ?? 0).toString(),
+        registered_revenue: (data.total_revenue ?? 0).toString(),
+        registered_profit: (data.total_profit ?? 0).toString(),
       }));
     }
   }, [rangeDataResponse, editingMetric]);
+
+  // llenado de datos de invoices (costos/pesos reales) cuando llegan
+  useEffect(() => {
+    if (invoiceRangeDataResponse && !editingMetric) {
+      const data = invoiceRangeDataResponse;
+      setFormData(prev => ({
+        ...prev,
+        invoice_weight: (data.total_tag_weight ?? 0).toString(),
+        invoice_cost: (data.total_tag_costs ?? 0).toString(),
+      }));
+    }
+  }, [invoiceRangeDataResponse, editingMetric]);
 
   // Efecto ligero para mantener re-render cuando lleguen datos de invoices
   useEffect(() => {
@@ -232,12 +242,12 @@ const ExpectedMetricsPage = () => {
     setFormData({
       start_date: undefined,
       end_date: undefined,
-      range_delivery_weight: '',
-      range_delivery_cost: '',
-      range_revenue: '',
-      range_profit: '',
-      delivery_real_cost: '',
-      delivery_real_weight: '',
+      registered_weight: '',
+      registered_cost: '',
+      registered_revenue: '',
+      registered_profit: '',
+      invoice_cost: '',
+      invoice_weight: '',
       others_costs: '',
       notes: '',
     });
@@ -251,12 +261,12 @@ const ExpectedMetricsPage = () => {
 
     const data: CreateExpectedMetricsData = {
       ...formData,
-      range_delivery_weight: formData.range_delivery_weight ? parseFloat(formData.range_delivery_weight) : undefined,
-      range_delivery_cost: formData.range_delivery_cost ? parseFloat(formData.range_delivery_cost) : undefined,
-      range_revenue: formData.range_revenue ? parseFloat(formData.range_revenue) : undefined,
-      range_profit: formData.range_profit ? parseFloat(formData.range_profit) : undefined,
-      delivery_real_cost: formData.delivery_real_cost ? parseFloat(formData.delivery_real_cost) : undefined,
-      delivery_real_weight: formData.delivery_real_weight ? parseFloat(formData.delivery_real_weight) : undefined,
+      registered_weight: formData.registered_weight ? parseFloat(formData.registered_weight) : undefined,
+      registered_cost: formData.registered_cost ? parseFloat(formData.registered_cost) : undefined,
+      registered_revenue: formData.registered_revenue ? parseFloat(formData.registered_revenue) : undefined,
+      registered_profit: formData.registered_profit ? parseFloat(formData.registered_profit) : undefined,
+      invoice_cost: formData.invoice_cost ? parseFloat(formData.invoice_cost) : undefined,
+      invoice_weight: formData.invoice_weight ? parseFloat(formData.invoice_weight) : undefined,
       others_costs: formData.others_costs ? parseFloat(formData.others_costs) : undefined,
     };
 
@@ -272,13 +282,13 @@ const ExpectedMetricsPage = () => {
     setFormData({
       start_date: metric.start_date,
       end_date: metric.end_date,
-      range_delivery_weight: metric.range_delivery_weight.toString(),
-      range_delivery_cost: metric.range_delivery_cost.toString(),
-      range_revenue: metric.range_revenue.toString(),
-      range_profit: metric.range_profit.toString(),
-      delivery_real_cost: metric.delivery_real_cost.toString(),
-      delivery_real_weight: metric.delivery_real_weight.toString(),
-      others_costs: metric.others_costs.toString(),
+      registered_weight: metric.registered_weight?.toString() ?? '',
+      registered_cost: metric.registered_cost?.toString() ?? '',
+      registered_revenue: metric.registered_revenue?.toString() ?? '',
+      registered_profit: metric.registered_profit?.toString() ?? '',
+      invoice_cost: metric.invoice_cost?.toString() ?? '',
+      invoice_weight: metric.invoice_weight?.toString() ?? '',
+      others_costs: metric.others_costs != null ? String(metric.others_costs) : '',
       notes: metric.notes || '',
     });
     setIsCreateDialogOpen(true);
@@ -300,8 +310,8 @@ const ExpectedMetricsPage = () => {
 
   // Small validation helper
   const validateFormData = () => {
-    const revenue = parseFloat(formData.range_revenue) || 0;
-    const profit = parseFloat(formData.range_profit) || 0;
+    const revenue = parseFloat(formData.registered_revenue) || 0;
+    const profit = parseFloat(formData.registered_profit) || 0;
 
     if (formData.start_date && formData.end_date && new Date(formData.end_date) < new Date(formData.start_date)) {
       toast.error('La fecha de fin debe ser posterior a la fecha de inicio');
@@ -326,7 +336,7 @@ const ExpectedMetricsPage = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Métricas Esperadas</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Finanazas</h1>
           <p className="text-muted-foreground">
             Compara costos y ganancias esperadas vs reales
           </p>
@@ -360,7 +370,7 @@ const ExpectedMetricsPage = () => {
                     onChange={(date) =>
                       setFormData({
                         ...formData,
-                        start_date: date ? formatDateYYYYMMDD(date) : '',
+                        start_date: date ? formatDateYYYYMMDD(date) : undefined,
                       })
                     }
                     className="w-full"
@@ -376,7 +386,7 @@ const ExpectedMetricsPage = () => {
                     onChange={(date) =>
                       setFormData({
                         ...formData,
-                        end_date: date ? formatDateYYYYMMDD(date) : '',
+                        end_date: date ? formatDateYYYYMMDD(date) : undefined,
                       })
                     }
                     className="w-full"
@@ -392,8 +402,32 @@ const ExpectedMetricsPage = () => {
                       setIsCalculating(true);
                       try {
                         const [rangeRes, invoiceRes] = await Promise.all([refetchRangeData(), refetchInvoiceRangeData()]);
-                        if (rangeRes?.data) setPrevRangeData(rangeRes.data);
-                        if (invoiceRes?.data) setPrevInvoiceData(invoiceRes.data);
+                        // store previous results to avoid UI flashing
+                        if (rangeRes?.data) {
+                          setPrevRangeData(rangeRes.data);
+                          // populate form fields with calculated registered values when not editing
+                          if (!editingMetric) {
+                            const data = rangeRes.data;
+                            setFormData(prev => ({
+                              ...prev,
+                              registered_weight: (data.total_weight ?? 0).toString(),
+                              registered_cost: (data.total_cost ?? 0).toString(),
+                              registered_revenue: (data.total_revenue ?? 0).toString(),
+                              registered_profit: (data.total_profit ?? 0).toString(),
+                            }));
+                          }
+                        }
+                        if (invoiceRes?.data) {
+                          setPrevInvoiceData(invoiceRes.data);
+                          if (!editingMetric) {
+                            const data = invoiceRes.data as import('@/types/models/invoice').InvoiceRangeData;
+                            setFormData(prev => ({
+                              ...prev,
+                              invoice_weight: (data.total_tag_weight ?? 0).toString(),
+                              invoice_cost: (data.total_tag_costs ?? 0).toString(),
+                            }));
+                          }
+                        }
                       } catch (error) {
                         console.error(error);
                       } finally {
@@ -494,7 +528,7 @@ const ExpectedMetricsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                <ValueWithUnit value={summary?.total_range_delivery_weight || 0} unit="Lb" />
+                <ValueWithUnit value={summary?.total_registered_weight || 0} unit="Lb" />
               </div>
             </CardContent>
           </Card>
@@ -506,7 +540,7 @@ const ExpectedMetricsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(summary?.total_range_profit || 0)}
+                {formatCurrency(summary?.total_registered_profit || 0)}
               </div>
             </CardContent>
           </Card>
@@ -518,7 +552,7 @@ const ExpectedMetricsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency((summary?.total_delivery_real_cost || 0) + (summary?.total_others_costs || 0))}
+                {formatCurrency((summary?.total_invoice_cost || 0))}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Varianza: {formatCurrency(summary?.total_cost_variance || 0)}
@@ -533,7 +567,7 @@ const ExpectedMetricsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(summary?.total_range_profit - ((summary?.total_delivery_real_cost || 0) + (summary?.total_others_costs || 0)) || 0)}
+                {formatCurrency(summary?.total_registered_profit - ((summary?.total_invoice_cost || 0)))}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Varianza: {formatCurrency(summary?.total_profit_variance || 0)}
@@ -597,21 +631,21 @@ const ExpectedMetricsPage = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          <ValueWithUnit value={Number(metric.range_delivery_weight) - Number(metric.delivery_real_weight)} unit="Lb" />
+                          <ValueWithUnit value={Number(metric.registered_weight) - Number(metric.invoice_weight)} unit="Lb" />
                         </TableCell>
 
 
 
                         <TableCell className="text-right">
-                          {formatCurrency(Number(metric.range_delivery_cost) - Number(metric.delivery_real_cost))}
+                          {formatCurrency(Number(metric.registered_cost) - Number(metric.invoice_cost))}
                         </TableCell>
 
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(metric.range_revenue)}
+                          {formatCurrency(metric.registered_revenue)}
                         </TableCell>
 
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(metric.range_profit)}
+                          {formatCurrency(metric.registered_profit)}
                         </TableCell>
 
                         <TableCell className="text-right">

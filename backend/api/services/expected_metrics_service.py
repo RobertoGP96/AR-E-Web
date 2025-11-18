@@ -78,9 +78,10 @@ class ExpectedMetricsService:
             total_delivery_weight = Decimal(str(total_delivery_weight_raw)) if total_delivery_weight_raw is not None else Decimal('0')
             total_delivery_cost = Decimal(str(total_delivery_cost_raw)) if total_delivery_cost_raw is not None else Decimal('0')
 
-            # Update the metric with calculated delivery weight and combined delivery+purchase cost
-            metric.delivery_real_cost = total_delivery_cost + actual_cost
-            metric.delivery_real_weight = total_delivery_weight
+            # Update the metric with calculated invoice (actual) weight and combined delivery+purchase cost
+            # The model currently stores actuals in `invoice_cost` and `invoice_weight` fields.
+            metric.invoice_cost = total_delivery_cost + actual_cost
+            metric.invoice_weight = total_delivery_weight
             metric.save()
 
             return {
@@ -205,24 +206,23 @@ class ExpectedMetricsService:
         """
         metrics = ExpectedMetrics.objects.all()
 
+        # Aggregate using the model fields that exist in the current model version
         summary_data = metrics.aggregate(
-            total_range_delivery_weight=Sum('range_delivery_weight'),
-            total_range_delivery_cost=Sum('range_delivery_cost'),
-            total_range_revenue=Sum('range_revenue'),
-            total_range_profit=Sum('range_profit'),
-            total_delivery_real_cost=Sum('delivery_real_cost'),
-            total_others_costs=Sum('others_costs'),
+            total_registered_weight=Sum('registered_weight'),
+            total_registered_cost=Sum('registered_cost'),
+            total_registered_revenue=Sum('registered_revenue'),
+            total_registered_profit=Sum('registered_profit'),
+            total_invoice_cost=Sum('invoice_cost'),
+            total_invoice_weight=Sum('invoice_weight'),
         )
 
-        # Calculate variances
-        total_expected_cost = summary_data['total_range_delivery_cost'] or Decimal('0')
-        total_actual_cost = (summary_data['total_delivery_real_cost'] or Decimal('0')) + \
-                           (summary_data['total_others_costs'] or Decimal('0'))
-        total_expected_profit = summary_data['total_range_profit'] or Decimal('0')
+        total_expected_cost = summary_data.get('total_registered_cost') or Decimal('0')
+        total_actual_cost = summary_data.get('total_invoice_cost') or Decimal('0')
+        total_expected_profit = summary_data.get('total_registered_profit') or Decimal('0')
 
         summary_data.update({
             'total_cost_variance': total_actual_cost - total_expected_cost,
-            'total_profit_variance': total_expected_profit - total_actual_cost,
+            'total_profit_variance': (summary_data.get('total_registered_revenue') or Decimal('0')) - total_actual_cost,
             'metrics_count': metrics.count()
         })
 
