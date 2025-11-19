@@ -43,7 +43,11 @@ git push origin main
 ```
 SECRET_KEY=genera_una_nueva_clave_secreta
 DEBUG=False
+Causa común: `DisallowedHost: Invalid HTTP_HOST header` cuando Django no reconoce el host público. Para evitarlo, agrega tu dominio Render a `ALLOWED_HOSTS`.
+
 ALLOWED_HOSTS=tu-app-name.onrender.com
+# Alternativa segura: Render expone el hostname público en la variable RENDER_EXTERNAL_HOSTNAME.
+# La configuración de `production.py` añadirá automáticamente ese valor si está presente.
 CORS_ALLOWED_ORIGINS=https://tu-frontend.vercel.app
 ```
 

@@ -3,6 +3,7 @@ Production settings.
 """
 
 import dj_database_url
+import os
 from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -11,9 +12,21 @@ DEBUG = False
 # Production allowed hosts
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='your-domain.com,www.your-domain.com',
+    default='ar-e-web.onrender.com,www.ar-e-web.onrender.com',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
+
+# If this app runs on Render, Render sets the environment variable
+# RENDER_EXTERNAL_HOSTNAME with the public hostname (eg: app-name.onrender.com).
+# Add it to ALLOWED_HOSTS automatically if present so you don't need to
+# manually update environment vars when deploying to Render.
+render_host = os.getenv('RENDER_EXTERNAL_HOSTNAME')
+if render_host:
+    # In some setups ALLOWED_HOSTS may be a tuple from the config cast; ensure list
+    if not isinstance(ALLOWED_HOSTS, list):
+        ALLOWED_HOSTS = list(ALLOWED_HOSTS)
+    if render_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(render_host)
 
 # Database
 DATABASE_URL = config('DATABASE_URL')
