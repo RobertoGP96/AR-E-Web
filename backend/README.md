@@ -97,6 +97,14 @@ API RESTful desarrollada con Django REST Framework para gestionar operaciones de
    python manage.py migrate
    ```
 
+Nota: Puedes usar Neon (Postgres gestionado) también en desarrollo estableciendo la variable `DATABASE_URL` en tu fichero `.env`.
+Ejemplo en `.env`:
+```
+# Para Neon development
+DATABASE_URL=postgresql://neondb_owner:password@ep-xxx-pooler.region.aws.neon.tech/dbname?sslmode=require&channel_binding=require
+```
+Si `DATABASE_URL` está presente, `development.py` utilizará esa cadena de conexión en lugar de SQLite.
+
 6. **Crear superusuario**
    ```bash
    python manage.py createsuperuser

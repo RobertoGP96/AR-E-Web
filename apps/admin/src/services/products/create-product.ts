@@ -42,6 +42,17 @@ export const createProduct = async (productData: CreateProductData): Promise<Pro
     payload.category = (data as Partial<CreateProductData>).category;
   }
 
+  // El backend espera product_pictures como JSON string (TextField) en algunas rutas
+  // Aceptamos que el frontend pase un array y lo convertimos aquí a string para evitar
+  // errores tipo "Not a valid string." durante la creación.
+  if (Array.isArray((data as Partial<CreateProductData>).product_pictures)) {
+    try {
+      payload.product_pictures = JSON.stringify((data as Partial<CreateProductData>).product_pictures);
+    } catch {
+      payload.product_pictures = '[]';
+    }
+  }
+
   return await apiClient.post<Product>('/api_data/product/', payload as unknown as object);
 };
 

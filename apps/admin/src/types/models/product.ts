@@ -62,9 +62,9 @@ export interface CreateProductData {
   link?: string;
   image_url?: string;
   sku?: string;
-  shop?: string; // Nombre de la tienda (slug_field="name")
+  shop?: string; // Nombre de la tienda (slug_field="name") o pk (id) para creación/edición
   description?: string;
-  category?: string; // Nombre de la categoría (slug_field="name")
+  category?: string; // Nombre de la categoría o pk (id) para creación/edición
   amount_requested: number;
   order: ID; // ID del pedido (slug_field="id")
   

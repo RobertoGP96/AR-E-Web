@@ -337,21 +337,59 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         const qty = Number(newProduct.amount_requested) || 1
         const unit = Number(newProduct.shop_cost) || 0
         const shippingCost = Number(newProduct.shop_delivery_cost) || 0
-        const shopName = (matchedShopId ? (availableShops.find(s => s.id === matchedShopId)?.name) : newProduct.shop) || (newProduct.link ? extractShopName(newProduct.link) : '') || 'Unknown'
+        // Preferir enviar el ID de la tienda (pk) cuando esté disponible.
+        let shopPayload: number | string | undefined
+        if (matchedShopId) {
+            shopPayload = matchedShopId
+        } else if (newProduct.shop) {
+            // Intentar mapear por nombre a la tienda en BD
+            const found = availableShops.find(s => s.name && s.name.toLowerCase() === (newProduct.shop || '').toLowerCase())
+            if (found) shopPayload = found.id
+            else {
+                // Si no coincide por nombre, intentar extraer del link
+                if (newProduct.link) {
+                    const fromLink = extractShopName(newProduct.link)
+                    const found2 = availableShops.find(s => s.name && s.name.toLowerCase() === fromLink.toLowerCase())
+                    if (found2) shopPayload = found2.id
+                }
+                    // Si aún no existe, dejamos undefined y validamos más abajo
+            }
+        }
         const shopTaxRate = newProduct.shop_taxes
         const addedTaxes = Number(newProduct.added_taxes) || 0
         const ownTaxes = Number(newProduct.own_taxes) || 0
         const chargeIva = newProduct.charge_iva ?? true
 
         // Calcular el total usando la función correcta
-        const calculation = calculateTotalCost(unit, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
+        // Decidir nombre de tienda para mostrar en el cálculo
+        let shopDisplayName = ''
+        if (typeof shopPayload === 'number') {
+            shopDisplayName = availableShops.find(s => s.id === shopPayload)?.name || ''
+        } else {
+            shopDisplayName = (newProduct.shop || (newProduct.link ? extractShopName(newProduct.link) : '')) || 'Unknown'
+        }
+
+        const calculation = calculateTotalCost(unit, shippingCost, shopDisplayName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
         const computedTotal = calculation.total
+
+        // category: backend espera PK; soportamos que el form guarde nombre -> mapear a id
+        const matchedCategory = categories.find(c => c.name && c.name.toLowerCase() === (newProduct.category || '').toLowerCase())
+        const categoryPayload = matchedCategory ? matchedCategory.id : (Number(newProduct.category) ? Number(newProduct.category) : undefined)
+
+        // Validación final: la API espera un PK para la tienda (shop). Si no está
+        // registrado (no conseguimos shopPayload), forzar al usuario a seleccionar
+        // la tienda manualmente o registrarla en el panel de tiendas.
+        if (typeof shopPayload === 'undefined' || shopPayload === null) {
+            alert('Debes seleccionar una tienda registrada o usar el selector manual.');
+            return
+        }
 
         const productToSubmit = {
             // Asegurar que se envía el nombre del producto
             name: newProduct.name,
             // Enviar shop como nombre (lo que espera la API según el serializer que usa slug_field="name")
-            shop: shopName,
+            // Enviar shop por id (PK) si está disponible. El backend espera un PK numérico.
+            shop: shopPayload ?? undefined,
             order: orderId,
             description: finalDescription,
             amount_requested: qty,
@@ -359,15 +397,17 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             shop_cost: unit,
             total_cost: computedTotal,
             // category: enviar el nombre de la categoría (la API espera nombre)
-            category: newProduct.category ?? '',
+            // category: enviar id si existe, si no envíe undefined (no se incluye)
+            category: typeof categoryPayload !== 'undefined' ? categoryPayload : undefined,
             // Guardar los valores en campos apropiados
             shop_delivery_cost: shippingCost, // Costo de envío
-            shop_taxes: shopTaxRate ?? getShopTaxRate(shopName), // Porcentaje de impuesto de tienda
+            shop_taxes: shopTaxRate ?? getShopTaxRate(shopDisplayName), // Porcentaje de impuesto de tienda
             charge_iva: chargeIva, // Si se cobra IVA o no
             base_tax: calculation.baseImpuesto, // IVA 7% calculado
             shop_tax_amount: calculation.tarifaTienda, // Impuesto adicional calculado (3% o 5%)
             added_taxes: addedTaxes, // Impuestos adicionales nominales
             own_taxes: ownTaxes, // Impuestos propios nominales
+            // Product images: enviar como array (el servicio create-product convertirá a string JSON)
             product_pictures: []
         } as unknown as CreateProductData
 
