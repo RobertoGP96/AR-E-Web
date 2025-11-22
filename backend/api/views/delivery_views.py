@@ -6,7 +6,8 @@ from drf_spectacular.utils import extend_schema
 from django.db.models import Q, Count
 from api.models import Package, DeliverReceip
 from api.serializers import (
-    PackageSerializer, DeliverReceipSerializer
+    PackageSerializer, DeliverReceipSerializer,
+    ProductReceivedSerializer, ProductDeliverySerializer,
 )
 from api.permissions.permissions import ReadOnly, AdminPermission, LogisticalPermission
 
@@ -78,6 +79,36 @@ class PackageViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Agregar productos al paquete",
+        description="Agrega múltiples productos recibidos a un paquete (bulk).",
+        tags=["Paquetes"]
+    )
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated], url_path="add_products")
+    def add_products(self, request, pk=None):
+        """Agregar múltiples productos recibidos al paquete identificado por `pk`.
+        Se espera un payload: { "products": [{"original_product_id": <uuid>, "amount_received": <int>, "observation": "..."}, ...] }
+        """
+        package = self.get_object()
+        products = request.data.get("products", [])
+        if not isinstance(products, list):
+            return Response({"error": "Expected a list of products under 'products' key."}, status=status.HTTP_400_BAD_REQUEST)
+
+        created = []
+        for item in products:
+            data = {
+                "original_product_id": item.get("original_product_id") or item.get("original_product"),
+                "amount_received": item.get("amount_received"),
+                "observation": item.get("observation", ""),
+                "package_id": package.id,
+            }
+            serializer = ProductReceivedSerializer(data=data, context={"request": request})
+            serializer.is_valid(raise_exception=True)
+            created_obj = serializer.save()
+            created.append(ProductReceivedSerializer(created_obj).data)
+
+        return Response({"created": created}, status=status.HTTP_201_CREATED)
+
 
 class DeliverReceipViewSet(viewsets.ModelViewSet):
     """
@@ -145,3 +176,33 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Agregar productos al recibo de entrega",
+        description="Agrega múltiples productos entregados a un recibo de entrega (bulk).",
+        tags=["Recibos de Entrega"]
+    )
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated], url_path="add_products")
+    def add_products(self, request, pk=None):
+        """Agregar múltiples product deliveries a un `deliver_receip`.
+        Body: { "products": [{"original_product_id": <uuid>, "amount_delivered": <int>, "reception": true/false}, ...] }
+        """
+        deliver_receip = self.get_object()
+        products = request.data.get("products", [])
+        if not isinstance(products, list):
+            return Response({"error": "Expected a list of products under 'products' key."}, status=status.HTTP_400_BAD_REQUEST)
+
+        created = []
+        for item in products:
+            data = {
+                "original_product_id": item.get("original_product_id") or item.get("original_product"),
+                "amount_delivered": item.get("amount_delivered"),
+                "reception": item.get("reception", False),
+                "deliver_receip_id": deliver_receip.id,
+            }
+            serializer = ProductDeliverySerializer(data=data, context={"request": request})
+            serializer.is_valid(raise_exception=True)
+            created_obj = serializer.save()
+            created.append(ProductDeliverySerializer(created_obj).data)
+
+        return Response({"created": created}, status=status.HTTP_201_CREATED)
