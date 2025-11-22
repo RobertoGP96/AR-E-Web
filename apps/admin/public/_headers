@@ -15,6 +15,12 @@
   # Headers adicionales para performance
   Vary: Accept-Encoding
   
+  # Cloudflare específico
+  CF-Cache-Status: HIT
+  Access-Control-Allow-Origin: https://ar-e-web.onrender.com
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With
+
 # Cache específico para assets
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
