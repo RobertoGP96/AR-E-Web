@@ -11,5 +11,9 @@ services:
         value: 3.12.8
       - key: DEBUG
         value: "False"
+      - key: DJANGO_ENV
+        value: "production"
+      - key: ALLOWED_HOSTS
+        value: "ar-e-web.onrender.com, www.ar-e-web.onrender.com"
       - key: DJANGO_SETTINGS_MODULE
         value: config.settings
