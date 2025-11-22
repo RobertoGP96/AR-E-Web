@@ -8,7 +8,7 @@ from .base import *
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'https://ar-e-web.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'ar-e-web.onrender.com']
 
 # Database
 DATABASE_URL = config('DATABASE_URL', default=None)
