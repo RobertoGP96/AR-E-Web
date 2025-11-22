@@ -7,130 +7,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TrendingUp, TrendingDown, DollarSign, Users, Trophy } from 'lucide-react';
-import axios from 'axios';
+import { fetchProfitReports } from '@/services/reports/reports';
+import type { ProfitReportsData, MonthlyReport, AgentReport } from '@/services/reports/reports';
 import { formatUSD } from '@/lib/format-usd';
 import * as React from 'react';
 import LoadingSpinner from '@/components/utils/LoadingSpinner';
 
-interface MonthlyReport {
-  month: string;
-  month_short: string;
-  revenue: number;
-  total_expenses: number;
-  product_expenses: number;
-  purchase_operational_expenses: number;
-  paid_purchase_expenses: number;
-  delivery_expenses: number;
-  agent_profits: number;
-  system_delivery_profit: number;
-  system_profit: number;
-  projected_profit: number;
-  // Campos legacy para compatibilidad hacia atrás
-  costs?: number;
-  product_costs?: number;
-  delivery_costs?: number;
-}
+// Types for Profit Reports are defined in `src/lib/api/reports.ts` and imported above
 
-interface AgentReport {
-  agent_id: number;
-  agent_name: string;
-  agent_phone: string;
-  total_profit: number;
-  current_month_profit: number;
-  clients_count: number;
-  orders_count: number;
-  orders_completed: number;
-}
-
-interface ProfitReportsData {
-  monthly_reports: MonthlyReport[];
-  agent_reports: AgentReport[];
-  summary: {
-    total_revenue: number;
-    total_expenses: number;
-    total_product_expenses: number;
-    total_purchase_operational_expenses: number;
-    total_paid_purchase_expenses: number;
-    total_delivery_expenses: number;
-    total_agent_profits: number;
-    total_system_delivery_profit: number;
-    total_system_profit: number;
-    profit_margin: number;
-    // Campos legacy para compatibilidad hacia atrás
-    total_costs?: number;
-    total_product_costs?: number;
-    total_delivery_costs?: number;
-  };
-}
-
-const fetchProfitReports = async (): Promise<ProfitReportsData> => {
-  try {
-    const token = localStorage.getItem('access_token');
-    console.log('Token encontrado:', !!token); // Debug: verificar si hay token
-    if (!token) {
-      throw new Error('No se encontró token de autenticación. Por favor, inicie sesión nuevamente.');
-    }
-
-    const apiUrl = import.meta.env.VITE_API_URL;
-    console.log('VITE_API_URL:', apiUrl); // Debug: verificar la URL
-    const fullUrl = `${apiUrl}/api_data/reports/profits/`;
-    console.log('URL completa:', fullUrl); // Debug: URL completa
-
-    const response = await axios.get(fullUrl, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    console.log('Respuesta de la API:', response); // Debug: respuesta completa
-    console.log('Datos de respuesta:', response.data); // Debug: datos
-
-    // Verificar el formato de respuesta estandarizado
-    if (!response.data || !response.data.success) {
-      throw new Error('No se pudieron cargar los reportes. La respuesta del servidor no contiene datos válidos.');
-    }
-
-    if (!response.data.success) {
-      const errorMessage = response.data.message || 'Error desconocido del servidor';
-      throw new Error(`Error del servidor: ${errorMessage}`);
-    }
-
-    if (!response.data.data) {
-      throw new Error('No se pudieron cargar los reportes. Los datos están vacíos.');
-    }
-
-    return response.data.data;
-  } catch (error) {
-    console.error('Error en fetchProfitReports:', error); // Debug: error completo
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 401) {
-        throw new Error('Sesión expirada. Por favor, inicie sesión nuevamente.');
-      } else if (error.response?.status === 403) {
-        throw new Error('No tiene permisos para acceder a los reportes.');
-      } else if (error.response?.status === 404) {
-        throw new Error('El endpoint de reportes no fue encontrado.');
-      } else if (error.response?.data?.message) {
-        throw new Error(`Error del servidor: ${error.response.data.message}`);
-      } else {
-        throw new Error(`Error de conexión: ${error.response?.status} ${error.response?.statusText}`);
-      }
-    } else {
-      throw new Error('Error desconocido al cargar los reportes. Verifique su conexión a internet.');
-    }
-  }
-};
+// fetchProfitReports se importa desde `src/lib/api/reports.ts`
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = React.useState("12m");
 
-  const { data: reports, isLoading, error } = useQuery({
+  const { data: reports, isLoading, error } = useQuery<ProfitReportsData, Error>({
     queryKey: ['profitReports'],
     queryFn: fetchProfitReports,
   });
 
   // Filtrar los datos según el rango de tiempo seleccionado
   const filteredData = React.useMemo(() => {
-    const data = reports?.monthly_reports || [];
+    const data: MonthlyReport[] = reports?.monthly_reports || [];
     if (timeRange === "3m") {
       return data.slice(-3);
     } else if (timeRange === "6m") {
@@ -475,7 +372,7 @@ export default function Analytics() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(filteredData || []).map((report, index) => (
+                  {(filteredData || []).map((report: MonthlyReport, index: number) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{report.month}</TableCell>
                       <TableCell className="text-right font-semibold" style={{ color: 'hsl(33 100% 50%)' }}>
@@ -530,7 +427,7 @@ export default function Analytics() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(reports.agent_reports || []).map((agent, index) => (
+                  {(reports.agent_reports || []).map((agent: AgentReport, index: number) => (
                     <TableRow key={agent.agent_id}>
                       <TableCell className="font-medium">
                         {index === 0 && <Trophy className="h-4 w-4" />}

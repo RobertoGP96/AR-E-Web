@@ -12,9 +12,9 @@ import {
   UserCircle, 
   FolderTree,
   type LucideIcon,
-  TrendingUp,
   Receipt,
-  FileText
+  FileText,
+  ChartColumn
 } from 'lucide-react';
 
 // Mapeo de rutas a iconos
@@ -30,7 +30,7 @@ const routeIcons: Record<string, LucideIcon> = {
   '/profile': UserCircle,
   '/categories': FolderTree,
   '/invoices': FileText,
-  '/analitics': TrendingUp,
+  '/analitics': ChartColumn,
   '/finances': Receipt,
 };
 
