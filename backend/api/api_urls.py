@@ -26,6 +26,7 @@ router.register(r"category", views.CategoryViewSet)
 router.register(r"expected_metrics", expected_metrics.ExpectedMetricsViewSet)
 router.register(r"invoice", invoice_views.InvoiceViewSet)
 router.register(r"tag", invoice_views.TagViewSet)
+router.register(r"expense", views.ExpenseViewSet)
 
 urlpatterns = [
     path("api_data/", include(router.urls)),
@@ -44,6 +45,7 @@ urlpatterns = [
     path("admin/create/", views.CreateAdminView.as_view(), name="create_admin_user"),
     path("api_data/dashboard/stats/", views.DashboardMetricsView.as_view(), name="dashboard_stats"),
     path("api_data/reports/profits/", views.ProfitReportsView.as_view(), name="profit_reports"),
+    path("api_data/reports/expenses/", views.ExpenseAnalysisView.as_view(), name="expense_analysis"),
     path("api_data/system/info/", views.SystemInfoView.as_view(), name="system_info"),
     # URLs de notificaciones (incluidas bajo el mismo prefijo `api_data/`)
     path("api_data/", include("api.notifications.urls_notifications")),

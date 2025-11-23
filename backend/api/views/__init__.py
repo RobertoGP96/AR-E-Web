@@ -22,6 +22,7 @@ from .shop_views import (
     BuyingAccountsViewsSet,
     ShoppingReceipViewSet
 )
+from .expense_views import ExpenseViewSet
 from .common_views import (
     CategoryViewSet,
     CommonInformationViewSet,
@@ -31,6 +32,9 @@ from .dashboard_views import (
     DashboardMetricsView,
     ProfitReportsView,
     SystemInfoView
+)
+from .reports_views import (
+    ExpenseAnalysisView
 )
 from .amazon_views import (
     AmazonScrapingView,
@@ -69,6 +73,7 @@ __all__ = [
     'ShopViewSet',
     'BuyingAccountsViewsSet',
     'ShoppingReceipViewSet',
+    'ExpenseViewSet',
 
     # Common views
     'CategoryViewSet',
@@ -79,6 +84,7 @@ __all__ = [
     'DashboardMetricsView',
     'ProfitReportsView',
     'SystemInfoView',
+    'ExpenseAnalysisView'
 
     # Amazon views
     'AmazonScrapingView',

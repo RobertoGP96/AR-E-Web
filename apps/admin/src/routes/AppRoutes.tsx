@@ -50,7 +50,6 @@ const AppRoutes = () => {
                 <Route index element={<Dashboard />} />
                 
                 <Route path="users" element={<Users />} />
-                <Route path="invoices" element={<Invoices />} />
                 <Route path="shops" element={<Shops />} />
                 
                 <Route path="products" element={<Products />} />
@@ -73,10 +72,12 @@ const AppRoutes = () => {
                 <Route path="delivery/:id/remove-products" element={<RemoveProductsFromDeliveryPage />} />
                 
                 <Route path="orders" element={<Orders />} />
-                <Route path="finances" element={<ExpectedMetrics />} />
-                <Route path="/analitics" element={<Analytics />} />
                 <Route path="orders/:id" element={<OrderDetails />} />
                 <Route path="orders/:id/add-products" element={<AddMultipleProductsToOrderPage />} />
+
+                <Route path="/analitics" element={<Analytics />} />
+                <Route path="finances" element={<ExpectedMetrics />} />
+                <Route path="/costs-expenses" element={<Invoices />} />
 
                 
                 <Route path="profile" element={<Profile />} />

@@ -7,6 +7,7 @@ from .products import Category, Product, ProductBuyed, ProductReceived, ProductD
 from .deliveries import DeliverReceip, Package
 from .common import CommonInformation
 from .invoice import Invoice, Tag
+from .expenses import Expense
 
 # Import existing models
 from ..notifications.models_notifications import Notification, NotificationPreference
@@ -28,6 +29,7 @@ __all__ = [
     'CommonInformation',
     'Invoice',
     'Tag',
+    'Expense',
     'Notification',
     'NotificationPreference',
     'ExpectedMetrics',

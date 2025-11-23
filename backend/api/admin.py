@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .forms import CustomUserCreationForm, CustomUserChangeForm
-from .models import CustomUser, Order
+from .models import CustomUser, Order, Expense
 from .models.expected_metrics import ExpectedMetrics
 from decimal import Decimal
 
@@ -71,6 +71,11 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Order)
+@admin.register(Expense)
+class ExpenseAdmin(admin.ModelAdmin):
+    list_display = ('id', 'date', 'amount', 'category', 'created_by')
+    list_filter = ('category', 'date')
+    search_fields = ('description', 'created_by__name')
 
 
 @admin.register(ExpectedMetrics)

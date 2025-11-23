@@ -48,6 +48,9 @@ from .invoice_serializers import (
     TagSerializer,
     InvoiceCreateSerializer,
 )
+from .expenses_serializers import (
+    ExpenseSerializer,
+)
 
 __all__ = [
     # Users
@@ -99,4 +102,5 @@ __all__ = [
     'InvoiceSerializer',
     'TagSerializer',
     'InvoiceCreateSerializer',
+    'ExpenseSerializer',
 ]
