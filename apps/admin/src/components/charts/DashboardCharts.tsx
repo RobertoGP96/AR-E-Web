@@ -72,9 +72,13 @@ export const UserMetricsBarChart = () => {
     },
   } satisfies ChartConfig
 
+  // Use the explicit total from the API if available; otherwise fall back to summing the chart segments
   const totalUsers = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.usuarios, 0)
-  }, [chartData])
+    if (typeof userMetrics?.total === 'number') {
+      return userMetrics.total;
+    }
+    return chartData.reduce((acc, curr) => acc + curr.usuarios, 0);
+  }, [userMetrics?.total, chartData]);
 
   if (isLoading || !userMetrics) {
     return (
