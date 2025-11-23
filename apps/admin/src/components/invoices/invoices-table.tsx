@@ -1,4 +1,4 @@
-import { Edit, Trash2, MoreHorizontal, Eye, Calendar, DollarSign, FileText, Receipt } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Eye, Calendar, DollarSign, Receipt, BaggageClaim, CircleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
@@ -80,9 +80,10 @@ export default function InvoicesTable({
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center justify-center h-64">
+        <CircleAlert className="h-12 w-12 text-gray-400 mb-4" />
         <div className="text-center">
-          <p className="text-red-600">Error al cargar facturas: {error}</p>
+          <p className="text-red-600">Error al cargar costos: {error}</p>
         </div>
       </div>
     );
@@ -92,8 +93,8 @@ export default function InvoicesTable({
     return (
       <div className="flex items-center justify-center h-64 rounded-lg border border-muted bg-background shadow">
         <div className="text-center">
-          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">No hay facturas registradas</p>
+          <BaggageClaim className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600">No hay costos registradas</p>
         </div>
       </div>
     );

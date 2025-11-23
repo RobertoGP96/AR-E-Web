@@ -2,22 +2,22 @@ import { Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 
-import type { CreateInvoiceData, UpdateInvoiceData } from '../../types/models/invoice';
-import { InvoiceForm } from './invoices-form';
+import type { UpdateExpenseData, CreateExpenseData} from '../../types/models/expenses';
+import { ExpencesForm } from './expenses-form';
 
 interface ExpencesFiltersProps {
   searchTerm?: string;
   onSearchChange?: (value: string) => void;
-  onCreateInvoice?: (data: CreateInvoiceData | UpdateInvoiceData) => void;
-  isCreatingInvoice?: boolean;
+  onCreateExpense?: (data: CreateExpenseData | UpdateExpenseData) => void;
+  isCreatingExpense?: boolean;
   resultCount?: number;
 }
 
 export default function ExpencesFilters({
   searchTerm,
   onSearchChange,
-  onCreateInvoice,
-  isCreatingInvoice = false,
+  onCreateExpense,
+  isCreatingExpense = false,
 }: ExpencesFiltersProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4">
@@ -34,10 +34,10 @@ export default function ExpencesFilters({
         </div>
       </div>
 
-      <InvoiceForm
+      <ExpencesForm
         mode="create"
-        onSubmit={onCreateInvoice}
-        loading={isCreatingInvoice}
+        onSubmit={onCreateExpense}
+        loading={isCreatingExpense}
         trigger={
           <Button className="h-10">
             <Plus className="h-4 w-4 mr-2" />

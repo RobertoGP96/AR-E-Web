@@ -10,11 +10,12 @@ import {
   ClipboardList, 
   Settings, 
   UserCircle, 
-  FolderTree,
   type LucideIcon,
   Receipt,
   FileText,
-  ChartColumn
+  ChartColumn,
+  BaggageClaim,
+  Tags
 } from 'lucide-react';
 
 // Mapeo de rutas a iconos
@@ -28,8 +29,8 @@ const routeIcons: Record<string, LucideIcon> = {
   '/orders': ClipboardList,
   '/settings': Settings,
   '/profile': UserCircle,
-  '/categories': FolderTree,
-  '/invoices': FileText,
+  '/categories': Tags,
+  '/invoices': BaggageClaim,
   '/expenses': FileText,
   '/analitics': ChartColumn,
   '/finances': Receipt,
@@ -48,7 +49,7 @@ const routeNames: Record<string, string> = {
   '/settings': 'Configuración',
   '/profile': 'Mi Perfil',
   '/categories': 'Categorías',
-  '/invoices': 'Facturas',
+  '/invoices': 'Costos',
   '/expenses': 'Gastos',
   '/analitics': 'Análisis',
   '/finances': 'Finanzas',

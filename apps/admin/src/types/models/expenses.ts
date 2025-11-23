@@ -33,6 +33,7 @@ export interface CreateExpenseData {
 	amount: number;
 	category: ExpenseCategory;
 	description?: string | null;
+	recurrent?: boolean;
 }
 
 export interface UpdateExpenseData extends Partial<CreateExpenseData> {

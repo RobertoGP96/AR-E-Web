@@ -13,7 +13,8 @@ import {
   Tag,
   ReceiptIcon,
   ChartColumn,
-  ReceiptText
+  ReceiptText,
+  BaggageClaim
 } from 'lucide-react';
 import { toast } from 'sonner';
 import logoSvg from '@/assets/logo/f-logo.svg';
@@ -118,8 +119,13 @@ const navigationGroups = [
         icon: ChartColumn
       },
       {
-        name: 'Costos y Gastos',
-        href: '/costs-expenses',
+        name: 'Costos',
+        href: '/invoices',
+        icon: BaggageClaim
+      },
+      {
+        name: 'Gastos',
+        href: '/expenses',
         icon: ReceiptText
       },
       {

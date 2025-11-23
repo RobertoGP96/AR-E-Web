@@ -31,7 +31,7 @@ import { ImageUploadExamples } from '@/pages/ImageUploadExamples';
 import Analytics from '@/pages/Analytics';
 import Invoices from '@/pages/Invoices';
 import ExpectedMetrics from '@/pages/ExpectedMetrics';
-import Expences from '@/pages/Expences';
+import Expenses from '@/pages/Expenses';
 
 const AppRoutes = () => {
     return (
@@ -77,7 +77,7 @@ const AppRoutes = () => {
                 <Route path="orders/:id/add-products" element={<AddMultipleProductsToOrderPage />} />
 
                 <Route path="/invoices" element={<Invoices />} />
-                <Route path="/expences" element={<Expences />} />
+                <Route path="/expenses" element={<Expenses />} />
                 
                 <Route path="finances" element={<ExpectedMetrics />} />
 

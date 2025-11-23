@@ -73,8 +73,8 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             changeType: 'increase' as const
           },
           { 
-            label: 'Verificados', 
-            value: metrics.users.verified, 
+            label: 'Clientes', 
+            value: metrics.users.clients, 
             icon: Users, 
             color: 'text-purple-600',
             iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',

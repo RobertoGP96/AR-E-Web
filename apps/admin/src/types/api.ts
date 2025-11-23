@@ -183,6 +183,7 @@ export interface DashboardMetrics {
     active: number;
     verified: number;
     agents: number;
+    clients: number;
   };
   revenue: {
     total: number;

@@ -72,6 +72,7 @@ class DashboardMetricsView(APIView):
             'active': CustomUser.objects.filter(is_active=True).count(),
             'verified': CustomUser.objects.filter(is_verified=True).count(),
             'agents': CustomUser.objects.filter(role='agent').count(),
+            'clients': CustomUser.objects.filter(role='client').count(),
         }
 
         # Revenue

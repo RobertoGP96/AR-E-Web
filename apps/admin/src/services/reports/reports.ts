@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api-client';
+import { apiClient, ApiError } from '@/lib/api-client';
 
 export interface MonthlyReport {
   month: string;
@@ -53,15 +53,8 @@ export interface ProfitReportsData {
 
 export const fetchProfitReports = async (): Promise<ProfitReportsData> => {
   try {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No se encontró token de autenticación. Por favor, inicie sesión nuevamente.');
-    }
-
-    const apiUrl = import.meta.env.VITE_API_URL;
-    const fullUrl = `${apiUrl}api_data/reports/profits/`;
-
-    const response = await apiClient.get<unknown>(fullUrl, { skipAuth: false });
+    // Use apiClient baseURL and auth handling - pass the endpoint relative to baseURL
+    const response = await apiClient.get<unknown>('/api_data/reports/profits/');
 
     // Si la API devuelve un wrapper { success: boolean, data: ... }
     if (response && typeof response === 'object' && 'success' in (response as Record<string, unknown>)) {
@@ -71,22 +64,37 @@ export const fetchProfitReports = async (): Promise<ProfitReportsData> => {
       return (resp.data as ProfitReportsData);
     }
 
-    // Si la API devuelve datos directamente
-    return response as ProfitReportsData;
+    // Caso donde la API retorna el objeto directamente
+    if (response && typeof response === 'object' && 'monthly_reports' in (response as Record<string, unknown>)) {
+      return response as ProfitReportsData;
+    }
+
+    // Caso donde la API envuelve los datos en { data: { monthly_reports: [...] } }
+    if (response && typeof response === 'object' && 'data' in (response as Record<string, unknown>)) {
+      const resp = response as Record<string, unknown>;
+      if (resp.data && typeof resp.data === 'object' && 'monthly_reports' in (resp.data as Record<string, unknown>)) {
+        return (resp.data as ProfitReportsData);
+      }
+    }
+
+    throw new Error('No se pudieron cargar los reportes. Respuesta inesperada del servidor.');
   } catch (error) {
     console.error('Error en fetchProfitReports:', error);
-    // apiClient already formats errors and throws ApiError; map to friendly messages
-    const err = error as { status?: number; message?: string }  ;
-    if (err?.status === 401) {
-      throw new Error('Sesión expirada. Por favor, inicie sesión nuevamente.');
-    } else if (err?.status === 403) {
-      throw new Error('No tiene permisos para acceder a los reportes.');
-    } else if (err?.status === 404) {
-      throw new Error('El endpoint de reportes no fue encontrado.');
-    } else if (err?.message) {
-      throw new Error(`Error del servidor: ${err.message}`);
+    // apiClient already formats errors and throws ApiError; map to friendly messages when possible
+    if (error instanceof ApiError) {
+      const { status, message } = error as ApiError;
+      if (status === 401) {
+        throw new Error('Sesión expirada. Por favor, inicie sesión nuevamente.');
+      } else if (status === 403) {
+        throw new Error('No tiene permisos para acceder a los reportes.');
+      } else if (status === 404) {
+        throw new Error('El endpoint de reportes no fue encontrado.');
+      } else if (message) {
+        throw new Error(`Error del servidor: ${message}`);
+      }
     }
-    throw new Error('Error desconocido al cargar los reportes. Verifique su conexión a internet.');
+
+    // Default fallback
     throw new Error('Error desconocido al cargar los reportes. Verifique su conexión a internet.');
   }
 };
