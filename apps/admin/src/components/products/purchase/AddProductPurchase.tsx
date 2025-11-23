@@ -254,8 +254,8 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
                 <FormLabel>Fecha de Compra</FormLabel>
                 <FormControl>
                   <DatePicker
-                    value={field.value ? new Date(field.value) : undefined}
-                    onChange={(date: Date | undefined) => field.onChange(date?.toISOString())}
+                    selected={field.value ? new Date(field.value) : undefined}
+                    onDateChange={(date: Date | undefined) => field.onChange(date?.toISOString())}
                   />
                 </FormControl>
                 <FormMessage />

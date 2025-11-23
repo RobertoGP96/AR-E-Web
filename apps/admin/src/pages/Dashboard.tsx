@@ -1,11 +1,9 @@
-import { LayoutDashboard, Calendar, Clock, Sparkles } from 'lucide-react';
-import AdminFeatures from '@/components/admin/AdminFeatures';
 import { DashboardCharts } from '@/components/charts';
 import { MetricsSummaryCards } from '@/components/metrics';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 
 const Dashboard = () => {
   // Obtener saludo según hora del día
@@ -16,74 +14,65 @@ const Dashboard = () => {
     return '¡Buenas noches!';
   }, []);
 
-  // Fecha actual formateada
-  const currentDate = useMemo(() => {
-    return new Date().toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  // Variable para la hora/fecha en vivo
+  const [timeNow, setTimeNow] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setTimeNow(new Date()), 1000);
+    return () => clearInterval(id);
   }, []);
 
-  // Hora actual formateada
-  const currentTime = useMemo(() => {
-    return new Date().toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }, []);
+  // Fecha actual formateada (gran día + detalle)
+  const currentDayNumber = timeNow.getDate().toString();
+  const currentShortMonthYear = timeNow.toLocaleString('es-ES', { month: 'long' });
+  const currentWeekday = timeNow.toLocaleString('es-ES', { weekday: 'long' });
+
+  // Hora actual formateada en 12 horas con am/pm (ej: 2:05:30 pm)
+  const hour24 = timeNow.getHours();
+  const hour12 = hour24 % 12 || 12;
+  const minutes = timeNow.getMinutes().toString().padStart(2, '0');
+  const seconds = timeNow.getSeconds().toString().padStart(2, '0');
+  const ampm = hour24 >= 12 ? 'pm' : 'am';
+  const currentTime = `${hour12}:${minutes}:${seconds} ${ampm}`;
 
   return (
     <div className="space-y-8 pb-8 animate-in fade-in duration-500">
       {/* Welcome Header Section */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary  to-orange-400 p-8 shadow-2xl animate-in slide-in-from-top duration-700">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 -mt-4 -mr-4 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 -mb-8 -ml-8 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
-        
+      <div className="relative  rounded-2xl  animate-in slide-in-from-top duration-700">
+
         <div className="relative z-10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg">
-                  <LayoutDashboard className="h-8 w-8 text-white" />
-                </div>
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
+                  <h1 className="text-3xl md:text-4xl font-bold text-orange-400 flex items-center gap-3">
                     {greeting}
-                    <Sparkles className="h-6 w-6 text-yellow-300 animate-pulse" />
+
                   </h1>
-                  <p className="text-orange-100 mt-1 text-sm md:text-base">
+                  <p className="text-orange-400 mt-1 text-sm md:text-base">
                     Panel de Administración · Resumen General
                   </p>
                 </div>
               </div>
             </div>
-            
-            <div className="flex flex-col gap-2">
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20 shadow-lg">
-                <CardContent className="">
-                  <div className="flex items-center gap-3 text-white">
-                    <Calendar className="h-5 w-5 text-orange-200" />
-                    <div>
-                      <p className="text-xs text-orange-200 uppercase tracking-wide">Fecha</p>
-                      <p className="font-semibold capitalize">{currentDate}</p>
-                    </div>
+
+            <div className="flex flex-row gap-2">
+              {/* Calendar-style Card */}
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20 shadow-lg w-35 overflow-hidden relative py-0 gap-0">
+                <CardHeader className='p-0 gap-0'>
+                  <div className="bg-orange-400 text-white px-3 py-1 text-[16px] font-semibold uppercase flex items-center gap-0 justify-center">
+                    <span className="truncate">{currentShortMonthYear}</span>
                   </div>
+                </CardHeader>
+                <CardContent className="p-0 bg-white">
+                  <div className="p-2 text-white text-center">
+                    <div className="mt-1 text-md font-medium capitalize text-orange-400">{currentWeekday}</div>
+                    <div className="text-5xl text-orange-400 font-extrabold leading-none">{currentDayNumber}</div>
+                    <div className="text-[16px] mt-1 text-orange-400">{currentTime}</div>
+                  </div>
+                  
                 </CardContent>
               </Card>
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20 shadow-lg p-0">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 text-white">
-                    <Clock className="h-5 w-5 text-orange-200" />
-                    <div>
-                      <p className="text-xs text-orange-200 uppercase tracking-wide">Hora</p>
-                      <p className="font-semibold">{currentTime}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+
             </div>
           </div>
         </div>
@@ -117,25 +106,12 @@ const Dashboard = () => {
               Visualiza el rendimiento de tu negocio con gráficos interactivos
             </p>
           </div>
-          
+
         </div>
         <Separator className="my-4" />
         <DashboardCharts />
       </section>
 
-      {/* Features Section */}
-      <section className="space-y-4 animate-in slide-in-from-bottom duration-700 delay-500">
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900">Funcionalidades</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Gestiona las características disponibles en el panel de administración
-            </p>
-          </div>
-        </div>
-        <Separator className="my-4" />
-        <AdminFeatures />
-      </section>
     </div>
   );
 };

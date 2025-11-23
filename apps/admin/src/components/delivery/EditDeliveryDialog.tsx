@@ -276,8 +276,8 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
             {/* Fecha de Entrega */}
             <div className="grid gap-2">
               <DatePicker
-                value={formData.deliver_date ? new Date(formData.deliver_date) : undefined}
-                onChange={(date: Date | undefined) => setFormData({ ...formData, deliver_date: date?.toISOString() || '' })}
+                selected={formData.deliver_date ? new Date(formData.deliver_date) : undefined}
+                onDateChange={(date: Date | undefined) => setFormData({ ...formData, deliver_date: date?.toISOString() || '' })}
               />
 
             </div>

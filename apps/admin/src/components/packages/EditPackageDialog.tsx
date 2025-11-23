@@ -142,8 +142,8 @@ export default function EditPackageDialog({ open, onOpenChange, package: pkg }: 
             {/* Fecha de Llegada */}
             <div className="grid gap-2">
               <DatePicker
-                value={formData.arrival_date ? new Date(formData.arrival_date) : undefined}
-                onChange={(date: Date | undefined) => setFormData({ ...formData, arrival_date: date?.toISOString() || '' })}
+                selected={formData.arrival_date ? new Date(formData.arrival_date) : undefined}
+                onDateChange={(date: Date | undefined) => setFormData({ ...formData, arrival_date: date?.toISOString() || '' })}
               />
 
             </div>

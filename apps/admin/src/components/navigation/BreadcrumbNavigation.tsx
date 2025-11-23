@@ -30,6 +30,7 @@ const routeIcons: Record<string, LucideIcon> = {
   '/profile': UserCircle,
   '/categories': FolderTree,
   '/invoices': FileText,
+  '/expenses': FileText,
   '/analitics': ChartColumn,
   '/finances': Receipt,
 };
@@ -48,6 +49,7 @@ const routeNames: Record<string, string> = {
   '/profile': 'Mi Perfil',
   '/categories': 'Categorías',
   '/invoices': 'Facturas',
+  '/expenses': 'Gastos',
   '/analitics': 'Análisis',
   '/finances': 'Finanzas',
 };

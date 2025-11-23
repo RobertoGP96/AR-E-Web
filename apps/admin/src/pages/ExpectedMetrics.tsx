@@ -362,19 +362,19 @@ const ExpectedMetricsPage = () => {
             <form onSubmit={handleSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto p-2">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <DatePicker
-                    id="start_date"
-                    label="Fecha de Inicio"
-                    required
-                    value={formData.start_date ? new Date(formData.start_date) : undefined}
-                    onChange={(date) =>
-                      setFormData({
-                        ...formData,
-                        start_date: date ? formatDateYYYYMMDD(date) : undefined,
-                      })
-                    }
-                    className="w-full"
-                  />
+                    <DatePicker
+                      id="start_date"
+                      label="Fecha de Inicio"
+                      required
+                      selected={formData.start_date ? new Date(formData.start_date) : undefined}
+                      onDateChange={(date) =>
+                        setFormData({
+                          ...formData,
+                          start_date: date ? formatDateYYYYMMDD(date) : undefined,
+                        })
+                      }
+                      className="w-full"
+                    />
                 </div>
 
                 <div className="space-y-2">
@@ -382,8 +382,8 @@ const ExpectedMetricsPage = () => {
                     id="end_date"
                     label="Fecha de Fin"
                     required
-                    value={formData.end_date ? new Date(formData.end_date) : undefined}
-                    onChange={(date) =>
+                    selected={formData.end_date ? new Date(formData.end_date) : undefined}
+                    onDateChange={(date) =>
                       setFormData({
                         ...formData,
                         end_date: date ? formatDateYYYYMMDD(date) : undefined,

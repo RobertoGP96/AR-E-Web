@@ -287,6 +287,12 @@ export const shoppingReceipService = {
 };
 
 // =============================================================================
+// EXPENSES
+// =============================================================================
+
+
+
+// =============================================================================
 // DASHBOARD Y ESTADÍSTICAS
 // =============================================================================
 
@@ -375,3 +381,4 @@ export type {
   Package,
   DeliverReceip
 };
+export type { Expense, CreateExpenseData, UpdateExpenseData, ExpenseFilters, ExpenseAnalysisResponse } from '../types/models/expenses';

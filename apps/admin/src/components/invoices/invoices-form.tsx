@@ -3,10 +3,10 @@ import type { Invoice, CreateInvoiceData, UpdateInvoiceData } from '../../types/
 import { useInvoiceForm } from '../../hooks/useInvoiceForm';
 import { useQueryClient } from '@tanstack/react-query';
 import { invoiceKeys } from '@/hooks/invoice';
-import { TagItem } from './TagItem';
+import { TagItem } from './tag-item';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { NewTagForm } from './NewTagForm';
-import { InvoiceSummary } from './InvoiceSummary';
+import { NewTagForm } from './new-tag-form';
+import { InvoiceSummary } from './invoices-summary';
 import {
   Dialog,
   DialogTrigger,
@@ -130,8 +130,8 @@ export function InvoiceForm({
             </Label>
             <DatePicker
               id="date"
-              value={watch('date') ? new Date(watch('date') as string) : undefined}
-              onChange={(date) => setValue('date' as const, date ? date.toISOString().split('T')[0] : '', { shouldValidate: true, shouldDirty: true })}
+              selected={watch('date') ? new Date(watch('date') as string) : undefined}
+              onDateChange={(date) => setValue('date' as const, date ? date.toISOString().split('T')[0] : '', { shouldValidate: true, shouldDirty: true })}
               placeholder="Selecciona la fecha"
             />
             

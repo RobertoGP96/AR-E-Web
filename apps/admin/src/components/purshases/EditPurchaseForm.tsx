@@ -304,8 +304,8 @@ export function EditPurchaseForm({ receipt, onSuccess, onCancel }: EditPurchaseF
                   <DatePicker
                     label="Fecha de Compra"
                     placeholder="Selecciona la fecha"
-                    value={field.value ? new Date(field.value) : undefined}
-                    onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : undefined)}
+                    selected={field.value ? new Date(field.value) : undefined}
+                    onDateChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : undefined)}
                   />
                 </FormControl>
                 <FormMessage />

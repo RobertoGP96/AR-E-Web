@@ -3,9 +3,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 
 import type { CreateInvoiceData, UpdateInvoiceData } from '../../types/models/invoice';
-import { InvoiceForm } from './InvoiceForm';
+import { InvoiceForm } from './invoices-form';
 
-interface InvoicesFiltersProps {
+interface ExpencesFiltersProps {
   searchTerm?: string;
   onSearchChange?: (value: string) => void;
   onCreateInvoice?: (data: CreateInvoiceData | UpdateInvoiceData) => void;
@@ -13,12 +13,12 @@ interface InvoicesFiltersProps {
   resultCount?: number;
 }
 
-export default function InvoicesFilters({
+export default function ExpencesFilters({
   searchTerm,
   onSearchChange,
   onCreateInvoice,
   isCreatingInvoice = false,
-}: InvoicesFiltersProps) {
+}: ExpencesFiltersProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4">
       <div className="flex-1">
@@ -34,8 +34,6 @@ export default function InvoicesFilters({
         </div>
       </div>
 
-      
-
       <InvoiceForm
         mode="create"
         onSubmit={onCreateInvoice}
@@ -43,7 +41,7 @@ export default function InvoicesFilters({
         trigger={
           <Button className="h-10">
             <Plus className="h-4 w-4 mr-2" />
-            Nueva factura
+            Agregar
           </Button>
         }
       />
