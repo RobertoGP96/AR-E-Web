@@ -33,7 +33,7 @@ const routeIcons: Record<string, LucideIcon> = {
   '/invoices': BaggageClaim,
   '/expenses': FileText,
   '/analitics': ChartColumn,
-  '/finances': Receipt,
+  '/balance': Receipt,
 };
 
 // Mapeo de rutas a nombres legibles
@@ -52,7 +52,7 @@ const routeNames: Record<string, string> = {
   '/invoices': 'Costos',
   '/expenses': 'Gastos',
   '/analitics': 'Análisis',
-  '/finances': 'Finanzas',
+  '/balance': 'Balance',
 };
 
 // Mapeo para rutas con detalles

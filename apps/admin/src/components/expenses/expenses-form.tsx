@@ -11,7 +11,6 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -155,12 +154,20 @@ export function ExpencesForm({
           </div>
         </FieldSet>
 
-        <Field orientation="horizontal">
-          <Button type="submit" disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {mode === 'create' ? (<><Plus className="mr-2 h-4 w-4" />Crear gasto</>) : (<><Save className="mr-2 h-4 w-4" />Actualizar gasto</>)}
-          </Button>
+        <Field orientation="horizontal" className="justify-end space-x-2 ">
           <Button variant="outline" type="button" onClick={() => handleOpenChange(false, onOpenChange)} disabled={loading}>Cancelar</Button>
+          <Button type="submit" disabled={loading}>
+
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+
+            {
+              !loading && (mode === 'create' ? (<Plus className="h-4 w-4" />) : (<Save className="h-4 w-4" />))
+            }
+
+            <p>
+              {mode === 'create' ? ('Crear Gasto') : ('Actualizar Gasto')}
+            </p>
+          </Button>
         </Field>
       </FieldGroup>
     </form>
@@ -170,17 +177,12 @@ export function ExpencesForm({
     return (
       <Dialog open={isOpen} onOpenChange={(newOpen) => handleOpenChange(newOpen, onOpenChange)}>
         <DialogTrigger asChild>{trigger}</DialogTrigger>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[450px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{mode === 'create' ? 'Nuevo Gasto' : 'Editar Gasto'}</DialogTitle>
             <DialogDescription>{mode === 'create' ? 'Registra un nuevo gasto del sistema.' : 'Edita los detalles del gasto.'}</DialogDescription>
           </DialogHeader>
-          <Card>
-            <CardHeader>
-              <CardTitle>{mode === 'create' ? 'Crear Gasto' : 'Editar Gasto'}</CardTitle>
-            </CardHeader>
-            <CardContent>{formContent}</CardContent>
-          </Card>
+          {formContent}
         </DialogContent>
       </Dialog>
     );

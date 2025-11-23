@@ -1,14 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
-import ExpensesFilters from '@/components/expences/expenses-filters';
-import ExpensesTable from '@/components/expences/expenses-table';
-import ExpenseForm from '@/components/expences/expenses-form';
+import ExpensesFilters from '@/components/expenses/expenses-filters';
+import ExpensesTable from '@/components/expenses/expenses-table';
+import ExpenseForm from '@/components/expenses/expenses-form';
 import type { CreateExpenseData, Expense, UpdateExpenseData, ExpenseFilters } from '@/types/models/expenses';
 import { DEFAULT_PAGE_SIZE, formatCurrency } from '@/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useDeleteExpense } from '@/hooks/expense';
 import { useExpenses, useCreateExpense, useUpdateExpense } from '@/hooks/expense';
-import ExpensesHeader from '@/components/expences/expenses-header';
+import ExpensesHeader from '@/components/expenses/expenses-header';
 
 const Expenses = () => {
   const [searchTerm, setSearchTerm] = useState('');

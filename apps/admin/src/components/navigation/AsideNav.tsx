@@ -111,13 +111,9 @@ const navigationGroups = [
     ]
   },
   {
-    title: 'Análisis',
+    title: 'Finanzas',
     items: [
-      {
-        name: 'Analisis',
-        href: '/analitics',
-        icon: ChartColumn
-      },
+      
       {
         name: 'Costos',
         href: '/invoices',
@@ -129,10 +125,15 @@ const navigationGroups = [
         icon: ReceiptText
       },
       {
-        name: 'Finanzas',
-        href: '/finances',
+        name: 'Balance',
+        href: '/balance',
         icon: ReceiptIcon
-      }
+      },
+      {
+        name: 'Analisis',
+        href: '/analitics',
+        icon: ChartColumn
+      },
     ]
   }
 ];

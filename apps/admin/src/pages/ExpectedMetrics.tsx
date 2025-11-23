@@ -336,9 +336,9 @@ const ExpectedMetricsPage = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Finanazas</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Balance</h1>
           <p className="text-muted-foreground">
-            Compara costos y ganancias esperadas vs reales
+            Compara costos y ganancias esperadas
           </p>
         </div>
 

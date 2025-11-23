@@ -1,4 +1,4 @@
-import { Edit, Trash2, MoreHorizontal, Eye, Calendar, DollarSign, CircleAlert,  ReceiptText } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Calendar, DollarSign, CircleAlert, ReceiptText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 // Popover not required here (but kept for parity if tags are added later)
 import { Badge } from '@/components/ui/badge';
@@ -50,7 +50,7 @@ export default function ExpensesTable({
 	if (error) {
 		return (
 			<div className="flex items-center justify-center h-64">
-                <CircleAlert className="h-12 w-12 text-gray-400 mb-4" />
+				<CircleAlert className="h-12 w-12 text-gray-400 mb-4" />
 				<div className="text-center">
 					<p className="text-red-600">Error al cargar gastos: {error}</p>
 				</div>
@@ -77,8 +77,8 @@ export default function ExpensesTable({
 						<TableRow>
 							<TableHead>ID</TableHead>
 							<TableHead>Fecha</TableHead>
-							<TableHead>Monto</TableHead>
 							<TableHead>Categoría</TableHead>
+							<TableHead>Monto</TableHead>
 							<TableHead>Descripción</TableHead>
 							<TableHead>Creado</TableHead>
 							<TableHead className="w-[70px]">Acciones</TableHead>
@@ -98,19 +98,26 @@ export default function ExpensesTable({
 										{formatDate(expense.date)}
 									</div>
 								</TableCell>
+
+								<TableCell>
+									<Badge variant="secondary" className="py-1">{expense.category}</Badge>
+								</TableCell>
 								<TableCell>
 									<div className="flex items-center gap-2">
 										<DollarSign className="h-4 w-4 text-green-500" />
 										<span className="font-semibold text-green-600">{formatCurrency(expense.amount)}</span>
 									</div>
 								</TableCell>
+
 								<TableCell>
-									<Badge variant="secondary" className="py-1">{expense.category}</Badge>
+									<div className="text-sm text-gray-700 max-w-[200px] overflow-ellipsis overflow-hidden whitespace-nowrap">{expense.description || '—'}</div>
 								</TableCell>
-								<TableCell>
-									<div className="text-sm text-gray-700">{expense.description ?? '—'}</div>
+								<TableCell className="text-sm text-gray-600">
+									<div className="flex items-center gap-2">
+										<Calendar className="h-4 w-4 text-gray-400" />
+										{formatDateTime(expense.created_at)}
+									</div>
 								</TableCell>
-								<TableCell className="text-sm text-gray-600">{formatDateTime(expense.created_at)}</TableCell>
 								<TableCell>
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
@@ -119,10 +126,7 @@ export default function ExpensesTable({
 											</Button>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align="end">
-											<DropdownMenuItem onClick={() => onExpenseClick?.(expense)}>
-												<Eye className="mr-2 h-4 w-4" />
-												Ver detalles
-											</DropdownMenuItem>
+											
 											<DropdownMenuItem onClick={() => onEditExpense?.(expense)}>
 												<Edit className="mr-2 h-4 w-4" />
 												Editar
