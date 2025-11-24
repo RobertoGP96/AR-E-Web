@@ -81,33 +81,11 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
-    def create(self, validated_data):
-        """Handle deliver_picture list input and store it as JSON text on the model."""
-        deliver_picture_data = validated_data.pop('deliver_picture', [])
-        # Create the delivery receipt without picture data
-        delivery = DeliverReceip.objects.create(**validated_data)
-
-        # Store the list of URLs as a JSON string
-        try:
-            delivery.deliver_picture = json.dumps(deliver_picture_data or [])
-        except Exception:
-            delivery.deliver_picture = '[]'
-        delivery.save(update_fields=['deliver_picture', 'updated_at'])
-
-        return delivery
-
     def to_representation(self, instance):
-        """Ensure deliver_picture is returned as a list (parsed from JSON text)."""
+        """Ensure deliver_picture is returned as a string."""
         ret = super().to_representation(instance)
         raw = getattr(instance, 'deliver_picture', None)
-        if raw:
-            try:
-                ret['deliver_picture'] = json.loads(raw)
-            except Exception:
-                # If not valid JSON, return empty list
-                ret['deliver_picture'] = []
-        else:
-            ret['deliver_picture'] = []
+        ret['deliver_picture'] = raw if raw is not None else ''
         return ret
 
 
