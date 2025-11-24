@@ -13,7 +13,7 @@ export interface Package {
   status_of_processing: PackageStatus;
   arrival_date: string;
   // Puede ser un array de URLs o un array de objetos con la propiedad picture
-  package_picture?: (string | { picture?: string })[];
+  package_picture?: string;
   contained_products?: ProductReceived[]; // Productos contenidos en el paquete
   created_at: string;
   updated_at: string;

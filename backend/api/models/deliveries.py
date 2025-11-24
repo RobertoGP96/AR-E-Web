@@ -77,8 +77,7 @@ class Package(models.Model):
         default=PackageStatusEnum.ENVIADO.value
     )
     arrival_date = models.DateField(default=timezone.now, help_text="Fecha de llegada del paquete")
-    # Antes: ManyToManyField a EvidenceImages. Ahora almacenamos las URLs como texto (JSON list).
-    package_picture = models.TextField(blank=True, null=True, help_text='JSON array of image URLs')
+    package_picture = models.TextField(blank=True, null=True, help_text=' image URL')
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 

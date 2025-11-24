@@ -3,7 +3,7 @@ import EditDeliveryDialog from './EditDeliveryDialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import type { DeliverReceip, DeliveryStatus } from '@/types';
-import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Truck, Package, CheckCircle2, Weight, Boxes } from 'lucide-react';
+import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Truck, Package, CheckCircle2, Weight, Boxes, ImageOff, Image } from 'lucide-react';
 import { formatDeliveryDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { QuickImageUpload } from '@/components/images/QuickImageUpload';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useUpdateDelivery } from '@/hooks/delivery/useUpdateDelivery';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card';
 
 interface DeliveryTableProps {
   deliveries: DeliverReceip[];
@@ -187,7 +188,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
   const updateDeliveryMutation = useUpdateDelivery();
 
   const handleCaptureUploaded = async (delivery: DeliverReceip, url: string) => {
-    try {      
+    try {
       const newUrls = url;
 
       await updateDeliveryMutation.mutateAsync({ id: delivery.id, data: { id: delivery.id, deliver_picture: newUrls } });
@@ -317,36 +318,31 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                             {delivery.delivered_products.map((product) => (
                               <li
                                 key={product.id}
-                                className="flex items-start justify-between p-2 rounded-md hover:bg-gray-50 border border-gray-100"
+                                className="flex flex-row items-start gap-2 justify-between p-2 rounded-md hover:bg-gray-50 border border-gray-100"
                               >
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-3 mb-2">
-                                    {getProductImageUrl(product.original_product) ? (
-                                      <div className="rounded-md overflow-hidden w-14 h-14 bg-muted border border-muted-foreground/10" title="Imagen del producto">
-                                        <img
-                                          src={getProductImageUrl(product.original_product) || ''}
-                                          alt={product.original_product.name}
-                                          className="w-full h-full object-cover"
-                                        />
-                                      </div>
-                                    ) : (
-                                      <div className="rounded-md w-14 h-14 bg-gray-50 border border-gray-100 flex items-center justify-center text-xs text-gray-400">
-                                        Sin imagen
-                                      </div>
-                                    )}
-                                  </div>
-
+                                <div className="flex items-center gap-3 ">
+                                  {getProductImageUrl(product.original_product) ? (
+                                    <div className="rounded-md overflow-hidden w-14 h-14 bg-muted border border-muted-foreground/10" title="Imagen del producto">
+                                      <img
+                                        src={getProductImageUrl(product.original_product) || ''}
+                                        alt={product.original_product.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="rounded-md w-14 h-14 bg-gray-50 border border-gray-100 flex items-center justify-center text-xs text-gray-400">
+                                      <ImageOff className="h-6 w-6" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex-1 flex flex-col justify-center items-start gap-1 pl-2">
                                   <p className="text-sm font-medium text-gray-900">
                                     {product.original_product.name}
                                   </p>
                                   <p className="text-xs text-gray-500 mt-1">
                                     Cantidad: {product.amount_delivered}
                                   </p>
-                                  {product.reception && (
-                                    <p className="text-xs text-gray-400 mt-1 italic">
-                                      Recepción: {formatDeliveryDate(product.reception)}
-                                    </p>
-                                  )}
+
                                 </div>
                                 <Badge variant="secondary" className="ml-2 shrink-0">
                                   x{product.amount_delivered}
@@ -366,25 +362,34 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                 </TableCell>
                 <TableCell>
                   <div className='flex flex-row gap-2'>
-                    <button
-                      type="button"
-                      className='text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50'
-                      onClick={() => {
-                        setCaptureDelivery(delivery);
-                        setShowCaptureDialog(true);
-                      }}
-                      title={delivery.deliver_picture && delivery.deliver_picture.length > 0 ? 'Ver imagen de entrega' : 'Subir imagen de entrega'}
-                    >
-                      {delivery.deliver_picture && delivery.deliver_picture.length > 0 ? (
-                        <img
-                          src={((delivery.deliver_picture as string) || '')}
-                          alt={`Entrega ${delivery.id}`}
-                          className="h-8 w-8 object-cover rounded-md"
-                        />
-                      ) : (
+                    {(delivery.deliver_picture || delivery.deliver_picture?.length === 0) ? (
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <div className='flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer'>
+                            <Image className='h-5 w-5 text-gray-500' />
+                          </div>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-32 h-32 flex items-center justify-center">
+                          <img
+                            src={((delivery.deliver_picture as string) || '')}
+                            alt={`Entrega ${delivery.id}`}
+                            className="h-25 w-25 object-cover rounded-md"
+                          />
+                        </HoverCardContent>
+                      </HoverCard>
+                    ) : (
+                      <button
+                        type="button"
+                        className='text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50'
+                        onClick={() => {
+                          setCaptureDelivery(delivery);
+                          setShowCaptureDialog(true);
+                        }}
+                        title={delivery.deliver_picture && delivery.deliver_picture.length > 0 ? 'Ver imagen de entrega' : 'Subir imagen de entrega'}
+                      >
                         <Camera className='h-5 w-5' />
-                      )}
-                    </button>
+                      </button>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>

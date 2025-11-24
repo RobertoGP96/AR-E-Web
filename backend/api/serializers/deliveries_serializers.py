@@ -134,16 +134,8 @@ class PackageSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def create(self, validated_data):
-        package_picture_data = validated_data.pop('package_picture', [])
         contained_products_data = validated_data.pop('package_products', [])
         package = Package.objects.create(**validated_data)
-
-        # Store package pictures as JSON string
-        try:
-            package.package_picture = json.dumps(package_picture_data or [])
-        except Exception:
-            package.package_picture = '[]'
-        package.save(update_fields=['package_picture', 'updated_at'])
 
         # Crear productos contenidos si se proporcionaron
         for product_data in contained_products_data:
@@ -154,11 +146,6 @@ class PackageSerializer(serializers.ModelSerializer):
         """Ensure package_picture is returned as a list (parsed from JSON text)."""
         ret = super().to_representation(instance)
         raw = getattr(instance, 'package_picture', None)
-        if raw:
-            try:
-                ret['package_picture'] = json.loads(raw)
-            except Exception:
-                ret['package_picture'] = []
-        else:
-            ret['package_picture'] = []
+        
+        ret['package_picture'] = raw if raw is not None else ''
         return ret

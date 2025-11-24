@@ -4,14 +4,14 @@ import EditPackageDialog from './EditPackageDialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import type { Package as PackageType } from '@/types';
-import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Package, CheckCircle2, Box } from 'lucide-react';
+import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Package, CheckCircle2, Box, Image, } from 'lucide-react';
 import { formatDate } from '@/lib/format-date';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useState, useMemo, useEffect } from 'react';
 import { useDeletePackage } from '@/hooks/package/useDeletePackage';
-import { useUpdatePackageStatus } from '@/hooks/package';
+import { useUpdatePackage, useUpdatePackageStatus } from '@/hooks/package';
 import { toast } from 'sonner';
 import {
   Pagination,
@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { QuickImageUpload } from '@/components/images/QuickImageUpload';
 // No parseProductPictures helper used; product_pictures is a single URL string
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useUpdateProduct } from '@/hooks/product/useUpdateProduct';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card';
 
 interface PackagesTableProps {
   packages: PackageType[];
@@ -53,8 +53,9 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   const [dialogState, setDialogState] = useState<{ type: 'delete' | null; pkg: PackageType | null }>({ type: null, pkg: null });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null);
+  
   const [showImageDialog, setShowImageDialog] = useState(false);
-  const [imageDialogProduct, setImageDialogProduct] = useState<any | null>(null);
+  const [imageDialogPackage, setImageDialogPackage] = useState<PackageType | null>(null);
 
   const deletePackageMutation = useDeletePackage();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -117,15 +118,15 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   };
 
   // Hook para actualizar producto (imagenes)
-  const updateProductMutation = useUpdateProduct();
+  const updatePackageMutation = useUpdatePackage();
 
-  const handleImageUploaded = async (product: any, url: string) => {
+  const handleImageUploaded = async (pkg: PackageType, url: string) => {
     try {
       // API expects a single URL string for product_pictures
-      await updateProductMutation.mutateAsync({ id: product.id, product_pictures: url });
+      await updatePackageMutation.mutateAsync({ id: pkg.id, data: { package_picture: url } });
       toast.success('Imagen añadida correctamente');
       setShowImageDialog(false);
-      setImageDialogProduct(null);
+      setImageDialogPackage(null);
     } catch (err) {
       console.error('Error actualizando imagen del producto:', err);
       toast.error('Error al guardar la imagen');
@@ -307,7 +308,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                                       <button
                                         type="button"
                                         onClick={() => {
-                                          setImageDialogProduct(product.original_product);
+                                          setImageDialogPackage(pkg);
                                           setShowImageDialog(true);
                                         }}
                                         className="rounded-md overflow-hidden w-14 h-14 bg-muted border border-muted-foreground/10"
@@ -324,7 +325,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                                         size="sm"
                                         variant="outline"
                                         onClick={() => {
-                                          setImageDialogProduct(product.original_product);
+                                          setImageDialogPackage(pkg);
                                           setShowImageDialog(true);
                                         }}
                                       >
@@ -364,12 +365,34 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                 </TableCell>
                 <TableCell>
                   <div className='flex flex-row gap-2'>
-                    <Button
-                      className='text-gray-600 cursor-pointer bg-gray-200 hover:bg-gray-300'
-                      onClick={() => onCapture?.(pkg)}
-                    >
-                      <Camera className='h-5 w-5' />
-                    </Button>
+                    {(pkg.package_picture || pkg.package_picture?.length === 0) ? (
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <div className='flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer'>
+                            <Image className='h-5 w-5 text-gray-500' />
+                          </div>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-32 h-32 flex items-center justify-center">
+                          <img
+                            src={((pkg.package_picture as string) || '')}
+                            alt={`Entrega ${pkg.id}`}
+                            className="h-25 w-25 object-cover rounded-md"
+                          />
+                        </HoverCardContent>
+                      </HoverCard>
+                    ) : (
+                      <button
+                        type="button"
+                        className='text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50'
+                        onClick={() => {
+                          setImageDialogPackage(pkg);
+                          setShowImageDialog(true);
+                        }}
+                        title={pkg.package_picture && pkg.package_picture.length > 0 ? 'Ver imagen de entrega' : 'Subir imagen de entrega'}
+                      >
+                        <Camera className='h-5 w-5' />
+                      </button>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -623,18 +646,18 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
         package={selectedPackage}
       />
       {/* Diálogo para ver/subir imágenes del producto */}
-      <Dialog open={showImageDialog} onOpenChange={(open) => { if (!open) { setShowImageDialog(false); setImageDialogProduct(null); } }}>
+      <Dialog open={showImageDialog} onOpenChange={(open) => { if (!open) { setShowImageDialog(false); setImageDialogPackage(null); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Imágenes del producto {imageDialogProduct ? `- ${imageDialogProduct.name}` : ''}</DialogTitle>
+            <DialogTitle>Imágenes del paquete {imageDialogPackage ? `- ${imageDialogPackage.agency_name}` : ''}</DialogTitle>
           </DialogHeader>
 
           <div className="py-2">
-            {imageDialogProduct ? (
+            {imageDialogPackage ? (
               <QuickImageUpload
                 entityType="products"
-                currentImage={imageDialogProduct?.product_pictures || imageDialogProduct.image_url}
-                onImageUploaded={(url: string) => handleImageUploaded(imageDialogProduct, url)}
+                currentImage={imageDialogPackage?.package_picture || imageDialogPackage.package_picture}
+                onImageUploaded={(url: string) => handleImageUploaded(imageDialogPackage, url)}
                 folder={undefined}
               />
             ) : (
