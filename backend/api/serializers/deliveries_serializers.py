@@ -108,10 +108,12 @@ class PackageSerializer(serializers.ModelSerializer):
     """
     """Package Serializer"""
 
-    package_picture = serializers.ListField(
-        child=serializers.URLField(),
+    package_picture = serializers.CharField(
         required=False,
+        allow_null=True,
+        allow_blank=True,
     )
+    
     contained_products = ProductReceivedSerializer(
         many=True,
         required=False,
@@ -143,7 +145,7 @@ class PackageSerializer(serializers.ModelSerializer):
         return package
 
     def to_representation(self, instance):
-        """Ensure package_picture is returned as a list (parsed from JSON text)."""
+        """Ensure package_picture is returned as a string."""
         ret = super().to_representation(instance)
         raw = getattr(instance, 'package_picture', None)
         
