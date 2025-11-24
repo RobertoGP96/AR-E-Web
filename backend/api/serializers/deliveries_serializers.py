@@ -45,10 +45,10 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
     # Categoría para lectura
     category = CategorySerializer(read_only=True)
 
-    deliver_picture = serializers.ListField(
-        child=serializers.URLField(),
+    deliver_picture = serializers.CharField(
         required=False,
-        allow_empty=True,
+        allow_null=True,
+        allow_blank=True,
     )
     delivered_products = ProductDeliverySerializer(many=True, read_only=True)
 

@@ -28,8 +28,7 @@ class DeliverReceip(models.Model):
         default=DeliveryStatusEnum.PENDIENTE.value
     )
     deliver_date = models.DateTimeField(default=timezone.now)
-    # Antes: ManyToManyField a EvidenceImages. Ahora almacenamos las URLs como texto (JSON list).
-    deliver_picture = models.TextField(blank=True, null=True, help_text='JSON array of image URLs')
+    deliver_picture = models.TextField(blank=True, null=True, help_text='image URLs')
     weight_cost = models.FloatField(default=0)
     manager_profit = models.FloatField(default=0)
 
