@@ -188,9 +188,9 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
 
   const handleCaptureUploaded = async (delivery: DeliverReceip, url: string) => {
     try {
-      // deliver_picture from backend is an array of image URLs (string[]), so cast accordingly
-      const existing = (delivery.deliver_picture && (delivery.deliver_picture as string[])) ?? [];
-      const newUrls = [...existing, url];
+      // deliver_picture from backend is a string of image URLs, so cast accordingly
+      const existing = (delivery.deliver_picture && (delivery.deliver_picture as string)) ?? '';
+      const newUrls = existing ? `${existing},${url}` : url;
 
       await updateDeliveryMutation.mutateAsync({ id: delivery.id, data: { id: delivery.id, deliver_picture: newUrls } });
       toast.success('Imagen de entrega añadida correctamente');
@@ -379,7 +379,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                     >
                       {delivery.deliver_picture && delivery.deliver_picture.length > 0 ? (
                         <img
-                          src={((delivery.deliver_picture as string[])[0] || '')}
+                          src={((delivery.deliver_picture as string) || '')}
                           alt={`Entrega ${delivery.id}`}
                           className="h-8 w-8 object-cover rounded-md"
                         />
@@ -641,7 +641,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
             {captureDelivery ? (
               <QuickImageUpload
                 entityType="deliveries"
-                currentImage={captureDelivery?.deliver_picture && captureDelivery.deliver_picture.length > 0 ? (captureDelivery.deliver_picture as string[])[0] : undefined}
+                currentImage={captureDelivery?.deliver_picture && captureDelivery.deliver_picture ? (captureDelivery.deliver_picture as string) : undefined}
                 onImageUploaded={(url: string) => handleCaptureUploaded(captureDelivery, url)}
                 folder={undefined}
                 label="Subir/Actualizar imagen de entrega"

@@ -16,7 +16,7 @@ export interface DeliverReceip {
   status: DeliveryStatus;
   deliver_date: DateTime;
   // Las imágenes de entrega son un array de URLs (strings)
-  deliver_picture?: string[];
+  deliver_picture?: string;
   
   // Costos (del backend)
   weight_cost: number;
@@ -44,7 +44,7 @@ export interface CreateDeliverReceipData {
   deliver_date?: DateTime;
   weight_cost?: number;
   manager_profit?: number;
-  deliver_picture?: string[]; // URLs de las imágenes de evidencia (opcional)
+  deliver_picture?: string; // URLs de las imágenes de evidencia (opcional)
 }
 
 export interface UpdateDeliverReceipData extends Partial<CreateDeliverReceipData> {
