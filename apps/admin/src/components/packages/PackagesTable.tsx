@@ -365,7 +365,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                 </TableCell>
                 <TableCell>
                   <div className='flex flex-row gap-2'>
-                    {(pkg.package_picture || pkg.package_picture?.length === 0) ? (
+                    {(pkg.package_picture && pkg.package_picture?.length === 0) ? (
                       <HoverCard>
                         <HoverCardTrigger asChild>
                           <div className='flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer'>
@@ -388,7 +388,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                           setImageDialogPackage(pkg);
                           setShowImageDialog(true);
                         }}
-                        title={pkg.package_picture && pkg.package_picture.length > 0 ? 'Ver imagen de entrega' : 'Subir imagen de entrega'}
+                        title={pkg.package_picture  ? 'Ver imagen de entrega' : 'Subir imagen de entrega'}
                       >
                         <Camera className='h-5 w-5' />
                       </button>
