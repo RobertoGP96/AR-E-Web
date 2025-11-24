@@ -407,8 +407,8 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             shop_tax_amount: calculation.tarifaTienda, // Impuesto adicional calculado (3% o 5%)
             added_taxes: addedTaxes, // Impuestos adicionales nominales
             own_taxes: ownTaxes, // Impuestos propios nominales
-            // Product images: enviar como array (el servicio create-product convertirá a string JSON)
-            product_pictures: []
+            // Product images: enviar como single string URL (service expects single URL string)
+            product_pictures: ''
         } as unknown as CreateProductData
 
         onSubmit(productToSubmit)

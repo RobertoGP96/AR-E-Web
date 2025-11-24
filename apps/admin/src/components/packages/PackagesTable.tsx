@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { QuickImageUpload } from '@/components/images/QuickImageUpload';
+// No parseProductPictures helper used; product_pictures is a single URL string
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useUpdateProduct } from '@/hooks/product/useUpdateProduct';
 
@@ -120,10 +121,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
   const handleImageUploaded = async (product: any, url: string) => {
     try {
-      const existing = product?.product_pictures?.map((i: any) => (typeof i === 'string' ? i : i.image_url || i.picture)) ?? [];
-      const newUrls = [...existing, url];
-
-      await updateProductMutation.mutateAsync({ id: product.id, product_pictures: newUrls });
+      // API expects a single URL string for product_pictures
+      await updateProductMutation.mutateAsync({ id: product.id, product_pictures: url });
       toast.success('Imagen añadida correctamente');
       setShowImageDialog(false);
       setImageDialogProduct(null);
@@ -304,7 +303,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                                 <div className="flex-1">
                                   {/* Thumbnail / botón para subir imagen */}
                                   <div className="flex items-center gap-3 mb-2">
-                                    {product.original_product?.product_pictures && product.original_product.product_pictures.length > 0 ? (
+                                    { product.original_product.product_pictures ? (
                                       <button
                                         type="button"
                                         onClick={() => {
@@ -315,7 +314,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                                         title="Ver imágenes"
                                       >
                                         <img
-                                          src={(Array.isArray(product.original_product.product_pictures) && (typeof product.original_product.product_pictures[0] === 'string' ? product.original_product.product_pictures[0] : product.original_product.product_pictures[0].image_url)) || product.original_product.image_url}
+                                          src={product.original_product.product_pictures}
                                           alt={product.original_product.name}
                                           className="w-full h-full object-cover"
                                         />
@@ -634,7 +633,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
             {imageDialogProduct ? (
               <QuickImageUpload
                 entityType="products"
-                currentImage={imageDialogProduct?.product_pictures && imageDialogProduct.product_pictures.length > 0 ? (typeof imageDialogProduct.product_pictures[0] === 'string' ? imageDialogProduct.product_pictures[0] : imageDialogProduct.product_pictures[0].image_url) : imageDialogProduct.image_url}
+                currentImage={imageDialogProduct?.product_pictures || imageDialogProduct.image_url}
                 onImageUploaded={(url: string) => handleImageUploaded(imageDialogProduct, url)}
                 folder={undefined}
               />

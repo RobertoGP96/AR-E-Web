@@ -8,7 +8,7 @@ export const useUpdateProduct = () => {
   return useMutation({
     mutationFn: async (data: UpdateProductData) => {
       const { id, ...updateData } = data;
-      const response = await apiClient.patch<Product>(`/api/products/${id}/`, updateData);
+      const response = await apiClient.patch<Product>(`/api_data/product/${id}/`, updateData);
       return response;
     },
     onSuccess: (updatedProduct) => {

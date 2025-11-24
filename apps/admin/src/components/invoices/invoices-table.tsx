@@ -1,8 +1,8 @@
-import { Edit, Trash2, MoreHorizontal, Eye, Calendar, DollarSign, Receipt, BaggageClaim, CircleAlert } from 'lucide-react';
+import { Trash2, MoreHorizontal, Calendar, DollarSign, Receipt, BaggageClaim, CircleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import type { Invoice } from '@/types/models/invoice';
 import { invoiceUtils } from '@/types/models/invoice';
@@ -31,7 +31,6 @@ interface DialogState {
 
 export default function InvoicesTable({
   invoices = [],
-  onEditInvoice,
   onDeleteInvoice,
   onInvoiceClick,
   isLoading = false,
@@ -186,15 +185,7 @@ export default function InvoicesTable({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onInvoiceClick?.(invoice)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Ver detalles
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onEditInvoice?.(invoice)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
+                      
                       <DropdownMenuItem
                         onClick={() => openDeleteDialog(invoice)}
                         className="text-red-600"

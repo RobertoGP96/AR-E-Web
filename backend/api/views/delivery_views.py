@@ -185,7 +185,7 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated], url_path="add_products")
     def add_products(self, request, pk=None):
         """Agregar múltiples product deliveries a un `deliver_receip`.
-        Body: { "products": [{"original_product_id": <uuid>, "amount_delivered": <int>, "reception": true/false}, ...] }
+        Body: { "products": [{"original_product_id": <uuid>, "amount_delivered": <int>}, ...] }
         """
         deliver_receip = self.get_object()
         products = request.data.get("products", [])
@@ -197,7 +197,6 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
             data = {
                 "original_product_id": item.get("original_product_id") or item.get("original_product"),
                 "amount_delivered": item.get("amount_delivered"),
-                "reception": item.get("reception", False),
                 "deliver_receip_id": deliver_receip.id,
             }
             serializer = ProductDeliverySerializer(data=data, context={"request": request})

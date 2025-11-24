@@ -11,7 +11,7 @@ export interface UpdateProductData {
   amount_requested?: number;
   shop_cost?: number;
   total_cost?: number;
-  product_pictures?: string[];
+  product_pictures?: string;
   status?: string;
 }
 
@@ -50,8 +50,8 @@ export const updateProductCosts = async (
 /**
  * Actualiza las imágenes de un producto
  */
-export const updateProductImages = async (id: number, imageUrls: string[]): Promise<Product> => {
-  return await apiClient.patch<Product>(`/api_data/product/${id}/`, { product_pictures: imageUrls });
+export const updateProductImages = async (id: number, imageUrl: string): Promise<Product> => {
+  return await apiClient.patch<Product>(`/api_data/product/${id}/`, { product_pictures: imageUrl });
 };
 
 /**

@@ -55,7 +55,7 @@ class Product(models.Model):
         default=ProductStatusEnum.ENCARGADO.value
     )
     # Antes: M2M con EvidenceImages; ahora almacenamos las URLs reales en texto (JSON list)
-    product_pictures = models.TextField(blank=True, null=True, help_text='JSON array of image URLs')
+    product_pictures = models.TextField(blank=True, null=True, help_text='image URLs')
     shop_cost = models.FloatField()
     shop_delivery_cost = models.FloatField(default=0)
     shop_taxes = models.FloatField(default=0)
@@ -326,8 +326,6 @@ class ProductDelivery(models.Model):
     original_product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="delivers"
     )
-
-    reception= models.DateField(null=True, blank=True)
 
     deliver_receip = models.ForeignKey(
         'api.DeliverReceip',

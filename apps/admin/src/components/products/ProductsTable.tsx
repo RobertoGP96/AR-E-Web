@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useState, useMemo, useEffect } from 'react';
 // no local state for visible columns; controlled by parent
-import type { Product } from "../../types/models/product";
+import type { Product, UpdateProductData } from "../../types/models/product";
 import type { VisibleColumn } from './ProductsColumnsSelector';
 import {
   Table,
@@ -73,7 +73,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
   const deleteMutation = useDeleteProduct();
   const [isDeleting, setIsDeleting] = useState(false);
   const updateMutation = useUpdateProduct();
-  const isUpdating = Boolean((updateMutation as any).isLoading);
+  const isUpdating = Boolean((updateMutation.isPending));
   // Estado para preview de URL de imagen
   const [previewStatus, setPreviewStatus] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
   const [previewUrl, setPreviewUrl] = useState<string>('');
@@ -524,8 +524,13 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                         toast.error('Por favor introduce una URL válida');
                         return;
                       }
+
+                      // Build new array of image URLs ensuring no duplicates and keeping existing pictures
+                      // Only accept a single URL string for product_pictures
+                      const newPicture = url;
+
                       try {
-                        await updateMutation.mutateAsync({ id: dialogState.product.id as any, image_url: url } as any);
+                        await updateMutation.mutateAsync({ id: dialogState.product.id, product_pictures: newPicture } as unknown as UpdateProductData);
                         toast.success('Imagen actualizada');
                         setDialogState({ type: null, product: null, imageUrl: '' });
                       } catch (err) {
@@ -534,7 +539,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                       }
                     }}
                     disabled={isUpdating}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-orange-400 hover:bg-orange-500"
                   >
                     {isUpdating ? (
                       <>

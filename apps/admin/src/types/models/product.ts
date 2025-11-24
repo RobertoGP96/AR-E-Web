@@ -5,6 +5,9 @@
 import type { ID, UUID, ProductStatus, DateTime } from './base';
 import type { Order } from './order';
 
+// Tipo util para los payloads de imagen: puede ser simplemente una URL o un objeto con image_url/picture
+export type ProductPicture = string | { image_url?: string; picture?: string };
+
 // Modelo principal
 export interface Product {
   id: UUID;
@@ -25,8 +28,8 @@ export interface Product {
   
   order: number | Order;
   status: ProductStatus;
-  // Puede ser un array de URLs o un array de objetos con la propiedad image_url
-  product_pictures?: (string | { image_url?: string; picture?: string })[];
+  // Almacenado en la base de datos como un único string (JSON), y la API ahora debe tratarlo como tal
+  product_pictures?: string;
   
   // Precios
   shop_cost: number;
@@ -80,7 +83,8 @@ export interface CreateProductData {
   own_taxes?: number;
   added_taxes?: number;
   total_cost?: number;
-  product_pictures?: string[];
+  // Para creación se acepta únicamente un string (JSON serializado, o una URL simple)
+  product_pictures?: string;
 }
 
 export interface UpdateProductData extends Partial<CreateProductData> {

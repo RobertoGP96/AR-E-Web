@@ -205,15 +205,8 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
   // Helper para obtener la URL de imagen del producto con tolerancia a tipos
   const getProductImageUrl = (product: { product_pictures?: unknown; image_url?: string } | null | undefined): string | undefined => {
     if (!product) return undefined;
-    // product_pictures puede ser array de objetos { image_url } o array de strings o string
-    const pics = product.product_pictures as unknown;
-    if (Array.isArray(pics) && pics.length > 0) {
-      const item = pics[0];
-      if (!item) return product.image_url;
-      if (typeof item === 'string') return item;
-      return item.image_url || product.image_url;
-    }
-    if (typeof pics === 'string' && pics) return pics;
+    const pic = product.product_pictures as unknown;
+    if (typeof pic === 'string' && pic) return pic;
     return product.image_url;
   };
 
@@ -330,7 +323,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                               >
                                 <div className="flex-1">
                                   <div className="flex items-center gap-3 mb-2">
-                                    {product.original_product?.product_pictures && product.original_product.product_pictures.length > 0 ? (
+                                    {getProductImageUrl(product.original_product) ? (
                                       <div className="rounded-md overflow-hidden w-14 h-14 bg-muted border border-muted-foreground/10" title="Imagen del producto">
                                         <img
                                           src={getProductImageUrl(product.original_product) || ''}

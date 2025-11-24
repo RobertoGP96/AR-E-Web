@@ -36,11 +36,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "invalid": "El valor proporcionado para la categoría no es válido.",
         },
     )
-    product_pictures = serializers.ListField(
-        child=serializers.URLField(),
-        required=False,
-        allow_empty=True,
-    )
+    # product_pictures is stored in DB as a JSON string; expose it as a single string in the API
+    product_pictures = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     status = serializers.SerializerMethodField(read_only=True)
     total_cost = serializers.FloatField(required=True)
     amount_buyed = serializers.SerializerMethodField(read_only=True)
@@ -90,16 +87,10 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def to_representation(self, instance):
-        """Ensure product_pictures returned as a list parsed from JSON text."""
+        """Return product_pictures exactly as stored (string)."""
         ret = super().to_representation(instance)
         raw = getattr(instance, 'product_pictures', None)
-        if raw:
-            try:
-                ret['product_pictures'] = json.loads(raw)
-            except Exception:
-                ret['product_pictures'] = []
-        else:
-            ret['product_pictures'] = []
+        ret['product_pictures'] = raw if raw is not None else ''
         return ret
 
     @extend_schema_field(str)
@@ -380,7 +371,6 @@ class ProductDeliverySerializer(serializers.ModelSerializer):
             "original_product_id",
             "deliver_receip_id",
             "amount_delivered",
-            "reception",
             "created_at",
             "updated_at"
         ]
@@ -441,22 +431,44 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        # Serializar product_pictures si viene como lista
-        pics = validated_data.get('product_pictures')
-        if isinstance(pics, list):
-            try:
-                validated_data['product_pictures'] = json.dumps(pics)
-            except Exception:
-                validated_data['product_pictures'] = '[]'
+        # Ensure product_pictures is a valid single URL string or empty
+        pic_val = validated_data.get('product_pictures')
+        if pic_val is None or (isinstance(pic_val, str) and pic_val == ''):
+            validated_data['product_pictures'] = ''
+        elif isinstance(pic_val, str):
+            # Validate that the provided string is a URL
+            serializers.URLField().run_validation(pic_val)
+            validated_data['product_pictures'] = pic_val
+        else:
+            raise serializers.ValidationError({
+                'product_pictures': 'product_pictures must be a single URL string.'
+            })
         return super().create(validated_data)
 
+    def validate_product_pictures(self, value):
+        # Accept only a single URL string or empty
+        if value is None or value == '':
+            return ''
+        if not isinstance(value, str):
+            raise serializers.ValidationError('product_pictures must be a string URL.')
+        try:
+            serializers.URLField().run_validation(value)
+            return value
+        except Exception:
+            raise serializers.ValidationError('product_pictures must be a valid URL string.')
+
     def update(self, instance, validated_data):
-        pics = validated_data.get('product_pictures')
-        if isinstance(pics, list):
-            try:
-                validated_data['product_pictures'] = json.dumps(pics)
-            except Exception:
-                validated_data['product_pictures'] = getattr(instance, 'product_pictures', '[]')
+        # Only accept a string URL for product_pictures
+        pic_val = validated_data.get('product_pictures')
+        if pic_val is None or (isinstance(pic_val, str) and pic_val == ''):
+            validated_data['product_pictures'] = ''
+        elif isinstance(pic_val, str):
+            serializers.URLField().run_validation(pic_val)
+            validated_data['product_pictures'] = pic_val
+        elif pic_val is not None:
+            raise serializers.ValidationError({
+                'product_pictures': 'product_pictures must be a single URL string.'
+            })
         return super().update(instance, validated_data)
 
 
@@ -498,10 +510,52 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         return value
     
     def update(self, instance, validated_data):
-        pics = validated_data.get('product_pictures')
-        if isinstance(pics, list):
+        pic_val = validated_data.get('product_pictures')
+        if isinstance(pic_val, list):
+            for i in pic_val:
+                serializers.URLField().run_validation(i)
+            validated_data['product_pictures'] = json.dumps(pic_val)
+        elif isinstance(pic_val, str):
             try:
-                validated_data['product_pictures'] = json.dumps(pics)
+                parsed = json.loads(pic_val)
+                if isinstance(parsed, list):
+                    for i in parsed:
+                        serializers.URLField().run_validation(i)
+                    validated_data['product_pictures'] = pic_val
+                elif isinstance(parsed, str):
+                    serializers.URLField().run_validation(parsed)
+                    validated_data['product_pictures'] = json.dumps([parsed])
+                else:
+                    raise Exception()
             except Exception:
-                validated_data['product_pictures'] = getattr(instance, 'product_pictures', '[]')
+                try:
+                    serializers.URLField().run_validation(pic_val)
+                    validated_data['product_pictures'] = pic_val
+                except Exception:
+                    validated_data['product_pictures'] = getattr(instance, 'product_pictures', '')
         return super().update(instance, validated_data)
+
+    def validate_product_pictures(self, value):
+        if value is None or value == '':
+            return ''
+        if isinstance(value, list):
+            for i in value:
+                serializers.URLField().run_validation(i)
+            return json.dumps(value)
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    for i in parsed:
+                        serializers.URLField().run_validation(i)
+                    return value
+                if isinstance(parsed, str):
+                    serializers.URLField().run_validation(parsed)
+                    return json.dumps([parsed])
+            except Exception:
+                try:
+                    serializers.URLField().run_validation(value)
+                    return value
+                except Exception:
+                    raise serializers.ValidationError("product_pictures must be a JSON array of URLs or a single URL string.")
+        raise serializers.ValidationError("product_pictures must be a string or a list of URLs.")

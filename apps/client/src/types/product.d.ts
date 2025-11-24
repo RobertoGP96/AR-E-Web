@@ -24,7 +24,8 @@ export interface Product {
   
   order: Order;
   status: ProductStatus;
-  product_pictures: EvidenceImage[];
+  // product_pictures is a single URL string that references the main image
+  product_pictures?: string;
   
   // Precios
   shop_cost: number;
