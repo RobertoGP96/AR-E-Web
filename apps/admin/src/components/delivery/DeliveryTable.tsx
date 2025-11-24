@@ -187,10 +187,8 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
   const updateDeliveryMutation = useUpdateDelivery();
 
   const handleCaptureUploaded = async (delivery: DeliverReceip, url: string) => {
-    try {
-      // deliver_picture from backend is a string of image URLs, so cast accordingly
-      const existing = (delivery.deliver_picture && (delivery.deliver_picture as string)) ?? '';
-      const newUrls = existing ? `${existing},${url}` : url;
+    try {      
+      const newUrls = url;
 
       await updateDeliveryMutation.mutateAsync({ id: delivery.id, data: { id: delivery.id, deliver_picture: newUrls } });
       toast.success('Imagen de entrega añadida correctamente');
