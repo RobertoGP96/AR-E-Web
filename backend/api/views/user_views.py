@@ -1,4 +1,6 @@
 from rest_framework import viewsets, status, views
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -16,6 +18,10 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = CustomUser.objects.all()
     permission_classes = [IsAuthenticated, AdminPermission | ReadOnly]
+    # Habilitar filtros y búsqueda para que los query params funcionen desde el frontend
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['role', 'is_active', 'is_verified']
+    search_fields = ['email', 'name', 'last_name', 'phone_number']
 
     def get_serializer_class(self):
         if self.action == 'create':

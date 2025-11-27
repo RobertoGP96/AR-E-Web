@@ -365,7 +365,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                 </TableCell>
                 <TableCell>
                   <div className='flex flex-row gap-2'>
-                    {(pkg.package_picture && pkg.package_picture?.length === 0) ? (
+                    {(pkg.package_picture && pkg.package_picture?.length > 0) ? (
                       <HoverCard>
                         <HoverCardTrigger asChild>
                           <div className='flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer'>
@@ -376,7 +376,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                           <img
                             src={((pkg.package_picture as string) || '')}
                             alt={`Entrega ${pkg.id}`}
-                            className="h-25 w-25 object-cover rounded-md"
+                            className="h-25 w-30 object-cover rounded-md"
                           />
                         </HoverCardContent>
                       </HoverCard>

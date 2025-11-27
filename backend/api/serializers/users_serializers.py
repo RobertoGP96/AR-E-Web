@@ -36,7 +36,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
             "date_joined",
             "full_name",
         ]
-        read_only_fields = ["id", "is_staff", "is_active", "is_verified", "date_joined"]
+        # Permitir que administradores actualicen is_active/is_verified mediante PATCH
+        read_only_fields = ["id", "is_staff", "date_joined"]
 
     def validate_phone_number(self, value):
         if re.search(r"^[\+\d\s\-\(\)]+$", value.strip()):
@@ -62,6 +63,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     """
     Serializador para actualizar usuarios.
+    Permite actualizar campos de usuario (incluyendo is_active e is_verified para administradores).
     """
     full_name = serializers.CharField(read_only=True)
 
