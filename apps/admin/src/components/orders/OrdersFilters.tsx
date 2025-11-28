@@ -16,7 +16,7 @@ interface OrdersFiltersProps {
 
 export default function OrdersFilters({
   searchTerm= "",
-  filters = { search: '', status: 'all', pay_status: 'all', sales_manager: 'all', date_from: '', date_to: '' },
+  filters = { search: '', status: 'all', pay_status: 'all', sales_manager: undefined, date_from: '', date_to: '' },
   onSearchChange,
   onFiltersChange = () => {},
 }: OrdersFiltersProps) {

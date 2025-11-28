@@ -19,15 +19,8 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { useUsers } from '@/hooks/user';
 import { ORDER_STATUS_OPTIONS, PAY_STATUS_OPTIONS } from '@/types/utils';
-
-export interface OrderFilterState {
-  search?: string;
-  status?: string;
-  pay_status?: string;
-  sales_manager?: string; // store user id as string or 'all'
-  date_from?: string;
-  date_to?: string;
-}
+import type { OrderFilters as OrderFiltersType } from '@/types/api';
+export type OrderFilterState = OrderFiltersType;
 
 interface OrderFiltersProps {
   filters: OrderFilterState;
@@ -48,7 +41,7 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
     filters.search?.trim() !== '',
     filters.status && filters.status !== 'all',
     filters.pay_status && filters.pay_status !== 'all',
-    filters.sales_manager && filters.sales_manager !== 'all',
+    typeof filters.sales_manager === 'number',
     !!filters.date_from,
     !!filters.date_to,
   ].filter(Boolean).length;
@@ -58,7 +51,7 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
   };
 
   const handleReset = () => {
-    onFiltersChange({ search: '', status: 'all', pay_status: 'all', sales_manager: 'all', date_from: '', date_to: '' });
+    onFiltersChange({ search: '', status: 'all', pay_status: 'all', sales_manager: undefined, date_from: '', date_to: '' });
   };
 
   return (
@@ -157,15 +150,15 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
                     </button>
                   </Badge>
                 )}
-                {filters.sales_manager && filters.sales_manager !== 'all' && (
+                {typeof filters.sales_manager === 'number' && (
                   <Badge variant="secondary" className="gap-1 text-xs">
                     {
                       (() => {
-                        const agent = agents.find(a => String(a.id) === filters.sales_manager);
+                        const agent = agents.find(a => a.id === filters.sales_manager);
                         return agent ? (agent.full_name || `${agent.name} ${agent.last_name}`) : 'Agente';
                       })()
                     }
-                    <button className="ml-0.5 hover:bg-muted rounded-full" onClick={() => handleChange({ sales_manager: 'all' })}>
+                    <button className="ml-0.5 hover:bg-muted rounded-full" onClick={() => handleChange({ sales_manager: undefined })}>
                       <X className="h-3 w-3" />
                     </button>
                   </Badge>
@@ -190,10 +183,10 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <div>
-              <Label className="text-xs font-medium">Manager de Ventas</Label>
-              <Select value={filters.sales_manager} onValueChange={(v) => handleChange({ sales_manager: v })}>
+              <Label className="text-xs font-medium">Agente</Label>
+              <Select value={typeof filters.sales_manager === 'number' ? String(filters.sales_manager) : 'all'} onValueChange={(v) => handleChange({ sales_manager: v === 'all' ? undefined : Number(v) })}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>

@@ -9,7 +9,7 @@ import { useAddProductsToOrder } from '@/hooks/order/useAddProductsToOrder';
 import { CompactMetricsSummary } from '@/components/metrics';
 
 const Orders = () => {
-  const [filters, setFilters] = useState<OrderFilterState>({ search: '', status: 'all', pay_status: 'all', sales_manager: 'all', date_from: '', date_to: '' });
+  const [filters, setFilters] = useState<OrderFilterState>({ search: '', status: 'all', pay_status: 'all', sales_manager: undefined, date_from: '', date_to: '' });
 
   // Obtener órdenes de la API
   const { orders, isLoading, error } = useOrders(filters);
@@ -48,7 +48,7 @@ const Orders = () => {
           if (filters.date_from) return createdDateStr >= filters.date_from;
           if (filters.date_to) return createdDateStr <= filters.date_to;
           return true;
-        } catch (err) {
+        } catch {
           return false;
         }
       });
