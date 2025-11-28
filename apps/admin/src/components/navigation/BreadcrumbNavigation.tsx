@@ -14,7 +14,8 @@ import {
   FileText,
   ChartColumn,
   BaggageClaim,
-  Tags
+  Tags,
+  ShoppingBag
 } from 'lucide-react';
 
 // Mapeo de rutas a iconos
@@ -22,7 +23,7 @@ const routeIcons: Record<string, LucideIcon> = {
   '/users': Users,
   '/shops': Store,
   '/products': Package,
-  '/purchases': ShoppingCart,
+  '/purchases': ShoppingBag,
   '/packages': PackageCheck,
   '/delivery': Truck,
   '/orders': ShoppingCart,
