@@ -6,6 +6,8 @@ import type { ID, PackageStatus } from './base';
 import type { ProductReceived } from './product-received';
 
 // Modelo principal
+export type PackageImage = string | { id?: number; picture?: string };
+
 export interface Package {
   id: ID;
   agency_name: string;
@@ -13,7 +15,7 @@ export interface Package {
   status_of_processing: PackageStatus;
   arrival_date: string;
   // Puede ser un array de URLs o un array de objetos con la propiedad picture
-  package_picture?: string;
+  package_picture?: PackageImage[];
   contained_products?: ProductReceived[]; // Productos contenidos en el paquete
   created_at: string;
   updated_at: string;

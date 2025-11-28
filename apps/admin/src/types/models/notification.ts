@@ -46,7 +46,7 @@ export interface Notification {
   action_url?: string;
   is_read: boolean;
   read_at?: DateTime;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: DateTime;
   expires_at?: DateTime;
 
@@ -72,14 +72,14 @@ export interface CreateNotificationData {
   sender?: ID;
   priority?: NotificationPriority;
   action_url?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   expires_at?: DateTime;
 }
 
 // Datos para actualizar una notificación
 export interface UpdateNotificationData {
   is_read?: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Filtros para notificaciones
@@ -128,7 +128,7 @@ export interface NotificationGroup {
   count: number;
   first_notification: ID;
   last_notification: ID;
-  aggregated_data: any[];
+  aggregated_data: unknown[];
   is_read: boolean;
   created_at: DateTime;
   updated_at: DateTime;
@@ -155,7 +155,7 @@ export interface UnreadCountResponse {
 // Evento SSE de notificación
 export interface NotificationSSEEvent {
   event: 'notification' | 'connected' | 'heartbeat' | 'error';
-  data: any;
+  data: unknown;
   timestamp: DateTime;
 }
 

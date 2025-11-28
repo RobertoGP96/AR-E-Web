@@ -62,7 +62,7 @@ export const useNotifications = (
     isError,
     error,
     refetch: refetchNotifications,
-  } = useQuery({
+  } = useQuery<import('../../types/api').PaginatedApiResponse<import('../../types/models').Notification>>({
     queryKey: ['notifications', currentFilters],
     queryFn: () => getNotifications(currentFilters),
     enabled,
@@ -74,7 +74,7 @@ export const useNotifications = (
   const {
     data: unreadData,
     refetch: refetchUnreadCount,
-  } = useQuery({
+  } = useQuery<import('../../types/models').UnreadCountResponse>({
     queryKey: ['notifications', 'unread-count'],
     queryFn: getUnreadCount,
     enabled,
@@ -114,7 +114,7 @@ export const useNotifications = (
 
   // Valores calculados
   const notifications = notificationsData?.results || [];
-  const unreadCount = (unreadData as any)?.unread_count || 0;
+  const unreadCount = unreadData?.unread_count || 0;
   const totalCount = notificationsData?.count || 0;
   const hasNextPage = !!notificationsData?.next;
   const hasPreviousPage = !!notificationsData?.previous;

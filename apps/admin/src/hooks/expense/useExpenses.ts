@@ -29,7 +29,7 @@ export function useExpenses(filters?: ExpenseFilters) {
 
 export function useExpense(id?: number) {
   return useQuery({
-    queryKey: id ? expenseKeys.detail(id) : undefined,
+    queryKey: id ? expenseKeys.detail(id) : expenseKeys.details(),
     queryFn: () => (id ? getExpenseById(id) : Promise.reject('No id')),
     enabled: !!id,
   });

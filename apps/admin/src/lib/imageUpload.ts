@@ -63,7 +63,7 @@ export const uploadToCloudinary = async (
 };
 
 export const deleteFromCloudinary = async (
-  _publicId: string
+  publicId: string
 ): Promise<boolean> => {
   try {
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
@@ -75,8 +75,8 @@ export const deleteFromCloudinary = async (
     }
 
     // Generar signature (necesitas implementar esto en el backend por seguridad)
-    // Por ahora, solo retornamos true
-    console.warn('Eliminación de Cloudinary debe hacerse desde el backend');
+    // Por ahora, solo retornamos true pero logueamos el publicId
+    console.warn('Eliminación de Cloudinary debe hacerse desde el backend', publicId);
     return true;
   } catch (error) {
     console.error('Error deleting from Cloudinary:', error);

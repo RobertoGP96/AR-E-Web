@@ -374,7 +374,15 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                         </HoverCardTrigger>
                         <HoverCardContent className="w-32 h-32 flex items-center justify-center">
                           <img
-                            src={((pkg.package_picture as string) || '')}
+                            src={(() => {
+                              const pic = pkg.package_picture;
+                              if (!pic) return '';
+                              if (Array.isArray(pic)) {
+                                const first = pic[0];
+                                return (typeof first === 'string' ? first : first?.picture) || '';
+                              }
+                              return typeof pic === 'string' ? pic : '';
+                            })()}
                             alt={`Entrega ${pkg.id}`}
                             className="h-25 w-30 object-cover rounded-md"
                           />
@@ -653,10 +661,18 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
           </DialogHeader>
 
           <div className="py-2">
-            {imageDialogPackage ? (
+              {imageDialogPackage ? (
               <QuickImageUpload
                 entityType="products"
-                currentImage={imageDialogPackage?.package_picture || imageDialogPackage.package_picture}
+                  currentImage={(() => {
+                    const pic = imageDialogPackage.package_picture;
+                    if (!pic) return undefined;
+                    if (Array.isArray(pic)) {
+                      const first = pic[0];
+                      return typeof first === 'string' ? first : first?.picture;
+                    }
+                    return typeof pic === 'string' ? pic : undefined;
+                  })()}
                 onImageUploaded={(url: string) => handleImageUploaded(imageDialogPackage, url)}
                 folder={undefined}
               />

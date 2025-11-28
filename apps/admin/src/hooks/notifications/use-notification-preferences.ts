@@ -55,9 +55,10 @@ export const useNotificationPreferences = (): UseNotificationPreferencesReturn =
 
       toast.success('Preferencias de notificación actualizadas');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const message = (error as Error)?.message || 'Ocurrió un error inesperado';
       toast.error('Error al actualizar preferencias', {
-        description: error?.message || 'Ocurrió un error inesperado',
+        description: message,
       });
     },
   });

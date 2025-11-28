@@ -22,26 +22,31 @@ export const getDashboardMetrics = async () => {
 };
 
 export const getUsersStats = async (_period: 'day' | 'week' | 'month' | 'year' = 'month') => {
+  void _period;
   // TODO: Implementar cuando el backend esté listo
   return Promise.resolve({ data: null });
 };
 
 export const getOrdersStats = async (_period: 'day' | 'week' | 'month' | 'year' = 'month') => {
+  void _period;
   // TODO: Implementar cuando el backend esté listo
   return Promise.resolve({ data: null });
 };
 
 export const getSalesStats = async (_period: 'day' | 'week' | 'month' | 'year' = 'month') => {
+  void _period;
   // TODO: Implementar cuando el backend esté listo
   return Promise.resolve({ data: null });
 };
 
 export const getTopProducts = async (_limit: number = 10) => {
+  void _limit;
   // TODO: Implementar cuando el backend esté listo
   return Promise.resolve({ data: null });
 };
 
 export const getTopAgents = async (_limit: number = 10) => {
+  void _limit;
   // TODO: Implementar cuando el backend esté listo
   return Promise.resolve({ data: null });
 };
