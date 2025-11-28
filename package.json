@@ -33,5 +33,10 @@
     "pnpm": ">=8.0.0",
     "python": ">=3.11.0"
   },
-  "packageManager": "pnpm@8.15.0"
+  "packageManager": "pnpm@8.15.0",
+  "dependencies": {
+    "jest-dom@^6.0.0": "link:...@testing-library\\jest-dom@^6.0.0",
+    "react@^15.0.0": "link:...@testing-library\\react@^15.0.0",
+    "user-event@^14.0.0": "link:...@testing-library\\user-event@^14.0.0"
+  }
 }

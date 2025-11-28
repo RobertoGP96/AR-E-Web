@@ -51,7 +51,7 @@ export const PurchaseFilters: React.FC<PurchaseFiltersProps> = ({ filters, onFil
   const accounts = accountsData?.results || [];
 
   const activeFiltersCount = [
-    filters.search?.trim() !== '',
+    !!filters.search?.trim(),
     filters.status_of_shopping && filters.status_of_shopping !== 'all',
     typeof filters.shopping_account === 'number' || typeof filters.shopping_account_id === 'number',
     typeof filters.shop_of_buy === 'number' || typeof filters.shop_of_buy_id === 'number',

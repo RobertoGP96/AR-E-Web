@@ -152,11 +152,16 @@ export interface ProductReceivedFilters extends BaseFilters {
 export interface PackageFilters extends BaseFilters {
   status_of_processing?: string;
   agency_name?: string;
+  arrival_date_from?: string;
+  arrival_date_to?: string;
+  search?: string;
 }
 
 export interface DeliverReceipFilters extends BaseFilters {
   order?: number;
   status?: string;
+  zone?: string;
+  search?: string;
   deliver_date_from?: string;
   deliver_date_to?: string;
 }

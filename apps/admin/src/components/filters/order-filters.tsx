@@ -38,7 +38,7 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
   const agents = agentsData?.results || [];
 
   const activeFiltersCount = [
-    filters.search?.trim() !== '',
+    !!filters.search?.trim(),
     filters.status && filters.status !== 'all',
     filters.pay_status && filters.pay_status !== 'all',
     typeof filters.sales_manager === 'number',

@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Filter, Plus, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 import CreatePackageDialog from './CreatePackageDialog';
+import PackageFilters, { type PackageFilterState } from '@/components/filters/package-filters';
 
 interface PackagesFiltersProps {
   searchTerm?: string;
@@ -11,11 +12,15 @@ interface PackagesFiltersProps {
   onStatusFilterChange?: (value: string) => void;
   cityFilter?: string;
   onCityFilterChange?: (value: string) => void;
+  filters?: PackageFilterState;
+  onFiltersChange?: (f: PackageFilterState) => void;
 }
 
 export default function PackagesFilters({
   searchTerm,
   onSearchChange,
+  filters = { search: '', status_of_processing: 'all' },
+  onFiltersChange = () => {},
 }: PackagesFiltersProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
@@ -34,13 +39,7 @@ export default function PackagesFilters({
             />
           </div>
         </div>
-        <Button
-          variant={"secondary"}
-          className="flex items-center gap-2"
-        >
-          <Filter className="h-5 w-5" />
-          Filtrar
-        </Button>
+        <PackageFilters filters={filters} onFiltersChange={(newFilters) => onFiltersChange(newFilters)} resultCount={undefined} />
         <Button
           onClick={() => setCreateDialogOpen(true)}
           className="flex items-center gap-2"

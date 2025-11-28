@@ -1,17 +1,13 @@
 import { DeliveryHeader, DeliveryStats, DeliveryFilters, DeliveryTable } from '@/components/delivery';
 import { useState } from 'react';
 import { useDeliveries } from '@/hooks/delivery/useDeliverys';
+import type { DeliverReceipFilters } from '@/types/api';
 
 export default function Delivery() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [zoneFilter, setZoneFilter] = useState('all');
-
-  const filters = {
-    search: searchTerm || undefined,
-    status: statusFilter !== 'all' ? statusFilter : undefined,
-    // Agregar otros filtros si es necesario
-  };
+  const [filters, setFilters] = useState<DeliverReceipFilters>({ search: undefined, status: undefined, page: 1, per_page: 10 });
 
   const { deliveries, isLoading } = useDeliveries(filters);
 
@@ -21,11 +17,13 @@ export default function Delivery() {
       <DeliveryStats />
       <DeliveryFilters 
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={(v) => { setSearchTerm(v); setFilters(prev => ({ ...prev, search: v, page: 1 })); }}
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+        onStatusFilterChange={(v) => { setStatusFilter(v); setFilters(prev => ({ ...prev, status: v !== 'all' ? v : undefined, page: 1 })); }}
         zoneFilter={zoneFilter}
-        onZoneFilterChange={setZoneFilter}
+        onZoneFilterChange={(v) => { setZoneFilter(v); setFilters(prev => ({ ...prev, zone: v !== 'all' ? v : undefined, page: 1 })); }}
+        filters={filters}
+        onFiltersChange={(f) => setFilters({ ...f, page: 1 })}
       />
       <DeliveryTable deliveries={deliveries} isLoading={isLoading} />
     </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Filter, Plus, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import DeliveryFiltersComponent, { type DeliveryFilterState } from '@/components/filters/delivery-filters';
 import { Button } from '../ui/button';
 import CreateDeliveryDialog from './CreateDeliveryDialog';
 
@@ -11,11 +12,15 @@ interface DeliveryFiltersProps {
   onStatusFilterChange?: (value: string) => void;
   zoneFilter?: string;
   onZoneFilterChange?: (value: string) => void;
+  filters?: DeliveryFilterState;
+  onFiltersChange?: (f: DeliveryFilterState) => void;
 }
 
 export default function DeliveryFilters({
   searchTerm,
   onSearchChange,
+  filters = { search: '', status: 'all' },
+  onFiltersChange = () => {},
 }: DeliveryFiltersProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
@@ -34,13 +39,7 @@ export default function DeliveryFilters({
             />
           </div>
         </div>
-        <Button
-          variant={"secondary"}
-          className="flex items-center gap-2"
-        >
-          <Filter className="h-5 w-5" />
-          Filtrar
-        </Button>
+        <DeliveryFiltersComponent filters={filters} onFiltersChange={(newFilters) => onFiltersChange(newFilters)} resultCount={undefined} />
         <Button
           onClick={() => setCreateDialogOpen(true)}
           className="flex items-center gap-2"
