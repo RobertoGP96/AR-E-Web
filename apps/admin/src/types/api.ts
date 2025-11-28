@@ -125,7 +125,9 @@ export interface BuyingAccountFilters extends BaseFilters {
 export interface ShoppingReceipFilters extends BaseFilters {
   status_of_shopping?: string;
   shopping_account?: number;
+  shopping_account_id?: number; // alias
   shop_of_buy?: number;
+  shop_of_buy_id?: number; // alias used by services
   buy_date_from?: string;
   buy_date_to?: string;
 }

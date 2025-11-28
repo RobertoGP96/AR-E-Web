@@ -1,22 +1,23 @@
-import { Filter, Plus, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 import { PurchaseDialog } from './purchase-dialog';
+import PurchaseFilters, { type PurchaseFilterState } from '@/components/filters/purchase-filters';
 
 interface PurshasesFiltersProps {
   searchValue?: string;
-  categoryFilter?: string;
-  statusFilter?: string;
   onSearchChange?: (value: string) => void;
-  onCategoryChange?: (value: string) => void;
-  onStatusChange?: (value: string) => void;
   onPurchaseCreated?: () => void;
+  filters?: PurchaseFilterState;
+  onFiltersChange?: (f: PurchaseFilterState) => void;
 }
 
 export default function PurshasesFilters({
   searchValue = "",
   onSearchChange,
   onPurchaseCreated,
+  filters = { search: '', status_of_shopping: 'all' },
+  onFiltersChange = () => {},
 }: PurshasesFiltersProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4">
@@ -25,17 +26,14 @@ export default function PurshasesFilters({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             type="text"
-            placeholder="Buscar productos..."
+            placeholder="Buscar compras..."
             className="pl-10 border-gray-200 focus:border-orange-300 focus:ring-orange-200  shadow-sm"
             value={searchValue}
             onChange={(e) => onSearchChange?.(e.target.value)}
           />
         </div>
       </div>
-      <Button variant="secondary">
-        <Filter className="h-5 w-5 mr-2" />
-        Filtrar
-      </Button>
+        <PurchaseFilters filters={filters} onFiltersChange={(newFilters) => onFiltersChange(newFilters)} resultCount={undefined} />
       <PurchaseDialog
         trigger={
           <Button className="flex items-center gap-2 border-0">

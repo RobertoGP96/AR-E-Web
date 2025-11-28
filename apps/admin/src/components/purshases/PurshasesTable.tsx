@@ -36,10 +36,11 @@ import {
 interface PurshasesTableProps {
     onDelete?: (receipt: ShoppingReceip) => void;
     itemsPerPage?: number;
+    filters?: import('@/types/api').ShoppingReceipFilters;
 }
 
-const PurshasesTable: React.FC<PurshasesTableProps> = ({ onDelete, itemsPerPage = 10 }) => {
-    const { shoppingReceipts, isLoading, error } = useShoppingReceipts();
+const PurshasesTable: React.FC<PurshasesTableProps> = ({ onDelete, itemsPerPage = 10, filters }) => {
+    const { shoppingReceipts, isLoading, error } = useShoppingReceipts(filters);
     const [dialogState, setDialogState] = useState<{ type: 'delete' | 'edit' | null; receipt: ShoppingReceip | null }>({ type: null, receipt: null });
     const deleteReceiptMutation = useDeleteShoppingReceipt();
     const updateReceiptMutation = useUpdateShoppingReceipt();
