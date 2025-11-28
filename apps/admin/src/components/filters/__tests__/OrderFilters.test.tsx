@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import OrderFilters from '../order-filters';
 import { vi } from 'vitest';
@@ -15,7 +16,8 @@ function Wrapper() {
 
 describe('OrderFilters', () => {
   it('no badge or counter when mounted with default filters', () => {
-    render(<Wrapper />);
+    const qc = new QueryClient();
+    render(<QueryClientProvider client={qc}><Wrapper /></QueryClientProvider>);
     // The substring 'Filtrar' is the Popover trigger button label
     const button = screen.getByRole('button', { name: /Filtrar/i });
     // Expect there is no small badge (count) visible
@@ -24,11 +26,12 @@ describe('OrderFilters', () => {
   });
 
   it('shows badge when a search filter is applied', async () => {
-    render(<Wrapper />);
+    const qc = new QueryClient();
+    render(<QueryClientProvider client={qc}><Wrapper /></QueryClientProvider>);
     const user = userEvent.setup();
     const trigger = screen.getByRole('button', { name: /Filtrar/i });
     await user.click(trigger);
-    const search = screen.getByPlaceholderText(/Buscar por ID, cliente, email o manager/i);
+    const search = await screen.findByPlaceholderText(/Buscar por ID, cliente, email o manager/i);
     await user.type(search, 'ABC123');
     const apply = screen.getByRole('button', { name: /Aplicar/i });
     await user.click(apply);
@@ -38,3 +41,7 @@ describe('OrderFilters', () => {
 });
 
 export {};
+    function expect(button: HTMLElement) {
+        throw new Error('Function not implemented.');
+    }
+

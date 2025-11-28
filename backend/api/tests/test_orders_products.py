@@ -58,6 +58,47 @@ class OrderModelTest(ModelTestCase):
         expected_total = 25.0 + 30.0
         self.assertEqual(self.order.total_cost(), expected_total)
 
+    def test_add_received_value_method(self):
+        """Test that `add_received_value` increments received_value_of_client and updates pay_status"""
+        # Add a product that gives a total cost for the order
+        Product.objects.create(
+            sku='TEST_ADD', name='Add Received Product', shop=self.test_shop,
+            amount_requested=1, order=self.order, shop_cost=50.0, total_cost=50.0
+        )
+
+        # Initially no payment
+        self.assertEqual(self.order.received_value_of_client, 0)
+        self.assertEqual(self.order.pay_status, 'No pagado')
+
+        # Add partial payment
+        self.order.add_received_value(30.0)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.received_value_of_client, 30.0)
+        self.assertEqual(self.order.pay_status, 'Parcial')
+
+        # Add another payment making it greater than total
+        self.order.add_received_value(25.0)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.received_value_of_client, 55.0)
+        self.assertEqual(self.order.pay_status, 'Pagado')
+
+    def test_save_recalculates_pay_status_on_update(self):
+        """Test that updating received_value_of_client after products are present updates pay_status accordingly"""
+        new_order = Order.objects.create(client=self.test_user, sales_manager=self.agent_user)
+
+        # Add a product to define total_cost
+        Product.objects.create(
+            sku='TEST_CRE', name='Create Product', shop=self.test_shop,
+            amount_requested=1, order=new_order, shop_cost=50.0, total_cost=50.0
+        )
+
+        # Now update the received_value and save - this should recalc pay_status
+        new_order.received_value_of_client = 80.0
+        new_order.save()
+        new_order.refresh_from_db()
+        self.assertEqual(new_order.received_value_of_client, 80.0)
+        self.assertEqual(new_order.pay_status, 'Pagado')
+
 
 class ProductModelTest(ModelTestCase):
     """Test the Product model"""
@@ -395,6 +436,39 @@ class OrderAPITest(BaseAPITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'Comprado')
+        self.assertEqual(response.data['pay_status'], 'Pagado')
+
+    def test_update_order_payment_accumulates(self):
+        """Test that partial updates to received_value_of_client accumulate and update pay_status accordingly"""
+        self.authenticate_user(self.agent_user)
+
+        # Add a product to determine a total_cost
+        Product.objects.create(
+            sku='TEST_P1',
+            name='Payment Product',
+            shop=self.test_shop,
+            amount_requested=1,
+            order=self.test_order,
+            shop_cost=50.0,
+            total_cost=50.0
+        )
+
+        # Ensure initial status
+        response = self.client.get(f'/shein_shop/order/{self.test_order.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['pay_status'], 'No pagado')
+        self.assertEqual(response.data['received_value_of_client'], 0)
+
+        # Add a partial payment of 30.0
+        response = self.client.patch(f'/shein_shop/order/{self.test_order.id}/', {'received_value_of_client': 30.0})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertAlmostEqual(float(response.data['received_value_of_client']), 30.0)
+        self.assertEqual(response.data['pay_status'], 'Parcial')
+
+        # Add another payment of 25.0 (total > 50 => Paid)
+        response = self.client.patch(f'/shein_shop/order/{self.test_order.id}/', {'received_value_of_client': 25.0})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertAlmostEqual(float(response.data['received_value_of_client']), 55.0)
         self.assertEqual(response.data['pay_status'], 'Pagado')
 
 

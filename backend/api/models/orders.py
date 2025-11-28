@@ -57,6 +57,43 @@ class Order(models.Model):
                 self.status = OrderStatusEnum.COMPLETADO.value
                 self.save(update_fields=['status', 'updated_at'])
 
+    def add_received_value(self, amount: float) -> None:
+        """
+        Añade una cantidad a `received_value_of_client` y actualiza `pay_status` en base
+        al costo total de la orden. Guarda la instancia con los campos necesarios.
+
+        Este método centraliza la lógica de acumulación y el cálculo del estado de pago
+        para mantener el comportamiento consistente en todo el backend.
+        """
+        if amount is None:
+            return
+
+        try:
+            amount_float = float(amount)
+        except (TypeError, ValueError):
+            # No se puede procesar la cantidad proporcionada
+            return
+
+        if amount_float <= 0:
+            # No sumar valores no positivos
+            return
+
+        self.received_value_of_client += amount_float
+
+        # Calcular el costo total de la orden
+        total_cost = self.total_cost() if callable(self.total_cost) else self.total_cost
+
+        # Actualizar el pay_status
+        if self.received_value_of_client >= total_cost:
+            self.pay_status = 'Pagado'
+        elif self.received_value_of_client > 0:
+            self.pay_status = 'Parcial'
+        else:
+            self.pay_status = 'No pagado'
+
+        # Guardar cambios mínimamente
+        self.save(update_fields=['received_value_of_client', 'pay_status', 'updated_at'])
+
     def total_cost(self):
         """Total cost of order"""
         return sum(product.total_cost for product in self.products.all())
@@ -122,3 +159,46 @@ class Order(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        """
+        Override save para recalcular 'pay_status' cuando 'received_value_of_client' cambie o durante creación.
+        Esto asegura que las operaciones directas de creación actualicen el estado de pago correctamente,
+        pero *no* sobrescribe manualmente `pay_status` si esta propiedad se establece explícitamente y el
+        valor de `received_value_of_client` no ha cambiado.
+        """
+        # Determinar el costo total para poder comparar
+        try:
+            total_cost = self.total_cost() if callable(self.total_cost) else self.total_cost
+        except Exception:
+            total_cost = 0
+
+        if not self.pk:
+            # Nueva instancia en create: calcular pay_status en base a received_value_of_client
+            if self.received_value_of_client >= total_cost and total_cost > 0:
+                self.pay_status = 'Pagado'
+            elif self.received_value_of_client > 0:
+                self.pay_status = 'Parcial'
+            else:
+                self.pay_status = 'No pagado'
+        else:
+            # Intentar comparar con instancia anterior para ver si received_value_of_client cambió
+            try:
+                previous = Order.objects.get(pk=self.pk)
+                if previous.received_value_of_client != self.received_value_of_client:
+                    if self.received_value_of_client >= total_cost and total_cost > 0:
+                        self.pay_status = 'Pagado'
+                    elif self.received_value_of_client > 0:
+                        self.pay_status = 'Parcial'
+                    else:
+                        self.pay_status = 'No pagado'
+            except Order.DoesNotExist:
+                # En caso de que la instancia no exista, proceder como creación
+                if self.received_value_of_client >= total_cost and total_cost > 0:
+                    self.pay_status = 'Pagado'
+                elif self.received_value_of_client > 0:
+                    self.pay_status = 'Parcial'
+                else:
+                    self.pay_status = 'No pagado'
+
+        super().save(*args, **kwargs)

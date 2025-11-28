@@ -93,41 +93,16 @@ class OrderSerializer(serializers.ModelSerializer):
         # Si se está actualizando received_value_of_client, necesitamos manejarlo de forma especial
         # para acumular el valor (sumarlo al anterior) en lugar de reemplazarlo
         if 'received_value_of_client' in validated_data:
-            # Guardar el valor que se quiere añadir
-            amount_to_add = validated_data['received_value_of_client']
-            previous_amount = instance.received_value_of_client
+            # Guardar el valor que se quiere añadir y usar el método del modelo para actualizar
+            amount_to_add = validated_data.pop('received_value_of_client')
+            try:
+                instance.add_received_value(amount_to_add)
+            except Exception as e:
+                # Log en caso de errores inesperados, luego intentar actualizar otras partes igualmente
+                print(f"[OrderSerializer] Error al añadir received value: {e}")
 
-            # Sumar al valor actual en lugar de reemplazarlo
-            instance.received_value_of_client += amount_to_add
-
-            print(f"[OrderSerializer] Actualizando pago de orden #{instance.id}")
-            print(f"  - Cantidad anterior: ${previous_amount}")
-            print(f"  - Cantidad añadida: ${amount_to_add}")
-            print(f"  - Nuevo total recibido: ${instance.received_value_of_client}")
-
-            # Remover del validated_data para evitar que super().update() lo sobrescriba
-            validated_data.pop('received_value_of_client')
-
-            # Actualizar otros campos si los hay
+            # Actualizar otros campos si los hay (ya removimos el campo recibido)
             instance = super().update(instance, validated_data)
-
-            # Obtener el costo total de la orden
-            total_cost = instance.total_cost() if callable(instance.total_cost) else instance.total_cost
-
-            print(f"  - Costo total de la orden: ${total_cost}")
-
-            # Actualizar el estado de pago basándose en el nuevo total acumulado
-            if instance.received_value_of_client >= total_cost:
-                instance.pay_status = 'Pagado'
-                print(f"  - Nuevo estado: Pagado (recibido >= total)")
-            elif instance.received_value_of_client > 0:
-                instance.pay_status = 'Parcial'
-                print(f"  - Nuevo estado: Parcial (recibido < total)")
-            else:
-                instance.pay_status = 'No pagado'
-                print(f"  - Nuevo estado: No pagado (recibido = 0)")
-
-            instance.save()
         else:
             # Si no se actualizó received_value_of_client, actualizar normalmente
             instance = super().update(instance, validated_data)
@@ -179,6 +154,23 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El usuario no es agente.")
         return value
 
+    def create(self, validated_data):
+        """
+        Crear orden y ajustar `pay_status` si se proporciona `received_value_of_client`.
+        """
+        received = validated_data.get('received_value_of_client', 0) or 0
+        # Crear la instancia primeramente
+        instance = super().create(validated_data)
+
+        # Si existe un received > 0, reutilizamos el método del modelo para sumar y recalcular
+        if received and received > 0:
+            try:
+                instance.add_received_value(received)
+            except Exception as e:
+                print(f"[OrderCreateSerializer] Error al aplicar received_value_of_client: {e}")
+
+        return instance
+
 
 class OrderUpdateSerializer(serializers.ModelSerializer):
     """
@@ -199,3 +191,26 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
         if value and value.role != 'agent':
             raise serializers.ValidationError("El usuario no es agente.")
         return value
+
+    def update(self, instance, validated_data):
+        """
+        Actualiza la orden parcialmente y verifica automáticamente el estado de pago
+        cuando se actualiza `received_value_of_client`.
+
+        Se comporta igual que la implementación en `OrderSerializer.update` para
+        preservar la acumulación y cálculo del estado de pago.
+        """
+        # Manejar la actualización del monto recibido de forma acumulativa
+        if 'received_value_of_client' in validated_data:
+            amount_to_add = validated_data.pop('received_value_of_client')
+            try:
+                instance.add_received_value(amount_to_add)
+            except Exception as e:
+                print(f"[OrderUpdateSerializer] Error al añadir received value: {e}")
+
+            # Actualizar otros campos
+            instance = super().update(instance, validated_data)
+        else:
+            instance = super().update(instance, validated_data)
+
+        return instance
