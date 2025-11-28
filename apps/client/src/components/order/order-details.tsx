@@ -382,7 +382,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
                             <div key={0} className="group cursor-pointer">
                               <img
-                                src={(typeof product.product_pictures === 'string' ? product.product_pictures : product.image_url) as string}
+                                src={(product.product_pictures ? product.product_pictures : '') as string}
                                 alt={`${product.name} - Imagen 1`}
                                 className="w-full aspect-square object-cover rounded-xl border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-all duration-200 shadow-sm group-hover:shadow-md transform group-hover:scale-105"
                               />
@@ -390,7 +390,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                           </div>
                         </div>
                       </>
-                    )}
+                    ) : null}
                   </div>
                 );
               })

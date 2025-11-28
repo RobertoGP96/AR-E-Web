@@ -13,10 +13,7 @@ export type { DeliverReceip, CreateDeliverReceipData, UpdateDeliverReceipData, D
 export type { EvidenceImage, CreateEvidenceImageData } from './evidence';
 export type { Shop, CreateShopData, UpdateShopData, ShopFilters } from './shop';
 export type { Package, CreatePackageData, UpdatePackageData, PackageFilters } from './package';
-export type { BuyingAccount, CreateBuyingAccountData, UpdateBuyingAccountData, BuyingAccountFilters } from './buying-account';
 export type { CommonInformation, CreateCommonInformationData, UpdateCommonInformationData } from './common-information';
-export type { ShoppingReceip, CreateShoppingReceipData, UpdateShoppingReceipData, ShoppingReceipFilters } from './shopping-receip';
-export type { ProductBuyed, CreateProductBuyedData, UpdateProductBuyedData, ProductBuyedFilters } from './product-buyed';
 export type { ProductReceived, CreateProductReceivedData, UpdateProductReceivedData, ProductReceivedFilters } from './product-received';
 
 // Tipos de API (sin conflictos)
