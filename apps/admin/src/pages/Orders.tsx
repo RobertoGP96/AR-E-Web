@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useOrders } from '../hooks/order/useOrders';
 import { OrdersHeader, OrdersFilters, OrdersTable, AddProductsDialog, EditOrderDialog } from '@/components/orders';
+import type { OrderFilterState } from '@/components/filters/order-filters';
 import type { CreateProductData, Order } from '@/types';
 import { toast } from 'sonner';
 import { useDeleteOrder } from '@/hooks/order/useDeleteOrder';
@@ -8,12 +9,10 @@ import { useAddProductsToOrder } from '@/hooks/order/useAddProductsToOrder';
 import { CompactMetricsSummary } from '@/components/metrics';
 
 const Orders = () => {
-  const [searchValue, setSearchValue] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
+  const [filters, setFilters] = useState<OrderFilterState>({ search: '', status: 'all', pay_status: 'all', sales_manager: 'all', date_from: '', date_to: '' });
 
   // Obtener órdenes de la API
-  const { orders, isLoading, error } = useOrders();
+  const { orders, isLoading, error } = useOrders(filters);
 
   // Filtrar órdenes basado en la búsqueda
   const filteredOrders = useMemo(() => {
@@ -22,8 +21,8 @@ const Orders = () => {
     let filtered = [...orders];
 
     // Filtrar por término de búsqueda
-    if (searchValue.trim()) {
-      const searchLower = searchValue.toLowerCase();
+    if (filters.search?.trim()) {
+      const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(order => 
         order.id.toString().includes(searchLower) ||
         order.client?.full_name?.toLowerCase().includes(searchLower) ||
@@ -33,15 +32,30 @@ const Orders = () => {
     }
 
     // Filtrar por estado
-    if (statusFilter) {
-      filtered = filtered.filter(order => order.status === statusFilter);
+    if (filters.status && filters.status !== 'all') {
+      filtered = filtered.filter(order => order.status === filters.status);
     }
 
-    // TODO: Implementar filtro por fecha si es necesario
-    // if (dateFilter) { ... }
+    // Filtro por fecha de creación (igualar día)
+    if (filters.date_from || filters.date_to) {
+      filtered = filtered.filter(order => {
+        try {
+          const created = new Date(order.created_at);
+          const createdDateStr = created.toISOString().split('T')[0];
+          if (filters.date_from && filters.date_to) {
+            return createdDateStr >= filters.date_from && createdDateStr <= filters.date_to;
+          }
+          if (filters.date_from) return createdDateStr >= filters.date_from;
+          if (filters.date_to) return createdDateStr <= filters.date_to;
+          return true;
+        } catch (err) {
+          return false;
+        }
+      });
+    }
 
     return filtered;
-  }, [orders, searchValue, statusFilter]);
+  }, [orders, filters]);
 
   // Manejar edición de orden
 
@@ -107,12 +121,11 @@ const Orders = () => {
 
 
       <OrdersFilters
-        searchTerm={searchValue}
-        statusFilter={statusFilter}
-        dateFilter={dateFilter}
-        onSearchChange={setSearchValue}
-        onStatusChange={setStatusFilter}
-        onDateChange={setDateFilter}
+        searchTerm={filters.search ?? ''}
+        filters={filters}
+        onSearchChange={(value) => setFilters(prev => ({ ...prev, search: value }))}
+        onFiltersChange={(newFilters) => setFilters(newFilters)}
+        resultCount={filteredOrders.length}
       />
 
       <OrdersTable 

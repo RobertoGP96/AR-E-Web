@@ -37,17 +37,57 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(client=user)
 
         # Filtros adicionales
+        # estado
         status_filter = self.request.query_params.get('status')
         if status_filter:
             queryset = queryset.filter(status=status_filter)
 
-        date_from = self.request.query_params.get('date_from')
+        # pago
+        pay_status_filter = self.request.query_params.get('pay_status') or self.request.query_params.get('pay_status')
+        if pay_status_filter:
+            queryset = queryset.filter(pay_status=pay_status_filter)
+
+        # cliente (accept both client and client_id)
+        client_id = self.request.query_params.get('client') or self.request.query_params.get('client_id')
+        if client_id:
+            try:
+                client_id_int = int(client_id)
+                queryset = queryset.filter(client__id=client_id_int)
+            except ValueError:
+                pass
+
+        # sales_manager (accept both sales_manager and sales_manager_id)
+        sales_manager_id = self.request.query_params.get('sales_manager') or self.request.query_params.get('sales_manager_id')
+        if sales_manager_id:
+            try:
+                sales_manager_id_int = int(sales_manager_id)
+                queryset = queryset.filter(sales_manager__id=sales_manager_id_int)
+            except ValueError:
+                pass
+
+        # fecha - accept both date_from/date_to and created_from/created_to for compatibility
+        date_from = self.request.query_params.get('date_from') or self.request.query_params.get('created_from')
         if date_from:
             queryset = queryset.filter(created_at__date__gte=date_from)
 
-        date_to = self.request.query_params.get('date_to')
+        date_to = self.request.query_params.get('date_to') or self.request.query_params.get('created_to')
         if date_to:
             queryset = queryset.filter(created_at__date__lte=date_to)
+
+        # búsqueda por texto (id, cliente, email, sales_manager)
+        search = self.request.query_params.get('search')
+        if search:
+            try:
+                # intentar buscar por id numérico
+                search_id = int(search)
+                queryset = queryset.filter(Q(id=search_id) |
+                                           Q(client__full_name__icontains=search) |
+                                           Q(client__email__icontains=search) |
+                                           Q(sales_manager__full_name__icontains=search))
+            except ValueError:
+                queryset = queryset.filter(Q(client__full_name__icontains=search) |
+                                           Q(client__email__icontains=search) |
+                                           Q(sales_manager__full_name__icontains=search))
 
         return queryset
 

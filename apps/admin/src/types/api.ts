@@ -97,10 +97,12 @@ export interface UserFilters extends BaseFilters {
 export interface OrderFilters extends BaseFilters {
   status?: string;
   pay_status?: string;
-  client?: number;
-  sales_manager?: number;
-  created_from?: string;
-  created_to?: string;
+  client?: number; // client id filter alias
+  client_id?: number; // alias for client
+  sales_manager?: number; // sales manager id
+  sales_manager_id?: number; // alias for sales manager
+  date_from?: string; // range start - align with backend param `date_from`
+  date_to?: string; // range end - align with backend param `date_to`
 }
 
 export interface ProductFilters extends BaseFilters {
