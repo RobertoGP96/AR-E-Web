@@ -59,6 +59,7 @@ export interface DeliveryAnalysisMonthly {
 }
 
 export interface DeliveryAnalysisResponse {
+  total_delivery_revenue: number;
   total_delivery_expenses: number;
   total_manager_profit: number;
   total_system_profit: number;

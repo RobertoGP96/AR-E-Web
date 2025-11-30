@@ -357,52 +357,10 @@ export default function BalanceReport() {
           </Card>
         </div>
 
-        {/* Chart: full width under header and summary */}
-        <Card className="border-2 shadow-sm hover:shadow-lg transition-shadow duration-300 lg:col-span-3 h-full">
-          <CardHeader className="flex items-center justify-between">
-            <div>
-              <CardTitle>Comparativa</CardTitle>
-              <CardDescription>Ingresos, costos y ganancias por mes</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6 h-full">
-            <ChartContainer
-              config={{
-                revenue: { label: 'Ingresos', color: 'hsl(33 100% 50%)' },
-                system_profit: { label: 'Ganancia Sistema', color: 'hsl(25 95% 53%)' },
-                agent_profits: { label: 'Ganancia Agentes', color: 'hsl(39 100% 57%)' },
-                product_expenses: { label: 'Gastos Productos', color: 'hsl(16 90% 48%)' },
-                delivery_expenses: { label: 'Gastos Entrega', color: 'hsl(27 87% 67%)' },
-              }}
-              className="aspect-auto h-[420px] w-full"
-            >
-              <AreaChart data={filteredMonthly} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
-                <defs>
-                  <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(33 100% 50%)" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="hsl(33 100% 50%)" stopOpacity={0.1} />
-                  </linearGradient>
-                  <linearGradient id="fillSystemProfit" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(25 95% 53%)" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="hsl(25 95% 53%)" stopOpacity={0.1} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="month_short" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} />
-                <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => formatUSD(value)} />
-                <ChartTooltip cursor={false} content={<ChartTooltipContent labelFormatter={(v) => `Mes: ${v}`} indicator="dot" />} />
-                <Area dataKey="revenue" type="monotone" fill="url(#fillRevenue)" stroke="hsl(33 100% 50%)" strokeWidth={2} name="Ingresos" />
-                <Area dataKey="system_profit" type="monotone" fill="url(#fillSystemProfit)" stroke="hsl(25 95% 53%)" strokeWidth={2} name="Ganancia Sistema" />
-                <Area dataKey="agent_profits" type="monotone" stroke="hsl(39 100% 57%)" strokeWidth={2} name="Ganancia Agentes" />
-                <Area dataKey="product_expenses" type="monotone" stroke="hsl(16 90% 48%)" strokeWidth={2} name="Gastos Productos" />
-                <Area dataKey="delivery_expenses" type="monotone" stroke="hsl(27 87% 67%)" strokeWidth={2} name="Gastos Entrega" />
-                <ChartLegend content={<ChartLegendContent />} />
-              </AreaChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+        {/* Oders */}
+       
 
-        {/* Bottom section: Invoices summary + Monthly detail side-by-side */}
+        {/* Delivery */}
         <div className="grid grid-cols-1 gap-4 ">
           <Card className="h-full">
             <CardHeader>
@@ -435,12 +393,12 @@ export default function BalanceReport() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-sm text-muted-foreground">Agentes</div>
-                      <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_manager_profit) || 0}</div>
+                      <div className="text-sm text-muted-foreground">Ingresos</div>
+                      <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_delivery_revenue) || 0}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Gastos</div>
-                      <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_delivery_expenses) || 0}</div>
+                      <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_delivery_expenses)+" +"+formatUSD(deliveryAnalysis?.total_manager_profit) || 0}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Ganancia</div>
@@ -453,6 +411,8 @@ export default function BalanceReport() {
               )}
             </CardContent>
           </Card>
+
+          {/* Costos */}
           <Card className="h-full">
             <CardHeader>
               <CardTitle>Costos - Resumen</CardTitle>
@@ -490,6 +450,7 @@ export default function BalanceReport() {
             </CardContent>
           </Card>
 
+              {/* Gastos */}
           <Card className="h-full">
             <CardHeader>
               <CardTitle>Gastos - Resumen</CardTitle>
