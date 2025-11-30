@@ -34,7 +34,9 @@ from .dashboard_views import (
     SystemInfoView
 )
 from .reports_views import (
-    ExpenseAnalysisView
+    ExpenseAnalysisView,
+    DeliveryAnalysisView,
+    OrderAnalysisView,
 )
 from .amazon_views import (
     AmazonScrapingView,
@@ -84,7 +86,9 @@ __all__ = [
     'DashboardMetricsView',
     'ProfitReportsView',
     'SystemInfoView',
-    'ExpenseAnalysisView'
+    'ExpenseAnalysisView',
+    'DeliveryAnalysisView',
+    'OrderAnalysisView',
 
     # Amazon views
     'AmazonScrapingView',
