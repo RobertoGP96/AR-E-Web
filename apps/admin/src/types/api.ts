@@ -222,6 +222,10 @@ export interface DashboardMetrics {
     pending: number;
     in_transit: number;
     delivered: number;
+    total_weight?: number;
+    today_weight?: number;
+    this_week_weight?: number;
+    this_month_weight?: number;
   };
 }
 

@@ -5,6 +5,7 @@
 import { apiClient } from '../../lib/api-client';
 import type { BaseFilters, PaginatedApiResponse } from '../../types/api';
 import type { DeliverReceip } from '../../types';
+import type { DeliveryAnalysisResponse } from '../../types/models/delivery';
 
 /**
  * Obtiene lista paginada de deliveries
@@ -44,4 +45,11 @@ export const getDeliveriesByOrder = async (orderId: number, filters?: BaseFilter
 export const searchDeliveries = async (searchTerm: string, filters?: BaseFilters) => {
   const searchFilters = { ...filters, search: searchTerm };
   return await apiClient.getPaginated<DeliverReceip>('/api_data/delivery_receips/', searchFilters);
+};
+
+/**
+ * Delivery reports analysis endpoint
+ */
+export const getDeliveryReportsAnalysis = async (params?: Record<string, unknown>) => {
+  return apiClient.get<{ data: DeliveryAnalysisResponse }>('/api_data/reports/deliveries/', { params });
 };

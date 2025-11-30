@@ -50,3 +50,22 @@ export interface CreateDeliverReceipData {
 export interface UpdateDeliverReceipData extends Partial<CreateDeliverReceipData> {
   id: ID;
 }
+
+// Analysis response for deliveries
+export interface DeliveryAnalysisMonthly {
+  month: string | null;
+  total: number; // total monetary for month
+  total_weight: number; // weight for month
+}
+
+export interface DeliveryAnalysisResponse {
+  total_delivery_expenses: number;
+  total_manager_profit: number;
+  total_system_profit: number;
+  total_weight: number;
+  average_weight: number;
+  average_delivery_cost: number;
+  count: number;
+  deliveries_by_status: Record<string, number>;
+  monthly_trend: DeliveryAnalysisMonthly[];
+}
