@@ -70,3 +70,29 @@ export interface OrderStats {
   pay_status: PayStatus;
   created_date: DateTime;
 }
+
+// Analysis types for orders
+export interface OrderAnalysisMonthly {
+  month: string | null;
+  total: number;
+}
+
+export interface OrderAnalysisPerOrder {
+  id: number;
+  revenue: number;
+  total_cost: number;
+  balance: number;
+  pay_status: PayStatus;
+  status: OrderStatus;
+  created_at: DateTime;
+}
+
+export interface OrderAnalysisResponse {
+  total_revenue: number;
+  average_revenue: number;
+  count: number;
+  total_cost: number;
+  orders_by_status: Record<string, number>;
+  monthly_trend: OrderAnalysisMonthly[];
+  orders: OrderAnalysisPerOrder[];
+}

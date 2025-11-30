@@ -2,14 +2,14 @@ import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { AreaChart, Area, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { fetchProfitReports } from '@/services/reports/reports';
 import type { ProfitReportsData, MonthlyReport } from '@/services/reports/reports';
 import { getExpenseReportsAnalysis } from '@/services/expenses/expenses';
 import { getDeliveryReportsAnalysis } from '@/services/delivery/get-deliveries';
+import { getOrderReportsAnalysis } from '@/services/orders/get-order-reports';
+import type { OrderAnalysisResponse } from '@/types/models/order';
 import type { DeliveryAnalysisResponse } from '@/types/models/delivery';
 import type { ExpenseAnalysisResponse } from '@/types/models/expenses';
 import LoadingSpinner from '@/components/utils/LoadingSpinner';
@@ -18,7 +18,6 @@ import { DatePicker } from '@/components/utils/DatePicker';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DollarSign, FileText, Truck, Users, Tag } from 'lucide-react';
 
 import { formatUSD } from '@/lib/format-usd';
 import { calculateInvoiceRangeData } from '@/services/invoices/calculate-range-data';
@@ -123,7 +122,18 @@ export default function BalanceReport() {
     staleTime: 1000 * 60 * 5,
   });
 
- 
+  const { data: ordersAnalysis, isLoading: isLoadingOrders, error: ordersError } = useQuery<OrderAnalysisResponse | null, Error>({
+    queryKey: ['orderReportsAnalysis', startIso, endIso],
+    queryFn: async () => {
+      if (!startIso || !endIso) return null;
+      const resp = await getOrderReportsAnalysis({ start_date: startIso, end_date: endIso });
+      return resp?.data ?? null;
+    },
+    enabled: !!startIso && !!endIso,
+    staleTime: 1000 * 60 * 5,
+  });
+
+
 
   // Apply preset shortcuts
   React.useEffect(() => {
@@ -180,20 +190,6 @@ export default function BalanceReport() {
     }
   }, [reports, filteredMonthly]);
 
-  // KPI comparisons: last vs previous month
-  const kpiComparison = React.useMemo(() => {
-    if (!filteredMonthly || filteredMonthly.length < 2) return null;
-    const last = filteredMonthly[filteredMonthly.length - 1];
-    const prev = filteredMonthly[filteredMonthly.length - 2];
-    const revenueChange = prev && prev.revenue ? ((last.revenue || 0) - (prev.revenue || 0)) / (prev.revenue || 1) * 100 : 0;
-    const profitChange = prev && prev.system_profit ? ((last.system_profit || 0) - (prev.system_profit || 0)) / (prev.system_profit || 1) * 100 : 0;
-    return {
-      revenueChange,
-      profitChange,
-      lastMonth: last.month_short,
-      prevMonth: prev.month_short,
-    };
-  }, [filteredMonthly]);
 
   React.useEffect(() => {
     if (!summary) return;
@@ -202,7 +198,7 @@ export default function BalanceReport() {
     summary.profit_margin = margin;
   }, [summary]);
 
-  if (isLoading || isLoadingInvoices || isLoadingExpensesAnalysis || isLoadingDeliveryAnalysis) return <LoadingSpinner text="Cargando Reportes..." />;
+  if (isLoading || isLoadingInvoices || isLoadingExpensesAnalysis || isLoadingDeliveryAnalysis || isLoadingOrders) return <LoadingSpinner text="Cargando Reportes..." />;
   if (error) return (
     <Card>
       <CardHeader>
@@ -300,68 +296,84 @@ export default function BalanceReport() {
             </Card>
           </div>
         </div>
-        {/* Summary cards */}
-        <div className="grid gap-3 md:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 col-span-3">
-          {/* Resumen card: KPI + preset selector */}
-
-          <Card className="h-full flex flex-col justify-between">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2"><DollarSign className='h-4 w-4' />Ingresos</CardTitle>
-              <CardDescription>Ingresos del rango seleccionado</CardDescription>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-4 h-full flex flex-col justify-between">
-              <div className="text-lg sm:text-xl font-bold">{formatUSD(summary?.total_revenue || 0)}</div>
-              {kpiComparison && (
-                <div className="text-xs text-muted-foreground">{`Cambio mes vs anterior: ${kpiComparison.revenueChange?.toFixed?.(2) ?? 0}%`}</div>
-              )}
-            </CardContent>
-          </Card>
-
-
-          <Card className="h-full flex flex-col justify-between">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2"><FileText className='h-4 w-4' />Facturas</CardTitle>
-              <CardDescription>Total y detalles de facturas</CardDescription>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-4 h-full flex flex-col justify-between">
-              <div className="text-lg sm:text-xl font-bold">{invoicesRangeData ? formatUSD(invoicesRangeData.total_invoices_amount) : '-'}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="h-full flex flex-col justify-between">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2"><Users className='h-4 w-4' />Ganancias Agentes</CardTitle>
-              <CardDescription>Sumatoria de ganancias a agentes</CardDescription>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-4 h-full flex flex-col justify-between">
-              <div className="text-lg sm:text-xl font-bold">{formatUSD(summary?.total_agent_profits || 0)}</div>
-            </CardContent>
-          </Card>
-          <Card className="h-full flex flex-col justify-between">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2"><Tag className='h-4 w-4' />Gastos Productos</CardTitle>
-              <CardDescription>Costos de los productos</CardDescription>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-4 h-full flex flex-col justify-between">
-              <div className="text-lg sm:text-xl font-bold">{formatUSD(summary?.total_product_expenses || 0)}</div>
-            </CardContent>
-          </Card>
-          <Card className="h-full flex flex-col justify-between">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2"><Truck className='h-4 w-4' />Gastos Entrega</CardTitle>
-              <CardDescription>Costos relacionados a la entrega</CardDescription>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-4 h-full flex flex-col justify-between">
-              <div className="text-lg sm:text-xl font-bold">{formatUSD(summary?.total_delivery_expenses || 0)}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Oders */}
-       
-
-        {/* Delivery */}
         <div className="grid grid-cols-1 gap-4 ">
+
+          {/* Pedidos */}
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>Pedidos - Resumen</CardTitle>
+              <CardDescription>Totales y estado de las órdenes</CardDescription>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 overflow-x-auto h-full">
+              {ordersError ? (
+                <div className="text-red-600">Error cargando pedidos (análisis): {ordersError.message}</div>
+              ) : !ordersAnalysis ? (
+                <div className="text-muted-foreground">No hay datos de pedidos para el rango seleccionado</div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+                    <div>
+                      <div className="text-sm text-muted-foreground">Pedidos</div>
+                      <div className="text-base sm:text-lg font-bold">{ordersAnalysis?.count || 0}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Ingresos</div>
+                      <div className="text-base sm:text-lg font-bold">{formatUSD(ordersAnalysis?.total_revenue || 0)}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Costo Total</div>
+                      <div className="text-base sm:text-lg font-bold">{formatUSD(ordersAnalysis?.total_cost || 0)}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Gasto Promedio</div>
+                      <div className="text-base sm:text-lg font-bold">{formatUSD(ordersAnalysis?.average_revenue || 0)}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Balance Total</div>
+                      <div className="text-base sm:text-lg font-bold">{formatUSD((ordersAnalysis?.total_revenue || 0) - (ordersAnalysis?.total_cost || 0))}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                
+              )}
+
+              {deliveryAnalysis?.deliveries_by_category && Object.keys(deliveryAnalysis.deliveries_by_category).length > 0 && (
+                  <div className="mt-4">
+                    <div className="text-sm text-muted-foreground mb-2">Entregas por Categoría</div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Categoria</TableHead>
+                          <TableHead className="text-right">Cantidad</TableHead>
+                          <TableHead className="text-right">Peso</TableHead>
+                          <TableHead className="text-right">Ingresos</TableHead>
+                          <TableHead className="text-right">Gastos</TableHead>
+                          <TableHead className="text-right">Ganancia Gerente</TableHead>
+                          <TableHead className="text-right">Ganancia Sistema</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Object.entries(deliveryAnalysis.deliveries_by_category).map(([category, values]) => (
+                          <TableRow key={category}>
+                            <TableCell className="font-medium">{category}</TableCell>
+                            <TableCell className="text-right">{values.count || 0}</TableCell>
+                            <TableCell className="text-right">{values.total_weight?.toLocaleString?.() ?? values.total_weight ?? '-'}</TableCell>
+                            <TableCell className="text-right">{formatUSD(values.total_delivery_revenue || 0)}</TableCell>
+                            <TableCell className="text-right">{formatUSD(values.total_delivery_expenses || 0)}</TableCell>
+                            <TableCell className="text-right">{formatUSD(values.total_manager_profit || 0)}</TableCell>
+                            <TableCell className="text-right">{formatUSD(values.total_system_profit || 0)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+
+            </CardContent>
+          </Card>
+          {/* Delivery */}
           <Card className="h-full">
             <CardHeader>
               <CardTitle>Entregas - Resumen</CardTitle>
@@ -398,13 +410,13 @@ export default function BalanceReport() {
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Gastos</div>
-                      <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_delivery_expenses)+" +"+formatUSD(deliveryAnalysis?.total_manager_profit) || 0}</div>
+                      <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_delivery_expenses) + " +" + formatUSD(deliveryAnalysis?.total_manager_profit) || 0}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Ganancia</div>
                       <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_system_profit) || 0}</div>
                     </div>
-                    
+
 
                   </div>
                 </div>
@@ -450,7 +462,7 @@ export default function BalanceReport() {
             </CardContent>
           </Card>
 
-              {/* Gastos */}
+          {/* Gastos */}
           <Card className="h-full">
             <CardHeader>
               <CardTitle>Gastos - Resumen</CardTitle>
@@ -522,46 +534,6 @@ export default function BalanceReport() {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-
-
-
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Detalle por Mes</CardTitle>
-              <CardDescription>Desglose de ingresos y gastos por mes</CardDescription>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-4 overflow-x-auto h-full">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Mes</TableHead>
-                    <TableHead className="text-right text-xs sm:text-sm">Ingresos</TableHead>
-                    <TableHead className="text-right text-xs sm:text-sm">Compras Pagadas</TableHead>
-                    <TableHead className="text-right text-xs sm:text-sm">Gastos Operativos</TableHead>
-                    <TableHead className="text-right text-xs sm:text-sm">Gastos Entrega</TableHead>
-                    <TableHead className="text-right text-xs sm:text-sm">Total Gastos</TableHead>
-                    <TableHead className="text-right text-xs sm:text-sm">Ganancia Agentes</TableHead>
-                    <TableHead className="text-right text-xs sm:text-sm">Ganancia Sistema</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredMonthly.map((r, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">{r.month_short}</TableCell>
-                      <TableCell className="text-right text-sm sm:text-base font-semibold">{formatUSD(r.revenue || 0)}</TableCell>
-                      <TableCell className="text-right text-sm sm:text-base font-semibold">{formatUSD(r.paid_purchase_expenses || 0)}</TableCell>
-                      <TableCell className="text-right text-sm sm:text-base font-semibold">{formatUSD(r.purchase_operational_expenses || 0)}</TableCell>
-                      <TableCell className="text-right text-sm sm:text-base font-semibold">{formatUSD(r.delivery_expenses || r.delivery_costs || 0)}</TableCell>
-                      <TableCell className="text-right text-sm sm:text-base font-bold">{formatUSD(r.total_expenses || r.costs || 0)}</TableCell>
-                      <TableCell className="text-right text-sm sm:text-base font-semibold">{formatUSD(r.agent_profits || 0)}</TableCell>
-                      <TableCell className="text-right text-sm sm:text-base font-bold">{formatUSD(r.system_profit || 0)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
             </CardContent>
           </Card>
         </div>

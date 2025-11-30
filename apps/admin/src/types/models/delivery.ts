@@ -68,5 +68,14 @@ export interface DeliveryAnalysisResponse {
   average_delivery_cost: number;
   count: number;
   deliveries_by_status: Record<string, number>;
+  // Breakdown by category: key = category name
+  deliveries_by_category: Record<string, {
+    count: number;
+    total_weight: number;
+    total_delivery_revenue: number;
+    total_delivery_expenses: number;
+    total_manager_profit: number;
+    total_system_profit: number;
+  }>;
   monthly_trend: DeliveryAnalysisMonthly[];
 }
