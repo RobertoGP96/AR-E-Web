@@ -28,6 +28,7 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
         qs = qs.filter(deliver_date__lte=end_date)
 
     # Totals computed in python because some values are derived properties
+    total_delivery_revenue = 0.0
     total_delivery_expenses = 0.0
     total_manager_profit = 0.0
     total_system_profit = 0.0
@@ -35,6 +36,10 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
     count = qs.count()
 
     for d in qs:
+        try:
+            total_delivery_revenue += float(d.weight_cost or 0.0)
+        except Exception:
+            total_delivery_revenue += 0.0
         try:
             total_delivery_expenses += float(d.delivery_expenses or 0.0)
         except Exception:
@@ -90,6 +95,7 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
         monthly_trend.append({'month': mo.strftime('%Y-%m') if mo else None, 'total': float(month_total), 'total_weight': float(month_weight)})
 
     return {
+        'total_delivery_revenue': float(total_delivery_revenue),
         'total_delivery_expenses': float(total_delivery_expenses),
         'total_manager_profit': float(total_manager_profit),
         'total_system_profit': float(total_system_profit),
