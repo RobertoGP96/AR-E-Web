@@ -85,7 +85,7 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
         month_weight = 0.0
         for d in month_items:
             try:
-                month_total += float(d.delivery_expenses or 0.0)
+                month_total += float(d.weight_cost or 0.0)
             except Exception:
                 month_total += 0.0
             try:
