@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import OrderFilters from '../order-filters';
-import { vi } from 'vitest';
+import { vi, describe, it } from 'vitest';
 
 vi.mock('@/hooks/user', () => ({
   useUsers: () => ({ data: { results: [{ id: 1, full_name: 'Agent One', name: 'Agent', last_name: 'One' }] }, isLoading: false }),

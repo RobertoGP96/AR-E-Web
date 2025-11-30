@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import PurchaseFilters from '../purchase-filters';
-import { vi } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 
 vi.mock('@/services/api', () => ({
   buyingAccountService: { getBuyingAccounts: async () => ({ count: 0, next: null, previous: null, results: [] }) }
@@ -29,7 +29,6 @@ describe('PurchaseFilters', () => {
     const trigger = screen.getByRole('button', { name: /Filtrar/i });
     await user.click(trigger);
     // Note: We use the search input to trigger a change that should also show a badge
-    const apply = screen.getByRole('button', { name: /Aplicar/i });
     // Use search input to trigger a change and apply
     // Instead of typing, render a wrapper that already has a filter set
     function WrapperWithFilter() {

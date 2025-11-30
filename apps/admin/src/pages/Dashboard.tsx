@@ -1,7 +1,6 @@
 import { DashboardCharts } from '@/components/charts';
 import { MetricsSummaryCards } from '@/components/metrics';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useMemo, useEffect, useState } from 'react';
 
@@ -83,10 +82,7 @@ const Dashboard = () => {
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              Métricas Clave
-              <Badge variant="secondary" className="bg-orange-50 text-orange-700 border-orange-200">
-                En vivo
-              </Badge>
+              Métricas
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               Resumen de las métricas más importantes de tu negocio

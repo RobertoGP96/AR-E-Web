@@ -11,11 +11,11 @@ import {
   CartesianGrid
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { 
-  ChartContainer, 
-  ChartTooltip, 
+import {
+  ChartContainer,
+  ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig 
+  type ChartConfig
 } from '@/components/ui/chart';
 import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
 import { useUserMetrics, useProductMetrics, useOrderMetrics, useRevenueMetrics } from '@/hooks/useDashboardMetrics';
@@ -181,7 +181,7 @@ export const ProductMetricsPieChart = () => {
 
   const chartData = React.useMemo(() => {
     if (!productMetrics?.by_category) return [];
-    
+
     // Usar los colores del array en orden
     const categoryColors = [
       COLORS.blue,
@@ -195,7 +195,7 @@ export const ProductMetricsPieChart = () => {
       COLORS.primary,
       COLORS.secondary,
     ];
-    
+
     return productMetrics.by_category.map((item, index) => ({
       category: item.category,
       productos: item.count,
@@ -209,14 +209,14 @@ export const ProductMetricsPieChart = () => {
         label: "Productos",
       },
     };
-    
+
     chartData.forEach((item) => {
       config[item.category] = {
         label: item.category,
         color: item.fill,
       };
     });
-    
+
     return config;
   }, [chartData]);
 
@@ -415,16 +415,16 @@ export const RevenueMetricsLineChart = () => {
                 return labels[value] || value;
               }}
             />
-            <YAxis 
+            <YAxis
               tickLine={false}
               axisLine={false}
               tickMargin={8}
               tickFormatter={(value: number) => `$${value.toLocaleString()}`}
             />
-            <ChartTooltip 
-              content={<ChartTooltipContent 
+            <ChartTooltip
+              content={<ChartTooltipContent
                 formatter={(value) => [`$${value.toLocaleString()}`, 'Ingresos']}
-              />} 
+              />}
             />
             <Line
               type="monotone"
@@ -638,13 +638,15 @@ export const DashboardCharts = () => {
   return (
     <div className="space-y-6">
       {/* Primera fila: Ingresos a todo lo ancho */}
-      <div className="w-full">
-        <RevenueMetricsLineChart />
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+        <div className="col-span-2">
+          <RevenueMetricsLineChart />
+        </div>
+        <UserMetricsBarChart />
       </div>
 
       {/* Segunda fila: Usuarios, Productos y Estados de Órdenes en columnas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
-        <UserMetricsBarChart />
         <ProductMetricsPieChart />
         <OrderStatusComparisonChart />
       </div>

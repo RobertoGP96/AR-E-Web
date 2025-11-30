@@ -346,7 +346,7 @@ const ExpectedMetricsPage = () => {
           <DialogTrigger asChild>
             <Button onClick={() => { resetForm(); setEditingMetric(null); }}>
               <Plus className="mr-2 h-4 w-4" />
-              Nueva Métrica
+              Nuevo Balance
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">

@@ -32,6 +32,7 @@ import Analytics from '@/pages/Analytics';
 import Invoices from '@/pages/Invoices';
 import ExpectedMetrics from '@/pages/ExpectedMetrics';
 import Expenses from '@/pages/Expenses';
+import BalanceReport from '@/components/balance/balance-report';
 
 const AppRoutes = () => {
     return (
@@ -80,6 +81,7 @@ const AppRoutes = () => {
                 <Route path="/expenses" element={<Expenses />} />
                 
                 <Route path="balance" element={<ExpectedMetrics />} />
+                <Route path="new-balance" element={<BalanceReport />} />
 
                 <Route path="/analitics" element={<Analytics />} />
 

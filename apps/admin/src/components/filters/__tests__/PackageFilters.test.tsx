@@ -1,16 +1,17 @@
 import React from 'react';
+import type { PackageFilterState } from '../package-filters';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PackageFilters from '../package-filters';
-import { vi } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 
 vi.mock('@/hooks/package/usePackages', () => ({
   usePackages: () => ({ packages: [], isLoading: false }),
 }));
 
 function Wrapper() {
-  const [filters, setFilters] = React.useState({ search: '', status_of_processing: 'all', agency_name: undefined, arrival_date_from: '', arrival_date_to: '' });
-  return <PackageFilters filters={filters} onFiltersChange={(f) => setFilters(f)} resultCount={0} />;
+  const [filters, setFilters] = React.useState<PackageFilterState>({ search: '', status_of_processing: 'all', agency_name: undefined, arrival_date_from: '', arrival_date_to: '' });
+  return <PackageFilters filters={filters} onFiltersChange={(f: PackageFilterState) => setFilters(f)} resultCount={0} />;
 }
 
 describe('PackageFilters', () => {
