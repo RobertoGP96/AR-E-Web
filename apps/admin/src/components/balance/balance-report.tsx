@@ -436,15 +436,15 @@ export default function BalanceReport() {
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Agentes</div>
-                      <div className="text-base sm:text-lg font-bold">{deliveryAnalysis?.total_manager_profit || 0}</div>
+                      <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_manager_profit) || 0}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Gastos</div>
-                      <div className="text-base sm:text-lg font-bold">{deliveryAnalysis.total_delivery_expenses || 0}</div>
+                      <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_delivery_expenses) || 0}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Ganancia</div>
-                      <div className="text-base sm:text-lg font-bold">{deliveryAnalysis?.total_system_profit || 0}</div>
+                      <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_system_profit) || 0}</div>
                     </div>
                     
 
