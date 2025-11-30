@@ -30,6 +30,12 @@ class DeliveryAnalysisServiceTest(BaseAPITestCase):
         # check monthly trend includes weight per month
         trend = analysis.get('monthly_trend', [])
         self.assertTrue(any(float(m.get('total_weight', 0)) == expected_weight for m in trend))
+        # Check breakdown by category
+        cat_name = cat.name
+        self.assertIn(cat_name, analysis.get('deliveries_by_category', {}))
+        cat_data = analysis['deliveries_by_category'][cat_name]
+        self.assertEqual(cat_data['count'], 2)
+        self.assertAlmostEqual(float(cat_data['total_weight']), expected_weight, places=2)
 
 
 class OrderAnalysisServiceTest(BaseAPITestCase):
@@ -55,6 +61,7 @@ class DeliveryOrderAPITest(BaseAPITestCase):
         data = response.data.get('data', {})
         self.assertIn('total_delivery_expenses', data)
         self.assertIn('deliveries_by_status', data)
+        self.assertIn('deliveries_by_category', data)
 
     def test_admin_can_retrieve_order_analysis(self):
         self.authenticate_user(self.admin_user)

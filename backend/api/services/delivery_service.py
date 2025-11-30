@@ -64,6 +64,44 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
     status_qs = qs.values('status').annotate(count=Count('id')).order_by('-count')
     deliveries_by_status = {row['status']: int(row['count']) for row in status_qs}
 
+    # By category: compute aggregated values per category name
+    deliveries_by_category = {}
+    for d in qs:
+        cat_name = d.category.name if d.category else 'Sin categoría'
+        if cat_name not in deliveries_by_category:
+            deliveries_by_category[cat_name] = {
+                'count': 0,
+                'total_weight': 0.0,
+                'total_delivery_revenue': 0.0,
+                'total_delivery_expenses': 0.0,
+                'total_manager_profit': 0.0,
+                'total_system_profit': 0.0,
+            }
+        try:
+            deliveries_by_category[cat_name]['count'] += 1
+        except Exception:
+            pass
+        try:
+            deliveries_by_category[cat_name]['total_weight'] += float(d.weight or 0.0)
+        except Exception:
+            pass
+        try:
+            deliveries_by_category[cat_name]['total_delivery_revenue'] += float(d.weight_cost or 0.0)
+        except Exception:
+            pass
+        try:
+            deliveries_by_category[cat_name]['total_delivery_expenses'] += float(d.delivery_expenses or 0.0)
+        except Exception:
+            pass
+        try:
+            deliveries_by_category[cat_name]['total_manager_profit'] += float(d.manager_profit or 0.0)
+        except Exception:
+            pass
+        try:
+            deliveries_by_category[cat_name]['total_system_profit'] += float(d.system_delivery_profit or 0.0)
+        except Exception:
+            pass
+
     # Monthly trend
     now = timezone.now()
     if not start_date and not end_date:
@@ -104,5 +142,6 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
         'average_delivery_cost': float(avg_delivery_cost),
         'count': int(count),
         'deliveries_by_status': deliveries_by_status,
+        'deliveries_by_category': deliveries_by_category,
         'monthly_trend': monthly_trend,
     }
