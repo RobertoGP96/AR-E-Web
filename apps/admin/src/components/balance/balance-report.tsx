@@ -13,7 +13,6 @@ import { getDeliveryReportsAnalysis } from '@/services/delivery/get-deliveries';
 import type { DeliveryAnalysisResponse } from '@/types/models/delivery';
 import type { ExpenseAnalysisResponse } from '@/types/models/expenses';
 import LoadingSpinner from '@/components/utils/LoadingSpinner';
-import { useDeliveryMetrics } from '@/hooks/useDashboardMetrics';
 import { DatePicker } from '@/components/utils/DatePicker';
 // Using native radio inputs here for mutually-exclusive mode selection (preset vs custom)
 import { Label } from '@/components/ui/label';
@@ -74,7 +73,7 @@ export default function BalanceReport() {
     setPreset(v);
   };
 
-  const { data: reports, isLoading, error, refetch: refetchReports } = useQuery<ProfitReportsData, Error>({
+  const { data: reports, isLoading, error } = useQuery<ProfitReportsData, Error>({
     queryKey: ['profitReports'],
     queryFn: fetchProfitReports,
   });
@@ -85,7 +84,7 @@ export default function BalanceReport() {
   const startIso = startDate ? `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}` : undefined;
   const endIso = endDate ? `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}` : undefined;
 
-  const { data: invoicesRangeData, isLoading: isLoadingInvoices, refetch: refetchInvoices } = useQuery<InvoiceRangeData | null, Error>({
+  const { data: invoicesRangeData, isLoading: isLoadingInvoices } = useQuery<InvoiceRangeData | null, Error>({
     queryKey: ['invoices-range-data', startIso, endIso],
     queryFn: async () => {
       if (!startIso || !endIso) return null;
@@ -99,7 +98,6 @@ export default function BalanceReport() {
     data: expensesAnalysis,
     isLoading: isLoadingExpensesAnalysis,
     error: expenseError,
-    refetch: refetchExpensesAnalysis,
   } = useQuery<ExpenseAnalysisResponse | null, Error>({
     queryKey: ['expenseReportsAnalysis', startIso, endIso],
     queryFn: async () => {
@@ -113,7 +111,6 @@ export default function BalanceReport() {
   });
 
   // Delivery metrics from dashboard
-  const { deliveryMetrics, isLoading: isLoadingDeliveryMetrics, error: deliveryError } = useDeliveryMetrics();
 
   const { data: deliveryAnalysis, isLoading: isLoadingDeliveryAnalysis, error: deliveryAnalysisError } = useQuery<DeliveryAnalysisResponse | null, Error>({
     queryKey: ['deliveryReportsAnalysis', startIso, endIso],
@@ -125,6 +122,8 @@ export default function BalanceReport() {
     enabled: !!startIso && !!endIso,
     staleTime: 1000 * 60 * 5,
   });
+
+ 
 
   // Apply preset shortcuts
   React.useEffect(() => {
@@ -203,7 +202,7 @@ export default function BalanceReport() {
     summary.profit_margin = margin;
   }, [summary]);
 
-  if (isLoading || isLoadingInvoices || isLoadingExpensesAnalysis || isLoadingDeliveryMetrics || isLoadingDeliveryAnalysis) return <LoadingSpinner text="Cargando Reportes..." />;
+  if (isLoading || isLoadingInvoices || isLoadingExpensesAnalysis || isLoadingDeliveryAnalysis) return <LoadingSpinner text="Cargando Reportes..." />;
   if (error) return (
     <Card>
       <CardHeader>
@@ -312,6 +311,9 @@ export default function BalanceReport() {
             </CardHeader>
             <CardContent className="p-3 sm:p-4 h-full flex flex-col justify-between">
               <div className="text-lg sm:text-xl font-bold">{formatUSD(summary?.total_revenue || 0)}</div>
+              {kpiComparison && (
+                <div className="text-xs text-muted-foreground">{`Cambio mes vs anterior: ${kpiComparison.revenueChange?.toFixed?.(2) ?? 0}%`}</div>
+              )}
             </CardContent>
           </Card>
 
@@ -410,69 +412,42 @@ export default function BalanceReport() {
             <CardContent className="p-3 sm:p-4 overflow-x-auto h-full">
               {deliveryAnalysisError ? (
                 <div className="text-red-600">Error cargando entregas (análisis): {deliveryAnalysisError.message}</div>
-              ) : deliveryError ? (
-                <div className="text-red-600">Error cargando entregas: {deliveryError.message}</div>
-              ) : !deliveryMetrics && !deliveryAnalysis ? (
+              ) : deliveryAnalysisError ? (
+                <div className="text-red-600">Error cargando entregas: {deliveryAnalysisError}</div>
+              ) : !deliveryAnalysis && !deliveryAnalysis ? (
                 <div className="text-muted-foreground">No hay datos de entregas para el rango seleccionado</div>
               ) : (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
                     <div>
-                      <div className="text-sm text-muted-foreground">Total Entregas</div>
-                      <div className="text-base sm:text-lg font-bold">{deliveryMetrics.total || 0}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Hoy</div>
-                      <div className="text-base sm:text-lg font-bold">{deliveryMetrics.today || 0}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Esta Semana</div>
-                      <div className="text-base sm:text-lg font-bold">{deliveryMetrics.this_week || 0}</div>
+                      <div className="text-sm text-muted-foreground">Entregas</div>
+                      <div className="text-base sm:text-lg font-bold">{deliveryAnalysis?.count || 0}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Peso Total</div>
-                        <div className="text-base sm:text-lg font-bold">{deliveryAnalysis?.total_weight ?? deliveryMetrics.total_weight ? `${deliveryAnalysis?.total_weight ?? deliveryMetrics.total_weight} lb` : '-'}</div>
+                      <div className="text-base sm:text-lg font-bold">
+                        {(() => {
+                          const totalWeight = (deliveryAnalysis?.total_weight ?? deliveryAnalysis?.total_weight);
+                          return (totalWeight !== undefined && totalWeight !== null)
+                            ? `${totalWeight.toLocaleString()} lb`
+                            : '-';
+                        })()}
+                      </div>
                     </div>
                     <div>
-                      <div className="text-sm text-muted-foreground">Este Mes</div>
-                      <div className="text-base sm:text-lg font-bold">{deliveryMetrics.this_month || 0}</div>
+                      <div className="text-sm text-muted-foreground">Agentes</div>
+                      <div className="text-base sm:text-lg font-bold">{deliveryAnalysis?.total_manager_profit || 0}</div>
                     </div>
-                  </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Gastos</div>
+                      <div className="text-base sm:text-lg font-bold">{deliveryAnalysis.total_delivery_expenses || 0}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Ganancia</div>
+                      <div className="text-base sm:text-lg font-bold">{deliveryAnalysis?.total_system_profit || 0}</div>
+                    </div>
+                    
 
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Estado</TableHead>
-                          <TableHead className="text-right">Cantidad</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {(deliveryAnalysis?.deliveries_by_status ? Object.entries(deliveryAnalysis.deliveries_by_status) : Object.entries(deliveryMetrics || {})).map(([status, value]) => (
-                          <TableRow key={status}>
-                            <TableCell className="font-medium">{status}</TableCell>
-                            <TableCell className="text-right text-sm sm:text-base font-semibold">{value || 0}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-2">Tendencia Mensual</div>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Mes</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
-                          <TableHead className="text-right">Peso (lb)</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {(deliveryAnalysis?.monthly_trend || []).map((m) => (
-                          <TableRow key={m.month || Math.random()}>
-                            <TableCell className="font-medium">{m.month}</TableCell>
-                            <TableCell className="text-right text-sm sm:text-base font-semibold">{formatUSD(m.total || 0)}</TableCell>
-                            <TableCell className="text-right text-sm sm:text-base font-semibold">{m.total_weight?.toLocaleString ? m.total_weight.toLocaleString() : (m.total_weight || 0)} lb</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
                   </div>
                 </div>
               )}
