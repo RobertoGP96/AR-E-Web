@@ -48,6 +48,9 @@ urlpatterns = [
     path("api_data/reports/expenses/", views.ExpenseAnalysisView.as_view(), name="expense_analysis"),
     path("api_data/reports/deliveries/", views.DeliveryAnalysisView.as_view(), name="delivery_analysis"),
     path("api_data/reports/orders/", views.OrderAnalysisView.as_view(), name="order_analysis"),
+    path("api_data/reports/purchases/", views.PurchasesAnalysisView.as_view(), name="purchases_analysis"),
+    path("api_data/reports/purchases/summary/", views.PurchasesSummaryView.as_view(), name="purchases_summary"),
+    path("api_data/reports/purchases/products/", views.ProductBuysAnalysisView.as_view(), name="product_buys_analysis"),
     path("api_data/system/info/", views.SystemInfoView.as_view(), name="system_info"),
     # URLs de notificaciones (incluidas bajo el mismo prefijo `api_data/`)
     path("api_data/", include("api.notifications.urls_notifications")),

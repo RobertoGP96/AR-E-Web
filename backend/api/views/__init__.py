@@ -37,6 +37,9 @@ from .reports_views import (
     ExpenseAnalysisView,
     DeliveryAnalysisView,
     OrderAnalysisView,
+    PurchasesAnalysisView,
+    PurchasesSummaryView,
+    ProductBuysAnalysisView,
 )
 from .amazon_views import (
     AmazonScrapingView,
@@ -89,6 +92,9 @@ __all__ = [
     'ExpenseAnalysisView',
     'DeliveryAnalysisView',
     'OrderAnalysisView',
+    'PurchasesAnalysisView',
+    'PurchasesSummaryView',
+    'ProductBuysAnalysisView',
 
     # Amazon views
     'AmazonScrapingView',
