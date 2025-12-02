@@ -346,9 +346,8 @@ export default function BalanceReport() {
                   <MetricCard label="Costo" value={formatUSD(ordersAnalysis?.total_cost || 0)} />
                   <MetricCard label="Ganancia" value={formatUSD(ordersAnalysis?.total_profit || 0)} />
                   <MetricCard
-                    label="Balance"
-                    value={formatUSD((ordersAnalysis?.total_revenue || 0) - (ordersAnalysis?.total_cost || 0))}
-                    
+                  label="Balance"
+                  value={((ordersAnalysis?.total_profit || 0) / (ordersAnalysis?.total_revenue || 1) * 100).toFixed(1)+" %"}
                   />
                 </div>
               </div>

@@ -4,6 +4,9 @@
 
 import type { ID, UUID, ProductStatus, DateTime } from './base';
 import type { Order } from './order';
+import type { ProductBuyed } from './product-buyed';
+import type { ProductReceived } from './product-received';
+import type { ProductDelivery } from './product-delivery';
 
 // Tipo util para los payloads de imagen: puede ser simplemente una URL o un objeto con image_url/picture
 export type ProductPicture = string | { image_url?: string; picture?: string };
@@ -57,6 +60,11 @@ export interface Product {
   pending_delivery: number;
   is_fully_purchased: boolean;
   is_fully_delivered: boolean;
+  
+  // Relaciones para timeline
+  buys?: ProductBuyed[];
+  receiveds?: ProductReceived[];
+  delivers?: ProductDelivery[];
 }
 
 // Tipos para crear/editar producto

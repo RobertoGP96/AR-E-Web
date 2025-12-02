@@ -4,6 +4,7 @@
 
 export * from './useProducts';
 export * from './useProduct';
+export * from './useProductTimeline';
 export * from './useCreateProductBuyed';
 export * from './useDeleteProduct';
 export * from './useProductReceiveds';

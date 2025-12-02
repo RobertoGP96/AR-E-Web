@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, DollarSign, Package, Store, Tag } from 'lucide-react';
 import ProductAmount from './product-amount';
+import ProductTimeline from './product-timeline';
 import { useProduct } from '@/hooks/product/useProduct';
 import { parseTagsFromDescriptionBlock } from '@/lib/tags';
 
@@ -284,6 +285,9 @@ const ProductDetails: React.FC = () => {
                         </Card>
 
                     </div>
+
+                    {/* Registro de Eventos / Timeline */}
+                    <ProductTimeline productId={id || ''} />
                 </CardContent>
             </Card>
 
