@@ -7,7 +7,8 @@ from django.db.models import Q, Sum, Count, Avg
 from api.models import Product, ProductBuyed, ProductReceived, ProductDelivery
 from api.serializers import (
     ProductSerializer, ProductCreateSerializer, ProductUpdateSerializer,
-    ProductBuyedSerializer, ProductReceivedSerializer, ProductDeliverySerializer
+    ProductBuyedSerializer, ProductReceivedSerializer, ProductDeliverySerializer,
+    ProductTimelineSerializer, ProductTimelineFormattedSerializer
 )
 from api.permissions.permissions import ReadOnly, AdminPermission, AgentPermission, BuyerPermission
 
@@ -99,6 +100,21 @@ class ProductViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Obtener timeline del producto",
+        description="Obtiene los datos de la timeline del producto incluyendo buys, receiveds y delivers.",
+        tags=["Productos"]
+    )
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def timeline(self, request, pk=None):
+        """
+        Endpoint para obtener los datos de la timeline de un producto.
+        Retorna los eventos ya formateados y listos para renderizar en el frontend.
+        """
+        product = self.get_object()
+        serializer = ProductTimelineFormattedSerializer(product)
+        return Response(serializer.data)
 
 
 class ProductBuyedViewSet(viewsets.ModelViewSet):

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from api.models import Product, Category, ProductBuyed, ProductReceived, ProductDelivery, Shop, Order, ShoppingReceip, Package, DeliverReceip
+from django.db.models import Sum
 import json
 from drf_spectacular.utils import extend_schema_field
 
@@ -559,3 +560,184 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
                 except Exception:
                     raise serializers.ValidationError("product_pictures must be a JSON array of URLs or a single URL string.")
         raise serializers.ValidationError("product_pictures must be a string or a list of URLs.")
+
+
+# ============================================================================
+# SERIALIZADORES PARA TIMELINE DEL PRODUCTO
+# ============================================================================
+
+class ProductBuyedTimelineSerializer(serializers.ModelSerializer):
+    """
+    Serializador simplificado para ProductBuyed para la timeline.
+    """
+    class Meta:
+        model = ProductBuyed
+        fields = ['id', 'buy_date', 'amount_buyed', 'created_at']
+
+
+class ProductReceivedTimelineSerializer(serializers.ModelSerializer):
+    """
+    Serializador simplificado para ProductReceived para la timeline.
+    """
+    class Meta:
+        model = ProductReceived
+        fields = ['id', 'amount_received', 'created_at']
+
+
+class ProductDeliveryTimelineSerializer(serializers.ModelSerializer):
+    """
+    Serializador simplificado para ProductDelivery para la timeline.
+    """
+    class Meta:
+        model = ProductDelivery
+        fields = ['id', 'amount_delivered', 'created_at']
+
+
+class ProductTimelineSerializer(serializers.ModelSerializer):
+    """
+    Serializador para obtener los datos de la timeline de un producto.
+    Incluye las relaciones buys, receiveds y delivers con sus fechas.
+    """
+    buys = ProductBuyedTimelineSerializer(many=True, read_only=True)
+    receiveds = ProductReceivedTimelineSerializer(many=True, read_only=True)
+    delivers = ProductDeliveryTimelineSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'name',
+            'status',
+            'created_at',
+            'updated_at',
+            'amount_requested',
+            'amount_purchased',
+            'amount_received',
+            'amount_delivered',
+            'buys',
+            'receiveds',
+            'delivers',
+        ]
+        read_only_fields = fields
+
+
+class ProductTimelineFormattedSerializer(serializers.ModelSerializer):
+    """
+    Serializador que retorna la timeline del producto ya formateada
+    con los eventos listos para renderizar en el frontend.
+    """
+    events = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'name',
+            'status',
+            'created_at',
+            'updated_at',
+            'events',
+        ]
+        read_only_fields = fields
+
+    @extend_schema_field(list)
+    def get_events(self, obj):
+        """
+        Construye y retorna los eventos de la timeline ya formateados.
+        Cada evento incluye toda la información necesaria para renderizar.
+        """
+        events = []
+
+        # Estado config mapping
+        status_config = {
+            'created': {
+                'label': 'Registro Creado',
+                'icon': 'check-circle-2',
+                'color': 'text-gray-600',
+                'bgColor': 'bg-gray-100',
+            },
+            'purchased': {
+                'label': 'Comprado',
+                'icon': 'shopping-cart',
+                'color': 'text-blue-600',
+                'bgColor': 'bg-blue-100',
+            },
+            'received': {
+                'label': 'Recibido',
+                'icon': 'package',
+                'color': 'text-yellow-600',
+                'bgColor': 'bg-yellow-100',
+            },
+            'delivered': {
+                'label': 'Entregado',
+                'icon': 'truck',
+                'color': 'text-green-600',
+                'bgColor': 'bg-green-100',
+            },
+        }
+
+        # Evento de creación
+        if obj.created_at:
+            events.append({
+                'status': 'created',
+                'date': obj.created_at.isoformat(),
+                'label': status_config['created']['label'],
+                'description': 'El producto fue registrado en el sistema',
+                'icon': status_config['created']['icon'],
+                'color': status_config['created']['color'],
+                'bgColor': status_config['created']['bgColor'],
+                'isCompleted': True,
+            })
+
+        # Evento de compra
+        if obj.buys.exists() and obj.amount_purchased and obj.amount_purchased > 0:
+            first_buy = obj.buys.first()
+            total_amount = obj.buys.aggregate(Sum('amount_buyed'))['amount_buyed__sum'] or 0
+            
+            events.append({
+                'status': 'purchased',
+                'date': (first_buy.buy_date or obj.created_at).isoformat(),
+                'label': status_config['purchased']['label'],
+                'description': f'Se compraron {int(total_amount)} unidad(es) del producto',
+                'icon': status_config['purchased']['icon'],
+                'color': status_config['purchased']['color'],
+                'bgColor': status_config['purchased']['bgColor'],
+                'isCompleted': True,
+            })
+
+        # Evento de recepción
+        if obj.receiveds.exists() and obj.amount_received and obj.amount_received > 0:
+            first_received = obj.receiveds.first()
+            total_amount = obj.receiveds.aggregate(Sum('amount_received'))['amount_received__sum'] or 0
+            
+            events.append({
+                'status': 'received',
+                'date': first_received.created_at.isoformat(),
+                'label': status_config['received']['label'],
+                'description': f'Se recibieron {int(total_amount)} unidad(es) del producto',
+                'icon': status_config['received']['icon'],
+                'color': status_config['received']['color'],
+                'bgColor': status_config['received']['bgColor'],
+                'isCompleted': True,
+            })
+
+        # Evento de entrega
+        if obj.delivers.exists() and obj.amount_delivered and obj.amount_delivered > 0:
+            first_delivery = obj.delivers.first()
+            total_amount = obj.delivers.aggregate(Sum('amount_delivered'))['amount_delivered__sum'] or 0
+            
+            events.append({
+                'status': 'delivered',
+                'date': first_delivery.created_at.isoformat(),
+                'label': status_config['delivered']['label'],
+                'description': f'Se entregaron {int(total_amount)} unidad(es) al cliente',
+                'icon': status_config['delivered']['icon'],
+                'color': status_config['delivered']['color'],
+                'bgColor': status_config['delivered']['bgColor'],
+                'isCompleted': True,
+            })
+
+        # Ordenar eventos por fecha
+        events.sort(key=lambda x: x['date'])
+
+        return events
