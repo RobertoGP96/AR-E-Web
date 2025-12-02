@@ -9,9 +9,11 @@ import type { ProfitReportsData, MonthlyReport } from '@/services/reports/report
 import { getExpenseReportsAnalysis } from '@/services/expenses/expenses';
 import { getDeliveryReportsAnalysis } from '@/services/delivery/get-deliveries';
 import { getOrderReportsAnalysis } from '@/services/orders/get-order-reports';
+import { getPurchasesAnalysis } from '@/services/purchases/get-purchases';
 import type { OrderAnalysisResponse } from '@/types/models/order';
 import type { DeliveryAnalysisResponse } from '@/types/models/delivery';
 import type { ExpenseAnalysisResponse } from '@/types/models/expenses';
+import type { PurchaseAnalysisResponse } from '@/services/purchases/get-purchases';
 import LoadingSpinner from '@/components/utils/LoadingSpinner';
 import { DatePicker } from '@/components/utils/DatePicker';
 // Using native radio inputs here for mutually-exclusive mode selection (preset vs custom)
@@ -22,6 +24,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { formatUSD } from '@/lib/format-usd';
 import { calculateInvoiceRangeData } from '@/services/invoices/calculate-range-data';
 import type { InvoiceRangeData } from '@/types/models/invoice';
+import { ArrowDown, TrendingUp, ShoppingCart } from 'lucide-react';
 
 // Componente BalanceReport: reutilizable en pages y widgets
 export default function BalanceReport() {
@@ -133,6 +136,17 @@ export default function BalanceReport() {
     staleTime: 1000 * 60 * 5,
   });
 
+  const { data: purchasesAnalysis, isLoading: isLoadingPurchases, error: purchasesError } = useQuery<PurchaseAnalysisResponse | null, Error>({
+    queryKey: ['purchasesReportsAnalysis', startIso, endIso],
+    queryFn: async () => {
+      if (!startIso || !endIso) return null;
+      const resp = await getPurchasesAnalysis({ start_date: startIso, end_date: endIso });
+      return resp?.data ?? null;
+    },
+    enabled: !!startIso && !!endIso,
+    staleTime: 1000 * 60 * 5,
+  });
+
 
 
   // Apply preset shortcuts
@@ -198,7 +212,7 @@ export default function BalanceReport() {
     summary.profit_margin = margin;
   }, [summary]);
 
-  if (isLoading || isLoadingInvoices || isLoadingExpensesAnalysis || isLoadingDeliveryAnalysis || isLoadingOrders) return <LoadingSpinner text="Cargando Reportes..." />;
+  if (isLoading || isLoadingInvoices || isLoadingExpensesAnalysis || isLoadingDeliveryAnalysis || isLoadingOrders || isLoadingPurchases) return <LoadingSpinner text="Cargando Reportes..." />;
   if (error) return (
     <Card>
       <CardHeader>
@@ -212,46 +226,46 @@ export default function BalanceReport() {
 
   return (
     <div className="space-y-6">
-      {/* Top header + controls: improved responsive layout */}
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-6 border border-primary/20">
+        <div className="space-y-2 mb-6">
+          <h2 className="text-3xl font-bold text-foreground">Reportes Financieros</h2>
+          <p className="text-sm text-muted-foreground">Análisis detallado de ingresos, gastos y entregas en tu rango seleccionado</p>
+        </div>
 
-      <div className="grid grid-cols-1 gap-3 items-center">
-        <div>
-          <div>
-            <h2 className="text-2xl font-bold">Reportes Financieros</h2>
-            <p className="text-sm text-muted-foreground mt-1">Resumen por mes y factura — seleccione un rango</p>
-          </div>
-          <div className="grid grid-cols-3 items-center justify-center gap-3 py-6">
+        {/* Date Range Controls - Improved Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card
               className={cn(
-                'h-full ring cursor-pointer transition-shadow duration-200 gap-0',
+                'cursor-pointer transition-all duration-300 border-2 hover:border-primary/50',
                 !useCustomRange
-                  ? 'ring-primary shadow-md'
-                  : 'ring-gray-100/50 hover:shadow-sm'
+                  ? 'border-primary bg-primary/5 shadow-md'
+                  : 'border-gray-200 bg-white hover:shadow-sm'
               )}
               onClick={() => handleUseCustomRangeChange(false)}
               aria-pressed={!useCustomRange}
               role="button"
             >
-              <CardHeader>
-                <div className="flex items-center gap-2">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
                   <Checkbox
                     aria-label="Usar rango estándar"
                     checked={!useCustomRange}
                     onCheckedChange={() => handleUseCustomRangeChange(false)}
-                    className="h-4 w-4"
+                    className="h-5 w-5"
                   />
-                  <Label className={cn('select-none', !useCustomRange && 'font-semibold text-primary')}>Estandar</Label>
+                  <Label className={cn('select-none cursor-pointer text-base font-semibold', !useCustomRange && 'text-primary')}>Rango Estándar</Label>
                 </div>
               </CardHeader>
-              <CardContent className="p-3 px-4">
-                <div className="flex flex-col ml-8">
-                  <Label htmlFor="preset-range-select" className="mb-2 text-xs font-medium">Rango Estandar</Label>
+              <CardContent className="pt-0">
+                <div className="ml-8 space-y-2">
+                  <Label htmlFor="preset-range-select" className="text-xs font-medium text-muted-foreground">Seleccionar período</Label>
                   <Select value={preset} onValueChange={(v) => handlePresetChange(v as '1m' | '3m' | '6m' | '12m' | 'custom')} >
-                    <SelectTrigger id="preset-range-select" className="min-w-[140px] rounded-lg" disabled={useCustomRange}>
-                      <SelectValue placeholder="Rango" />
+                    <SelectTrigger id="preset-range-select" className="w-full rounded-md" disabled={useCustomRange}>
+                      <SelectValue placeholder="Selecciona un rango" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1m">Último mes</SelectItem>
+                      <SelectItem value="1m">Último 1 mes</SelectItem>
                       <SelectItem value="3m">Últimos 3 meses</SelectItem>
                       <SelectItem value="6m">Últimos 6 meses</SelectItem>
                       <SelectItem value="12m">Últimos 12 meses</SelectItem>
@@ -262,162 +276,303 @@ export default function BalanceReport() {
             </Card>
             <Card
               className={cn(
-                'col-span-2 ring h-full cursor-pointer transition-shadow duration-200 gap-0',
+                'lg:col-span-2 cursor-pointer transition-all duration-300 border-2 hover:border-primary/50',
                 useCustomRange
-                  ? 'ring-primary shadow-md'
-                  : 'ring-gray-100/50 hover:shadow-sm'
+                  ? 'border-primary bg-primary/5 shadow-md'
+                  : 'border-gray-200 bg-white hover:shadow-sm'
               )}
               onClick={() => handleUseCustomRangeChange(true)}
               aria-pressed={useCustomRange}
               role="button"
             >
-              <CardHeader>
-                <div className="flex items-center gap-2">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
                   <Checkbox
                     aria-label="Usar rango personalizado"
                     checked={useCustomRange}
                     onCheckedChange={() => handleUseCustomRangeChange(true)}
-                    className="h-4 w-4"
+                    className="h-5 w-5"
                   />
-                  <Label className={cn('select-none', useCustomRange && 'font-semibold text-primary')}>Personalizado</Label>
+                  <Label className={cn('select-none cursor-pointer text-base font-semibold', useCustomRange && 'text-primary')}>Rango Personalizado</Label>
                 </div>
-
               </CardHeader>
-              <CardContent className="p-3 sm:p-4 h-full">
-                <div className='flex flex-row justify-between px-10 items-center gap-4'>
-                  <div className="w-[250px]">
-                    <DatePicker label="Desde" selected={startDate} onDateChange={setStartDate} disabled={!useCustomRange} />
+              <CardContent className="pt-0">
+                <div className='flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between items-start sm:items-end'>
+                  <div className="flex-1 w-full sm:w-auto">
+                    <DatePicker label="Fecha Inicio" selected={startDate} onDateChange={setStartDate} disabled={!useCustomRange} />
                   </div>
-                  <div className="w-[250px]">
-                    <DatePicker label="Hasta" selected={endDate} onDateChange={setEndDate} disabled={!useCustomRange} />
+                  <div className="hidden sm:flex text-muted-foreground">→</div>
+                  <div className="flex-1 w-full sm:w-auto">
+                    <DatePicker label="Fecha Fin" selected={endDate} onDateChange={setEndDate} disabled={!useCustomRange} />
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 ">
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 gap-5">
 
           {/* Pedidos */}
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Pedidos - Resumen</CardTitle>
-              <CardDescription>Totales y estado de las órdenes</CardDescription>
+          <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3 bg-gradient-to-r from-blue-50/50 to-transparent">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Pedidos</CardTitle>
+                  <CardDescription className="text-xs mt-1">Análisis de órdenes en el rango seleccionado</CardDescription>
+                </div>
+                <TrendingUp className="h-5 w-5 text-blue-500 opacity-50" />
+              </div>
             </CardHeader>
-            <CardContent className="p-3 sm:p-4 overflow-x-auto h-full">
+            <CardContent className="pt-4">
               {ordersError ? (
-                <div className="text-red-600">Error cargando pedidos (análisis): {ordersError.message}</div>
+                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-sm">Error cargando pedidos: {ordersError.message}</div>
               ) : !ordersAnalysis ? (
-                <div className="text-muted-foreground">No hay datos de pedidos para el rango seleccionado</div>
+                <div className="text-center py-8 text-muted-foreground">No hay datos de pedidos para el rango seleccionado</div>
               ) : (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-                    <div>
-                      <div className="text-sm text-muted-foreground">Pedidos</div>
-                      <div className="text-base sm:text-lg font-bold">{ordersAnalysis?.count || 0}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Ingresos</div>
-                      <div className="text-base sm:text-lg font-bold">{formatUSD(ordersAnalysis?.total_revenue || 0)}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Costo Total</div>
-                      <div className="text-base sm:text-lg font-bold">{formatUSD(ordersAnalysis?.total_cost || 0)}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Gasto Promedio</div>
-                      <div className="text-base sm:text-lg font-bold">{formatUSD(ordersAnalysis?.average_revenue || 0)}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Balance Total</div>
-                      <div className="text-base sm:text-lg font-bold">{formatUSD((ordersAnalysis?.total_revenue || 0) - (ordersAnalysis?.total_cost || 0))}</div>
-                    </div>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <MetricCard label="Pedidos" value={ordersAnalysis?.count || 0} />
+                    <MetricCard label="Ingresos" value={formatUSD(ordersAnalysis?.total_revenue || 0)} />
+                    <MetricCard label="Costo Total" value={formatUSD(ordersAnalysis?.total_cost || 0)} />
+                    <MetricCard label="Costo Promedio" value={formatUSD(ordersAnalysis?.average_revenue || 0)} />
+                    <MetricCard 
+                      label="Balance" 
+                      value={formatUSD((ordersAnalysis?.total_revenue || 0) - (ordersAnalysis?.total_cost || 0))} 
+                      highlight 
+                    />
                   </div>
                 </div>
-                
-                
               )}
-
-              {deliveryAnalysis?.deliveries_by_category && Object.keys(deliveryAnalysis.deliveries_by_category).length > 0 && (
-                  <div className="mt-4">
-                    <div className="text-sm text-muted-foreground mb-2">Entregas por Categoría</div>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Categoria</TableHead>
-                          <TableHead className="text-right">Cantidad</TableHead>
-                          <TableHead className="text-right">Peso</TableHead>
-                          <TableHead className="text-right">Ingresos</TableHead>
-                          <TableHead className="text-right">Gastos</TableHead>
-                          <TableHead className="text-right">Ganancia Gerente</TableHead>
-                          <TableHead className="text-right">Ganancia Sistema</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {Object.entries(deliveryAnalysis.deliveries_by_category).map(([category, values]) => (
-                          <TableRow key={category}>
-                            <TableCell className="font-medium">{category}</TableCell>
-                            <TableCell className="text-right">{values.count || 0}</TableCell>
-                            <TableCell className="text-right">{values.total_weight?.toLocaleString?.() ?? values.total_weight ?? '-'}</TableCell>
-                            <TableCell className="text-right">{formatUSD(values.total_delivery_revenue || 0)}</TableCell>
-                            <TableCell className="text-right">{formatUSD(values.total_delivery_expenses || 0)}</TableCell>
-                            <TableCell className="text-right">{formatUSD(values.total_manager_profit || 0)}</TableCell>
-                            <TableCell className="text-right">{formatUSD(values.total_system_profit || 0)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-
-
             </CardContent>
           </Card>
           {/* Delivery */}
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Entregas - Resumen</CardTitle>
-              <CardDescription>Totales y estado de entregas</CardDescription>
+          <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3 bg-gradient-to-r from-green-50/50 to-transparent">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Entregas</CardTitle>
+                  <CardDescription className="text-xs mt-1">Estado y rentabilidad de entregas</CardDescription>
+                </div>
+                <TrendingUp className="h-5 w-5 text-green-500 opacity-50" />
+              </div>
             </CardHeader>
-            <CardContent className="p-3 sm:p-4 overflow-x-auto h-full">
+            <CardContent className="pt-4">
               {deliveryAnalysisError ? (
-                <div className="text-red-600">Error cargando entregas (análisis): {deliveryAnalysisError.message}</div>
-              ) : deliveryAnalysisError ? (
-                <div className="text-red-600">Error cargando entregas: {deliveryAnalysisError}</div>
-              ) : !deliveryAnalysis && !deliveryAnalysis ? (
-                <div className="text-muted-foreground">No hay datos de entregas para el rango seleccionado</div>
+                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-sm">Error cargando entregas: {deliveryAnalysisError.message}</div>
+              ) : !deliveryAnalysis ? (
+                <div className="text-center py-8 text-muted-foreground">No hay datos de entregas para el rango seleccionado</div>
               ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-                    <div>
-                      <div className="text-sm text-muted-foreground">Entregas</div>
-                      <div className="text-base sm:text-lg font-bold">{deliveryAnalysis?.count || 0}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Peso Total</div>
-                      <div className="text-base sm:text-lg font-bold">
-                        {(() => {
-                          const totalWeight = (deliveryAnalysis?.total_weight ?? deliveryAnalysis?.total_weight);
-                          return (totalWeight !== undefined && totalWeight !== null)
-                            ? `${totalWeight.toLocaleString()} lb`
-                            : '-';
-                        })()}
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <MetricCard label="Entregas" value={deliveryAnalysis?.count || 0} />
+                    <MetricCard 
+                      label="Peso Total" 
+                      value={`${((deliveryAnalysis?.total_weight ?? 0) || 0).toLocaleString()} lb`} 
+                    />
+                    <MetricCard label="Ingresos" value={formatUSD(deliveryAnalysis?.total_delivery_revenue || 0)} />
+                    <MetricCard label="Gastos" value={formatUSD((deliveryAnalysis?.total_delivery_expenses || 0) + (deliveryAnalysis?.total_manager_profit || 0))} />
+                    <MetricCard label="Ganancia" value={formatUSD(deliveryAnalysis?.total_system_profit || 0)} highlight />
+                  </div>
+
+
+                  {deliveryAnalysis?.deliveries_by_category && Object.keys(deliveryAnalysis.deliveries_by_category).length > 0 && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">Desglose por Categoría</h4>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/50">
+                              <TableHead>Categoría</TableHead>
+                              <TableHead className="text-right">Cantidad</TableHead>
+                              <TableHead className="text-right">Peso</TableHead>
+                              <TableHead className="text-right">Ingresos</TableHead>
+                              <TableHead className="text-right">Gastos</TableHead>
+                              <TableHead className="text-right">Ganancia</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {Object.entries(deliveryAnalysis.deliveries_by_category).map(([category, values]) => (
+                              <TableRow key={category} className="hover:bg-muted/50 transition-colors">
+                                <TableCell className="font-medium"><Badge variant="outline">{category}</Badge></TableCell>
+                                <TableCell className="text-right">{values.count || 0}</TableCell>
+                                <TableCell className="text-right text-sm">{values.total_weight.toFixed(2)} lb</TableCell>
+                                <TableCell className="text-right text-green-600 font-semibold">{formatUSD(values.total_delivery_revenue || 0)}</TableCell>
+                                <TableCell className="text-right text-red-600 font-semibold">{formatUSD(values.total_delivery_expenses || 0)}</TableCell>
+                                <TableCell className="text-right text-blue-600 font-semibold">{formatUSD(values.total_system_profit || 0)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       </div>
                     </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Ingresos</div>
-                      <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_delivery_revenue) || 0}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Gastos</div>
-                      <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_delivery_expenses) + " +" + formatUSD(deliveryAnalysis?.total_manager_profit) || 0}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Ganancia</div>
-                      <div className="text-base sm:text-lg font-bold">{formatUSD(deliveryAnalysis?.total_system_profit) || 0}</div>
-                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
+          {/* Compras */}
+          <Card className="border-l-4 border-l-purple-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3 bg-gradient-to-r from-purple-50/50 to-transparent">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Compras</CardTitle>
+                  <CardDescription className="text-xs mt-1">Análisis de compras realizadas y reembolsos</CardDescription>
+                </div>
+                <ShoppingCart className="h-5 w-5 text-purple-500 opacity-50" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-4">
+              {purchasesError ? (
+                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-sm">Error cargando compras: {purchasesError.message}</div>
+              ) : !purchasesAnalysis ? (
+                <div className="text-center py-8 text-muted-foreground">No hay datos de compras para el rango seleccionado</div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <MetricCard label="Compras" value={purchasesAnalysis?.count || 0} />
+                    <MetricCard label="Monto Total" value={formatUSD(purchasesAnalysis?.total_purchase_amount || 0)} />
+                    <MetricCard label="Reembolsos" value={formatUSD(purchasesAnalysis?.total_refunded || 0)} />
+                    <MetricCard label="Gastos Op." value={formatUSD(purchasesAnalysis?.total_operational_expenses || 0)} />
+                    <MetricCard 
+                      label="Costo Neto" 
+                      value={formatUSD(purchasesAnalysis?.total_real_cost_paid || 0)} 
+                      highlight 
+                    />
+                  </div>
 
+                  {/* Desglose por Tienda */}
+                  {purchasesAnalysis?.purchases_by_shop && Object.keys(purchasesAnalysis.purchases_by_shop).length > 0 && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">Desglose por Tienda</h4>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/50">
+                              <TableHead>Tienda</TableHead>
+                              <TableHead className="text-right">Compras</TableHead>
+                              <TableHead className="text-right">Monto</TableHead>
+                              <TableHead className="text-right">Reembolsos</TableHead>
+                              <TableHead className="text-right">Costo Neto</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {Object.entries(purchasesAnalysis.purchases_by_shop).map(([shop, stats]) => (
+                              <TableRow key={shop} className="hover:bg-muted/50 transition-colors">
+                                <TableCell className="font-medium"><Badge variant="outline">{shop}</Badge></TableCell>
+                                <TableCell className="text-right">{stats.count || 0}</TableCell>
+                                <TableCell className="text-right text-green-600 font-semibold">{formatUSD(stats.total_purchase_amount || 0)}</TableCell>
+                                <TableCell className="text-right text-orange-600 font-semibold">{formatUSD(stats.total_refunded || 0)}</TableCell>
+                                <TableCell className="text-right text-blue-600 font-semibold">{formatUSD(stats.total_real_cost_paid || 0)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Desglose por Cuenta de Compra */}
+                  {purchasesAnalysis?.purchases_by_account && Object.keys(purchasesAnalysis.purchases_by_account).length > 0 && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">Desglose por Cuenta de Compra</h4>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/50">
+                              <TableHead>Cuenta</TableHead>
+                              <TableHead className="text-right">Compras</TableHead>
+                              <TableHead className="text-right">Monto Total</TableHead>
+                              <TableHead className="text-right">Reembolsos</TableHead>
+                              <TableHead className="text-right">Costo Neto</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {Object.entries(purchasesAnalysis.purchases_by_account).map(([account, stats]) => (
+                              <TableRow key={account} className="hover:bg-muted/50 transition-colors">
+                                <TableCell className="font-medium"><Badge variant="secondary">{account}</Badge></TableCell>
+                                <TableCell className="text-right">{stats.count || 0}</TableCell>
+                                <TableCell className="text-right text-green-600 font-semibold">{formatUSD(stats.total_purchase_amount || 0)}</TableCell>
+                                <TableCell className="text-right text-orange-600 font-semibold">{formatUSD(stats.total_refunded || 0)}</TableCell>
+                                <TableCell className="text-right text-blue-600 font-semibold">{formatUSD(stats.total_real_cost_paid || 0)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Estado de Pago */}
+                  {purchasesAnalysis?.purchases_by_status && Object.keys(purchasesAnalysis.purchases_by_status).length > 0 && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">Estado de Pago</h4>
+                      <div className="space-y-2">
+                        {Object.entries(purchasesAnalysis.purchases_by_status).map(([status, count]) => (
+                          <div key={status} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">{status}</Badge>
+                            </div>
+                            <span className="font-semibold text-sm">{count} compra{count !== 1 ? 's' : ''}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tendencia Mensual */}
+                  {purchasesAnalysis?.monthly_trend && purchasesAnalysis.monthly_trend.length > 0 && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">Tendencia Mensual</h4>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/50">
+                              <TableHead>Mes</TableHead>
+                              <TableHead className="text-right">Compras</TableHead>
+                              <TableHead className="text-right">Monto</TableHead>
+                              <TableHead className="text-right">Reembolsos</TableHead>
+                              <TableHead className="text-right">Costo Neto</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {purchasesAnalysis.monthly_trend.map((trend) => (
+                              <TableRow key={trend.month} className="hover:bg-muted/50 transition-colors">
+                                <TableCell className="font-medium text-sm">{trend.month}</TableCell>
+                                <TableCell className="text-right">{trend.count || 0}</TableCell>
+                                <TableCell className="text-right text-green-600 font-semibold">{formatUSD(trend.total_purchase_amount || 0)}</TableCell>
+                                <TableCell className="text-right text-orange-600 font-semibold">{formatUSD(trend.total_refunded || 0)}</TableCell>
+                                <TableCell className="text-right text-blue-600 font-semibold">{formatUSD(trend.net_cost || 0)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Resumen de Reembolsos */}
+                  <div className="border-t pt-4 bg-gradient-to-r from-purple-50/50 to-transparent p-3 rounded-md">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="text-center">
+                        <div className="text-xs font-medium text-muted-foreground">Con Reembolsos</div>
+                        <div className="text-lg font-bold text-purple-600">{purchasesAnalysis?.refunded_purchases_count || 0}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs font-medium text-muted-foreground">Sin Reembolsos</div>
+                        <div className="text-lg font-bold text-green-600">{purchasesAnalysis?.non_refunded_purchases_count || 0}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs font-medium text-muted-foreground">% Reembolso</div>
+                        <div className="text-lg font-bold text-orange-600">{(purchasesAnalysis?.refund_rate_percentage || 0).toFixed(1)}%</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs font-medium text-muted-foreground">Productos Comprados</div>
+                        <div className="text-lg font-bold text-blue-600">{purchasesAnalysis?.total_products_bought || 0}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -425,118 +580,115 @@ export default function BalanceReport() {
           </Card>
 
           {/* Costos */}
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Costos - Resumen</CardTitle>
-              <CardDescription>Resumen agregado de tags y costos de facturas</CardDescription>
+          <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3 bg-gradient-to-r from-orange-50/50 to-transparent">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Costos - Facturas</CardTitle>
+                  <CardDescription className="text-xs mt-1">Resumen agregado de tags y costos de envío</CardDescription>
+                </div>
+                <ArrowDown className="h-5 w-5 text-orange-500 opacity-50" />
+              </div>
             </CardHeader>
-            <CardContent className="p-3 sm:p-4 overflow-x-auto h-full">
+            <CardContent className="pt-4">
               {invoicesRangeData ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Facturas</div>
-                    <div className="text-base sm:text-lg font-bold">{invoicesRangeData.invoices_count}</div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm text-muted-foreground">Peso total</div>
-                    <div className="text-base sm:text-lg font-bold">{invoicesRangeData.total_tag_weight.toLocaleString()} lb</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">Costo tags (subtotal)</div>
-                    <div className="text-base sm:text-lg font-bold">{formatUSD(invoicesRangeData.total_tag_subtotal)}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">Costo fijos (subtotal)</div>
-                    <div className="text-base sm:text-lg font-bold">{formatUSD(invoicesRangeData.total_fixed_cost)}</div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm text-muted-foreground  font-medium">Total </div>
-                    <div className="text-base sm:text-lg font-bold">{formatUSD(invoicesRangeData.total_invoices_amount)}</div>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <MetricCard label="Facturas" value={invoicesRangeData.invoices_count} />
+                    <MetricCard label="Peso Total" value={`${invoicesRangeData.total_tag_weight.toLocaleString()} lb`} />
+                    <MetricCard label="Costo Tags" value={formatUSD(invoicesRangeData.total_tag_subtotal)} />
+                    <MetricCard label="Costo Fijos" value={formatUSD(invoicesRangeData.total_fixed_cost)} />
+                    <MetricCard label="Total" value={formatUSD(invoicesRangeData.total_invoices_amount)} highlight />
                   </div>
                 </div>
               ) : (
-                <div className="text-muted-foreground">No hay datos de facturas para el rango seleccionado</div>
+                <div className="text-center py-8 text-muted-foreground">No hay datos de facturas para el rango seleccionado</div>
               )}
             </CardContent>
           </Card>
 
           {/* Gastos */}
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Gastos - Resumen</CardTitle>
-              <CardDescription>Totales y desglose por categoría en el rango seleccionado</CardDescription>
+          <Card className="border-l-4 border-l-red-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3 bg-gradient-to-r from-red-50/50 to-transparent">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Gastos Operativos</CardTitle>
+                  <CardDescription className="text-xs mt-1">Desglose y tendencia de gastos</CardDescription>
+                </div>
+                <ArrowDown className="h-5 w-5 text-red-500 opacity-50" />
+              </div>
             </CardHeader>
-            <CardContent className="p-3 sm:p-4 overflow-x-auto h-full">
+            <CardContent className="pt-4">
               {expenseError ? (
-                <div className="text-red-600">Error cargando los gastos: {expenseError.message}</div>
+                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-sm">Error cargando gastos: {expenseError.message}</div>
               ) : !expensesAnalysis ? (
-                <div className="text-muted-foreground">No hay datos de gastos para el rango seleccionado</div>
+                <div className="text-center py-8 text-muted-foreground">No hay datos de gastos para el rango seleccionado</div>
               ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <div className="text-sm text-muted-foreground">Gastos</div>
-                      <div className="text-base sm:text-lg font-bold">{expensesAnalysis.count || 0}</div>
-                    </div>
-
-                    <div>
-                      <div className="text-sm text-muted-foreground">Gasto Promedio</div>
-                      <div className="text-base sm:text-lg font-bold">{formatUSD(expensesAnalysis.average_expense || 0)}</div>
-                    </div><div>
-                      <div className="text-sm text-muted-foreground">Total Gastos</div>
-                      <div className="text-base sm:text-lg font-bold">{formatUSD(expensesAnalysis.total_expenses || 0)}</div>
-                    </div>
-
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <MetricCard label="Total Transacciones" value={expensesAnalysis.count || 0} />
+                    <MetricCard label="Gasto Promedio" value={formatUSD(expensesAnalysis.average_expense || 0)} />
+                    <MetricCard label="Total Gastos" value={formatUSD(expensesAnalysis.total_expenses || 0)} highlight />
                   </div>
 
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-2">Gastos por Categoría</div>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Categoria</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {Object.entries(expensesAnalysis.expenses_by_category || {})
-                          .sort((a, b) => (b[1] || 0) - (a[1] || 0))
-                          .map(([category, value]) => (
-                            <TableRow key={category}>
-                              <TableCell className="font-medium"><Badge variant={'secondary'}>{category}</Badge></TableCell>
-                              <TableCell className="text-right text-sm sm:text-base font-semibold">{formatUSD(value || 0)}</TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-2">Tendencia Mensual</div>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Mes</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {(expensesAnalysis.monthly_trend || []).map((m) => (
-                          <TableRow key={m.month || Math.random()}>
-                            <TableCell className="font-medium">{m.month}</TableCell>
-                            <TableCell className="text-right text-sm sm:text-base font-semibold">{formatUSD(m.total || 0)}</TableCell>
-                          </TableRow>
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-semibold text-foreground mb-3">Gastos por Categoría</h4>
+                    <div className="space-y-2">
+                      {Object.entries(expensesAnalysis.expenses_by_category || {})
+                        .sort((a, b) => (b[1] || 0) - (a[1] || 0))
+                        .map(([category, value]) => (
+                          <div key={category} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">{category}</Badge>
+                            </div>
+                            <span className="font-semibold text-sm text-red-600">{formatUSD(value || 0)}</span>
+                          </div>
                         ))}
-                      </TableBody>
-                    </Table>
+                    </div>
                   </div>
+
+                  {(expensesAnalysis.monthly_trend || []).length > 0 && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">Tendencia Mensual</h4>
+                      <div className="space-y-2">
+                        {(expensesAnalysis.monthly_trend || []).map((m) => (
+                          <div key={m.month || Math.random()} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors">
+                            <span className="text-sm font-medium text-muted-foreground">{m.month}</span>
+                            <span className="font-semibold text-sm">{formatUSD(m.total || 0)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
+      </div>
+  );
+}
+
+/**
+ * Componente auxiliar para mostrar métricas de manera consistente
+ */
+function MetricCard(
+  { label, value, highlight }: 
+  { label: string; value: string | number; highlight?: boolean }
+) {
+  return (
+    <div className={cn(
+      'p-3 rounded-lg border transition-all',
+      highlight 
+        ? 'bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 shadow-sm' 
+        : 'bg-muted/30 border-muted-foreground/20 hover:bg-muted/50'
+    )}>
+      <div className="text-xs font-medium text-muted-foreground mb-1">{label}</div>
+      <div className={cn(
+        'font-bold',
+        highlight ? 'text-lg text-primary' : 'text-base text-foreground'
+      )}>
+        {value}
       </div>
     </div>
   );

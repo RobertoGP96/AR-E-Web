@@ -171,3 +171,14 @@ export {
   notificationTypeUtils,
   notificationPriorityUtils
 } from './notification';
+
+// Modelo de análisis de compras
+export type {
+  PurchaseAnalysisData,
+  ShopPurchaseStats,
+  AccountPurchaseStats,
+  MonthlyPurchaseTrend,
+  PurchasesSummaryData,
+  ProductBuysAnalysisData,
+  RefundedProductStats,
+} from './purchase-analysis';
