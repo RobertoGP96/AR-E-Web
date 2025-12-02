@@ -39,8 +39,8 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
 
   const activeFiltersCount = [
     !!filters.search?.trim(),
-    filters.status && filters.status !== 'all',
-    filters.pay_status && filters.pay_status !== 'all',
+    !!filters.status,
+    !!filters.pay_status,
     typeof filters.sales_manager === 'number',
     !!filters.date_from,
     !!filters.date_to,
@@ -51,7 +51,14 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
   };
 
   const handleReset = () => {
-    onFiltersChange({ search: '', status: 'all', pay_status: 'all', sales_manager: undefined, date_from: '', date_to: '' });
+    onFiltersChange({
+      search: '',
+      status: undefined,
+      pay_status: undefined,
+      sales_manager: undefined,
+      date_from: '',
+      date_to: ''
+    });
   };
 
   return (
@@ -103,7 +110,7 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs font-medium">Estado</Label>
-              <Select value={filters.status} onValueChange={(v) => handleChange({ status: v })}>
+              <Select value={filters.status || 'all'} onValueChange={(v) => handleChange({ status: v === 'all' ? undefined : v })}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
@@ -116,7 +123,7 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
 
             <div>
               <Label className="text-xs font-medium">T. Pago</Label>
-              <Select value={filters.pay_status} onValueChange={(v) => handleChange({ pay_status: v })}>
+              <Select value={filters.pay_status || 'all'} onValueChange={(v) => handleChange({ pay_status: v === 'all' ? undefined : v })}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>

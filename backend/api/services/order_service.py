@@ -33,8 +33,10 @@ def analyze_orders(start_date=None, end_date=None, months_back=12, limit_per_ord
     count = qs.count()
     avg_revenue = (total_revenue / count) if count else 0.0
 
-    # Compute total cost by iterating orders and summing product costs
+    # Compute total cost, expenses and profit by iterating orders
     total_cost = 0.0
+    total_expenses = 0.0
+    total_profit = 0.0
     per_order_details: List[Dict[str, Any]] = []
     for order in qs[:limit_per_order]:
         order_cost = 0.0
@@ -42,25 +44,37 @@ def analyze_orders(start_date=None, end_date=None, months_back=12, limit_per_ord
             try:
                 order_cost += float(p.total_cost or 0.0)
             except Exception:
-                order_cost += 0.0
+                continue
+        
+        # Usar las propiedades calculadas del modelo Order
+        order_expenses = order.total_expenses
+        order_profit = order.total_profit
         balance = float(order.received_value_of_client or 0.0) - float(order_cost)
+        
         per_order_details.append({
             'id': order.id,
             'revenue': float(order.received_value_of_client or 0.0),
             'total_cost': float(order_cost),
+            'total_expenses': float(order_expenses),
+            'total_profit': float(order_profit),
             'balance': float(balance),
             'pay_status': order.pay_status,
             'status': order.status,
             'created_at': order.created_at,
         })
         total_cost += order_cost
+        total_expenses += order_expenses
+        total_profit += order_profit
 
-    # If the queryset contains more than limit_per_order, still compute total cost by iterating through all orders
+    # If the queryset contains more than limit_per_order, still compute total cost, expenses and profit by iterating through all orders
     if count > limit_per_order:
         for order in qs[limit_per_order:]:
             try:
-                for p in order.products.all():
-                    total_cost += float(p.total_cost or 0.0)
+                order_cost = sum(float(p.total_cost or 0.0) for p in order.products.all())
+                total_cost += order_cost
+                # Usar las propiedades calculadas del modelo Order
+                total_expenses += order.total_expenses
+                total_profit += order.total_profit
             except Exception:
                 continue
 
@@ -86,6 +100,8 @@ def analyze_orders(start_date=None, end_date=None, months_back=12, limit_per_ord
         'average_revenue': float(avg_revenue),
         'count': int(count),
         'total_cost': float(total_cost),
+        'total_expenses': float(total_expenses),
+        'total_profit': float(total_profit),
         'orders_by_status': orders_by_status,
         'monthly_trend': monthly_trend,
         'orders': per_order_details,

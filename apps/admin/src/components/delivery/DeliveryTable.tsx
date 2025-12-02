@@ -187,6 +187,16 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
 
   const updateDeliveryMutation = useUpdateDelivery();
 
+  // Helper para validar si la imagen es válida (no vacía)
+  const isValidImage = (image: unknown): boolean => {
+    if (!image) return false;
+    if (typeof image === 'string') return image.trim().length > 0;
+    if (Array.isArray(image)) {
+      return image.length > 0 && (typeof image[0] === 'string' ? image[0].trim().length > 0 : !!image[0]);
+    }
+    return false;
+  };
+
   const handleCaptureUploaded = async (delivery: DeliverReceip, url: string) => {
     try {
       const newUrls = url;
@@ -362,7 +372,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                 </TableCell>
                 <TableCell>
                   <div className='flex flex-row gap-2'>
-                    {(delivery.deliver_picture || delivery.deliver_picture?.length === 0) ? (
+                    {isValidImage(delivery.deliver_picture) ? (
                       <HoverCard>
                         <HoverCardTrigger asChild>
                           <div className='flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer'>
@@ -385,7 +395,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                           setCaptureDelivery(delivery);
                           setShowCaptureDialog(true);
                         }}
-                        title={delivery.deliver_picture && delivery.deliver_picture.length > 0 ? 'Ver imagen de entrega' : 'Subir imagen de entrega'}
+                        title='Subir imagen de entrega'
                       >
                         <Camera className='h-5 w-5' />
                       </button>

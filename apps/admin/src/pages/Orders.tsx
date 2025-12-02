@@ -9,7 +9,14 @@ import { useAddProductsToOrder } from '@/hooks/order/useAddProductsToOrder';
 import { CompactMetricsSummary } from '@/components/metrics';
 
 const Orders = () => {
-  const [filters, setFilters] = useState<OrderFilterState>({ search: '', status: 'all', pay_status: 'all', sales_manager: undefined, date_from: '', date_to: '' });
+  const [filters, setFilters] = useState<OrderFilterState>({
+    search: '',
+    status: undefined, // Cambiar de 'all' a undefined para no enviar el parámetro
+    pay_status: undefined, // Cambiar de 'all' a undefined para no enviar el parámetro
+    sales_manager: undefined,
+    date_from: '',
+    date_to: ''
+  });
 
   // Obtener órdenes de la API
   const { orders, isLoading, error } = useOrders(filters);
@@ -34,6 +41,11 @@ const Orders = () => {
     // Filtrar por estado
     if (filters.status && filters.status !== 'all') {
       filtered = filtered.filter(order => order.status === filters.status);
+    }
+
+    // Filtrar por estado de pago
+    if (filters.pay_status && filters.pay_status !== 'all') {
+      filtered = filtered.filter(order => order.pay_status === filters.pay_status);
     }
 
     // Filtro por fecha de creación (igualar día)

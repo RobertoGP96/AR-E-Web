@@ -274,10 +274,10 @@ class ProductReceived(models.Model):
             )
             self.original_product.amount_received = total_received
 
-            # Si la cantidad recibida es igual o mayor a la solicitada, cambiar estado a RECIBIDO
-            if total_received >= self.original_product.amount_requested:
-                # Solo cambiar a RECIBIDO si está en COMPRADO o ENCARGADO
-                if self.original_product.status in [ProductStatusEnum.COMPRADO.value, ProductStatusEnum.ENCARGADO.value]:
+            # Si la cantidad recibida es igual a la COMPRADA, cambiar estado a RECIBIDO
+            if total_received == self.original_product.amount_purchased and self.original_product.amount_purchased > 0:
+                # Solo cambiar a RECIBIDO si está en COMPRADO
+                if self.original_product.status == ProductStatusEnum.COMPRADO.value:
                     self.original_product.status = ProductStatusEnum.RECIBIDO.value
 
             self.original_product.save(update_fields=['amount_received', 'status', 'updated_at'])
@@ -299,13 +299,10 @@ class ProductReceived(models.Model):
             product.amount_received = total_received
 
             # Si después de eliminar ya no está completamente recibido
-            if total_received < product.amount_requested:
+            if total_received < product.amount_purchased:
                 if product.status == ProductStatusEnum.RECIBIDO.value:
-                    # Volver al estado anterior (COMPRADO si hay algo comprado, ENCARGADO si no)
-                    if product.amount_purchased >= product.amount_requested:
-                        product.status = ProductStatusEnum.COMPRADO.value
-                    else:
-                        product.status = ProductStatusEnum.ENCARGADO.value
+                    # Volver a COMPRADO
+                    product.status = ProductStatusEnum.COMPRADO.value
 
             product.save(update_fields=['amount_received', 'status', 'updated_at'])
 
@@ -359,16 +356,15 @@ class ProductDelivery(models.Model):
             )
             self.original_product.amount_delivered = total_delivered
 
-            # Si la cantidad entregada es igual o mayor a la solicitada, cambiar estado a ENTREGADO
-            if total_delivered >= self.original_product.amount_requested:
-                # Solo cambiar a ENTREGADO si está en RECIBIDO, COMPRADO o ENCARGADO
-                if self.original_product.status in [ProductStatusEnum.RECIBIDO.value, ProductStatusEnum.COMPRADO.value, ProductStatusEnum.ENCARGADO.value]:
+            # Si la cantidad entregada es igual a la RECIBIDA Y COMPRADA, cambiar estado a ENTREGADO
+            if (total_delivered == self.original_product.amount_received and 
+                total_delivered == self.original_product.amount_purchased and
+                self.original_product.amount_purchased > 0):
+                # Solo cambiar a ENTREGADO si está en RECIBIDO o COMPRADO
+                if self.original_product.status in [ProductStatusEnum.RECIBIDO.value, ProductStatusEnum.COMPRADO.value]:
                     self.original_product.status = ProductStatusEnum.ENTREGADO.value
-                    self.original_product.save(update_fields=['amount_delivered', 'status', 'updated_at'])
-                else:
-                    self.original_product.save(update_fields=['amount_delivered', 'updated_at'])
-            else:
-                self.original_product.save(update_fields=['amount_delivered', 'updated_at'])
+
+            self.original_product.save(update_fields=['amount_delivered', 'status', 'updated_at'])
 
         # Verificar si la orden debe cambiar a COMPLETADO
         if self.original_product.order:
@@ -392,16 +388,10 @@ class ProductDelivery(models.Model):
             product.amount_delivered = total_delivered
 
             # Si después de eliminar ya no está completamente entregado
-            if total_delivered < product.amount_requested:
+            if total_delivered < product.amount_received:
                 if product.status == ProductStatusEnum.ENTREGADO.value:
-                    # Volver al estado anterior basado en lo que se ha recibido/comprado
-                    total_received = sum(pr.amount_received for pr in product.receiveds.all())
-                    if total_received >= product.amount_requested:
-                        product.status = ProductStatusEnum.RECIBIDO.value
-                    elif product.amount_purchased >= product.amount_requested:
-                        product.status = ProductStatusEnum.COMPRADO.value
-                    else:
-                        product.status = ProductStatusEnum.ENCARGADO.value
+                    # Volver a RECIBIDO si la cantidad entregada es menor a la recibida
+                    product.status = ProductStatusEnum.RECIBIDO.value
                     product.save(update_fields=['amount_delivered', 'status', 'updated_at'])
                 else:
                     product.save(update_fields=['amount_delivered', 'updated_at'])

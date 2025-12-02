@@ -454,12 +454,32 @@ export class ApiClient {
     params?: BaseFilters & Record<string, unknown>,
     config?: RequestConfig
   ): Promise<PaginatedApiResponse<T>> {
+    // Filtrar parámetros inválidos (valores 'all' y undefined/null/empty strings)
+    const cleanParams: Record<string, unknown> = {};
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        // Incluir el parámetro solo si:
+        // - No es 'all' (valor por defecto para filtros)
+        // - No es undefined o null
+        // - No es una cadena vacía
+        if (
+          value !== 'all' && 
+          value !== undefined && 
+          value !== null && 
+          value !== ''
+        ) {
+          cleanParams[key] = value;
+        }
+      });
+    }
+
     const response = await this.client.get<PaginatedApiResponse<T>>(url, {
       ...config,
       params: {
         page: 1,
         per_page: 20,
-        ...params,
+        ...cleanParams,
       },
     });
     return response.data;

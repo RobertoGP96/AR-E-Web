@@ -83,10 +83,14 @@ class Order(models.Model):
         # Calcular el costo total de la orden
         total_cost = self.total_cost() if callable(self.total_cost) else self.total_cost
 
+        # Redondear ambos valores para evitar problemas de precisión en punto flotante
+        received_rounded = round(self.received_value_of_client, 2)
+        total_rounded = round(total_cost, 2)
+
         # Actualizar el pay_status
-        if self.received_value_of_client >= total_cost:
+        if received_rounded >= total_rounded and total_rounded > 0:
             self.pay_status = 'Pagado'
-        elif self.received_value_of_client > 0:
+        elif received_rounded > 0:
             self.pay_status = 'Parcial'
         else:
             self.pay_status = 'No pagado'
@@ -139,6 +143,43 @@ class Order(models.Model):
         return not self.has_pending_delivery
 
     @property
+    def total_expenses(self):
+        """
+        Gastos totales de la orden.
+        Suma de los gastos del sistema (system_expenses) de todos los productos,
+        multiplicados por la cantidad comprada de cada producto.
+        """
+        total = 0.0
+        for product in self.products.all():
+            try:
+                # Gastos del sistema por unidad × cantidad comprada
+                product_expenses = float(product.system_expenses or 0.0) * int(product.amount_purchased or 0)
+                total += product_expenses
+            except (AttributeError, TypeError, ValueError):
+                continue
+        return float(total)
+
+    @property
+    def total_profit(self):
+        """
+        Ganancia total de la orden.
+        Suma de las ganancias del sistema (system_profit) de todos los productos,
+        multiplicadas por la cantidad comprada de cada producto.
+        
+        La ganancia se calcula como:
+        (costo total cobrado al cliente - gastos del sistema) × cantidad comprada
+        """
+        total = 0.0
+        for product in self.products.all():
+            try:
+                # Ganancia del sistema por unidad × cantidad comprada
+                product_profit = float(product.system_profit or 0.0) * int(product.amount_purchased or 0)
+                total += product_profit
+            except (AttributeError, TypeError, ValueError):
+                continue
+        return float(total)
+
+    @property
     def available_for_delivery(self):
         """
         Verifica si la orden está disponible para crear un delivery.
@@ -173,11 +214,15 @@ class Order(models.Model):
         except Exception:
             total_cost = 0
 
+        # Redondear ambos valores para evitar problemas de precisión en punto flotante
+        received_rounded = round(self.received_value_of_client, 2)
+        total_rounded = round(total_cost, 2)
+
         if not self.pk:
             # Nueva instancia en create: calcular pay_status en base a received_value_of_client
-            if self.received_value_of_client >= total_cost and total_cost > 0:
+            if received_rounded >= total_rounded and total_rounded > 0:
                 self.pay_status = 'Pagado'
-            elif self.received_value_of_client > 0:
+            elif received_rounded > 0:
                 self.pay_status = 'Parcial'
             else:
                 self.pay_status = 'No pagado'
@@ -186,17 +231,17 @@ class Order(models.Model):
             try:
                 previous = Order.objects.get(pk=self.pk)
                 if previous.received_value_of_client != self.received_value_of_client:
-                    if self.received_value_of_client >= total_cost and total_cost > 0:
+                    if received_rounded >= total_rounded and total_rounded > 0:
                         self.pay_status = 'Pagado'
-                    elif self.received_value_of_client > 0:
+                    elif received_rounded > 0:
                         self.pay_status = 'Parcial'
                     else:
                         self.pay_status = 'No pagado'
             except Order.DoesNotExist:
                 # En caso de que la instancia no exista, proceder como creación
-                if self.received_value_of_client >= total_cost and total_cost > 0:
+                if received_rounded >= total_rounded and total_rounded > 0:
                     self.pay_status = 'Pagado'
-                elif self.received_value_of_client > 0:
+                elif received_rounded > 0:
                     self.pay_status = 'Parcial'
                 else:
                     self.pay_status = 'No pagado'

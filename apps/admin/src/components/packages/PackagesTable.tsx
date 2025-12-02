@@ -120,6 +120,16 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   // Hook para actualizar producto (imagenes)
   const updatePackageMutation = useUpdatePackage();
 
+  // Helper para validar si la imagen es válida (no vacía)
+  const isValidImage = (image: unknown): boolean => {
+    if (!image) return false;
+    if (typeof image === 'string') return image.trim().length > 0;
+    if (Array.isArray(image)) {
+      return image.length > 0 && (typeof image[0] === 'string' ? image[0].trim().length > 0 : !!image[0]);
+    }
+    return false;
+  };
+
   const handleImageUploaded = async (pkg: PackageType, url: string) => {
     try {
       // API expects a single URL string for product_pictures
@@ -365,7 +375,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                 </TableCell>
                 <TableCell>
                   <div className='flex flex-row gap-2'>
-                    {(pkg.package_picture && pkg.package_picture?.length > 0) ? (
+                    {isValidImage(pkg.package_picture) ? (
                       <HoverCard>
                         <HoverCardTrigger asChild>
                           <div className='flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer'>
@@ -396,7 +406,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                           setImageDialogPackage(pkg);
                           setShowImageDialog(true);
                         }}
-                        title={pkg.package_picture  ? 'Ver imagen de entrega' : 'Subir imagen de entrega'}
+                        title='Subir imagen de paquete'
                       >
                         <Camera className='h-5 w-5' />
                       </button>

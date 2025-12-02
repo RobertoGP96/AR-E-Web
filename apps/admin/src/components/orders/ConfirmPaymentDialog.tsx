@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { formatCurrency, type Order } from '@/types';
+import { calculatePaymentStatus } from '@/lib/payment-status-calculator';
 
 interface ConfirmPaymentDialogProps {
   order: Order | null;
@@ -70,28 +71,18 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
   };
 
   // Calcular el nuevo total que se recibirá y el estado de pago resultante
+  // Usa la utilidad que coincide exactamente con la lógica del backend
   const calculateNewStatus = () => {
     if (!order || !amountReceived) return null;
     
     const amount = parseFloat(amountReceived);
     if (isNaN(amount) || amount <= 0) return null;
 
-    const newTotal = order.received_value_of_client + amount;
-    const totalCost = order.total_cost;
-    const remaining = totalCost - newTotal;
-
-    let newStatus = 'No pagado';
-    let statusColor = 'text-red-600';
-    
-    if (newTotal >= totalCost) {
-      newStatus = 'Pagado';
-      statusColor = 'text-green-600';
-    } else if (newTotal > 0) {
-      newStatus = 'Parcial';
-      statusColor = 'text-yellow-600';
-    }
-
-    return { newTotal, remaining, newStatus, statusColor };
+    return calculatePaymentStatus(
+      order.received_value_of_client,
+      amount,
+      order.total_cost
+    );
   };
 
   const newStatusInfo = calculateNewStatus();

@@ -22,6 +22,8 @@ export interface Order {
   
   // Propiedades computadas de dinero
   total_cost: number;
+  total_expenses: number;
+  total_profit: number;
   received_value_of_client: number;
   
   // Propiedades computadas de productos (del backend)
@@ -81,6 +83,8 @@ export interface OrderAnalysisPerOrder {
   id: number;
   revenue: number;
   total_cost: number;
+  total_expenses: number;
+  total_profit: number;
   balance: number;
   pay_status: PayStatus;
   status: OrderStatus;
@@ -92,6 +96,8 @@ export interface OrderAnalysisResponse {
   average_revenue: number;
   count: number;
   total_cost: number;
+  total_expenses: number;
+  total_profit: number;
   orders_by_status: Record<string, number>;
   monthly_trend: OrderAnalysisMonthly[];
   orders: OrderAnalysisPerOrder[];

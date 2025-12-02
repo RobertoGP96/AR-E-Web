@@ -99,6 +99,52 @@ class OrderModelTest(ModelTestCase):
         self.assertEqual(new_order.received_value_of_client, 80.0)
         self.assertEqual(new_order.pay_status, 'Pagado')
 
+    def test_received_value_equals_total_cost_marks_as_paid(self):
+        """Test that when received_value_of_client equals total_cost, pay_status is 'Pagado'"""
+        order = Order.objects.create(client=self.test_user, sales_manager=self.agent_user)
+        
+        # Add a product with total_cost = 100.0
+        Product.objects.create(
+            sku='TEST_EQUAL',
+            name='Equal Payment Product',
+            shop=self.test_shop,
+            amount_requested=1,
+            order=order,
+            shop_cost=100.0,
+            total_cost=100.0
+        )
+        
+        # Add payment exactly equal to total_cost
+        order.add_received_value(100.0)
+        order.refresh_from_db()
+        
+        # Should be marked as "Pagado" not "Parcial"
+        self.assertEqual(order.received_value_of_client, 100.0)
+        self.assertEqual(order.pay_status, 'Pagado')
+    
+    def test_received_value_with_floating_point_precision(self):
+        """Test that floating point precision doesn't prevent 'Pagado' status"""
+        order = Order.objects.create(client=self.test_user, sales_manager=self.agent_user)
+        
+        # Add a product with decimal total_cost
+        Product.objects.create(
+            sku='TEST_FLOAT',
+            name='Float Payment Product',
+            shop=self.test_shop,
+            amount_requested=1,
+            order=order,
+            shop_cost=49.99,
+            total_cost=49.99
+        )
+        
+        # Add payment with potential floating point precision issues
+        order.add_received_value(49.99)
+        order.refresh_from_db()
+        
+        # Should be marked as "Pagado" not "Parcial"
+        self.assertAlmostEqual(order.received_value_of_client, 49.99, places=2)
+        self.assertEqual(order.pay_status, 'Pagado')
+
 
 class ProductModelTest(ModelTestCase):
     """Test the Product model"""
