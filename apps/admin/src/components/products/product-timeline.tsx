@@ -76,14 +76,14 @@ const ProductTimeline: React.FC<ProductTimelineProps> = ({ productId }) => {
         ) : events && events.length > 0 ? (
           <div className="relative">
             {/* Línea central vertical con gradiente */}
-            <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 via-yellow-200 to-green-200"></div>
+            <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
 
             {/* Eventos renderizados directamente del API */}
-            <div className="space-y-6 pl-20">
+            <div className="space-y-6 pl-15">
               {events.map((event: TimelineEvent, index: number) => (
                 <div key={index} className="relative">
                   {/* Punto de la línea de tiempo */}
-                  <div className={`absolute left-[-56px] top-1 w-12 h-12 rounded-full flex items-center justify-center ${event.bgColor} border-4 border-white shadow-md transition-transform hover:scale-110`}>
+                  <div className={`absolute left-[-60px] top-1 w-12 h-12 rounded-full flex items-center justify-center ${event.bgColor} border-4 border-white shadow-md transition-transform hover:scale-110`}>
                     {renderIcon(event.icon, event.color)}
                   </div>
 
@@ -121,40 +121,6 @@ const ProductTimeline: React.FC<ProductTimelineProps> = ({ productId }) => {
           </div>
         )}
 
-        {/* Leyenda de estados */}
-        {events && events.length > 0 && (
-          <div className="mt-8 pt-6 border-t">
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">
-              Estados del Producto:
-            </h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <CheckCircle2 className="h-4 w-4 text-gray-600" />
-                </div>
-                <span className="text-xs text-gray-600">Creado</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <ShoppingCart className="h-4 w-4 text-blue-600" />
-                </div>
-                <span className="text-xs text-gray-600">Comprado</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                  <Package className="h-4 w-4 text-yellow-600" />
-                </div>
-                <span className="text-xs text-gray-600">Recibido</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                  <Truck className="h-4 w-4 text-green-600" />
-                </div>
-                <span className="text-xs text-gray-600">Entregado</span>
-              </div>
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

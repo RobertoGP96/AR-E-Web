@@ -239,7 +239,7 @@ export default function BalanceReport() {
             className={cn(
               'cursor-pointer transition-all duration-300 border-2 hover:border-primary/50',
               !useCustomRange
-                ? 'border-primary bg-primary/5 shadow-md'
+                ? 'border-primary shadow-md'
                 : 'border-gray-200 bg-white hover:shadow-sm'
             )}
             onClick={() => handleUseCustomRangeChange(false)}
@@ -278,7 +278,7 @@ export default function BalanceReport() {
             className={cn(
               'lg:col-span-2 cursor-pointer transition-all duration-300 border-2 hover:border-primary/50',
               useCustomRange
-                ? 'border-primary bg-primary/5 shadow-md'
+                ? 'border-primary  shadow-md'
                 : 'border-gray-200 bg-white hover:shadow-sm'
             )}
             onClick={() => handleUseCustomRangeChange(true)}

@@ -1,30 +1,19 @@
 'use client'
 
 import OrderRow from '@/components/order/order-row'
-
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
 import ErrorMeassage from '@/components/utils/error'
 import LoadingSpinner from '@/components/utils/loading-spinner'
-import useAuth from '@/hooks/auth/useAuth'
 import { useOrders } from '@/hooks/order/useOrders'
-import { OrderFilters } from '@/types/api'
-
 import { ShoppingBag } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-
-
 export default function UserOrders() {
     const [isVisible, setIsVisible] = useState(false)
-
-    const { user } = useAuth()
-    const [filters, setFilters] = useState<OrderFilters>({});
-    const { orders, error, isLoading} = useOrders(filters)
-
-    useEffect(() => {
-        setFilters({ client_id: user?.id })
-    }, [user])
+    
+    // ✅ SEGURIDAD: Sin inyección de client_id (backend lo determina del token JWT)
+    const { orders, error, isLoading } = useOrders()
 
     useEffect(() => {
         setIsVisible(true)

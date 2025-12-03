@@ -1,8 +1,9 @@
 import { useAuthUser, useAuthActions } from "@/hooks/auth/useAuth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback} from "../ui/avatar";
-import { LogOut, ShoppingBag, ShoppingCart, User } from "lucide-react";
+import { LogOut, ShoppingBag, ShoppingCart, User, Package } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { usePendingDeliveries } from "@/hooks/delivery/useDeliveries";
 
 interface NavUserProps {
     onNavigate?: () => void;
@@ -12,6 +13,7 @@ export function NavUser({ onNavigate }: NavUserProps) {
     const auth = useAuthUser()
     const { logout } = useAuthActions();
     const navigate = useNavigate();
+    const { pendingCount } = usePendingDeliveries();
 
     const handleLogout = async () => {
         try {
@@ -63,6 +65,17 @@ export function NavUser({ onNavigate }: NavUserProps) {
                     <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer" onClick={() => handleNavigate("/user_orders")} >
                         <ShoppingBag className="h-5 w-5 text-primary" />
                         <span className="text-gray-300">Pedidos</span>
+                    </DropdownMenuItem>
+                </NavLink>
+                <NavLink to={"/user_deliveries"}>
+                    <DropdownMenuItem className="gap-3 px-3 py-3 text-base cursor-pointer relative" onClick={() => handleNavigate("/user_deliveries")} >
+                        <Package className="h-5 w-5 text-primary" />
+                        <span className="text-gray-300">Entregas</span>
+                        {pendingCount > 0 && (
+                            <span className="absolute right-3 inline-flex items-center justify-center h-5 w-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                                {pendingCount > 99 ? '99+' : pendingCount}
+                            </span>
+                        )}
                     </DropdownMenuItem>
                 </NavLink>
                 <DropdownMenuSeparator className="bg-gray-800" />

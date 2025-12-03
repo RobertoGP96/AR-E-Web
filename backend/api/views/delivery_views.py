@@ -125,7 +125,9 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
         if user.role == 'logistical':
             queryset = queryset.filter(delivery__logistical=user)
         elif user.role == 'client':
-            queryset = queryset.filter(delivery__order__client=user)
+            queryset = queryset.filter(client=user)  # ✅ CORRECCIÓN: Filtrar directamente por cliente
+
+        return queryset
 
         return queryset
 
@@ -168,6 +170,90 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
     )
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Eliminar recibo de entrega",
+        description="Elimina un recibo de entrega.",
+        tags=["Recibos de Entrega"]
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Obtener mis entregas",
+        description="Obtiene las entregas del usuario autenticado con paginación.",
+        tags=["Recibos de Entrega"],
+        parameters=[
+            {
+                'name': 'page',
+                'in': 'query',
+                'type': 'integer',
+                'description': 'Número de página',
+                'default': 1
+            },
+            {
+                'name': 'per_page',
+                'in': 'query',
+                'type': 'integer',
+                'description': 'Elementos por página',
+                'default': 20
+            },
+            {
+                'name': 'status',
+                'in': 'query',
+                'type': 'string',
+                'description': 'Filtrar por estado de entrega'
+            },
+        ]
+    )
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated], url_path="my-deliveries")
+    def my_deliveries(self, request):
+        """
+        ✅ NUEVA ACCIÓN: Obtiene las entregas del cliente autenticado.
+        
+        Solo clientes pueden acceder a este endpoint.
+        El backend valida que solo veas tus propias entregas.
+        
+        Query params opcionales:
+        - status: Filtrar por estado (pendiente, entregado, etc)
+        - page: Página (default: 1)
+        - per_page: Items por página (default: 20)
+        """
+        user = request.user
+        
+        # ✅ SEGURIDAD: Solo clientes pueden ver sus entregas
+        if user.role != 'client':
+            return Response(
+                {"error": "Solo clientes pueden ver sus entregas"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # ✅ SEGURIDAD: Filtrar entregas solo del cliente autenticado
+        queryset = self.get_queryset().filter(client=user).order_by('-deliver_date')
+        
+        # ✅ FILTRO: Status opcional
+        delivery_status = request.query_params.get('status')
+        if delivery_status:
+            queryset = queryset.filter(status=delivery_status)
+        
+        # ✅ PAGINACIÓN
+        page = int(request.query_params.get('page', 1))
+        per_page = int(request.query_params.get('per_page', 20))
+        start = (page - 1) * per_page
+        end = start + per_page
+        
+        total = queryset.count()
+        deliveries = queryset[start:end]
+        
+        serializer = self.get_serializer(deliveries, many=True)
+        
+        return Response({
+            'count': total,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': (total + per_page - 1) // per_page,
+            'results': serializer.data
+        })
 
     @extend_schema(
         summary="Eliminar recibo de entrega",

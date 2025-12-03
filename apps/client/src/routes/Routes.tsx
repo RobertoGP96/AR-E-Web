@@ -9,6 +9,7 @@ import Profile from '@/pages/profile';
 import Pricing from '@/pages/pricing';
 import Stores from '@/pages/stores';
 import UserOrders from '@/pages/user-orders';
+import UserDeliveries from '@/pages/user-deliveries';
 import { ProductList } from '@/components/product';
 
 
@@ -29,6 +30,7 @@ const AppRoutes = () => {
                 <Route path="contact" element={<Contact />} />
                 <Route path="profile" element={<Profile/>} />
                 <Route path="user_orders" element={<UserOrders/>} />
+                <Route path="user_deliveries" element={<UserDeliveries/>} />
                 <Route path="product-list" element={<ProductList/>} />
             </Route>
         </Routes>

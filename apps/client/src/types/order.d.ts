@@ -58,3 +58,12 @@ export interface OrderFilters {
   date_from?: string;
   date_to?: string;
 }
+
+// ✅ SEGURIDAD: Tipo para filtros sin client_id (endpoint /my-orders/)
+export interface OrderFiltersForMyOrders extends Omit<OrderFilters, 'client_id'> {
+  status?: OrderStatus;
+  pay_status?: PayStatus;
+  sales_manager_id?: ID;
+  date_from?: string;
+  date_to?: string;
+}

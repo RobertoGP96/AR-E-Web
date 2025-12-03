@@ -29,14 +29,16 @@ class OrderViewSet(viewsets.ModelViewSet):
         queryset = Order.objects.all().order_by('-created_at')
         user = self.request.user
 
-        # Filtros por rol
+        # Filtros por rol - aplicar restricción de seguridad
         if user.role == 'agent':
-            # Campo real en el modelo Order
+            # Los agentes solo ven sus órdenes asignadas
             queryset = queryset.filter(sales_manager=user)
         elif user.role == 'client':
+            # Los clientes solo ven sus propias órdenes
             queryset = queryset.filter(client=user)
+        # Los admins ven todas (solo aplican otros filtros)
 
-        # Filtros adicionales
+        # Filtros adicionales - solo aplicados si no violarían la restricción de seguridad
         # estado
         status_filter = self.request.query_params.get('status')
         if status_filter:
@@ -47,23 +49,25 @@ class OrderViewSet(viewsets.ModelViewSet):
         if pay_status_filter:
             queryset = queryset.filter(pay_status=pay_status_filter)
 
-        # cliente (accept both client and client_id)
-        client_id = self.request.query_params.get('client') or self.request.query_params.get('client_id')
-        if client_id:
-            try:
-                client_id_int = int(client_id)
-                queryset = queryset.filter(client__id=client_id_int)
-            except ValueError:
-                pass
+        # cliente - solo aplicar si el usuario es admin o agent
+        if user.role != 'client':
+            client_id = self.request.query_params.get('client') or self.request.query_params.get('client_id')
+            if client_id:
+                try:
+                    client_id_int = int(client_id)
+                    queryset = queryset.filter(client__id=client_id_int)
+                except ValueError:
+                    pass
 
-        # sales_manager (accept both sales_manager and sales_manager_id)
-        sales_manager_id = self.request.query_params.get('sales_manager') or self.request.query_params.get('sales_manager_id')
-        if sales_manager_id:
-            try:
-                sales_manager_id_int = int(sales_manager_id)
-                queryset = queryset.filter(sales_manager__id=sales_manager_id_int)
-            except ValueError:
-                pass
+        # sales_manager - solo aplicar si el usuario es admin
+        if user.role == 'admin':
+            sales_manager_id = self.request.query_params.get('sales_manager') or self.request.query_params.get('sales_manager_id')
+            if sales_manager_id:
+                try:
+                    sales_manager_id_int = int(sales_manager_id)
+                    queryset = queryset.filter(sales_manager__id=sales_manager_id_int)
+                except ValueError:
+                    pass
 
         # fecha - accept both date_from/date_to and created_from/created_to for compatibility
         date_from = self.request.query_params.get('date_from') or self.request.query_params.get('created_from')
@@ -141,6 +145,37 @@ class OrderViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Obtener mis órdenes",
+        description="Obtiene las órdenes del usuario autenticado.",
+        tags=["Órdenes"]
+    )
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_orders(self, request):
+        """
+        Endpoint que devuelve las órdenes del usuario autenticado.
+        Los clientes verán solo sus órdenes.
+        Los agentes verán las órdenes que gestionan.
+        Los administradores pueden ver todas (a través del queryset filtrado).
+        """
+        from rest_framework.pagination import PageNumberPagination
+        
+        user = request.user
+        queryset = self.get_queryset()
+
+        # Paginar los resultados
+        paginator = PageNumberPagination()
+        paginator.page_size_query_param = 'per_page'
+        paginator.page_size = 20
+        
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     @extend_schema(
         summary="Estadísticas de órdenes",

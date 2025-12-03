@@ -3,11 +3,12 @@ import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, DollarSign, Package, Store, Tag } from 'lucide-react';
+import { DollarSign, Package, Store, Tag } from 'lucide-react';
 import ProductAmount from './product-amount';
 import ProductTimeline from './product-timeline';
 import { useProduct } from '@/hooks/product/useProduct';
 import { parseTagsFromDescriptionBlock } from '@/lib/tags';
+import LoadingSpinner from '../utils/LoadingSpinner';
 
 const ProductDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -15,10 +16,7 @@ const ProductDetails: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="container mx-auto p-4 flex justify-center items-center min-h-64">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <span className="ml-2">Cargando producto...</span>
-            </div>
+            <LoadingSpinner size="lg" text="Cargando detalles del producto..." />
         );
     }
 
