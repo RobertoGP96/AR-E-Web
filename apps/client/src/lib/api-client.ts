@@ -23,7 +23,7 @@ import type {
 
 // Configuración base de la API
 const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_URL+'/arye_system' || 'http://localhost:8000/arye_system',
+  baseURL: (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/arye_system',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

@@ -10,7 +10,7 @@ import type { BaseFilters } from '../../types/api';
  * Obtiene una entrega específica por ID
  */
 export const getDeliveryById = async (deliveryId: number) => {
-  return await apiClient.get<DeliverReceip>(`/api_data/delivery/${deliveryId}/`);
+  return await apiClient.get<DeliverReceip>(`/api_data/delivery_receips/${deliveryId}/`);
 };
 
 /**
@@ -31,7 +31,7 @@ export const getMyDeliveries = async (filters?: { status?: string; date_from?: s
   }
 
   return await apiClient.getPaginated<DeliverReceip>(
-    '/api_data/delivery/my-deliveries/', 
+    '/api_data/delivery_receips/my-deliveries/', 
     filters as unknown as BaseFilters
   );
 };
