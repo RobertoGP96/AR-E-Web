@@ -30,6 +30,8 @@ router.register(r"expense", views.ExpenseViewSet)
 
 urlpatterns = [
     path("api_data/", include(router.urls)),
+    # Endpoint explícito para las órdenes del usuario autenticado
+    path("api_data/order/my-orders/", views.OrderViewSet.as_view({'get': 'my_orders'}), name="my_orders"),
     path("user/", views.CurrentUserView.as_view(), name="current_user"),
     path("verify_user/<str:verification_secret>", views.verify_user, name="verify_user"),
     path("auth/", views.MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
