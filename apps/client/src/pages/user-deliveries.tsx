@@ -17,7 +17,7 @@ import { useState } from 'react'
  */
 export default function UserDeliveries() {
     const [searchTerm, setSearchTerm] = useState('')
-    
+
     // ✅ SEGURIDAD: Sin inyección de client_id (backend lo determina del token)
     const { deliveries, error, isLoading } = useDeliveries()
 
@@ -60,7 +60,7 @@ export default function UserDeliveries() {
                             </p>
                         </div>
                     </div>
-                    
+
                     {/* Estadísticas rápidas */}
                     {deliveries.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3">
@@ -108,7 +108,7 @@ export default function UserDeliveries() {
                         {searchTerm && (
                             <div className="mt-3 pt-3 border-t border-muted-foreground/10">
                                 <p className="text-sm text-muted-foreground">
-                                    {filteredDeliveries.length === 0 
+                                    {filteredDeliveries.length === 0
                                         ? "No se encontraron entregas"
                                         : `${filteredDeliveries.length} entrega${filteredDeliveries.length !== 1 ? 's' : ''} encontrada${filteredDeliveries.length !== 1 ? 's' : ''}`
                                     } para "{searchTerm}"
@@ -130,7 +130,7 @@ export default function UserDeliveries() {
 
                 {/* Error State */}
                 {error && deliveries.length === 0 && (
-                    <ErrorMessage 
+                    <ErrorMessage
                         text={error.message || 'Error cargando entregas'}
                     />
                 )}
@@ -171,12 +171,12 @@ export default function UserDeliveries() {
                 {!isLoading && !error && filteredDeliveries.length > 0 && (
                     <div className="space-y-4">
                         {filteredDeliveries.map((delivery, index) => {
-                            const statusInfo = statusLabels[delivery.status as string] || 
+                            const statusInfo = statusLabels[delivery.status as string] ||
                                 { label: delivery.status, color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200' }
-                            
+
                             return (
                                 <div key={delivery.id} className="animate-scale-in" style={{ animationDelay: `${index * 100}ms` }}>
-                                    <Card className="hover:shadow-md transition-shadow duration-200">
+                                    <Card className="hover:shadow-md  border border-primary bg-transparent transition-shadow duration-200  p-0">
                                         <CardContent className="p-4 space-y-3">
                                             {/* Delivery Header */}
                                             <div className="flex items-center justify-between">
@@ -191,27 +191,28 @@ export default function UserDeliveries() {
                                                         <p className="text-xs text-muted-foreground">
                                                             Orden #{delivery.order}
                                                         </p>
+
                                                     </div>
-                                                </div>
-                                                <div className="text-right">
                                                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
                                                         {statusInfo.label}
                                                     </span>
+                                                    <Badge variant="outline" className="bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20">
+                                                        {delivery.category.name}
+                                                    </Badge>
                                                 </div>
                                             </div>
+
+
 
                                             {/* Delivery Details */}
                                             <Separator className="my-2" />
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                                                <div>
+                                                <div className='flex flex-row gap-2.5'>
                                                     <p className="text-xs text-muted-foreground font-medium">Peso</p>
-                                                    <p className="font-semibold text-foreground">{delivery.weight} kg</p>
+                                                    <p className="font-semibold text-foreground">{delivery.weight} lb</p>
                                                 </div>
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground font-medium">Costo</p>
-                                                    <p className="font-semibold text-foreground">${delivery.weight_cost.toFixed(2)}</p>
-                                                </div>
-                                                <div>
+
+                                                <div className='flex flex-row gap-2.5'>
                                                     <p className="text-xs text-muted-foreground font-medium">Fecha</p>
                                                     <p className="font-semibold text-foreground">
                                                         {new Date(delivery.deliver_date).toLocaleDateString('es-ES', {
@@ -220,6 +221,14 @@ export default function UserDeliveries() {
                                                         })}
                                                     </p>
                                                 </div>
+
+                                                <div className="text-right">
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-medium">Costo</p>
+                                                        <p className="font-semibold text-xl text-foreground">${delivery.weight_cost.toFixed(2)}</p>
+                                                    </div>
+                                                </div>
+
                                             </div>
 
                                             {/* Delivery Pictures if exists */}

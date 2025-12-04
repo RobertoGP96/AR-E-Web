@@ -9,6 +9,14 @@ import type { ProductReceived } from './product-received';
 // Type alias para OrderID
 type OrderID = ID;
 
+type Category = {
+  client_shipping_charge: number;
+  created_at: DateTime;
+  id: ID;
+  name: string;
+  shipping_cost_per_pound: number;
+  updated_at: DateTime;
+};
 // Modelo principal
 export interface DeliverReceip {
   id: ID;
@@ -21,7 +29,7 @@ export interface DeliverReceip {
   manager_profit: number;
   created_at: DateTime;
   updated_at: DateTime;
-  
+  category: Category
   // Productos entregados en este delivery receipt
   products_delivered: ProductReceived[];
 
