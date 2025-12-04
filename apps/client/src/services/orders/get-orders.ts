@@ -24,14 +24,8 @@ export const getOrderById = async (orderId: number) => {
  * @param filters - Filtros opcionales (EXCLUYE client_id)
  */
 export const getMyOrders = async (filters?: Omit<OrderFiltersForMyOrders, 'client_id'>) => {
-  // ✅ SEGURIDAD: Advertir si alguien intenta pasar client_id
-  if (filters && 'client_id' in filters) {
-    console.warn('⚠️ SEGURIDAD: client_id debe ser determinado por el backend, no por el cliente');
-    delete (filters as any).client_id;
-  }
-
   return await apiClient.getPaginated<Order>(
-    '/api_data/order/my-orders/', 
+    '/api_data/order/my_orders/', 
     filters as unknown as BaseFilters
   );
 };
