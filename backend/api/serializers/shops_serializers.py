@@ -169,7 +169,7 @@ class ShopCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
         fields = [
-            'name', 'url', 'description', 'logo', 'is_active', 'category'
+            'name', 'link', 'tax_rate', 'is_active', 
         ]
 
 
@@ -181,5 +181,5 @@ class ShopUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
         fields = [
-            'name', 'url', 'description', 'logo', 'is_active', 'category'
+            'name', 'link', 'tax_rate', 'is_active', 
         ]
