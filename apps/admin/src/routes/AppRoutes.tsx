@@ -32,6 +32,7 @@ import Analytics from '@/pages/Analytics';
 import Invoices from '@/pages/Invoices';
 import Expenses from '@/pages/Expenses';
 import BalanceReport from '@/components/balance/balance-report';
+import ExpectedMetricsPage from '@/pages/ExpectedMetrics';
 
 const AppRoutes = () => {
     return (
@@ -76,12 +77,13 @@ const AppRoutes = () => {
                 <Route path="orders/:id" element={<OrderDetails />} />
                 <Route path="orders/:id/add-products" element={<AddMultipleProductsToOrderPage />} />
 
-                <Route path="/invoices" element={<Invoices />} />
-                <Route path="/expenses" element={<Expenses />} />
+                <Route path="invoices" element={<Invoices />} />
+                <Route path="expenses" element={<Expenses />} />
                 
-                <Route path="balance" element={<BalanceReport />} />
+                <Route path="balance" element={<ExpectedMetricsPage />} />
+                <Route path="balance/new-balance" element={<BalanceReport />} />
 
-                <Route path="/analitics" element={<Analytics />} />
+                <Route path="analytics" element={<Analytics />} />
 
                 <Route path="profile" element={<Profile />} />
                 <Route path="settings" element={<Settings />} />

@@ -86,7 +86,6 @@ const navigationGroups = [
         href: '/products',
         icon: Package
       },
-      
     ]
   },
   {
@@ -107,7 +106,6 @@ const navigationGroups = [
         href: '/delivery',
         icon: Truck
       }
-      
     ]
   },
   {
@@ -131,7 +129,7 @@ const navigationGroups = [
       },
       {
         name: 'Analisis',
-        href: '/analitics',
+        href: '/analytics',
         icon: ChartColumn
       },
     ]
@@ -171,7 +169,6 @@ export function AsideNav() {
           <img src={logoSvg} alt="AR&E Shipps" className="h-15 aspect-auto" />
         </div>
       </SidebarHeader>
-
       {/* Navigation */}
       <SidebarContent className="pl-4 ">
         {navigationGroups.map((group) => (
@@ -184,7 +181,6 @@ export function AsideNav() {
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item.href);
-
                   return (
                     <SidebarMenuItem key={item.name}  >
                       <SidebarMenuButton asChild isActive={active} >
@@ -208,7 +204,6 @@ export function AsideNav() {
               {bottomNavigation.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
-
                 return (
                   <SidebarMenuItem key={item.name}>
                     <SidebarMenuButton asChild isActive={active}>
