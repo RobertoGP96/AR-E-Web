@@ -11,7 +11,7 @@ from .expenses import Expense
 
 # Import existing models
 from ..notifications.models_notifications import Notification, NotificationPreference
-from .expected_metrics import ExpectedMetrics
+from .balance import Balance
 
 __all__ = [
     'CustomUser',
@@ -32,5 +32,5 @@ __all__ = [
     'Expense',
     'Notification',
     'NotificationPreference',
-    'ExpectedMetrics',
+    'Balance',
 ]

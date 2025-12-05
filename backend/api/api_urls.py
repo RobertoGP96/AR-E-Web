@@ -2,9 +2,8 @@
 
 from django.urls import include, path, re_path
 from api import views
-from api.views import invoice_views
+
 from rest_framework.routers import DefaultRouter
-from api.views import expected_metrics
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
@@ -23,9 +22,9 @@ router.register(r"product_received", views.ProductReceivedViewSet)
 router.register(r"package", views.PackageViewSet)
 router.register(r"product_delivery", views.ProductDeliveryViewSet)
 router.register(r"category", views.CategoryViewSet)
-router.register(r"expected_metrics", expected_metrics.ExpectedMetricsViewSet)
-router.register(r"invoice", invoice_views.InvoiceViewSet)
-router.register(r"tag", invoice_views.TagViewSet)
+router.register(r"balances", views.BalanceViewSet)
+router.register(r"invoice", views.InvoiceViewSet)
+router.register(r"tag", views.TagViewSet)
 router.register(r"expense", views.ExpenseViewSet)
 
 urlpatterns = [

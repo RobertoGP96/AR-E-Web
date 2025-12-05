@@ -50,6 +50,8 @@ from .invoice_views import (
     TagViewSet
 )
 
+from .balance_views import BalanceViewSet
+
 __all__ = [
     # Auth views
     'MyTokenObtainPairView',
@@ -103,4 +105,7 @@ __all__ = [
     # Invoice views
     'InvoiceViewSet',
     'TagViewSet',
+    
+    # Balance views
+    'BalanceViewSet',
 ]

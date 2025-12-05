@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 from .models import CustomUser, Order, Expense
-from .models.expected_metrics import ExpectedMetrics
+from .models.balance import Balance
 from decimal import Decimal
 
 
@@ -78,21 +78,26 @@ class ExpenseAdmin(admin.ModelAdmin):
     search_fields = ('description', 'created_by__name')
 
 
-@admin.register(ExpectedMetrics)
-class ExpectedMetricsAdmin(admin.ModelAdmin):
-    """Admin interface for Expected Metrics"""
+@admin.register(Balance)
+class BalanceAdmin(admin.ModelAdmin):
+    """Admin interface for Balance Metrics"""
     
     list_display = (
         'id',
         'start_date',
         'end_date',
+        'system_weight',
         'registered_weight',
-        'registered_profit',
-        'invoice_cost',
+        'revenues',
+        'buys_costs',
+        'costs',
+        'expenses',
         'real_profit',
-        'cost_difference',
-        'profit_difference',
-        'created_at',
+        'notes',
+        'total_cost',
+        'weight_difference',
+        'real_profit',
+        'profit_percentage',
     )
     
     list_filter = (
@@ -104,10 +109,10 @@ class ExpectedMetricsAdmin(admin.ModelAdmin):
     search_fields = ('notes',)
     
     readonly_fields = (
-        'cost_difference',
+        'total_cost',
+        'weight_difference',
         'real_profit',
-        'profit_difference',
-        'profit_variance_percentage',
+        'profit_percentage',
         'created_at',
         'updated_at',
     )
@@ -116,18 +121,22 @@ class ExpectedMetricsAdmin(admin.ModelAdmin):
         ('Rango de Fechas', {
             'fields': ('start_date', 'end_date')
         }),
-        ('Métricas Esperadas', {
-            'fields': ('registered_weight', 'registered_revenue', 'registered_profit')
-        }),
-        ('Métricas Reales', {
-            'fields': ('invoice_weight', 'invoice_cost')
+        ('Métricas', {
+            'fields': (
+                'system_weight',
+                'registered_weight',
+                'revenues',
+                'buys_costs',
+                'costs',
+                'expenses',
+                )
         }),
         ('Análisis de Varianza', {
             'fields': (
-            'cost_difference',
-            'real_profit',
-            'profit_difference',
-            'profit_variance_percentage',
+                'total_cost',
+                'weight_difference',
+                'real_profit',
+                'profit_percentage',
             ),
             'classes': ('collapse',)
         }),
@@ -145,27 +154,20 @@ class ExpectedMetricsAdmin(admin.ModelAdmin):
         except Exception:
             return Decimal('0')
 
-    def cost_difference(self, obj):
-        """invoice_cost - registered_cost"""
-        return self._to_decimal(getattr(obj, 'invoice_cost', None)) - self._to_decimal(getattr(obj, 'registered_cost', None))
-    cost_difference.short_description = 'Diferencia de costo'
+    def total_cost(self, obj):
+        """buys_costs + costs + expenses"""
+        return self._to_decimal(getattr(obj, 'buys_costs', None)) + self._to_decimal(getattr(obj, 'costs', None))+ self._to_decimal(getattr(obj, 'expenses', None))
+    total_cost.short_description = 'Costo total'
 
     def real_profit(self, obj):
-        """registered_revenue - invoice_cost (approximate real profit)"""
-        return self._to_decimal(getattr(obj, 'registered_revenue', None)) - self._to_decimal(getattr(obj, 'invoice_cost', None))
+        """revenues - total_cost (approximate real profit)"""
+        return self._to_decimal(getattr(obj, 'revenues', None)) - self._to_decimal(getattr(obj, 'total_cost', None))
     real_profit.short_description = 'Ganancia real'
 
-    def profit_difference(self, obj):
-        """Real profit - expected (registered_profit)"""
-        real = self._to_decimal(self.real_profit(obj))
-        expected = self._to_decimal(getattr(obj, 'registered_profit', None))
-        return real - expected
-    profit_difference.short_description = 'Diferencia de ganancia'
-
-    def profit_variance_percentage(self, obj):
-        expected = self._to_decimal(getattr(obj, 'registered_profit', None))
-        if expected == 0:
+    def profit_percentage(self, obj):
+        revenues = self._to_decimal(getattr(obj, 'revenues', None))
+        if revenues == 0:
             return Decimal('0.00')
-        diff = self._to_decimal(self.profit_difference(obj))
-        return (diff / expected) * 100
-    profit_variance_percentage.short_description = 'Porcentaje variación ganancia'
+        profit = self._to_decimal(getattr(obj, 'real_profit', None))
+        return (profit / revenues) * 100
+    profit_percentage.short_description = 'Porcentaje de ganancia'

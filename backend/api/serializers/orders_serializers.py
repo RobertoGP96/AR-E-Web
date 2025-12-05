@@ -72,6 +72,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "total_cost",
             "products",
             "received_value_of_client",
+            "payment_date",
         ]
         depth = 0
         read_only_fields = ["id"]
@@ -185,6 +186,7 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
             "pay_status",
             "observations",
             "received_value_of_client",
+            "payment_date"
         ]
 
     def validate_sales_manager(self, value):

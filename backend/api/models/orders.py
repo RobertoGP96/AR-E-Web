@@ -33,6 +33,8 @@ class Order(models.Model):
         default=0,
         help_text="Cantidad total recibida del cliente por este pedido"
     )
+    
+    payment_date = models.DateField(default=timezone.now, help_text="Fecha de pago")
 
     # Timestamps
     created_at = models.DateTimeField(default=timezone.now)

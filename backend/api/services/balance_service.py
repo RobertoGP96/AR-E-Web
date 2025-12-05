@@ -6,23 +6,23 @@ from datetime import datetime, date
 from typing import Dict, Any, Optional, Tuple
 from decimal import Decimal
 
-from api.models.expected_metrics import ExpectedMetrics
+from api.models.balance import Balance
 from api.models import Order, ProductBuyed, DeliverReceip
 
 
-class ExpectedMetricsService:
+class BalanceService:
     """
     Service class for handling Expected Metrics business logic.
     Provides methods for calculating actual values, summaries, and date range operations.
     """
 
     @staticmethod
-    def calculate_actuals_for_metric(metric: ExpectedMetrics) -> Dict[str, Any]:
+    def calculate_actuals_for_metric(metric: Balance) -> Dict[str, Any]:
         """
         Calculate actual costs and profits from real data within the date range of a metric.
 
         Args:
-            metric: ExpectedMetrics instance
+            metric: Balance instance
 
         Returns:
             Dict containing calculation results and metadata
@@ -204,7 +204,7 @@ class ExpectedMetricsService:
         Returns:
             Dict containing aggregated statistics
         """
-        metrics = ExpectedMetrics.objects.all()
+        metrics = Balance.objects.all()
 
         # Aggregate using the model fields that exist in the current model version
         summary_data = metrics.aggregate(
@@ -249,7 +249,7 @@ class ExpectedMetricsService:
             end = datetime.strptime(end_date, '%Y-%m-%d').date()
 
             # Filter metrics that overlap with the date range
-            metrics = ExpectedMetrics.objects.filter(
+            metrics = Balance.objects.filter(
                 Q(start_date__lte=end) & Q(end_date__gte=start)
             )
 
