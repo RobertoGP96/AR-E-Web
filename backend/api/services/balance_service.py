@@ -128,7 +128,7 @@ class BalanceService:
             total_expenses=Sum("expenses"),
   
             total_cost= Sum( "buys_costs") + Sum("costs")+ Sum("expenses"),
-            total_profit= Sum("real_profit"),
+            total_profit= Sum("revenues") - (Sum( "buys_costs") + Sum("costs")+ Sum("expenses")),
         )
 
         summary_data.update({
