@@ -2,8 +2,8 @@
  * Servicio para crear categorías
  */
 
-import { apiClient } from '../../lib/api-client';
-import type { Category } from '../../types/models/category';
+import { apiClient } from '@/lib/api-client';
+import type { Category } from '@/types/models/category';
 
 export interface CreateCategoryData {
   name: string;

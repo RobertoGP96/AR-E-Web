@@ -314,12 +314,8 @@ export default function BalanceReport() {
           </Card>
         </div>
       </div>
-
-
-
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 gap-5">
-
         {/* Pedidos */}
         <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow">
           <CardHeader className="pb-3 ">

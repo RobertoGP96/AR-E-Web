@@ -131,14 +131,12 @@ export type {
 
 // Modelo de Métricas Esperadas
 export type {
-  ExpectedMetrics,
-  CreateExpectedMetricsData,
-  UpdateExpectedMetricsData,
-  ExpectedMetricsFilters,
-  ExpectedMetricsSummary,
-  CalculateActualsResponse,
-  ExpectedMetricsListItem
-} from './expected-metrics';
+  Balance,
+  BalanceFilters,
+  BalanceSummary,
+  CreateBalanceData,
+  UpdateBalanceData
+} from './balance';
 
 // Estadísticas del dashboard
 export type {

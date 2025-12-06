@@ -34,7 +34,7 @@ export * from './delivery';
 export * from './analytics';
 
 // Servicios de métricas esperadas
-export * from './expected-metrics';
+export * from './balance';
 
 // Servicios de archivos
 export * from './files';

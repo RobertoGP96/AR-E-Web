@@ -17,93 +17,6 @@ class BalanceService:
     """
 
     @staticmethod
-    def calculate_actuals_for_metric(metric: Balance) -> Dict[str, Any]:
-        """
-        Calculate actual costs and profits from real data within the date range of a metric.
-
-        Args:
-            metric: Balance instance
-
-        Returns:
-            Dict containing calculation results and metadata
-        """
-        try:
-            # Query orders within date range
-            orders = Order.objects.filter(
-                created_at__date__gte=metric.start_date,
-                created_at__date__lte=metric.end_date
-            )
-
-            # Calculate actual profits from orders (received_value - total_cost)
-            # Since profit is calculated as received_value_of_client - total_cost(),
-            # and total_cost is a method, we need to calculate it differently
-            total_received_raw = orders.aggregate(
-                total_received=Sum('received_value_of_client')
-            )['total_received'] or 0
-            total_received = Decimal(str(total_received_raw)) if total_received_raw is not None else Decimal('0')
-
-            # For simplicity, we'll calculate profit as total_received - total_cost
-            # This requires getting all orders and calculating their total_cost
-            total_cost_from_orders = Decimal('0')
-            for order in orders:
-                total_cost_from_orders += Decimal(str(order.total_cost()))
-
-            actual_profit = total_received - total_cost_from_orders
-
-            # Calculate actual costs from products bought in the date range
-            products_bought = ProductBuyed.objects.filter(
-                shoping_receip__buy_date__date__gte=metric.start_date,
-                shoping_receip__buy_date__date__lte=metric.end_date
-            )
-
-            actual_cost_data = products_bought.aggregate(
-                total_cost=Sum('real_cost_of_product')
-            )
-            actual_cost_raw = actual_cost_data['total_cost'] or 0
-            actual_cost = Decimal(str(actual_cost_raw)) if actual_cost_raw is not None else Decimal('0')
-
-            # Calculate delivery totals in the metric range
-            deliveries = DeliverReceip.objects.filter(
-                deliver_date__date__gte=metric.start_date,
-                deliver_date__date__lte=metric.end_date
-            )
-
-            delivery_data = deliveries.aggregate(
-                total_weight=Sum('weight'),
-                total_delivery_cost=Sum('weight_cost')
-            )
-
-            total_delivery_weight_raw = delivery_data['total_weight'] or 0
-            total_delivery_cost_raw = delivery_data['total_delivery_cost'] or 0
-            total_delivery_weight = Decimal(str(total_delivery_weight_raw)) if total_delivery_weight_raw is not None else Decimal('0')
-            total_delivery_cost = Decimal(str(total_delivery_cost_raw)) if total_delivery_cost_raw is not None else Decimal('0')
-
-            # Update the metric with calculated invoice (actual) weight and combined delivery+purchase cost
-            # The model currently stores actuals in `invoice_cost` and `invoice_weight` fields.
-            metric.invoice_cost = total_delivery_cost + actual_cost
-            metric.invoice_weight = total_delivery_weight
-            metric.save()
-
-            return {
-                'success': True,
-                'actual_profit': actual_profit,
-                'actual_cost': actual_cost,
-                'delivery_cost': total_delivery_cost,
-                'purchase_cost': actual_cost,
-                'delivery_cost_including_purchases': total_delivery_cost + actual_cost,
-                'delivery_weight': total_delivery_weight,
-                'orders_count': orders.count(),
-                'products_bought_count': products_bought.count(),
-                'metric': metric
-            }
-
-        except Exception as e:
-            return {
-                'success': False,
-                'error': str(e)
-            }
-
-    @staticmethod
     def calculate_range_data(start_date: str, end_date: str) -> Dict[str, Any]:
         """
         Calculate actual data (weight, cost, profit) for a given date range.
@@ -204,26 +117,27 @@ class BalanceService:
         Returns:
             Dict containing aggregated statistics
         """
-        metrics = Balance.objects.all()
+        balances = Balance.objects.all()
 
         # Aggregate using the model fields that exist in the current model version
-        summary_data = metrics.aggregate(
+        summary_data = balances.aggregate(
+            total_system_weight=Sum('system_weight'),
             total_registered_weight=Sum('registered_weight'),
-            total_registered_cost=Sum('registered_cost'),
+            
             total_registered_revenue=Sum('registered_revenue'),
             total_registered_profit=Sum('registered_profit'),
             total_invoice_cost=Sum('invoice_cost'),
             total_invoice_weight=Sum('invoice_weight'),
+            
+            total_revenues=Sum("revenues"),
+            total_expenses=Sum("expenses"),
+  
+            total_cost= Sum("total_cost"),
+            total_profit= Sum("real_profit"),
         )
 
-        total_expected_cost = summary_data.get('total_registered_cost') or Decimal('0')
-        total_actual_cost = summary_data.get('total_invoice_cost') or Decimal('0')
-        total_expected_profit = summary_data.get('total_registered_profit') or Decimal('0')
-
         summary_data.update({
-            'total_cost_variance': total_actual_cost - total_expected_cost,
-            'total_profit_variance': (summary_data.get('total_registered_revenue') or Decimal('0')) - total_actual_cost,
-            'metrics_count': metrics.count()
+            'balances_count': balances.count()
         })
 
         return summary_data

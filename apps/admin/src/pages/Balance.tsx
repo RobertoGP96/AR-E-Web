@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
-  Calculator,
   TrendingUp,
   Calendar,
   DollarSign,
@@ -22,7 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { expectedMetricsService} from '@/services';
+import { balanceService } from '@/services';
 import ValueWithUnit from '@/components/utils/ValueWithUnit';
 import { Link } from 'react-router-dom';
 
@@ -35,50 +34,37 @@ const ExpectedMetricsPage = () => {
   
   // Query para obtener todas las métricas
   const { data: metricsResponse, isLoading } = useQuery({
-    queryKey: ['expected-metrics'],
-    queryFn: () => expectedMetricsService.getMetrics(),
+    queryKey: ['balance'],
+    queryFn: () => balanceService.getMetrics(),
   });
 
   // Query para obtener el resumen
   const { data: summaryResponse } = useQuery({
-    queryKey: ['expected-metrics-summary'],
-    queryFn: () => expectedMetricsService.getSummary(),
+    queryKey: ['balance-summary'],
+    queryFn: () => balanceService.getSummary(),
   });
 
   
 
   // Mutation para eliminar métrica
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => expectedMetricsService.deleteMetric(id),
+    mutationFn: (id: number) => balanceService.deleteMetric(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expected-metrics'] });
-      queryClient.invalidateQueries({ queryKey: ['expected-metrics-summary'] });
-      toast.success('Métrica eliminada correctamente');
+      queryClient.invalidateQueries({ queryKey: ['balance'] });
+      queryClient.invalidateQueries({ queryKey: ['balance-summary'] });
+      toast.success('Balance eliminado correctamente');
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'No se pudo eliminar la métrica';
+      const message = error instanceof Error ? error.message : 'No se pudo eliminar el balance';
       toast.error(message);
     },
   });
 
-  // Mutation para calcular valores reales
-  const calculateActualsMutation = useMutation({
-    mutationFn: (id: number) => expectedMetricsService.calculateActuals(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expected-metrics'] });
-      queryClient.invalidateQueries({ queryKey: ['expected-metrics-summary'] });
-      toast.success('Valores reales calculados correctamente');
-    },
-    onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'No se pudieron calcular los valores reales';
-      toast.error(message);
-    },
-  });
 
 
 
   const handleDelete = (id: number) => {
-    if (window.confirm('¿Estás seguro de eliminar esta métrica?')) {
+    if (window.confirm('¿Estás seguro de eliminar este balance?')) {
       deleteMutation.mutate(id);
     }
   };
@@ -130,7 +116,7 @@ const ExpectedMetricsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                <ValueWithUnit value={summary?.total_registered_weight || 0} unit="Lb" />
+                <ValueWithUnit value={summary.total_system_weight || 0} unit="Lb" />
               </div>
             </CardContent>
           </Card>
@@ -142,7 +128,7 @@ const ExpectedMetricsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(summary?.total_registered_profit || 0)}
+                {formatCurrency(summary.total_expenses || 0)}
               </div>
             </CardContent>
           </Card>
@@ -154,11 +140,8 @@ const ExpectedMetricsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency((summary?.total_invoice_cost || 0))}
+                {formatCurrency((summary.total_cost || 0))}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Varianza: {formatCurrency(summary?.total_cost_variance || 0)}
-              </p>
             </CardContent>
           </Card>
 
@@ -169,11 +152,8 @@ const ExpectedMetricsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(summary?.total_registered_profit - ((summary?.total_invoice_cost || 0)))}
+                {formatCurrency(summary?.total_registered_profit - ((summary.total_profit || 0)))}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Varianza: {formatCurrency(summary?.total_profit_variance || 0)}
-              </p>
             </CardContent>
           </Card>
         </div>
@@ -231,28 +211,20 @@ const ExpectedMetricsPage = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          <ValueWithUnit value={Number(metric.registered_weight) - Number(metric.invoice_weight)} unit="Lb" />
+                          <ValueWithUnit value={Number(metric.registered_weight) +" - "+ Number(metric.system_weight)} unit="Lb" />
                         </TableCell>
                         <TableCell className="text-right">
-                          {formatCurrency(Number(metric.registered_cost) - Number(metric.invoice_cost))}
+                          {formatCurrency(Number(metric.total_cost))}
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(metric.registered_revenue)}
+                          {formatCurrency(metric.revenues)}
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(metric.registered_profit)}
+                          {formatCurrency(metric.real_profit)}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => calculateActualsMutation.mutate(metric.id as number)}
-                              disabled={calculateActualsMutation.isPending}
-                              title="Calcular valores reales"
-                            >
-                              <Calculator className="h-4 w-4" />
-                            </Button>
+
                             <Button
                               variant="ghost"
                               size="icon"
