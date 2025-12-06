@@ -23,11 +23,21 @@ def analyze_orders(start_date=None, end_date=None, months_back=12, limit_per_ord
         dict: contains totals, by_status and monthly_trend and details for orders
     """
     qs = Order.objects.all()
+    
+    #Revenues for order pay off on range date
+    others_revenues = qs
+    if start_date:
+        others_revenues = qs.filter(payment_date__gte=start_date)
+    if end_date:
+        others_revenues = qs.filter(payment_date__lte=end_date)
+
     if start_date:
         qs = qs.filter(created_at__gte=start_date)
     if end_date:
         qs = qs.filter(created_at__lte=end_date)
 
+    qs.aaggregate(others_revenues)
+    
     # Basic aggregates
     total_revenue = qs.aggregate(total=Sum('received_value_of_client'))['total'] or 0.0
     count = qs.count()
