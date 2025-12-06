@@ -127,7 +127,7 @@ class BalanceService:
             total_revenues=Sum("revenues"),
             total_expenses=Sum("expenses"),
   
-            total_cost= Sum("total_cost"),
+            total_cost= Sum( "buys_cost"+"expenses"+"costs"),
             total_profit= Sum("real_profit"),
         )
 
