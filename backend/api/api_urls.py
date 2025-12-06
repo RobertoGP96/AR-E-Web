@@ -28,7 +28,9 @@ router.register(r"tag", views.TagViewSet)
 router.register(r"expense", views.ExpenseViewSet)
 
 urlpatterns = [
+    # Inclusión de las rutas del router bajo el prefijo `api_data/`
     path("api_data/", include(router.urls)),
+    
     # Endpoint explícito para las órdenes del usuario autenticado
     path("user/", views.CurrentUserView.as_view(), name="current_user"),
     path("verify_user/<str:verification_secret>", views.verify_user, name="verify_user"),
@@ -40,10 +42,17 @@ urlpatterns = [
         name="recover_password",
     ),
     path("image_upload/", views.ImageUploadApiView.as_view(), name="image_upload"),
+    # Posting Management Security URL
     path("security/", views.Protection.as_view(), name="posting_management"),
+    # Amazon Scraping URL
     path("amazon/scrape/", views.AmazonScrapingView.as_view(), name="amazon_scraping"),
+    # Admin User Creation URL
     path("admin/create/", views.CreateAdminView.as_view(), name="create_admin_user"),
+    
+    # Dashboard URLs
     path("api_data/dashboard/stats/", views.DashboardMetricsView.as_view(), name="dashboard_stats"),
+    
+    # Reports URLs
     path("api_data/reports/profits/", views.ProfitReportsView.as_view(), name="profit_reports"),
     path("api_data/reports/expenses/", views.ExpenseAnalysisView.as_view(), name="expense_analysis"),
     path("api_data/reports/deliveries/", views.DeliveryAnalysisView.as_view(), name="delivery_analysis"),

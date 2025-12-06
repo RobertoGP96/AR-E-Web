@@ -124,11 +124,6 @@ class BalanceService:
             total_system_weight=Sum('system_weight'),
             total_registered_weight=Sum('registered_weight'),
             
-            total_registered_revenue=Sum('registered_revenue'),
-            total_registered_profit=Sum('registered_profit'),
-            total_invoice_cost=Sum('invoice_cost'),
-            total_invoice_weight=Sum('invoice_weight'),
-            
             total_revenues=Sum("revenues"),
             total_expenses=Sum("expenses"),
   

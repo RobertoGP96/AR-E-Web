@@ -152,7 +152,7 @@ const ExpectedMetricsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(summary?.total_registered_profit - ((summary.total_profit || 0)))}
+                {formatCurrency(summary.total_profit || 0 )}
               </div>
             </CardContent>
           </Card>

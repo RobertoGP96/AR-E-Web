@@ -76,15 +76,13 @@ export interface BalanceFilters {
  * Resumen de métricas esperadas
  */
 export interface BalanceSummary {
-  total_system_weight: number;
-  total_registered_weight: number;
-  total_registered_revenue: number;
-  total_registered_profit: number;
-  total_invoice_cost: number;
-  total_invoice_weight: number;
-  total_revenues: number;
-  total_expenses: number;
-  total_cost: number;
-  total_profit: number;
+
+  total_system_weight:number;
+  total_registered_weight:number;          
+  total_revenues:number;
+  total_expenses:number;
+  
+  total_cost:number;
+  total_profit:number;
   balance_count: number;
 }
