@@ -61,7 +61,7 @@ export default function ShopsList({
                     </div>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-800 text-base">
+                        <span className="font-semibold capitalize text-gray-800 text-base">
                           {shop.name}
                         </span>
 

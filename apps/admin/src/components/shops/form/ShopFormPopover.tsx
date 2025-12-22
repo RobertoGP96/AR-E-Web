@@ -216,7 +216,7 @@ export default function ShopFormPopover({
                             id="name"
                             type="text"
                             value={formData.name}
-                            onChange={(e) => handleInputChange('name', e.target.value)}
+                            onChange={(e) => handleInputChange('name', e.target.value.toLowerCase())}
                             placeholder="Ej: Amazon Store"
                             className={`transition-colors ${errors.name
                                     ? 'border-red-300 focus:border-red-500 focus:ring-red-500'

@@ -85,7 +85,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "date_joined",
             "full_name",
         ]
-        read_only_fields = ["id", "is_staff", "is_active", "is_verified", "date_joined"]
+        read_only_fields = ["id", "date_joined"]
 
     def validate_phone_number(self, value):
         clean_value = value.strip()
