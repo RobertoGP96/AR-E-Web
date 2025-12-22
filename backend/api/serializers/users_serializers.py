@@ -321,6 +321,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "role",
             "agent_profit",
             "assigned_agent",
+            "agent_name",
             "is_staff",
             "is_active",
             "is_verified",
