@@ -6,16 +6,18 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { formatCurrency, type Order } from '@/types';
 import { calculatePaymentStatus } from '@/lib/payment-status-calculator';
+import { DatePicker } from '../utils/DatePicker';
 
 interface ConfirmPaymentDialogProps {
   order: Order | null;
   open: boolean;
   onClose: () => void;
-  onConfirm: (orderId: number, amountReceived: number) => Promise<void>;
+  onConfirm: (orderId: number, amountReceived: number, paymentDate: Date | undefined) => Promise<void>;
 }
 
 export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: ConfirmPaymentDialogProps) {
   const [amountReceived, setAmountReceived] = useState<string>('');
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>('');
 
@@ -60,7 +62,7 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
 
     try {
       console.log(`[ConfirmPaymentDialog] Confirmando pago - Order ID: ${order.id}, Amount: ${amount}`);
-      await onConfirm(order.id, amount);
+      await onConfirm(order.id, amount, paymentDate);
       handleClose();
     } catch (err) {
       setError('Error al confirmar el pago. Intenta nuevamente.');
@@ -149,6 +151,10 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
               {error && (
                 <p className="text-sm text-red-500">{error}</p>
               )}
+            </div>
+            {/* Campo para ingresar cantidad recibida */}
+            <div className="space-y-2">
+              <DatePicker label='Fecha de pago' selected={paymentDate} onDateChange={setPaymentDate} />
             </div>
 
             {/* Información adicional */}

@@ -29,7 +29,7 @@ interface OrderTableProps {
   isLoading?: boolean;
   onEdit?: (order: Order) => void;
   onDelete?: (order: Order) => void;
-  onConfirmPayment?: (orderId: number, amountReceived: number) => void;
+  onConfirmPayment?: (orderId: number, amountReceived: number, paymentDate: Date | undefined) => void;
   onAddProducts?: (order: Order) => void;
   itemsPerPage?: number;
 }
@@ -125,10 +125,11 @@ const OrderTable: React.FC<OrderTableProps> = ({
     }
   };
 
-  const handlePaymentConfirm = async (orderId: number, amountReceived: number) => {
+  const handlePaymentConfirm = async (orderId: number, amountReceived: number, paymentDate: Date | undefined) => {
     console.log(`[OrdersTable] handlePaymentConfirm llamado con:`, {
       orderId,
       amountReceived,
+      paymentDate,
       selectedOrder: selectedOrderForPayment
     });
 
@@ -140,9 +141,9 @@ const OrderTable: React.FC<OrderTableProps> = ({
 
     try {
       if (onConfirmPayment && selectedOrderForPayment) {
-        // Si se proporciona un callback personalizado, pásale el id y la cantidad recibida
+        // Si se proporciona un callback personalizado, pásale el id, la cantidad recibida y la fecha de pago
         console.log('[OrdersTable] Usando callback personalizado onConfirmPayment con amount');
-        await onConfirmPayment(orderId, amountReceived);
+        await onConfirmPayment(orderId, amountReceived, paymentDate);
       } else {
         // Usar el hook de mutación
         console.log(`[OrdersTable] Llamando a markOrderAsPaidMutation con orderId: ${orderId}, amount: ${amountReceived}`);

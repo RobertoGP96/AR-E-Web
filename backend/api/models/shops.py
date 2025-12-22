@@ -27,7 +27,7 @@ class Shop(models.Model):
 class BuyingAccounts(models.Model):
     """Accounts for buying in Shops"""
 
-    account_name = models.CharField(max_length=100, unique=True)
+    account_name = models.CharField(max_length=100)
     shop = models.ForeignKey('Shop', on_delete=models.CASCADE, related_name='buying_accounts', null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

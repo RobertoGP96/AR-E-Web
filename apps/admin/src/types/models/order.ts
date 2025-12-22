@@ -31,6 +31,7 @@ export interface Order {
   total_products_purchased: number;
   total_products_delivered: number;
   
+  payment_date?: DateTime
   // Timestamps
   created_at: DateTime;
   updated_at: DateTime;

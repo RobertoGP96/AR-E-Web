@@ -22,7 +22,7 @@ export interface CustomUser {
   email: string;
   name: string;
   last_name: string;
-  home_address: string;
+  home_address?: string;
   phone_number: string;
 
   // Roles

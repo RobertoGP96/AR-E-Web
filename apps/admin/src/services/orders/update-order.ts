@@ -55,24 +55,20 @@ export const assignOrderToAgent = async (orderId: number, agentEmail: string): P
  * - Si 0 < received_value < total_cost => 'Parcial'
  * - Si received_value == 0 => 'No pagado'
  */
-export const markOrderAsPaid = async (id: number, amountReceived?: number): Promise<Order> => {
+export const markOrderAsPaid = async (id: number, amountReceived?: number, paymentDate?: Date): Promise<Order> => {
   // Validar que el ID sea válido
   if (!id || id === undefined || id === null) {
     const error = `[markOrderAsPaid] ERROR: ID inválido recibido: ${id}`;
     console.error(error);
     throw new Error('ID de orden inválido. No se puede actualizar el pago.');
   }
-
-  console.log(`[markOrderAsPaid] Parámetros recibidos - ID: ${id}, Amount: ${amountReceived}`);
-
   // Si se proporciona una cantidad recibida, actualizamos solo ese campo
   // El backend se encargará de ajustar automáticamente el pay_status
   if (amountReceived !== undefined && amountReceived > 0) {
-    console.log(`[markOrderAsPaid] Actualizando orden ${id} con cantidad recibida: ${amountReceived}`);
     const url = `/api_data/order/${id}/`;
-    console.log(`[markOrderAsPaid] URL completa: ${url}`);
     return await apiClient.patch<Order>(url, {
-      received_value_of_client: amountReceived
+      received_value_of_client: amountReceived,
+      payment_date: paymentDate
     });
   }
   

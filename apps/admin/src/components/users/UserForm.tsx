@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -25,9 +25,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Eye, Mail, Phone, MapPin, Shield, Percent, User2, Lock, CheckCircle, XCircle, UserCheck, UserX, UserPlus, Save, Loader2 } from 'lucide-react';
+import { Eye, Mail, Phone, MapPin, Shield, Percent, User2, Lock, CheckCircle, XCircle, UserCheck, UserX, UserPlus, Save, Loader2, InfoIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUsersByRole } from '@/hooks/user';
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '../ui/input-group';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 // Schema para crear usuario (contraseña requerida)
 const createUserSchema = z.object({
@@ -71,13 +73,13 @@ interface UserFormProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export const UserForm: React.FC<UserFormProps> = ({ 
-  user, 
-  onSubmit, 
+export const UserForm: React.FC<UserFormProps> = ({
+  user,
+  onSubmit,
   onActivate,
   onVerify,
-  mode = 'create', 
-  loading = false, 
+  mode = 'create',
+  loading = false,
   error,
   trigger,
   open: controlledOpen,
@@ -86,7 +88,7 @@ export const UserForm: React.FC<UserFormProps> = ({
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
-  const setOpen = isControlled ? controlledOnOpenChange || (() => {}) : setInternalOpen;
+  const setOpen = isControlled ? controlledOnOpenChange || (() => { }) : setInternalOpen;
 
   const isEdit = mode === 'edit';
   const isView = mode === 'view';
@@ -103,7 +105,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         home_address: '',
         phone_number: '',
         password: '',
-        role: 'user',
+        role: 'client',
         agent_profit: 0,
         assigned_agent: undefined,
       };
@@ -126,7 +128,7 @@ export const UserForm: React.FC<UserFormProps> = ({
       last_name: '',
       home_address: '',
       phone_number: '',
-      role: 'user',
+      role: 'client',
       agent_profit: 0,
       assigned_agent: undefined,
     };
@@ -149,6 +151,8 @@ export const UserForm: React.FC<UserFormProps> = ({
 
   // Obtener lista de agentes para asignar
   const { data: agentsData } = useUsersByRole('agent');
+  const { data: adminsData } = useUsersByRole('admin');
+
 
   // Resetear el formulario cuando cambia el usuario o el modo
   React.useEffect(() => {
@@ -254,10 +258,10 @@ export const UserForm: React.FC<UserFormProps> = ({
           });
           return;
         }
-        
+
         // Llamar a onSubmit y esperar (puede lanzar error)
         await onSubmit(updateData as UpdateUserData);
-        
+
         // Si llegamos aquí, fue exitoso - NO mostrar toast, lo hace el padre
       } else if (isCreate) {
         const createUserData: CreateUserData = {
@@ -273,11 +277,11 @@ export const UserForm: React.FC<UserFormProps> = ({
         };
 
         await onSubmit(createUserData);
-        
+
         toast.success('Usuario creado exitosamente', {
           description: `${data.name} ${data.last_name} ha sido registrado como ${roleLabels[data.role as keyof typeof roleLabels]}`,
         });
-        
+
         reset(getDefaultValues());
         setOpen(false);
       }
@@ -542,9 +546,9 @@ export const UserForm: React.FC<UserFormProps> = ({
               <Mail className="h-4 w-4" />
               Información de contacto
             </h3>
-            
+
             <div className="grid grid-cols-1 gap-4">
-             
+
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -552,11 +556,11 @@ export const UserForm: React.FC<UserFormProps> = ({
                     <User2 className="h-3.5 w-3.5 text-muted-foreground" />
                     Nombre *
                   </Label>
-                  <Input 
+                  <Input
                     id="name"
-                    type="text" 
-                    placeholder="Juan" 
-                    {...register('name')} 
+                    type="text"
+                    placeholder="Juan"
+                    {...register('name')}
                     disabled={loading}
                     className="h-10"
                   />
@@ -573,11 +577,11 @@ export const UserForm: React.FC<UserFormProps> = ({
                     <User2 className="h-3.5 w-3.5 text-muted-foreground" />
                     Apellido *
                   </Label>
-                  <Input 
+                  <Input
                     id="last_name"
-                    type="text" 
-                    placeholder="Pérez" 
-                    {...register('last_name')} 
+                    type="text"
+                    placeholder="Pérez"
+                    {...register('last_name')}
                     disabled={loading}
                     className="h-10"
                   />
@@ -595,11 +599,11 @@ export const UserForm: React.FC<UserFormProps> = ({
                   <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                   Teléfono *
                 </Label>
-                <Input 
+                <Input
                   id="phone_number"
-                  type="tel" 
-                  placeholder="+1234567890" 
-                  {...register('phone_number')} 
+                  type="tel"
+                  placeholder="+1234567890"
+                  {...register('phone_number')}
                   disabled={loading}
                   className="h-10"
                 />
@@ -616,11 +620,11 @@ export const UserForm: React.FC<UserFormProps> = ({
                   <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                   Dirección
                 </Label>
-                <Input 
+                <Input
                   id="home_address"
-                  type="text" 
-                  placeholder="Calle Principal #123, Ciudad, País (opcional)" 
-                  {...register('home_address')} 
+                  type="text"
+                  placeholder="Calle Principal #123, Ciudad, País (opcional)"
+                  {...register('home_address')}
                   disabled={loading}
                   className="h-10"
                 />
@@ -632,16 +636,16 @@ export const UserForm: React.FC<UserFormProps> = ({
                 )}
               </div>
 
-               <div className="space-y-2">
+              <div className="space-y-2">
                 <Label htmlFor="email" className="flex items-center gap-2">
                   <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                   Email
                 </Label>
-                <Input 
+                <Input
                   id="email"
-                  type="email" 
-                  placeholder="usuario@ejemplo.com" 
-                  {...register('email')} 
+                  type="email"
+                  placeholder="usuario@ejemplo.com"
+                  {...register('email')}
                   disabled={loading}
                   className="h-10"
                 />
@@ -665,27 +669,26 @@ export const UserForm: React.FC<UserFormProps> = ({
                   <Lock className="h-4 w-4" />
                   Seguridad
                 </h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="flex items-center gap-2">
-                    <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                    Contraseña <span className="text-destructive">*</span>
-                  </Label>
-                  <Input 
-                    id="password"
-                    type="password" 
-                    placeholder="Mínimo 6 caracteres" 
-                    {...register('password')} 
-                    disabled={loading}
-                    className="h-10"
-                  />
-                  {isCreate && (errors as Record<string, { message?: string }>).password && (
-                    <span className="text-destructive text-xs flex items-center gap-1">
-                      <XCircle className="h-3 w-3" />
-                      {(errors as Record<string, { message?: string }>).password.message}
-                    </span>
-                  )}
-                </div>
+
+                <InputGroup>
+                  <InputGroupInput placeholder="Crea una contraseña" type="password" {...register('password')} />
+                  <InputGroupAddon align="inline-end">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <InputGroupButton
+                          variant="ghost"
+                          aria-label="Info"
+                          size="icon-xs"
+                        >
+                          <InfoIcon />
+                        </InputGroupButton>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Debe tener no menos 8 caracteres</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </InputGroupAddon>
+                </InputGroup>
               </div>
 
               <Separator />
@@ -742,11 +745,11 @@ export const UserForm: React.FC<UserFormProps> = ({
                     <Percent className="h-3.5 w-3.5 text-muted-foreground" />
                     Ganancia de agente (%)
                   </Label>
-                  <Input 
+                  <Input
                     id="agent_profit"
-                    type="number" 
-                    placeholder="0" 
-                    {...register('agent_profit', { valueAsNumber: true })} 
+                    type="number"
+                    placeholder="0"
+                    {...register('agent_profit', { valueAsNumber: true })}
                     min={0}
                     max={100}
                     step={0.01}
@@ -794,6 +797,11 @@ export const UserForm: React.FC<UserFormProps> = ({
                               {agent.name} {agent.last_name}
                             </SelectItem>
                           ))}
+                          {adminsData?.results?.map((admin) => (
+                            <SelectItem className="bg-gray-200" key={admin.id} value={admin.id.toString()}>
+                              {admin.name} {admin.last_name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     )}
@@ -810,17 +818,17 @@ export const UserForm: React.FC<UserFormProps> = ({
           </div>
 
           <DialogFooter className="gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => setOpen(false)}
               disabled={loading}
             >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
-              disabled={loading} 
+            <Button
+              type="submit"
+              disabled={loading}
               className="gap-2"
             >
               {getButtonIcon()}
@@ -840,8 +848,8 @@ interface ViewUserButtonProps {
 
 export const ViewUserButton: React.FC<ViewUserButtonProps> = ({ user }) => {
   return (
-    <UserForm 
-      user={user} 
+    <UserForm
+      user={user}
       mode="view"
       trigger={
         <Button variant="ghost" size="sm">
