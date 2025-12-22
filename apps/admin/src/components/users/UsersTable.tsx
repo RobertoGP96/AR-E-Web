@@ -405,28 +405,16 @@ export default function UsersTable({
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {
-                      user.assigned_agent ? (
-                        <div className="flex items-center space-x-4">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-gradient-to-br from-orange-400 to-yellow-200 font-semibold">
-                              
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">
-                              {user.full_name}
-                            </div>
-                            <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                              <Phone className="h-3 w-3" />
-                              {user.phone_number}
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div></div>
-                      )
-                    }
+                    {user.agent_name ? (
+                      <div className="flex items-center gap-2">
+                        <Handshake className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-700">
+                          {user.agent_name}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400 italic">Sin agente</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {user.is_verified ? (

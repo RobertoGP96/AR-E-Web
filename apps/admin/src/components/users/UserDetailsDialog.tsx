@@ -154,6 +154,14 @@ export default function UserDetailsDialog({ user, open, onOpenChange }: UserDeta
                 <span className="font-medium text-gray-900">{formatDate(user.date_joined)}</span>
               </div>
               
+              {user.agent_name && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Handshake className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-600">Agente asignado:</span>
+                  <span className="font-medium text-gray-900">{user.agent_name}</span>
+                </div>
+              )}
+              
               {user.role === 'agent' && (
                 <div className="flex items-center gap-3 text-sm">
                   <Handshake className="h-4 w-4 text-gray-400" />

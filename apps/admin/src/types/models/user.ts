@@ -45,6 +45,7 @@ export interface CustomUser {
 
   // Propiedades computadas
   full_name: string;
+  agent_name?: string | null;
 
   // Extras para UI (no existen en el modelo pero útiles para la tabla)
   ordersCount?: number;
