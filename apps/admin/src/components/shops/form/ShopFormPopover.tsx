@@ -124,7 +124,7 @@ export default function ShopFormPopover({
                 // El backend usa lookup_field = 'name', por lo que la URL espera el nombre de la tienda
                 const { updateShopService } = await import('@/services/shops');
                 // Usar el nombre original (shop.name) para buscar la instancia y enviar los datos actualizados
-                result = await updateShopService.updateShop(shop.name, submitData);
+                result = await updateShopService.updateShop(shop.id, submitData);
                 toast.success('Tienda actualizada', {
                     description: `"${result.name}" ha sido actualizada exitosamente`
                 });

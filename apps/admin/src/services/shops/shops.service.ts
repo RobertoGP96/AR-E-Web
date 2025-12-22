@@ -50,14 +50,14 @@ export class ShopsService {
   /**
    * Actualiza una tienda existente
    */
-  async updateShop(id: string | number, data: Partial<UpdateShopData>): Promise<Shop> {
+  async updateShop(id: number, data: Partial<UpdateShopData>): Promise<Shop> {
     return apiClient.patch<Shop>(`${this.baseUrl}/${id}/`, data);
   }
 
   /**
    * Elimina una tienda
    */
-  async deleteShop(id: string | number): Promise<void> {
+  async deleteShop(id: number): Promise<void> {
     return apiClient.delete<void>(`${this.baseUrl}/${id}/`);
   }
 

@@ -102,7 +102,7 @@ export default function UsersTable({
   // Función para generar números de página con puntos suspensivos
   const getPageNumbers = () => {
     const pages: (number | 'ellipsis')[] = [];
-    
+
     if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -130,7 +130,7 @@ export default function UsersTable({
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -152,7 +152,7 @@ export default function UsersTable({
     if (!dialogState.user) return;
 
     const userId = dialogState.user.id;
-    
+
     // Debug: verificar que el ID sea válido
     if (!userId || userId === undefined) {
       console.error('Error: ID de usuario inválido', dialogState.user);
@@ -344,216 +344,240 @@ export default function UsersTable({
   return (
     <>
       <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(100vh-15rem)]">
-          <Table>
-            <TableHeader className='bg-gray-100 rounded-sm sticky top-0 z-10'>
-              <TableRow>
-                <TableHead className="text-center bg-gray-100">#</TableHead>
-                <TableHead className="bg-gray-100">Usuario</TableHead>
-                <TableHead className="bg-gray-100">Correo</TableHead>
-                <TableHead className="bg-gray-100">Rol</TableHead>
-                <TableHead className="bg-gray-100">Verificación</TableHead>
-                <TableHead className="bg-gray-100">Activación</TableHead>
-                <TableHead className="bg-gray-100">Registro</TableHead>
-                <TableHead className="text-right bg-gray-100">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-          {paginatedUsers.map((user, index) => {
-            const RoleIcon = roleIcons[user.role];
-            
-            return (
-              <TableRow
-                key={user.id}
-                className="group"
-              >
-                <TableCell className="py-4 px-3 text-center w-16">
-                  <span className="inline-flex items-center justify-center w-8 h-8 text-gray-700 text-sm font-medium">
-                    {(currentPage - 1) * itemsPerPage + index + 1}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-gradient-to-br from-orange-400 to-yellow-200 font-semibold">
-                        {user.name.charAt(0)}{user.last_name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">
-                        {user.full_name}
-                      </div>
-                      <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                        <Phone className="h-3 w-3" />
-                        {user.phone_number}
+        <Table>
+          <TableHeader className='bg-gray-100 rounded-sm sticky top-0 z-10'>
+            <TableRow>
+              <TableHead className="text-center bg-gray-100">#</TableHead>
+              <TableHead className="bg-gray-100">Usuario</TableHead>
+              <TableHead className="bg-gray-100">Correo</TableHead>
+              <TableHead className="bg-gray-100">Rol</TableHead>
+              <TableHead className="bg-gray-100">Agente</TableHead>
+              <TableHead className="bg-gray-100">Verificación</TableHead>
+              <TableHead className="bg-gray-100">Activación</TableHead>
+              <TableHead className="bg-gray-100">Registro</TableHead>
+              <TableHead className="text-right bg-gray-100">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedUsers.map((user, index) => {
+              const RoleIcon = roleIcons[user.role];
+
+              return (
+                <TableRow
+                  key={user.id}
+                  className="group"
+                >
+                  <TableCell className="py-4 px-3 text-center w-16">
+                    <span className="inline-flex items-center justify-center w-8 h-8 text-gray-700 text-sm font-medium">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-4">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-gradient-to-br from-orange-400 to-yellow-200 font-semibold">
+                          {user.name.charAt(0)}{user.last_name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">
+                          {user.full_name}
+                        </div>
+                        <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                          <Phone className="h-3 w-3" />
+                          {user.phone_number}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">
-                      {user.email || <span className="text-gray-400 italic">Sin email</span>}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={"secondary"} className="rounded-full px-3 py-1 flex items-center gap-1 w-fit">
-                    <RoleIcon className="h-5 w-5" />
-                    {roleLabels[user.role]}
-                  </Badge>
-                </TableCell>
-                
-                <TableCell>
-                  {user.is_verified ? (
-                    <Badge className="rounded-full px-3 py-1 w-fit bg-green-100 text-green-700 flex items-center gap-1">
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      Verificado
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-700">
+                        {user.email || <span className="text-gray-400 italic">Sin email</span>}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={"secondary"} className="rounded-full px-3 py-1 flex items-center gap-1 w-fit">
+                      <RoleIcon className="h-5 w-5" />
+                      {roleLabels[user.role]}
                     </Badge>
-                  ) : (
-                    <Badge className="rounded-full px-3 py-1 w-fit bg-yellow-100 text-yellow-700 flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      Sin verificar
-                    </Badge>
-                  )}
-                </TableCell>
-                
-                <TableCell>
-                  {user.is_active ? (
-                    <Badge className="rounded-full px-3 py-1 w-fit bg-blue-100 text-blue-700 flex items-center gap-1">
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      Activo
-                    </Badge>
-                  ) : (
-                    <Badge className="rounded-full px-3 py-1 w-fit bg-gray-100 text-gray-600 flex items-center gap-1">
-                      <XCircle className="h-3.5 w-3.5" />
-                      Inactivo
-                    </Badge>
-                  )}
-                </TableCell>
-                
-                <TableCell>
-                  <div className='flex items-center'>
-                    <Clock className="h-4 w-4 inline-block mr-1" />
-                    <span>{formatDate(user.date_joined)}</span>
-                  </div>
-                </TableCell>
-
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewDetails(user);
-                        }}
-                        className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                      >
-                        <Eye className="h-4 w-4" />
-                        Ver detalles
-                      </DropdownMenuItem>
-                      
-                      <DropdownMenuSeparator />
-                      
-                      {!user.is_verified && (
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDialogState({ type: 'verify', user });
-                          }}
-                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                        >
-                          <UserCheck className="h-4 w-4" />
-                          Verificar usuario
-                        </DropdownMenuItem>
-                      )}
-                      
-                      {user.is_active ? (
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDialogState({ type: 'deactivate', user });
-                          }}
-                          className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
-                        >
-                          <XCircle className="h-4 w-4" />
-                          Desactivar usuario
-                        </DropdownMenuItem>
+                  </TableCell>
+                  <TableCell>
+                    {
+                      user.assigned_agent ? (
+                        <div className="flex items-center space-x-4">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="bg-gradient-to-br from-orange-400 to-yellow-200 font-semibold">
+                              
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">
+                              {user.full_name}
+                            </div>
+                            <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                              <Phone className="h-3 w-3" />
+                              {user.phone_number}
+                            </div>
+                          </div>
+                        </div>
                       ) : (
+                        <div></div>
+                      )
+                    }
+                  </TableCell>
+                  <TableCell>
+                    {user.is_verified ? (
+                      <Badge className="rounded-full px-3 py-1 w-fit bg-green-100 text-green-700 flex items-center gap-1">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        Verificado
+                      </Badge>
+                    ) : (
+                      <Badge className="rounded-full px-3 py-1 w-fit bg-yellow-100 text-yellow-700 flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        Sin verificar
+                      </Badge>
+                    )}
+                  </TableCell>
+
+                  <TableCell>
+                    {user.is_active ? (
+                      <Badge className="rounded-full px-3 py-1 w-fit bg-blue-100 text-blue-700 flex items-center gap-1">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        Activo
+                      </Badge>
+                    ) : (
+                      <Badge className="rounded-full px-3 py-1 w-fit bg-gray-100 text-gray-600 flex items-center gap-1">
+                        <XCircle className="h-3.5 w-3.5" />
+                        Inactivo
+                      </Badge>
+                    )}
+                  </TableCell>
+
+                  <TableCell>
+                    <div className='flex items-center'>
+                      <Clock className="h-4 w-4 inline-block mr-1" />
+                      <span>{formatDate(user.date_joined)}</span>
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
-                            setDialogState({ type: 'activate', user });
+                            handleViewDetails(user);
                           }}
-                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
                         >
-                          <CheckCircle className="h-4 w-4" />
-                          Activar usuario
+                          <Eye className="h-4 w-4" />
+                          Ver detalles
                         </DropdownMenuItem>
-                      )}
-                      
-                      <DropdownMenuSeparator />
-                      
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEditUser?.(user);
-                        }}
-                        className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                      >
-                        <Edit className="h-4 w-4" />
-                        Editar usuario
-                      </DropdownMenuItem>
-                      
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setUserToChangePassword(user);
-                          setShowPasswordPopover(true);
-                        }}
-                        className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
-                      >
-                        <Key className="h-4 w-4" />
-                        Cambiar contraseña
-                      </DropdownMenuItem>
-                      
-                      <DropdownMenuSeparator />
-                      
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          
-                          // Validación: verificar que el usuario tenga un ID válido
-                          if (!user || !user.id) {
-                            console.error('Error: Usuario sin ID válido', user);
-                            toast.error('Error: No se puede eliminar un usuario sin ID');
-                            return;
-                          }
-                          
-                          setDialogState({ type: 'delete', user });
-                        }}
-                        className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Eliminar usuario
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-            </TableBody>
-          </Table>
+
+                        <DropdownMenuSeparator />
+
+                        {!user.is_verified && (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDialogState({ type: 'verify', user });
+                            }}
+                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                          >
+                            <UserCheck className="h-4 w-4" />
+                            Verificar usuario
+                          </DropdownMenuItem>
+                        )}
+
+                        {user.is_active ? (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDialogState({ type: 'deactivate', user });
+                            }}
+                            className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
+                          >
+                            <XCircle className="h-4 w-4" />
+                            Desactivar usuario
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDialogState({ type: 'activate', user });
+                            }}
+                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Activar usuario
+                          </DropdownMenuItem>
+                        )}
+
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditUser?.(user);
+                          }}
+                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Editar usuario
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setUserToChangePassword(user);
+                            setShowPasswordPopover(true);
+                          }}
+                          className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                        >
+                          <Key className="h-4 w-4" />
+                          Cambiar contraseña
+                        </DropdownMenuItem>
+
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+
+                            // Validación: verificar que el usuario tenga un ID válido
+                            if (!user || !user.id) {
+                              console.error('Error: Usuario sin ID válido', user);
+                              toast.error('Error: No se puede eliminar un usuario sin ID');
+                              return;
+                            }
+
+                            setDialogState({ type: 'delete', user });
+                          }}
+                          className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Eliminar usuario
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       </div>
 
       {/* Diálogo de confirmación */}
@@ -611,7 +635,7 @@ export default function UsersTable({
                 className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
-            
+
             {getPageNumbers().map((page, index) => {
               if (page === 'ellipsis') {
                 return (
@@ -620,7 +644,7 @@ export default function UsersTable({
                   </PaginationItem>
                 );
               }
-              
+
               return (
                 <PaginationItem key={page}>
                   <PaginationLink
@@ -633,7 +657,7 @@ export default function UsersTable({
                 </PaginationItem>
               );
             })}
-            
+
             <PaginationItem>
               <PaginationNext
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}

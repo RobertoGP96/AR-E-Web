@@ -29,12 +29,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='client')
     agent_profit = models.FloatField(default=0)
+    
     assigned_agent = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        limit_choices_to={'role': 'agent'},
+        limit_choices_to={'role': 'agent', 'role': 'admin'},
         related_name='assigned_clients',
         help_text='Agente asignado para este cliente'
     )
@@ -60,6 +61,35 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.name + " " + self.last_name
 
+     # Nuevo método para obtener el nombre del agente
+    @property
+    def agent_name(self):
+        """
+        Devuelve el nombre del agente asignado
+        """
+        return self.assigned_agent.full_name if self.assigned_agent else None
+
+    def assign_agent(self, agent):
+        """
+        Método para asignar un agente de manera segura
+        """
+        if agent.is_agent():
+            self.assigned_agent = agent
+            self.save(update_fields=['assigned_agent'])
+        else:
+            raise ValueError("Solo se pueden asignar usuarios con rol de agente")
+
+    # Método de clase para obtener clientes de un agente
+    @classmethod
+    def get_agent_clients(cls, agent):
+        """
+        Obtiene todos los clientes asignados a un agente
+        """
+        return cls.objects.filter(
+            assigned_agent=agent, 
+            role='client'
+        )
+        
     @property
     def full_name(self):
         """Get user's full name"""

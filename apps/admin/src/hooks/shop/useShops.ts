@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { shopsService } from '../../services/shops/shops.service';
-import type { ShopFilters } from '../../services/shops/shops.service';
+import { shopsService } from '@/services/shops/shops.service';
+import type { ShopFilters } from '@/services/shops/shops.service';
 
 /**
  * Hook para obtener la lista de tiendas (shops)
@@ -13,7 +13,7 @@ export function useShops(filters?: ShopFilters) {
     isLoading,
     isFetching,
     refetch,
-  } = useQuery<import('../../types/api').PaginatedApiResponse<import('../../types/models/shop').Shop>, Error>({
+  } = useQuery<import('@/types/api').PaginatedApiResponse<import('@/types/models/shop').Shop>, Error>({
     queryKey: ['shops', filters],
     queryFn: () => shopsService.getShops(filters),
   });

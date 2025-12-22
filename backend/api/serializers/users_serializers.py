@@ -401,7 +401,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-
+    
+    def get_agent_name(self, obj):
+        """
+        Método para obtener el nombre del agente
+        """
+        return obj.agent_name
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """
@@ -423,6 +428,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "role",
             "agent_profit",
             "assigned_agent",
+            "agent_name",
             "is_staff",
             "is_active",
             "is_verified",
