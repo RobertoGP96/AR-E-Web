@@ -16,6 +16,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     """
     password = serializers.CharField(write_only=True, required=True)
     full_name = serializers.CharField(read_only=True)
+    agent_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CustomUser
@@ -35,9 +36,16 @@ class UserCreateSerializer(serializers.ModelSerializer):
             "is_verified",
             "date_joined",
             "full_name",
+            "agent_name",
         ]
         # Permitir que administradores actualicen is_active/is_verified mediante PATCH
         read_only_fields = ["id", "is_staff", "date_joined"]
+
+    def get_agent_name(self, obj):
+        """
+        Método para obtener el nombre del agente asignado
+        """
+        return obj.agent_name if hasattr(obj, 'agent_name') else None
 
     def validate_phone_number(self, value):
         if re.search(r"^[\+\d\s\-\(\)]+$", value.strip()):
@@ -66,6 +74,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     Permite actualizar campos de usuario (incluyendo is_active e is_verified para administradores).
     """
     full_name = serializers.CharField(read_only=True)
+    agent_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CustomUser
@@ -84,8 +93,15 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "is_verified",
             "date_joined",
             "full_name",
+            "agent_name",
         ]
         read_only_fields = ["id", "date_joined"]
+
+    def get_agent_name(self, obj):
+        """
+        Método para obtener el nombre del agente asignado
+        """
+        return obj.agent_name if hasattr(obj, 'agent_name') else None
 
     def validate_phone_number(self, value):
         clean_value = value.strip()
@@ -125,6 +141,7 @@ class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=False, allow_blank=True)  # Removido write_only para que se devuelva en GET
     password = serializers.CharField(write_only=True, required=False)  # Password es opcional en updates
     full_name = serializers.CharField(read_only=True)
+    agent_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         """Class of model"""
@@ -146,6 +163,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_verified",
             "date_joined",
             "full_name",
+            "agent_name",
         ]
         read_only_fields = ["id"]  # Asegurar que id sea read-only
 
@@ -224,9 +242,9 @@ class UserSerializer(serializers.ModelSerializer):
     
     def get_agent_name(self, obj):
         """
-        Método para obtener el nombre del agente
+        Método para obtener el nombre del agente asignado
         """
-        return obj.agent_name
+        return obj.agent_name if hasattr(obj, 'agent_name') else None
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """
@@ -235,6 +253,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """
     # Removido user_id, usar id directamente
     full_name = serializers.CharField(read_only=True)
+    agent_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CustomUser
@@ -265,6 +284,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "date_joined",
             "full_name"
         ]
+
+    def get_agent_name(self, obj):
+        """
+        Método para obtener el nombre del agente asignado
+        """
+        return obj.agent_name if hasattr(obj, 'agent_name') else None
 
     def validate_phone_number(self, value):
         """Validar formato de número de teléfono y unicidad"""

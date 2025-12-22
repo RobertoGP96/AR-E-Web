@@ -23,6 +23,13 @@ class UserViewSet(viewsets.ModelViewSet):
     filterset_fields = ['role', 'is_active', 'is_verified']
     search_fields = ['email', 'name', 'last_name', 'phone_number']
 
+    def get_queryset(self):
+        """
+        Optimiza las queries usando select_related para cargar el agente asignado
+        y evitar el problema N+1.
+        """
+        return CustomUser.objects.select_related('assigned_agent').all()
+
     def get_serializer_class(self):
         if self.action == 'create':
             return UserCreateSerializer
