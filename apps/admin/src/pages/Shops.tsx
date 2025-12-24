@@ -10,10 +10,10 @@ export default function Shops() {
     selectedShop,
     isLoading,
     addShop,
-    updateShop,
     deleteShop,
     selectShop,
-    updateShopAccounts
+    updateShopAccounts,
+    fetchShops
   } = useShops({
     onError: (error) => {
       toast.error('Error', {
@@ -28,18 +28,14 @@ export default function Shops() {
   });
 
   // Handler para actualizar tienda
-  const handleShopUpdate = async (shop: Shop) => {
-    try {
-      await updateShop(shop.name, {
-        name: shop.name,
-        link: shop.link,
-        is_active: shop.is_active
-      });
-    } catch (error) {
-      toast.error('Error al actualizar tienda', {
-        description: error instanceof Error ? error.message : 'Error desconocido'
-      });
-    }
+  // Nota: La tienda ya fue actualizada en ShopFormPopover y se invalidó la query de React Query
+  // Solo recargamos el estado local del hook useShops para mantener sincronización
+  // No mostramos toast aquí porque ya se mostró en ShopFormPopover
+  const handleShopUpdate = async (_shop: Shop) => {
+    // Recargar las tiendas para actualizar el estado local
+    // Esto no mostrará toast porque el hook tiene onSuccess configurado pero
+    // solo se llama en deleteShop, no en fetchShops
+    await fetchShops();
   };
 
   // Handler para actualizar cuenta

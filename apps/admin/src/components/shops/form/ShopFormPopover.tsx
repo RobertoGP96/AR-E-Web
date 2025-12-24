@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Save, X, Store } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,7 +30,7 @@ interface FormData {
 interface FormErrors {
     name?: string;
     link?: string;
-    tax_rate?: number;
+    tax_rate?: string;
 }
 
 export default function ShopFormPopover({
@@ -39,6 +40,7 @@ export default function ShopFormPopover({
     trigger,
     mode = shop ? 'edit' : 'create'
 }: ShopFormPopoverProps) {
+    const queryClient = useQueryClient();
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState<FormData>({
@@ -82,6 +84,15 @@ export default function ShopFormPopover({
             }
         }
 
+        // Validar tasa de impuesto
+        if (formData.tax_rate < 0) {
+            newErrors.tax_rate = 'La tasa de impuesto no puede ser negativa';
+        } else if (formData.tax_rate > 100) {
+            newErrors.tax_rate = 'La tasa de impuesto no puede ser mayor a 100%';
+        } else if (isNaN(formData.tax_rate)) {
+            newErrors.tax_rate = 'La tasa de impuesto debe ser un número válido';
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -119,12 +130,28 @@ export default function ShopFormPopover({
 
             let result: Shop;
 
-                if (mode === 'edit' && shop) {
+            if (mode === 'edit' && shop) {
                 // Actualizar tienda existente
-                // El backend usa lookup_field = 'name', por lo que la URL espera el nombre de la tienda
                 const { updateShopService } = await import('@/services/shops');
-                // Usar el nombre original (shop.name) para buscar la instancia y enviar los datos actualizados
-                result = await updateShopService.updateShop(shop.id, submitData);
+                
+                // Verificar si hay cambios antes de actualizar
+                const updatedResult = await updateShopService.updateShopIfChanged(
+                    shop.id,
+                    submitData,
+                    shop
+                );
+
+                if (updatedResult === null) {
+                    // No hay cambios, no se actualiza
+                    toast.info('Sin cambios', {
+                        description: 'No se detectaron cambios en los datos de la tienda'
+                    });
+                    setOpen(false);
+                    setIsLoading(false);
+                    return;
+                }
+
+                result = updatedResult;
                 toast.success('Tienda actualizada', {
                     description: `"${result.name}" ha sido actualizada exitosamente`
                 });
@@ -136,14 +163,38 @@ export default function ShopFormPopover({
                 });
             }
 
+            // Invalidar la query de shops para refrescar la lista
+            queryClient.invalidateQueries({ queryKey: ['shops'] });
+            
             onSuccess?.(result);
             setOpen(false);
             setFormData({ name: '', link: '', tax_rate: 0.0 });
 
         } catch (error) {
             console.error('Error saving shop:', error);
-            const errorMessage = error instanceof Error ? error.message : "Ha ocurrido un error inesperado";
-            toast.error('Error al guardar tienda', {
+            
+            let errorMessage = "Ha ocurrido un error inesperado";
+            
+            if (error instanceof Error) {
+                errorMessage = error.message;
+                
+                // Mensajes más específicos para errores comunes
+                if (error.message.includes('No hay datos para actualizar')) {
+                    errorMessage = 'No se detectaron cambios para actualizar';
+                } else if (error.message.includes('ya existe') || error.message.includes('already exists')) {
+                    errorMessage = 'Ya existe una tienda con este nombre o enlace';
+                } else if (error.message.includes('400') || error.message.includes('Bad Request')) {
+                    errorMessage = 'Los datos proporcionados no son válidos';
+                } else if (error.message.includes('404') || error.message.includes('Not Found')) {
+                    errorMessage = 'La tienda no fue encontrada';
+                } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+                    errorMessage = 'No tienes permisos para realizar esta acción';
+                } else if (error.message.includes('500') || error.message.includes('Internal Server Error')) {
+                    errorMessage = 'Error del servidor. Por favor, intenta más tarde';
+                }
+            }
+            
+            toast.error(mode === 'edit' ? 'Error al actualizar tienda' : 'Error al crear tienda', {
                 description: errorMessage
             });
         } finally {
@@ -266,9 +317,9 @@ export default function ShopFormPopover({
                             type="number"
                             min={0}
                             max={100}
-                            step={1}
+                            step={0.01}
                             value={formData.tax_rate}
-                            onChange={(e) => setFormData({ ...formData, tax_rate: Number(e.target.value) })}
+                            onChange={(e) => handleInputChange('tax_rate', e.target.value)}
                             placeholder="0"
                             className={`transition-colors ${errors.tax_rate
                                     ? 'border-red-300 focus:border-red-500 focus:ring-red-500'

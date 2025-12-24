@@ -4,89 +4,63 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 from api.permissions.permissions import AdminPermission, AgentPermission
-from api.serializers import AmazonScrapingSerializer
-import requests
-from bs4 import BeautifulSoup
-import json
+from api.serializers.amazon_serializers import AmazonScrapingRequestSerializer, AmazonScrapingResponseSerializer
+from api.utils.amazon_scraper import amazon_scraper
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AmazonScrapingView(APIView):
     """
     Vista para scraping de productos de Amazon.
+    Utiliza el scraper robusto con manejo de reintentos, rotación de User-Agents y proxies.
     """
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
         summary="Scraping de Amazon",
-        description="Realiza scraping de productos desde Amazon usando URL.",
-        request=AmazonScrapingSerializer,
+        description="Realiza scraping de productos o carritos desde Amazon usando URL. "
+                    "Soporta productos individuales y carritos de compra.",
+        request=AmazonScrapingRequestSerializer,
+        responses={200: AmazonScrapingResponseSerializer},
         tags=["Amazon"]
     )
     def post(self, request):
-        serializer = AmazonScrapingSerializer(data=request.data)
-        if serializer.is_valid():
-            url = serializer.validated_data['url']
+        serializer = AmazonScrapingRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'error': 'URL inválida. Debe ser una URL válida de Amazon (producto o carrito).'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-            try:
-                # Headers para simular un navegador real
-                headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
+        url = serializer.validated_data['url']
 
-                # Realizar la petición
-                response = requests.get(url, headers=headers, timeout=10)
-                response.raise_for_status()
-
-                # Parsear el HTML
-                soup = BeautifulSoup(response.content, 'html.parser')
-
-                # Extraer información básica del producto
-                product_data = {}
-
-                # Título del producto
-                title_elem = soup.find('span', {'id': 'productTitle'})
-                if title_elem:
-                    product_data['title'] = title_elem.get_text(strip=True)
-
-                # Precio
-                price_elem = soup.find('span', {'class': 'a-price-whole'})
-                if price_elem:
-                    product_data['price'] = price_elem.get_text(strip=True)
-
-                # Imagen principal
-                image_elem = soup.find('img', {'id': 'landingImage'})
-                if image_elem:
-                    product_data['image_url'] = image_elem.get('src')
-
-                # Descripción
-                desc_elem = soup.find('div', {'id': 'productDescription'})
-                if desc_elem:
-                    product_data['description'] = desc_elem.get_text(strip=True)
-
-                # Rating
-                rating_elem = soup.find('span', {'class': 'a-icon-alt'})
-                if rating_elem:
-                    product_data['rating'] = rating_elem.get_text(strip=True)
-
-                return Response({
-                    'success': True,
-                    'product_data': product_data,
-                    'url': url
-                })
-
-            except requests.RequestException as e:
+        try:
+            logger.info(f"Iniciando scraping de Amazon para URL: {url}")
+            
+            # Usar el scraper robusto
+            result = amazon_scraper.scrape_product(url)
+            
+            if not result.get('success', False):
+                error_message = result.get('error', 'Error desconocido al hacer scraping')
+                logger.warning(f"Error en scraping de Amazon: {error_message}")
                 return Response({
                     'success': False,
-                    'error': f'Error al acceder a Amazon: {str(e)}'
+                    'error': error_message
                 }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # El resultado ya viene en el formato correcto con 'success' y 'data'
+            logger.info(f"Scraping exitoso. Tipo: {result.get('data', {}).get('type', 'unknown')}")
+            return Response(result, status=status.HTTP_200_OK)
 
-            except Exception as e:
-                return Response({
-                    'success': False,
-                    'error': f'Error al procesar el producto: {str(e)}'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            error_message = f'Error inesperado al procesar la solicitud: {str(e)}'
+            logger.error(f"Error en AmazonScrapingView: {error_message}", exc_info=True)
+            return Response({
+                'success': False,
+                'error': error_message
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CreateAdminView(APIView):
