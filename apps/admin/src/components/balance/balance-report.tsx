@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -20,11 +20,15 @@ import { DatePicker } from '@/components/utils/DatePicker';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { balanceService } from '@/services/balance';
+import type { CreateBalanceData } from '@/types/models/balance';
 
 import { formatUSD } from '@/lib/format-usd';
 import { calculateInvoiceRangeData } from '@/services/invoices/calculate-range-data';
 import type { InvoiceRangeData } from '@/types/models/invoice';
-import { ShoppingCart, Truck, ShoppingBag, BaggageClaim, ReceiptText, ArrowBigRight } from 'lucide-react';
+import { ShoppingCart, Truck, ShoppingBag, BaggageClaim, ReceiptText, ArrowBigRight, Save } from 'lucide-react';
 
 // Componente BalanceReport: reutilizable en pages y widgets
 export default function BalanceReport() {
@@ -571,6 +575,8 @@ export default function BalanceReport() {
           expensesAnalysis={expensesAnalysis}
           invoicesRangeData={invoicesRangeData}
           isLoading={isLoadingOrders || isLoadingDeliveryAnalysis || isLoadingPurchases || isLoadingExpensesAnalysis || isLoadingInvoices}
+          startDate={startDate}
+          endDate={endDate}
         />
       </div>
     </div>
@@ -588,6 +594,8 @@ function ExecutiveSummary({
   expensesAnalysis,
   invoicesRangeData,
   isLoading,
+  startDate,
+  endDate,
 }: {
   ordersAnalysis: OrderAnalysisResponse | null | undefined;
   deliveryAnalysis: DeliveryAnalysisResponse | null | undefined;
@@ -595,7 +603,11 @@ function ExecutiveSummary({
   expensesAnalysis: ExpenseAnalysisResponse | null | undefined;
   invoicesRangeData: InvoiceRangeData | null | undefined;
   isLoading: boolean;
+  startDate: Date | undefined;
+  endDate: Date | undefined;
 }) {
+  const queryClient = useQueryClient();
+
   // Calcular totales integrados
   const summary = React.useMemo(() => {
     if (isLoading || !ordersAnalysis) {
@@ -646,6 +658,63 @@ function ExecutiveSummary({
     };
   }, [ordersAnalysis, deliveryAnalysis, purchasesAnalysis, expensesAnalysis, invoicesRangeData, isLoading]);
 
+  // Mutation para guardar el balance
+  const saveBalanceMutation = useMutation({
+    mutationFn: (data: CreateBalanceData) => balanceService.createMetric(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['balance'] });
+      queryClient.invalidateQueries({ queryKey: ['balance-summary'] });
+      toast.success('Balance guardado', {
+        description: 'El balance ha sido guardado exitosamente'
+      });
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'No se pudo guardar el balance';
+      toast.error('Error al guardar balance', {
+        description: message
+      });
+    },
+  });
+
+  const handleSaveBalance = () => {
+    if (!startDate || !endDate) {
+      toast.error('Fechas requeridas', {
+        description: 'Por favor selecciona un rango de fechas válido'
+      });
+      return;
+    }
+
+    if (!summary) {
+      toast.error('Datos no disponibles', {
+        description: 'No hay datos para guardar en el rango seleccionado'
+      });
+      return;
+    }
+
+    // Formatear fechas a YYYY-MM-DD
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    // Mapear los datos calculados a la estructura CreateBalanceData
+    const balanceData: CreateBalanceData = {
+      start_date: formatDate(startDate),
+      end_date: formatDate(endDate),
+      system_weight: deliveryAnalysis?.total_weight || 0,
+      registered_weight: invoicesRangeData?.total_tag_weight || 0, // Peso total registrado de las facturas
+      revenues: summary.totalIncome,
+      buys_costs: summary.purchaseCosts,
+      costs: summary.invoiceCosts,
+      expenses: summary.totalExpenses,
+      notes: `Balance generado automáticamente para el período ${formatDate(startDate)} - ${formatDate(endDate)}`
+    };
+
+    saveBalanceMutation.mutate(balanceData);
+  };
+
   if (isLoading || !summary) {
     return null;
   }
@@ -665,7 +734,23 @@ function ExecutiveSummary({
               Análisis completo de ingresos, costos y ganancias netas del período
             </CardDescription>
           </div>
-
+          <Button
+            onClick={handleSaveBalance}
+            disabled={isLoading || !summary || saveBalanceMutation.isPending}
+            className="shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            {saveBalanceMutation.isPending ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Guardando...
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Save className="h-4 w-4" />
+                Guardar Balance
+              </div>
+            )}
+          </Button>
         </div>
       </CardHeader>
 

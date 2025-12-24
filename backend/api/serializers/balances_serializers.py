@@ -46,7 +46,7 @@ class BalanceSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'costs','expenses','buys_costs','system_weight', 'total_cost', 'weight_difference', 'real_profit', 'profit_percentage', 'notes']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'total_cost', 'weight_difference', 'real_profit', 'profit_percentage']
     
     def validate(self, data):
         """Validate that end_date is after start_date"""

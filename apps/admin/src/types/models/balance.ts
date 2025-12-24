@@ -17,7 +17,7 @@ export interface Balance {
   registered_weight: number; // Decimal como string (peso esperado dentro del periodo)
 
   revenues: number; // Decimal como string (costo esperado dentro del periodo)
-  buys_cost: number; // Decimal como string (costo real según facturas)
+  buys_costs: number; // Decimal como string (costo real según facturas)
   costs: number; // Decimal como string (peso real según facturas)
   expenses: number; // Decimal como string (nuevo)
   notes?: string;
@@ -40,7 +40,7 @@ export interface CreateBalanceData {
   registered_weight: number; // Decimal como string (peso esperado dentro del periodo)
 
   revenues: number; // Decimal como string (costo esperado dentro del periodo)
-  buys_cost: number; // Decimal como string (costo real según facturas)
+  buys_costs: number; // Decimal como string (costo real según facturas)
   costs: number; // Decimal como string (peso real según facturas)
   expenses: number; // Decimal como string (nuevo)
   notes?: string;
@@ -56,7 +56,7 @@ export interface UpdateBalanceData {
   registered_weight: number; // Decimal como string (peso esperado dentro del periodo)
 
   revenues: number; // Decimal como string (costo esperado dentro del periodo)
-  buys_cost: number; // Decimal como string (costo real según facturas)
+  buys_costs: number; // Decimal como string (costo real según facturas)
   costs: number; // Decimal como string (peso real según facturas)
   expenses: number; // Decimal como string (nuevo)
   notes?: string;
