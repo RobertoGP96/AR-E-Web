@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Edit, Save, X, Store } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -38,8 +38,10 @@ export default function ShopFormPopover({
     onSuccess,
     onCancel,
     trigger,
-    mode = shop ? 'edit' : 'create'
+    mode: modeProp
 }: ShopFormPopoverProps) {
+    // Calcular mode de forma estable para evitar re-renders innecesarios
+    const mode = modeProp ?? (shop ? 'edit' : 'create');
     const queryClient = useQueryClient();
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -49,18 +51,33 @@ export default function ShopFormPopover({
         tax_rate: 0.0
     });
     const [errors, setErrors] = useState<FormErrors>({});
+    
+    // Usar useRef para rastrear el shop.id y evitar actualizaciones innecesarias
+    const previousShopIdRef = useRef<number | null>(null);
+    const previousOpenRef = useRef<boolean>(false);
 
     // Inicializar formulario cuando se abre o cambia el shop
+    // Solo dependemos de shop?.id para evitar ciclos infinitos cuando shop se recrea
     useEffect(() => {
-        if (open) {
+        const shopId = shop?.id ?? null;
+        const isOpening = open && !previousOpenRef.current;
+        const shopChanged = shopId !== previousShopIdRef.current;
+        
+        // Solo inicializar cuando se abre el popover o cuando cambia el shop.id
+        // No dependemos de shop?.name, shop?.link, shop?.tax_rate para evitar
+        // que se resetee el formulario mientras el usuario está editando
+        if (open && (isOpening || shopChanged)) {
             setFormData({
                 name: shop?.name || '',
                 link: shop?.link || '',
                 tax_rate: shop?.tax_rate || 0.0,
             });
             setErrors({});
+            previousShopIdRef.current = shopId;
         }
-    }, [open, shop]);
+        
+        previousOpenRef.current = open;
+    }, [open, shop?.id]);
 
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {};
@@ -104,12 +121,15 @@ export default function ShopFormPopover({
         }));
 
         // Limpiar error del campo cuando el usuario empiece a escribir
-        if (errors[field]) {
-            setErrors(prev => ({
-                ...prev,
-                [field]: undefined
-            }));
-        }
+        // Usar función de actualización para evitar dependencias del estado errors
+        setErrors(prev => {
+            if (prev[field]) {
+                const newErrors = { ...prev };
+                delete newErrors[field];
+                return newErrors;
+            }
+            return prev;
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
