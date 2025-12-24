@@ -36,17 +36,37 @@ class BalanceSerializer(serializers.ModelSerializer):
             'buys_costs',
             'costs',
             'expenses',
-            'real_profit',
             'notes',
             'total_cost',
             'weight_difference',
             'real_profit',
             'profit_percentage',
-            
+            'cost_difference',
+            'profit_difference',
+            'profit_variance_percentage',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'total_cost', 'weight_difference', 'real_profit', 'profit_percentage']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'total_cost', 'weight_difference', 'real_profit', 'profit_percentage', 'cost_difference', 'profit_difference', 'profit_variance_percentage']
+    
+    def get_cost_difference(self, obj):
+        """Calculate cost difference (currently returns 0 as model doesn't have expected cost)"""
+        return str(Decimal('0.00'))
+    
+    def get_real_profit(self, obj):
+        """Get real profit from model property"""
+        return str(obj.real_profit)
+    
+    def get_profit_difference(self, obj):
+        """Calculate profit difference (currently returns 0 as model doesn't have expected profit)"""
+        return str(Decimal('0.00'))
+    
+    def get_profit_variance_percentage(self, obj):
+        """Calculate profit variance percentage"""
+        if obj.revenues == 0:
+            return str(Decimal('0.00'))
+        variance = ((obj.real_profit / obj.revenues) * 100) if obj.revenues > 0 else Decimal('0.00')
+        return str(variance)
     
     def validate(self, data):
         """Validate that end_date is after start_date"""
