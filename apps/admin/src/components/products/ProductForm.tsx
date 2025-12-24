@@ -2,7 +2,7 @@ import { Plus, Save, Tag, X, Store, Link2, FileText, CheckCircle, AlertCircle, C
 import { serializeTagsToDescription, type StoredTag } from '@/lib/tags'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useShops } from '@/hooks/shop/useShops'
 import { useCategories } from '@/hooks/category/useCategory'
@@ -210,34 +210,70 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
     const { config: systemConfig } = useSystemConfig()
     const exchangeRate = systemConfig?.change_rate || 1
 
-    // Efecto para extraer automáticamente el nombre de la tienda cuando cambia el link
-    useEffect(() => {
-        if (newProduct.link?.trim()) {
-            const shopName = extractShopName(newProduct.link)
-            if (shopName && shopName !== newProduct.shop) {
-                setNewProduct(prev => ({ ...prev, shop: shopName }))
-            }
-        }
-    }, [newProduct.link, newProduct.shop])
+    // Refs para rastrear valores previos y evitar ciclos infinitos
+    const previousLinkRef = useRef<string>('')
+    const previousShopRef = useRef<string>('')
+    const previousShopTaxesRef = useRef<number | undefined>(undefined)
+    const previousMatchedShopIdRef = useRef<number | undefined>(undefined)
 
     // Estado para controlar si se muestra el selector manual de tienda
     const [showManualShopSelect, setShowManualShopSelect] = useState(false)
 
     // Cuando se detecta un shop por link, intentar normalizar con las shops de la BD
     const { shops: availableShops, error: shopsError } = useShops()
+
+    // Efecto para extraer automáticamente el nombre de la tienda cuando cambia el link
     useEffect(() => {
-        if (!newProduct.shop || !availableShops || availableShops.length === 0) return
+        const currentLink = newProduct.link?.trim() || ''
+        const currentShop = newProduct.shop || ''
+        
+        // Solo procesar si el link cambió realmente
+        if (currentLink && currentLink !== previousLinkRef.current) {
+            const shopName = extractShopName(currentLink)
+            if (shopName && shopName !== currentShop) {
+                setNewProduct(prev => ({ ...prev, shop: shopName }))
+                previousShopRef.current = shopName
+            }
+            previousLinkRef.current = currentLink
+        }
+    }, [newProduct.link])
+
+    // Efecto para normalizar shop con las tiendas de la BD
+    useEffect(() => {
+        const currentShop = newProduct.shop || ''
+        const currentShopTaxes = newProduct.shop_taxes
+        const currentLink = newProduct.link?.trim() || ''
+        
+        // Solo procesar si hay cambios relevantes
+        if (!currentShop || !availableShops || availableShops.length === 0) {
+            // Si no hay shop, resetear estados
+            if (currentShop !== previousShopRef.current) {
+                setIsShopInDatabase(undefined)
+                setMatchedShopId(undefined)
+                previousShopRef.current = currentShop
+            }
+            return
+        }
+
+        // Solo procesar si el shop cambió o si las shops disponibles cambiaron
+        const shopChanged = currentShop !== previousShopRef.current
+        const linkChanged = currentLink !== previousLinkRef.current
+        
+        if (!shopChanged && !linkChanged && previousMatchedShopIdRef.current !== undefined) {
+            // No hay cambios relevantes, evitar procesamiento
+            return
+        }
 
         // Buscar coincidencia por nombre (case-insensitive) o por link que incluya el hostname
-        const detected = newProduct.shop.toLowerCase()
+        const detected = currentShop.toLowerCase()
 
         // Primero buscar por nombre exacto/insensible a mayúsculas
         let matched = availableShops.find(s => s.name && s.name.toLowerCase() === detected)
 
         // Si no hay match por nombre, intentar buscar por hostname dentro del link de la shop
-        if (!matched && newProduct.link) {
+        if (!matched && currentLink) {
             try {
-                const urlObj = new URL(newProduct.link)
+                const urlObj = new URL(currentLink)
                 const hostname = urlObj.hostname.replace(/^www\./, '').toLowerCase()
                 matched = availableShops.find(s => s.link && s.link.toLowerCase().includes(hostname))
             } catch {
@@ -247,32 +283,44 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
 
         // Si encontramos una tienda en la BD, normalizar el campo shop con su name
         if (matched) {
-            setIsShopInDatabase(true);
+            const matchedId = matched.id
+            const isNewMatch = matchedId !== previousMatchedShopIdRef.current
+            
+            setIsShopInDatabase(true)
             const updates: Partial<CreateProductData> = {}
 
-            if (matched.name && matched.name !== newProduct.shop) {
+            if (matched.name && matched.name !== currentShop) {
                 updates.shop = matched.name
             }
-            // Si no hay shop_taxes definido manualmente, usar el de la BD
-            if (newProduct.shop_taxes === undefined || newProduct.shop_taxes === 0) {
+            // Si no hay shop_taxes definido manualmente o cambió la tienda, usar el de la BD
+            if (isNewMatch && (currentShopTaxes === undefined || currentShopTaxes === 0)) {
                 updates.shop_taxes = matched.tax_rate
             }
 
             if (Object.keys(updates).length > 0) {
                 setNewProduct(prev => ({ ...prev, ...updates }))
             }
-            // almacenar id en un campo temporal del estado (no persistir en backend form state)
-            setMatchedShopId(matched.id)
-        } else if (newProduct.shop) {
-            setIsShopInDatabase(false);
+            
+            setMatchedShopId(matchedId)
+            previousMatchedShopIdRef.current = matchedId
+            previousShopRef.current = matched.name || currentShop
+            previousShopTaxesRef.current = matched.tax_rate
+        } else if (currentShop) {
+            setIsShopInDatabase(false)
+            setMatchedShopId(undefined)
+            previousMatchedShopIdRef.current = undefined
+            
             // Si la tienda no está en BD y no hay shop_taxes definido, usar auto-detectado
-            if (newProduct.shop_taxes === undefined || newProduct.shop_taxes === 0) {
-                const autoRate = getShopTaxRate(newProduct.shop)
-                setNewProduct(prev => ({ ...prev, shop_taxes: autoRate }))
+            if (currentShopTaxes === undefined || currentShopTaxes === 0) {
+                const autoRate = getShopTaxRate(currentShop)
+                if (autoRate !== previousShopTaxesRef.current) {
+                    setNewProduct(prev => ({ ...prev, shop_taxes: autoRate }))
+                    previousShopTaxesRef.current = autoRate
+                }
             }
+            previousShopRef.current = currentShop
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [newProduct.shop, newProduct.link, availableShops])
+    }, [newProduct.shop, newProduct.link, newProduct.shop_taxes, availableShops])
 
     // Id de la tienda detectada en la BD (si existe)
     const [matchedShopId, setMatchedShopId] = useState<number | undefined>(undefined)

@@ -149,7 +149,18 @@ export function AsideNav() {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    // Para la ruta raíz, solo se activa cuando es exactamente '/'
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    
+    // Para otras rutas, se activa si el pathname comienza con el path
+    // y el siguiente carácter es '/' o es el final de la cadena
+    // Esto permite que rutas como /products/123 mantengan activo /products
+    return location.pathname === path || 
+           location.pathname.startsWith(path + '/');
+  };
 
   const handleLogout = async () => {
     try {
