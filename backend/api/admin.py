@@ -166,8 +166,11 @@ class BalanceAdmin(admin.ModelAdmin):
 
     def profit_percentage(self, obj):
         revenues = self._to_decimal(getattr(obj, 'revenues', None))
-        if revenues == 0:
+        if revenues == 0 or revenues is None:
             return Decimal('0.00')
-        profit = self._to_decimal(getattr(obj, 'real_profit', None))
-        return (profit / revenues) * 100
+        try:
+            profit = self._to_decimal(getattr(obj, 'real_profit', None))
+            return (profit / revenues) * 100
+        except (ZeroDivisionError, TypeError):
+            return Decimal('0.00')
     profit_percentage.short_description = 'Porcentaje de ganancia'

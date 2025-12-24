@@ -105,7 +105,7 @@ class Balance(models.Model):
     @property
     def profit_percentage(self):
         """Calculate profit variance as percentage"""
-        if self.real_profit == 0:
+        if self.revenues == 0 or self.revenues is None:
             return Decimal('0.00')
         return (self.real_profit / self.revenues) * 100
 

@@ -63,10 +63,13 @@ class BalanceSerializer(serializers.ModelSerializer):
     
     def get_profit_variance_percentage(self, obj):
         """Calculate profit variance percentage"""
-        if obj.revenues == 0:
+        if obj.revenues == 0 or obj.revenues is None:
             return str(Decimal('0.00'))
-        variance = ((obj.real_profit / obj.revenues) * 100) if obj.revenues > 0 else Decimal('0.00')
-        return str(variance)
+        try:
+            variance = (obj.real_profit / obj.revenues) * 100
+            return str(variance)
+        except (ZeroDivisionError, TypeError):
+            return str(Decimal('0.00'))
     
     def validate(self, data):
         """Validate that end_date is after start_date"""
