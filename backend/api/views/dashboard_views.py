@@ -228,7 +228,7 @@ class ProfitReportsView(APIView):
         agents = CustomUser.objects.filter(role='agent')
         agent_reports = []
         for agent in agents:
-            # Órdenes del agente (como sales_manager)
+            # Órdenes del agente (como sales_manager) - solo para estadísticas
             agent_orders = Order.objects.filter(sales_manager=agent)
             current_month_orders = agent_orders.filter(
                 created_at__gte=timezone.now().replace(day=1)
@@ -243,17 +243,37 @@ class ProfitReportsView(APIView):
             )
             clients_count = clients_assigned.count()
 
+            # Calcular ganancia basada SOLO en entregas (deliveries)
+            # Filtrar entregas donde el cliente tiene asignado este agente
+            agent_deliveries = DeliverReceip.objects.filter(
+                client__assigned_agent=agent
+            )
+            
+            # Ganancia total del agente (suma de manager_profit de todas sus entregas)
+            total_profit = agent_deliveries.aggregate(
+                total=Sum('manager_profit')
+            )['total'] or 0.0
+            
+            # Ganancia del mes actual (entregas del mes actual)
+            current_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            current_month_deliveries = agent_deliveries.filter(
+                created_at__gte=current_month_start
+            )
+            current_month_profit = current_month_deliveries.aggregate(
+                total=Sum('manager_profit')
+            )['total'] or 0.0
+
             agent_reports.append({
                 'agent_id': agent.id,
                 'agent_name': f"{agent.name} {agent.last_name}",
                 'agent_phone': agent.phone_number or '',
-                'total_profit': float(agent.agent_profit or 0),
-                'current_month_profit': float(current_month_orders.aggregate(
-                    total=Sum('received_value_of_client')
-                )['total'] or 0) * 0.15,  # Estimar 15% de comisión
+                'total_profit': float(total_profit),
+                'current_month_profit': float(current_month_profit),
                 'clients_count': clients_count,
                 'orders_count': agent_orders.count(),
                 'orders_completed': agent_orders.filter(status='Completado').count(),
+                'deliveries_count': agent_deliveries.count(),
+                'current_month_deliveries': current_month_deliveries.count(),
             })
 
         # Resumen total
