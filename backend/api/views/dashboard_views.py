@@ -235,18 +235,13 @@ class ProfitReportsView(APIView):
             )
 
             # Calcular clientes asignados correctamente:
-            # 1. Clientes con assigned_agent asignado directamente
-            clients_with_assigned_agent = CustomUser.objects.filter(
+            # Usar el campo assigned_agent directamente (relación directa)
+            # Este es el campo que realmente indica la asignación del cliente al agente
+            clients_assigned = CustomUser.objects.filter(
                 assigned_agent=agent, 
                 role='client'
-            ).values_list('id', flat=True)
-            
-            # 2. Clientes con órdenes gestionadas por el agente
-            clients_with_orders = agent_orders.values_list('client_id', flat=True).distinct()
-            
-            # 3. Total de clientes únicos (unión de ambos conjuntos)
-            all_client_ids = set(clients_with_assigned_agent) | set(clients_with_orders)
-            clients_count = len(all_client_ids)
+            )
+            clients_count = clients_assigned.count()
 
             agent_reports.append({
                 'agent_id': agent.id,
