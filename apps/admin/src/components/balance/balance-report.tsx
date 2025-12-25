@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -28,7 +29,7 @@ import type { CreateBalanceData } from '@/types/models/balance';
 import { formatUSD } from '@/lib/format-usd';
 import { calculateInvoiceRangeData } from '@/services/invoices/calculate-range-data';
 import type { InvoiceRangeData } from '@/types/models/invoice';
-import { ShoppingCart, Truck, ShoppingBag, BaggageClaim, ReceiptText, ArrowBigRight, Save } from 'lucide-react';
+import { ShoppingCart, Truck, ShoppingBag, BaggageClaim, ReceiptText, ArrowBigRight, Save, CheckCircle2 } from 'lucide-react';
 
 // Componente BalanceReport: reutilizable en pages y widgets
 export default function BalanceReport() {
@@ -607,6 +608,8 @@ function ExecutiveSummary({
   endDate: Date | undefined;
 }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [showSuccessAnimation, setShowSuccessAnimation] = React.useState(false);
 
   // Calcular totales integrados
   const summary = React.useMemo(() => {
@@ -664,9 +667,19 @@ function ExecutiveSummary({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['balance'] });
       queryClient.invalidateQueries({ queryKey: ['balance-summary'] });
+      
+      // Mostrar animación de confirmación
+      setShowSuccessAnimation(true);
+      
+      // Mostrar toast de éxito
       toast.success('Balance guardado', {
         description: 'El balance ha sido guardado exitosamente'
       });
+      
+      // Redirigir después de mostrar la animación (1.5 segundos)
+      setTimeout(() => {
+        navigate('/balance', { replace: true });
+      }, 1500);
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : 'No se pudo guardar el balance';
@@ -722,9 +735,26 @@ function ExecutiveSummary({
   const isPositive = summary.netProfit >= 0;
 
   return (
-    <Card className=
-      'border-2 hover:shadow-xl transition-all duration-300'>
-      <CardHeader className="pb-4">
+    <>
+      {/* Animación de confirmación */}
+      {showSuccessAnimation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in-95 duration-300">
+            <div className="relative">
+              <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-75"></div>
+              <CheckCircle2 className="relative h-20 w-20 text-green-500 animate-in zoom-in-95 duration-500" />
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-2xl font-bold text-gray-900">¡Balance Guardado!</h3>
+              <p className="text-sm text-gray-600">Redirigiendo a la vista de balances...</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <Card className=
+        'border-2 hover:shadow-xl transition-all duration-300'>
+        <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-2xl font-bold ">
@@ -883,6 +913,7 @@ function ExecutiveSummary({
 
       </CardContent>
     </Card>
+    </>
   );
 }
 

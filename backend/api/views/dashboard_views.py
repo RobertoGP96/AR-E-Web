@@ -234,6 +234,20 @@ class ProfitReportsView(APIView):
                 created_at__gte=timezone.now().replace(day=1)
             )
 
+            # Calcular clientes asignados correctamente:
+            # 1. Clientes con assigned_agent asignado directamente
+            clients_with_assigned_agent = CustomUser.objects.filter(
+                assigned_agent=agent, 
+                role='client'
+            ).values_list('id', flat=True)
+            
+            # 2. Clientes con órdenes gestionadas por el agente
+            clients_with_orders = agent_orders.values_list('client_id', flat=True).distinct()
+            
+            # 3. Total de clientes únicos (unión de ambos conjuntos)
+            all_client_ids = set(clients_with_assigned_agent) | set(clients_with_orders)
+            clients_count = len(all_client_ids)
+
             agent_reports.append({
                 'agent_id': agent.id,
                 'agent_name': f"{agent.name} {agent.last_name}",
@@ -242,7 +256,7 @@ class ProfitReportsView(APIView):
                 'current_month_profit': float(current_month_orders.aggregate(
                     total=Sum('received_value_of_client')
                 )['total'] or 0) * 0.15,  # Estimar 15% de comisión
-                'clients_count': agent_orders.values('client').distinct().count(),
+                'clients_count': clients_count,
                 'orders_count': agent_orders.count(),
                 'orders_completed': agent_orders.filter(status='Completado').count(),
             })
