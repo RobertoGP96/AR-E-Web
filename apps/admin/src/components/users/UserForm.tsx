@@ -17,13 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Eye, Mail, Phone, MapPin, Shield, Percent, User2, Lock, CheckCircle, XCircle, UserCheck, UserX, UserPlus, Save, Loader2, InfoIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -41,7 +35,7 @@ const createUserSchema = z.object({
   password: z.string().min(6, 'Contraseña requerida (mínimo 6 caracteres)'),
   role: z.string(),
   agent_profit: z.number().min(0).optional(),
-  assigned_agent: z.number().optional(),
+  assigned_agent: z.number().nullable().optional(),
 });
 
 // Schema para editar usuario (sin contraseña)
@@ -53,7 +47,7 @@ const editUserSchema = z.object({
   phone_number: z.string().min(7, 'Teléfono requerido'),
   role: z.string(),
   agent_profit: z.number().min(0).optional(),
-  assigned_agent: z.number().optional(),
+  assigned_agent: z.number().nullable().optional(),
 });
 
 type CreateUserFormSchema = z.infer<typeof createUserSchema>;
@@ -107,7 +101,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         password: '',
         role: 'client',
         agent_profit: 0,
-        assigned_agent: undefined,
+        assigned_agent: null,
       };
     }
     if (user) {
@@ -119,7 +113,9 @@ export const UserForm: React.FC<UserFormProps> = ({
         phone_number: user.phone_number,
         role: user.role,
         agent_profit: user.agent_profit || 0,
-        assigned_agent: user.assigned_agent || undefined,
+        assigned_agent: user.assigned_agent !== null && user.assigned_agent !== undefined 
+          ? Number(user.assigned_agent) 
+          : null,
       };
     }
     return {
@@ -130,7 +126,7 @@ export const UserForm: React.FC<UserFormProps> = ({
       phone_number: '',
       role: 'client',
       agent_profit: 0,
-      assigned_agent: undefined,
+      assigned_agent: null,
     };
   };
 
@@ -149,9 +145,21 @@ export const UserForm: React.FC<UserFormProps> = ({
   // Observar el rol seleccionado para mostrar/ocultar ganancia de agente
   const selectedRole = watch('role');
 
-  // Obtener lista de agentes para asignar
-  const { data: agentsData } = useUsersByRole('agent');
-  const { data: adminsData } = useUsersByRole('admin');
+  // Obtener lista de agentes y administradores para asignar
+  const { data: agentsData, isLoading: isLoadingAgents } = useUsersByRole('agent');
+  const { data: adminsData, isLoading: isLoadingAdmins } = useUsersByRole('admin');
+  
+  // Extraer y combinar las listas de agentes y administradores
+  const agentsList: CustomUser[] = agentsData?.results || [];
+  const adminsList: CustomUser[] = adminsData?.results || [];
+  
+  // Filtrar y combinar solo usuarios activos
+  const assignableUsers = React.useMemo(() => {
+    const allUsers = [...agentsList, ...adminsList];
+    return allUsers.filter(user => user.is_active);
+  }, [agentsList, adminsList]);
+  
+  const isLoading = isLoadingAgents || isLoadingAdmins;
 
 
   // Resetear el formulario cuando cambia el usuario o el modo
@@ -176,6 +184,18 @@ export const UserForm: React.FC<UserFormProps> = ({
         description: 'No se ha proporcionado una función para guardar el usuario',
       });
       return;
+    }
+
+    // Verificar que el usuario asignado existe
+    if (data.assigned_agent !== null && data.assigned_agent !== undefined) {
+      const agentId = Number(data.assigned_agent);
+      const userExists = assignableUsers.some(user => user.id === agentId);
+      if (!userExists) {
+        toast.error('Error de validación', {
+          description: 'El usuario seleccionado no existe en el sistema o está inactivo',
+        });
+        return;
+      }
     }
 
     // Validar campos requeridos manualmente antes de enviar
@@ -777,31 +797,37 @@ export const UserForm: React.FC<UserFormProps> = ({
                     control={control}
                     render={({ field }) => (
                       <Select
-                        value={field.value ? field.value.toString() : 'none'}
+                        value={field.value !== null && field.value !== undefined ? field.value.toString() : 'none'}
                         onValueChange={(value) => {
-                          if (value === 'none') {
-                            field.onChange(undefined);
-                          } else {
-                            field.onChange(parseInt(value));
-                          }
+                          field.onChange(value === 'none' ? null : Number(value));
                         }}
-                        disabled={loading}
+                        disabled={loading || isLoading}
                       >
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder="Seleccionar agente" />
+                        <SelectTrigger>
+                          <SelectValue placeholder={isLoading ? 'Cargando usuarios...' : 'Seleccionar usuario'} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">Sin agente asignado</SelectItem>
-                          {agentsData?.results?.map((agent) => (
-                            <SelectItem key={agent.id} value={agent.id.toString()}>
-                              {agent.name} {agent.last_name}
-                            </SelectItem>
-                          ))}
-                          {adminsData?.results?.map((admin) => (
-                            <SelectItem className="bg-gray-200" key={admin.id} value={admin.id.toString()}>
-                              {admin.name} {admin.last_name}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="none">Ninguno</SelectItem>
+                          <SelectGroup>
+                            <SelectLabel>Agentes</SelectLabel>
+                            {assignableUsers
+                              .filter(user => user.role === 'agent')
+                              .map((user: CustomUser) => (
+                                <SelectItem key={user.id} value={user.id.toString()}>
+                                  {user.name} {user.last_name} ({user.email})
+                                </SelectItem>
+                              ))}
+                          </SelectGroup>
+                          <SelectGroup>
+                            <SelectLabel>Administradores</SelectLabel>
+                            {assignableUsers
+                              .filter(user => user.role === 'admin')
+                              .map((user: CustomUser) => (
+                                <SelectItem key={user.id} value={user.id.toString()}>
+                                  {user.name} {user.last_name} ({user.email})
+                                </SelectItem>
+                              ))}
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                     )}

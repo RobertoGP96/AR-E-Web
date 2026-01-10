@@ -35,7 +35,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        limit_choices_to={'role': 'agent', 'role': 'admin'},
+        limit_choices_to={'role__in': ['agent', 'admin']},
         related_name='assigned_clients',
         help_text='Agente asignado para este cliente'
     )

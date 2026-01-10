@@ -127,11 +127,11 @@ export const userRoleUtils = {
 // Etiquetas para mostrar en la UI
 export const roleLabels: Record<UserRole, string> = {
   user: 'Usuario',
+  client: 'Cliente',
   agent: 'Agente',
   accountant: 'Contador',
   buyer: 'Comprador',
   logistical: 'Logístico',
   community_manager: 'Community Manager',
   admin: 'Administrador',
-  client: 'Cliente',
 };
