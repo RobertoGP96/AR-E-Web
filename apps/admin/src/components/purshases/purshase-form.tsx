@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,8 +22,8 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { buyingAccountService, shoppingReceipService } from '@/services/api';
-import type { BuyingAccount, CreateProductBuyedData, Product } from '@/types/models';
+import { shoppingReceipService } from '@/services/api';
+import type { CreateProductBuyedData, Product } from '@/types/models';
 import { SHOPPING_STATUSES } from '@/types/models/base';
 import SelectedProductsForPurchase from '../products/selected-products-for-purchase';
 import { DatePicker } from '@/components/utils/DatePicker';
@@ -47,8 +47,6 @@ interface PurchaseFormProps {
 }
 
 export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
-  const [buyingAccounts, setBuyingAccounts] = useState<BuyingAccount[]>([]);
-  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<CreateProductBuyedData[]>([]);
 
@@ -83,38 +81,13 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
   // Cargar cuentas de compra cuando se selecciona una tienda
   const selectedShopId = form.watch('shop_of_buy_id');
 
-  useEffect(() => {
-    if (selectedShopId) {
-      form.setValue('shopping_account_id', undefined);
-      loadBuyingAccounts(selectedShopId);
-    } else {
-      setBuyingAccounts([]);
-      form.setValue('shopping_account_id', undefined);
-    }
-  }, [selectedShopId, form]);
-
-  const loadBuyingAccounts = async (shopId: number) => {
-    setIsLoadingAccounts(true);
-    try {
-      const response = await buyingAccountService.getBuyingAccounts({
-        shop: shopId,
-        per_page: 100,
-      });
-      setBuyingAccounts(response.results || []);
-    } catch (error) {
-      console.error('Error loading buying accounts:', error);
-      toast.error('Error al cargar las cuentas de compra');
-    } finally {
-      setIsLoadingAccounts(false);
-    }
-  };
 
   const onSubmit = async (data: CreateShoppingReceipFormData) => {
     setIsSubmitting(true);
     try {
       // Encontrar los nombres de la cuenta y tienda seleccionadas
-      const selectedAccount = buyingAccounts.find(account => account.id === data.shopping_account_id);
       const selectedShop = shops.find(shop => shop.id === data.shop_of_buy_id);
+      const selectedAccount = selectedShop?.buying_accounts?.find(account => account.id === data.shopping_account_id);
 
       if (!selectedAccount || !selectedShop) {
         toast.error('Cuenta de compra o tienda no encontrada');
@@ -196,11 +169,11 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   value={field.value?.toString()}
-                  disabled={!selectedShopId || isLoadingAccounts}
+                  disabled={!selectedShopId}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      {isLoadingAccounts ? (
+                      {true ? (
                         <div className="flex items-center">
                           <span>Cargando cuentas...</span>
                           <Loader2 className="h-4 w-4 animate-spin ml-2" />

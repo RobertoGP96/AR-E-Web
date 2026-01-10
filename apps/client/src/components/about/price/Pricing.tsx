@@ -1,3 +1,4 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckIcon } from "lucide-react"
 
 
@@ -141,6 +142,27 @@ export default function Pricing() {
 
           </div>
         ))}
+      </div>
+
+      <div className="mt-6 w-full flex justify-center items-center">
+        <Card className="w-full bg-white/2.5 border-0 hover:bg-white/5 ring-1 ring-white/10 rounded-3xl transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl">
+          <CardHeader>
+            <CardTitle className="text-2xl text-primary font-bold tracking-tight">
+              Envío por carga
+            </CardTitle>
+            <CardDescription>
+              Esta categoría de servicio de envío representa una solución económica pero con
+              tiempos de entrega más extensos. Abarca todos los artículos de las categorías de envío previas, con una característica
+              distintiva fundamental: la utilización del transporte marítimo como medio principal de traslado.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm  flex items-end leading-6">
+            <span className="text-4xl leading-none font-bold">
+              $4
+            </span>
+            <span className="ml-0.5 mr-1.5">USD/Lb</span>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

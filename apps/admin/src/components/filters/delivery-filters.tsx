@@ -74,7 +74,7 @@ export const DeliveryFilters: React.FC<DeliveryFiltersProps> = ({ filters, onFil
               <Label className="text-xs font-medium">Zona</Label>
               <Select value={filters.zone ?? 'all'} onValueChange={(v) => handleChange({ zone: v === 'all' ? undefined : v })}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todas" /></SelectTrigger>
-                <SelectContent><SelectItem value={'all'}>Todas</SelectItem>{zones.map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}</SelectContent>
+                <SelectContent><SelectItem value={'all'}>Todas</SelectItem>{zones.map(z => <SelectItem key={z} value={z as string}>{z}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>

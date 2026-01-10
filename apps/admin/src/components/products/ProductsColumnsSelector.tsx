@@ -18,7 +18,8 @@ export type VisibleColumn =
   | 'amount_delivered'
   | 'pending_purchase'
   | 'pending_delivery'
-  | 'link';
+  | 'link'
+  | 'picture';
 
 interface ColumnOption {
   key: VisibleColumn;
@@ -47,6 +48,7 @@ const OPTIONS: ColumnOption[] = [
   { key: 'pending_purchase', label: 'Pendiente compra' },
   { key: 'pending_delivery', label: 'Pendiente entrega' },
   { key: 'link', label: 'Link' },
+  { key: 'picture', label: 'foto' },
 ];
 
 export default function ProductsColumnsSelector({ value, onChange }: Props) {

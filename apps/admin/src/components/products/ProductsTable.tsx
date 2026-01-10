@@ -207,6 +207,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                 {visibleColumns.includes('status') && <TableHead className="text-center">Estado</TableHead>}
                 {visibleColumns.includes('total_cost') && <TableHead className="text-right">Costo Total</TableHead>}
                 {visibleColumns.includes('actions') && <TableHead className="text-center">Acciones</TableHead>}
+                {visibleColumns.includes('picture') && <TableHead className="text-center">Imagen</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -325,6 +326,12 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                   {visibleColumns.includes('total_cost') && (
                     <TableCell className="text-right font-semibold">
                       ${product.total_cost.toFixed(2)}
+                    </TableCell>
+                  )}
+
+                  {visibleColumns.includes('picture') && (
+                    <TableCell>
+
                     </TableCell>
                   )}
                   {visibleColumns.includes('actions') && (
