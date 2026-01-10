@@ -184,12 +184,12 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {buyingAccounts.length === 0 && !isLoadingAccounts ? (
+                    {selectedShopId && shops?.find(shop => shop.id === selectedShopId)?.buying_accounts?.length === 0 ? (
                       <SelectItem value="no-accounts" disabled>
                         No hay cuentas disponibles para esta tienda
                       </SelectItem>
                     ) : (
-                      buyingAccounts.map((account) => (
+                      shops?.find(shop => shop.id === selectedShopId)?.buying_accounts?.map((account) => (
                         <SelectItem key={account.id} value={account.id.toString()}>
                           {account.account_name}
                         </SelectItem>
