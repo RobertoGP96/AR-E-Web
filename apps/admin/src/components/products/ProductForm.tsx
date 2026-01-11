@@ -2,6 +2,7 @@ import { Plus, Save, Tag, X, Store, Link2, FileText, CheckCircle, AlertCircle, C
 import { serializeTagsToDescription, type StoredTag } from '@/lib/tags'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
 import { useState, useEffect, useRef } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useShops } from '@/hooks/shop/useShops'
@@ -94,6 +95,7 @@ const getShopTaxRate = (shopName: string): number => {
 // Función para calcular el total según las reglas de la empresa
 const calculateTotalCost = (
     unitPrice: number,
+    quantity: number,
     shippingCost: number,
     shopName: string,
     shopTaxRate: number | undefined,
@@ -111,7 +113,8 @@ const calculateTotalCost = (
     total: number
 } => {
     // Precio del producto (sin multiplicar por cantidad)
-    const subtotal = unitPrice
+
+    const subtotal = unitPrice * quantity
 
     // Costo de envío
     const costoEnvio = shippingCost
@@ -404,6 +407,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                     // Si aún no existe, dejamos undefined y validamos más abajo
             }
         }
+        const quantity = Number(newProduct.amount_requested) || 1
         const shopTaxRate = newProduct.shop_taxes
         const addedTaxes = Number(newProduct.added_taxes) || 0
         const ownTaxes = Number(newProduct.own_taxes) || 0
@@ -418,7 +422,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             shopDisplayName = (newProduct.shop || (newProduct.link ? extractShopName(newProduct.link) : '')) || 'Unknown'
         }
 
-        const calculation = calculateTotalCost(unit, shippingCost, shopDisplayName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
+        const calculation = calculateTotalCost(unit, quantity,shippingCost, shopDisplayName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
         const computedTotal = calculation.total
 
         // category: backend espera PK; soportamos que el form guarde nombre -> mapear a id
@@ -804,13 +808,12 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                 <label htmlFor="amount_requested" className="text-sm font-medium text-foreground">
                                     Cantidad
                                 </label>
-                                <Input
+                                <DecimalInput
                                     id="amount_requested"
-                                    type="number"
-                                    min={1}
-                                    step="1"
                                     value={newProduct.amount_requested}
-                                    onChange={(e) => setNewProduct({ ...newProduct, amount_requested: Number(e.target.value) })}
+                                    onChange={(value) => setNewProduct({ ...newProduct, amount_requested: value || 1 })}
+                                    decimalPlaces={0}
+                                    min={1}
                                     className="h-10"
                                 />
                             </div>
@@ -820,13 +823,12 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                 <label htmlFor="shop_cost" className="text-sm font-medium text-foreground">
                                     Precio
                                 </label>
-                                <Input
+                                <DecimalInput
                                     id="shop_cost"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
                                     value={newProduct.shop_cost}
-                                    onChange={(e) => setNewProduct({ ...newProduct, shop_cost: Number(e.target.value) })}
+                                    onChange={(value) => setNewProduct({ ...newProduct, shop_cost: value || 0 })}
+                                    decimalPlaces={2}
+                                    min={0}
                                     className="h-10"
                                     placeholder="0.00"
                                 />
@@ -837,13 +839,12 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                 <label htmlFor="shop_delivery_cost" className="text-sm font-medium text-foreground">
                                     Costo Envío
                                 </label>
-                                <Input
+                                <DecimalInput
                                     id="shop_delivery_cost"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
                                     value={newProduct.shop_delivery_cost}
-                                    onChange={(e) => setNewProduct({ ...newProduct, shop_delivery_cost: Number(e.target.value) })}
+                                    onChange={(value) => setNewProduct({ ...newProduct, shop_delivery_cost: value || 0 })}
+                                    decimalPlaces={2}
+                                    min={0}
                                     className="h-10"
                                     placeholder="0.00"
                                 />
@@ -888,13 +889,12 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                 <label htmlFor="added_taxes" className="text-sm font-medium text-foreground">
                                     Impuesto Adicional
                                 </label>
-                                <Input
+                                <DecimalInput
                                     id="added_taxes"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
                                     value={newProduct.added_taxes}
-                                    onChange={(e) => setNewProduct({ ...newProduct, added_taxes: Number(e.target.value) })}
+                                    onChange={(value) => setNewProduct({ ...newProduct, added_taxes: value || 0 })}
+                                    decimalPlaces={2}
+                                    min={0}
                                     className="h-10"
                                     placeholder="0.00"
                                 />
@@ -905,13 +905,12 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                                 <label htmlFor="own_taxes" className="text-sm font-medium text-foreground">
                                     Impuestos Propios ($)
                                 </label>
-                                <Input
+                                <DecimalInput
                                     id="own_taxes"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
                                     value={newProduct.own_taxes}
-                                    onChange={(e) => setNewProduct({ ...newProduct, own_taxes: Number(e.target.value) })}
+                                    onChange={(value) => setNewProduct({ ...newProduct, own_taxes: value || 0 })}
+                                    decimalPlaces={2}
+                                    min={0}
                                     className="h-10"
                                     placeholder="0.00"
                                 />
@@ -933,6 +932,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                     {/* Resumen de total calculado con detalle de factura */}
                     {(() => {
                         const price = Number(newProduct.shop_cost) || 0
+                        const quantity = Number(newProduct.amount_requested) || 1
                         const shippingCost = Number(newProduct.shop_delivery_cost) || 0
                         const shopName = newProduct.shop || ''
                         const shopTaxRate = newProduct.shop_taxes
@@ -940,7 +940,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                         const ownTaxes = Number(newProduct.own_taxes) || 0
                         const chargeIva = newProduct.charge_iva ?? true
 
-                        const calculation = calculateTotalCost(price, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
+                        const calculation = calculateTotalCost(price, quantity, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
 
                         return (
                             <div className="space-y-4">
