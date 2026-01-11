@@ -786,7 +786,7 @@ export const UserForm: React.FC<UserFormProps> = ({
               )}
 
               {/* Solo mostrar agente asignado si el rol es 'client' */}
-              {selectedRole === 'client' && (
+              {selectedRole === 'client' || selectedRole=== 'agent' && (
                 <div className="space-y-2">
                   <Label htmlFor="assigned_agent" className="flex items-center gap-2">
                     <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
