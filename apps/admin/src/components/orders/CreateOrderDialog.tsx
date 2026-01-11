@@ -55,19 +55,23 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
   const filteredClients = useMemo(() => {
     const allClients = clientsData?.results || [];
     
-    if (!formData.sales_manager_id || formData.sales_manager_id === 0) {
-      // Si no hay agente seleccionado, mostrar todos los clientes
-      return allClients;
+    // Filtrar clientes según el agente seleccionado
+    let result = allClients;
+    if (formData.sales_manager_id && formData.sales_manager_id !== 0) {
+      result = allClients.filter(client => {
+        if (!client.assigned_agent) return false;
+        
+        const assignedAgentId = typeof client.assigned_agent === 'object' 
+          ? (client.assigned_agent as CustomUser).id 
+          : client.assigned_agent;
+        return assignedAgentId === formData.sales_manager_id;
+      });
     }
-    // Filtrar clientes que tienen asignado el agente seleccionado
-    return allClients.filter(client => {
-      if (!client.assigned_agent) return false;
-      
-      const assignedAgentId = typeof client.assigned_agent === 'object' 
-        ? (client.assigned_agent as CustomUser).id 
-        : client.assigned_agent;
-      return assignedAgentId === formData.sales_manager_id;
-    });
+    
+    // Ordenar alfabéticamente por nombre
+    return [...result].sort((a, b) => 
+      (a.full_name || '').localeCompare(b.full_name || '')
+    );
   }, [clientsData?.results, formData.sales_manager_id]);
 
   // Funciones para obtener estilos según el estado
@@ -128,7 +132,7 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
           throw new Error('No se pudo obtener el ID del pedido para la redirección');
         }
         // Redirigir a la vista de agregar productos
-        window.location.href = `/orders/${newOrder.id}/products`;
+        window.location.href = `/orders/${newOrder.id}/add-products`;
       } else {
         // Cerrar diálogo si no se redirige
         onOpenChange(false);
