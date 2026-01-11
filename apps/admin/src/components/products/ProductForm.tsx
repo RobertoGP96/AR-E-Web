@@ -40,6 +40,7 @@ const extractShopName = (url: string): string => {
         // Mapeo de dominios conocidos a nombres de tienda
         const shopMappings: Record<string, string> = {
             'amazon.com': 'Amazon',
+            'a.co': 'Amazon',
             'ebay.com': 'eBay',
             'ebay.es': 'eBay España',
             'aliexpress.com': 'AliExpress',

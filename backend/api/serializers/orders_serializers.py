@@ -142,6 +142,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
+            "id",  # Asegurar que el ID se incluya en la respuesta
             "client_id",
             "sales_manager_id",
             "status",
@@ -149,6 +150,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             "observations",
             "received_value_of_client",
         ]
+        read_only_fields = ["id"]  # Marcar el ID como solo lectura
 
     def validate_sales_manager(self, value):
         if value and value.role != 'agent':

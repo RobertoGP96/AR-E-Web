@@ -90,7 +90,7 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
     return styles[status as keyof typeof styles] || '';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, redirectToProducts: boolean = false) => {
     e.preventDefault();
 
     if (!formData.client_id) {
@@ -99,7 +99,7 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
     }
 
     try {
-      await createOrderMutation.mutateAsync({
+      const newOrder = await createOrderMutation.mutateAsync({
         client_id: formData.client_id,
         sales_manager_id: formData.sales_manager_id || undefined,
         observations: formData.observations || undefined,
@@ -107,9 +107,13 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
         status: formData.status,
       });
 
+      if (!newOrder || !newOrder.id) {
+        throw new Error('No se pudo obtener el ID del pedido creado');
+      }
+
       toast.success('Pedido creado exitosamente');
 
-      // Resetear formulario y cerrar diálogo
+      // Resetear formulario
       setFormData({
         client_id: undefined,
         sales_manager_id: 0,
@@ -117,7 +121,18 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
         pay_status: 'No pagado',
         status: 'Encargado',
       });
-      onOpenChange(false);
+
+      if (redirectToProducts) {
+        // Verificar nuevamente que tenemos el ID antes de redirigir
+        if (!newOrder.id) {
+          throw new Error('No se pudo obtener el ID del pedido para la redirección');
+        }
+        // Redirigir a la vista de agregar productos
+        window.location.href = `/orders/${newOrder.id}/products`;
+      } else {
+        // Cerrar diálogo si no se redirige
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error('No se pudo crear el pedido. Por favor intenta de nuevo.');
@@ -314,7 +329,26 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={createOrderMutation.isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={(e) => handleSubmit(e, true)}
+              disabled={createOrderMutation.isPending}
+            >
+              {createOrderMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creando...
+                </>
+              ) : (
+                'Crear y Agregar Productos'
+              )}
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={createOrderMutation.isPending}
+              onClick={(e) => handleSubmit(e, false)}
+            >
               {createOrderMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -324,6 +358,7 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
                 'Crear Pedido'
               )}
             </Button>
+            
           </DialogFooter>
         </form>
       </DialogContent>
