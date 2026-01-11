@@ -91,12 +91,32 @@ export default function AddMultipleProductsToOrderPage() {
 
       {/* Información de la orden */}
       {currentOrder && (
-        <Card className="bg-blue-50/50 border-blue-200">
-          <CardContent className="pt-6">
-            <p className="text-sm text-gray-700">
-              <span className="font-semibold">Cliente:</span>{' '}
-              {typeof currentOrder.client === 'object' ? currentOrder.client.email : currentOrder.client}
-            </p>
+        <Card className="border-gray-200">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-500">ORDEN #</p>
+                <p className="font-medium">#{currentOrder.id}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-500">FECHA</p>
+                <p>{new Date(currentOrder.created_at).toLocaleDateString()}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-500">CLIENTE</p>
+                <p className="font-medium">
+                  {typeof currentOrder.client === 'object' 
+                    ? currentOrder.client.name || 'Sin nombre' 
+                    : 'Cliente no disponible'}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-500">ESTADO</p>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {currentOrder.status}
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

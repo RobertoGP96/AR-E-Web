@@ -31,11 +31,16 @@ interface CreateOrderDialogProps {
 export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps) {
   const createOrderMutation = useCreateOrder();
   
-  // Obtener usuarios (clientes y agentes) usando hooks específicos por rol
+  // Obtener usuarios (clientes, agentes y admins)
   const { data: clientsData } = useUsersByRole('client');
   const { data: agentsData } = useUsersByRole('agent');
+  const { data: adminsData } = useUsersByRole('admin');
   
-  const agents = agentsData?.results || [];
+  // Combinar agentes y admins en una sola lista
+  const agents = [
+    ...(agentsData?.results || []),
+    ...(adminsData?.results || [])
+  ];
 
   // Estado del formulario
   const [formData, setFormData] = useState({
@@ -161,7 +166,7 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
                   <SelectItem value="0">
                     <span className="text-muted-foreground">Todos agentes</span>
                   </SelectItem>
-                  {agents.filter(agent => agent.role === 'agent').map((agent: CustomUser) => (
+                  {agents.map((agent: CustomUser) => (
                     <SelectItem key={agent.id} value={agent.id.toString()}>
                       {agent.full_name}
                     </SelectItem>

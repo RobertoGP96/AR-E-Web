@@ -32,11 +32,16 @@ interface EditOrderDialogProps {
 export default function EditOrderDialog({ open, onOpenChange, order }: EditOrderDialogProps) {
   const updateOrderMutation = useUpdateOrder();
   
-  // Obtener usuarios (clientes y agentes)
+  // Obtener usuarios (clientes, agentes y admins)
   const { data: clientsData } = useUsers({ role: 'client' });
   const { data: agentsData } = useUsers({ role: 'agent' });
+  const { data: adminsData } = useUsers({ role: 'admin' });
   
-  const agents = agentsData?.results || [];
+  // Combinar agentes y admins en una sola lista
+  const agents = [
+    ...(agentsData?.results || []),
+    ...(adminsData?.results || [])
+  ];
 
   // Estado del formulario
   const [formData, setFormData] = useState({
