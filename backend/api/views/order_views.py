@@ -85,13 +85,17 @@ class OrderViewSet(viewsets.ModelViewSet):
                 # intentar buscar por id numérico
                 search_id = int(search)
                 queryset = queryset.filter(Q(id=search_id) |
-                                           Q(client__full_name__icontains=search) |
+                                           Q(client__name__icontains=search) |
+                                           Q(client__last_name__icontains=search) |
                                            Q(client__email__icontains=search) |
-                                           Q(sales_manager__full_name__icontains=search))
+                                           Q(sales_manager__name__icontains=search) |
+                                           Q(sales_manager__last_name__icontains=search))
             except ValueError:
-                queryset = queryset.filter(Q(client__full_name__icontains=search) |
+                queryset = queryset.filter(Q(client__name__icontains=search) |
+                                           Q(client__last_name__icontains=search) |
                                            Q(client__email__icontains=search) |
-                                           Q(sales_manager__full_name__icontains=search))
+                                           Q(sales_manager__name__icontains=search) |
+                                           Q(sales_manager__last_name__icontains=search))
 
         return queryset
 

@@ -129,7 +129,13 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
           Seleccionar Producto
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full min-w-[600px] max-h-[80vh] overflow-y-auto">
+      <PopoverContent 
+        className="w-[90vw] max-w-3xl max-h-[80vh] overflow-y-auto p-4"
+        align="start"
+        sideOffset={8}
+        collisionPadding={16}
+        side="bottom"
+      >
         <div className="space-y-4">
           {/* Filtros */}
           <div className="space-y-2">
@@ -145,52 +151,64 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
           </div>
 
           {/* Lista de productos */}
-          <div className="space-y-2">
+          <div className="space-y-2 mt-2">
             {filteredProducts.length === 0 ? (
               <div className="text-center text-gray-500 py-4">
                 No se encontraron productos.
               </div>
             ) : (
               filteredProducts.map((product) => (
-                <ProductSummaryRow
-                  key={product.id}
-                  product={product}
-                  selectable={true}
-                  isSelected={selectionMode ? false : selectedProducts.some(p => p.id === product.id)}
-                  onSelect={handleSelectProduct}
-                />
+                <div key={product.id} className="relative">
+                  <ProductSummaryRow
+                    product={product}
+                    selectable={true}
+                    isSelected={selectedProducts.some(p => p.id === product.id)}
+                    onSelect={handleSelectProduct}
+                  />
+                </div>
               ))
             )}
           </div>
 
           {/* Botón de crear/confirmar */}
-          {selectionMode ? (
-            <div className="flex justify-end pt-4 border-t">
-              <Button
-                onClick={handleConfirmSelection}
-                disabled={selectedProducts.length === 0}
-                className="flex items-center gap-2"
-              >
-                <ShoppingCart className="h-4 w-4" />
-                Agregar a Compra ({selectedProducts.length})
-              </Button>
-            </div>
-          ) : (
-            <div className="flex justify-end pt-4 border-t">
-              <Button
-                onClick={handleCreateProductBuyed}
-                disabled={isCreating || selectedProducts.length === 0}
-                className="flex items-center gap-2"
-              >
-                {isCreating ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+          <div className="sticky bottom-0 bg-white pt-4 border-t -mx-4 px-4 -mb-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {selectedProducts.length} {selectedProducts.length === 1 ? 'producto' : 'productos'} seleccionados
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                {selectionMode ? (
+                  <Button
+                    onClick={handleConfirmSelection}
+                    disabled={selectedProducts.length === 0}
+                    className="flex items-center gap-2"
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    Agregar a Compra
+                  </Button>
                 ) : (
-                  <ShoppingCart className="h-4 w-4" />
+                  <Button
+                    onClick={handleCreateProductBuyed}
+                    disabled={isCreating || selectedProducts.length === 0}
+                    className="flex items-center gap-2"
+                  >
+                    {isCreating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShoppingCart className="h-4 w-4" />
+                    )}
+                    Crear
+                  </Button>
                 )}
-                Crear ({selectedProducts.length})
-              </Button>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </PopoverContent>
     </Popover>

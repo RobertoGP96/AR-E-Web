@@ -80,6 +80,8 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
 
   // Cargar cuentas de compra cuando se selecciona una tienda
   const selectedShopId = form.watch('shop_of_buy_id');
+  const selectedShop = shops.find(shop => shop.id === selectedShopId);
+  const buyingAccounts = selectedShop?.buying_accounts || [];
 
 
   const onSubmit = async (data: CreateShoppingReceipFormData) => {
@@ -169,32 +171,28 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   value={field.value?.toString()}
-                  disabled={!selectedShopId}
+                  disabled={!selectedShopId || buyingAccounts.length === 0}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      {true ? (
-                        <div className="flex items-center">
-                          <span>Cargando cuentas...</span>
-                          <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                        </div>
-                      ) : (
-                        <SelectValue className='min-w-[150px] truncate' placeholder={selectedShopId ? "Selecciona una cuenta de compra" : "Selecciona una tienda primero"} />
-                      )}
+                      <SelectValue 
+                        className='min-w-[150px] truncate' 
+                        placeholder={
+                          !selectedShopId 
+                            ? "Selecciona una tienda primero" 
+                            : buyingAccounts.length === 0 
+                              ? "No hay cuentas disponibles" 
+                              : "Selecciona una cuenta"
+                        } 
+                      />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {selectedShopId && shops?.find(shop => shop.id === selectedShopId)?.buying_accounts?.length === 0 ? (
-                      <SelectItem value="no-accounts" disabled>
-                        No hay cuentas disponibles para esta tienda
+                    {buyingAccounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id.toString()}>
+                        {account.account_name}
                       </SelectItem>
-                    ) : (
-                      shops?.find(shop => shop.id === selectedShopId)?.buying_accounts?.map((account) => (
-                        <SelectItem key={account.id} value={account.id.toString()}>
-                          {account.account_name}
-                        </SelectItem>
-                      ))
-                    )}
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -262,8 +260,9 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
             <div className={selectedShopId ? '' : 'pointer-events-none opacity-50'}>
               <SelectedProductsForPurchase
                 filters={{ status: 'Encargado' }}
-                orderId={123}
-                shoppingReceiptId={456}
+                orderId={0} // No se requiere en este contexto
+                shoppingReceiptId={0} // No se requiere en este contexto
+                shopId={selectedShopId}
                 selectionMode={true}
                 onProductsConfirmed={handleProductsConfirmed}
                 onProductBuyedCreated={(productBuyed) => {
@@ -273,17 +272,18 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
             </div>
           </div>
 
-          <div className='p-4 bg-gray-300/30 rounded-sm'>
+          <div className='p-4 bg-gray-300/30 rounded-sm max-h-96 overflow-y-auto'>
             {selectedProducts.length === 0 ? (
               <p className="text-gray-500">No hay productos seleccionados para la compra.</p>
             ) : (
-              <div>
+              <div className="space-y-2">
                 {selectedProducts.map((productB) => (
-                  <ProductBuyedShopping key={productB.original_product} productB={productB} />
+                  <div key={productB.original_product} className="bg-white p-3 rounded-md shadow-sm">
+                    <ProductBuyedShopping productB={productB} />
+                  </div>
                 ))}
               </div>
             )}
-
           </div>
 
         </div>

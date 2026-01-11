@@ -47,6 +47,11 @@ class ProductViewSet(viewsets.ModelViewSet):
         status_filter = self.request.query_params.get('status')
         if status_filter:
             queryset = queryset.filter(status=status_filter)
+            
+        # Filtrar por tienda si se proporciona el parámetro shop
+        shop_id = self.request.query_params.get('shop')
+        if shop_id:
+            queryset = queryset.filter(shop_id=shop_id)
 
         return queryset
 
