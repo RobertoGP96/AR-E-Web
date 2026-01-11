@@ -18,7 +18,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     ViewSet para gestión de productos.
     """
     queryset = Product.objects.all().order_by('-created_at')
-    permission_classes = [IsAuthenticated, AdminPermission, AgentPermission | ReadOnly]
+    permission_classes = [IsAuthenticated, (AdminPermission | AgentPermission)]
 
     def get_serializer_class(self):
         if self.action == 'create':
