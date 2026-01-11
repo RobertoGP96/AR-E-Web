@@ -107,8 +107,8 @@ export default function AddMultipleProductsToOrderPage() {
               <div className="space-y-1">
                 <p className="text-xs font-medium text-gray-500">CLIENTE</p>
                 <p className="font-medium">
-                  {typeof currentOrder.client === 'object' 
-                    ? currentOrder.client.name || 'Sin nombre' 
+                  {typeof currentOrder.client === 'object'
+                    ? currentOrder.client.name || 'Sin nombre'
                     : 'Cliente no disponible'}
                 </p>
               </div>
@@ -172,26 +172,22 @@ export default function AddMultipleProductsToOrderPage() {
                       <TableCell>
                         <div>
                           <p className="font-medium">{product.name}</p>
-                          {product.description && (
-                            <p className="text-sm text-gray-500 truncate max-w-xs">
-                              {product.description}
-                            </p>
-                          )}
-                           {/* Mostrar tags como badges en formato Badge(name:value) debajo de la descripción */}
-                      {(() => {
-                        const description = product.description as string | undefined;
-                        const tags = parseTagsFromDescriptionBlock(description);
-                        if (!tags || tags.length === 0) return null;
-                        return (
-                          <div className=" flex flex-row flex-wrap items-start gap-1">
-                            {tags.map((tag, i) => (
-                              <Badge key={i} variant="secondary" className="text-xs">
-                                {tag.name}{tag.value ? `: ${tag.value}` : ''}
-                              </Badge>
-                            ))}
-                          </div>
-                        );
-                      })()}
+
+                          {/* Mostrar tags como badges en formato Badge(name:value) debajo de la descripción */}
+                          {(() => {
+                            const description = product.description as string | undefined;
+                            const tags = parseTagsFromDescriptionBlock(description);
+                            if (!tags || tags.length === 0) return null;
+                            return (
+                              <div className=" flex flex-row flex-wrap items-start gap-1">
+                                {tags.map((tag, i) => (
+                                  <Badge key={i} variant="secondary" className="text-xs">
+                                    {tag.name}{tag.value ? `: ${tag.value}` : ''}
+                                  </Badge>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </TableCell>
                       <TableCell>{product.shop}</TableCell>
