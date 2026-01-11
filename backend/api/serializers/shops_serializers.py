@@ -58,13 +58,18 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
     """
     """Shopping Receip Serializer"""
 
-    shopping_account = serializers.SlugRelatedField(
+    shopping_account = serializers.PrimaryKeyRelatedField(
         queryset=BuyingAccounts.objects.all(),
-        slug_field="account_name",
         error_messages={
-            "does_not_exist": "La cuenta de compra {value} no existe.",
-            "invalid": "El valor proporcionado para la cuenta de compra no es válido.",
-        },
+            "does_not_exist": "La cuenta de compra no existe.",
+            "invalid": "El ID proporcionado para la cuenta de compra no es válido.",
+        }
+    )
+    
+    # Campo de solo lectura para mostrar el nombre de la cuenta
+    shopping_account_name = serializers.StringRelatedField(
+        source='shopping_account.account_name',
+        read_only=True
     )
     shop_of_buy = serializers.SlugRelatedField(
         queryset=Shop.objects.all(),
@@ -114,6 +119,7 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "shopping_account",
+            "shopping_account_name",
             "shop_of_buy",
             "total_cost_of_purchase",
             "total_cost_of_shopping",

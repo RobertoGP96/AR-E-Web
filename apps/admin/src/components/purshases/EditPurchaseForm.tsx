@@ -160,7 +160,7 @@ export function EditPurchaseForm({ receipt, onSuccess, onCancel }: EditPurchaseF
       }
 
       const payload = {
-        shopping_account: selectedAccount.account_name,
+        shopping_account: data.shopping_account_id, // Send the ID instead of the name
         shop_of_buy: selectedShop.name,
         status_of_shopping: data.status_of_shopping,
         buy_date: data.buy_date,

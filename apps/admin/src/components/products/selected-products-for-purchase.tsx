@@ -130,13 +130,13 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[90vw] max-w-3xl max-h-[80vh] overflow-y-auto p-4"
+        className="w-[90vw] max-w-3xl max-h-[min(300px,50vh)] overflow-y-auto p-4 flex flex-col"
         align="start"
         sideOffset={8}
         collisionPadding={16}
         side="bottom"
       >
-        <div className="space-y-4">
+        <div className="flex flex-col flex-1 min-h-0">
           {/* Filtros */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -151,7 +151,7 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
           </div>
 
           {/* Lista de productos */}
-          <div className="space-y-2 mt-2">
+          <div className="flex-1 overflow-y-auto space-y-2 mt-2 pr-2 -mr-2">
             {filteredProducts.length === 0 ? (
               <div className="text-center text-gray-500 py-4">
                 No se encontraron productos.

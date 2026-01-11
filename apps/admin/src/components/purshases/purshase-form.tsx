@@ -97,13 +97,13 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
       }
 
       const payload = {
-        shopping_account: selectedAccount.account_name,
+        shopping_account: data.shopping_account_id, // Send the ID instead of the name
         shop_of_buy: selectedShop.name,
         status_of_shopping: data.status_of_shopping,
         buy_date: data.buy_date,
         total_cost_of_purchase: data.total_cost_of_purchase || 0,
         buyed_products: selectedProducts,
-      } as const;
+      };
 
       await shoppingReceipService.createShoppingReceipt(payload as Partial<unknown>);
 
