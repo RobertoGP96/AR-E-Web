@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ProductForm } from '@/components/products/ProductForm';
 import type { CreateProductData, Order } from '@/types';
+import { parseTagsFromDescriptionBlock } from '@/lib/tags';
+import { Badge } from '../ui/badge';
 
 export default function AddMultipleProductsToOrderPage() {
   const { id } = useParams<{ id: string }>();
@@ -175,13 +177,28 @@ export default function AddMultipleProductsToOrderPage() {
                               {product.description}
                             </p>
                           )}
+                           {/* Mostrar tags como badges en formato Badge(name:value) debajo de la descripción */}
+                      {(() => {
+                        const description = product.description as string | undefined;
+                        const tags = parseTagsFromDescriptionBlock(description);
+                        if (!tags || tags.length === 0) return null;
+                        return (
+                          <div className=" flex flex-row flex-wrap items-start gap-1">
+                            {tags.map((tag, i) => (
+                              <Badge key={i} variant="secondary" className="text-xs">
+                                {tag.name}{tag.value ? `: ${tag.value}` : ''}
+                              </Badge>
+                            ))}
+                          </div>
+                        );
+                      })()}
                         </div>
                       </TableCell>
                       <TableCell>{product.shop}</TableCell>
                       <TableCell>{product.amount_requested}</TableCell>
                       <TableCell>${(product.shop_cost || 0).toFixed(2)}</TableCell>
                       <TableCell className="font-semibold">
-                        ${(product.shop_cost || 0).toFixed(2)}
+                        ${(product.total_cost || 0).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -207,7 +224,7 @@ export default function AddMultipleProductsToOrderPage() {
                   <p className="text-lg font-bold text-orange-600">
                     Total estimado: $
                     {productsList
-                      .reduce((sum, p) => sum + (p.shop_cost || 0), 0)
+                      .reduce((sum, p) => sum + (p.total_cost || 0), 0)
                       .toFixed(2)}
                   </p>
                 </div>
