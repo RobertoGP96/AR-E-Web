@@ -33,6 +33,8 @@ const PurchaseDetails: React.FC = () => {
         );
     }
 
+    const profit= shoppingReceipt.total_cost_of_shopping - shoppingReceipt.total_cost_of_purchase;
+
     return (
         <div className="container mx-auto p-4">
             <Card className="w-full shadow-lg">
@@ -69,7 +71,7 @@ const PurchaseDetails: React.FC = () => {
                                                 Cuenta
                                             </h4>
                                             <p className="text-sm text-gray-900">
-                                                {shoppingReceipt.shopping_account || 'N/A'}
+                                                {shoppingReceipt.shopping_account_name || 'N/A'}
                                             </p>
                                         </div>
 
@@ -86,8 +88,8 @@ const PurchaseDetails: React.FC = () => {
                                 </CardContent>
                             </Card>
 
-                            <Card className="col-span-2">
-                                <CardContent>
+                            <Card className="col-span-2 border-0 shadow-none">
+                                <CardContent className='px-0'>
                                     {/* Productos Comprados */}
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
@@ -169,14 +171,14 @@ const PurchaseDetails: React.FC = () => {
                                 </>
                             )}
                             
-                            <div className="p-2 rounded-lg bg-amber-50 border border-amber-200">
-                                <h4 className="text-sm font-medium text-amber-700 uppercase tracking-wide mb-2">
-                                    Gastos Operativos
+                            <div className={"p-2 rounded-lg  border "+ (profit! > 0 ? "border-green-200 bg-green-50":"border-amber-200 bg-amber-50")}>
+                                <h4 className={"text-sm font-medium uppercase tracking-wide mb-2 "+(profit! > 0 ? "text-green-600":"text-amber-700")}>
+                                    Diferencia
                                 </h4>
-                                <p className="text-2xl font-bold text-amber-700">
-                                    ${(shoppingReceipt.operational_expenses || 0).toFixed(2)}
+                                <p className={"text-2xl font-bold "+(profit! > 0 ? "text-green-700":"text-amber-700")}>
+                                    ${(profit || 0).toFixed(2)}
                                 </p>
-                                <p className="text-xs text-amber-600 mt-1">
+                                <p className={"text-xs  mt-1 "+(profit! > 0 ? "text-green-500":"text-amber-600")}>
                                     Diferencia entre costo real y valor neto
                                 </p>
                             </div>

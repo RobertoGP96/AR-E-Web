@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -28,7 +29,11 @@ export function PurchaseDialog({
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? controlledOnOpenChange || (() => {}) : setInternalOpen;
 
+  const queryClient = useQueryClient();
+
   const handleSuccess = () => {
+    // Invalidate the purchases query to refetch the updated list
+    queryClient.invalidateQueries({ queryKey: ['shopping-receipts'] });
     setOpen(false);
     onSuccess?.();
   };

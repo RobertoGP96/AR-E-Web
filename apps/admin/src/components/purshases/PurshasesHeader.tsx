@@ -10,6 +10,8 @@ export default function PurshasesHeader({
   title = "Compras", 
   description = "Gestiona las compras",
 }: PurshasesHeaderProps) {
+
+
   return (
     <div className="flex items-center justify-between">
       <div>
@@ -21,7 +23,6 @@ export default function PurshasesHeader({
           {description}
         </p>
       </div>
-      
     </div>
   );
 }

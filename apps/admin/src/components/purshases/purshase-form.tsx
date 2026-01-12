@@ -23,7 +23,7 @@ import {
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { shoppingReceipService } from '@/services/api';
-import type { CreateProductBuyedData, Product } from '@/types/models';
+import type { CreateProductBuyedData, Product, ShoppingReceip } from '@/types/models';
 import { SHOPPING_STATUSES } from '@/types/models/base';
 import SelectedProductsForPurchase from '../products/selected-products-for-purchase';
 import { DatePicker } from '@/components/utils/DatePicker';
@@ -42,6 +42,7 @@ const createShoppingReceipSchema = z.object({
 type CreateShoppingReceipFormData = z.infer<typeof createShoppingReceipSchema>;
 
 interface PurchaseFormProps {
+  purchase?: ShoppingReceip;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -175,15 +176,15 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue 
-                        className='min-w-[150px] truncate' 
+                      <SelectValue
+                        className='min-w-[150px] truncate'
                         placeholder={
-                          !selectedShopId 
-                            ? "Selecciona una tienda primero" 
-                            : buyingAccounts.length === 0 
-                              ? "No hay cuentas disponibles" 
+                          !selectedShopId
+                            ? "Selecciona una tienda primero"
+                            : buyingAccounts.length === 0
+                              ? "No hay cuentas disponibles"
                               : "Selecciona una cuenta"
-                        } 
+                        }
                       />
                     </SelectTrigger>
                   </FormControl>
@@ -247,12 +248,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
               </FormItem>
             )}
           />
-
         </div>
-
-
-
-
         <div className='w-full'>
           <div className='w-full flex flex-row nowrap  items-center justify-between'>
 

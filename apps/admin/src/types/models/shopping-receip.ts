@@ -10,6 +10,7 @@ import type { ProductBuyed, CreateProductBuyedData } from './product-buyed';
 export interface ShoppingReceip {
   id: ID;
   shopping_account: string;
+  shopping_account_name?: string;
   shop_of_buy: string;
   status_of_shopping: string;
   buy_date: DateTime;

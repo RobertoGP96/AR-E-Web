@@ -158,7 +158,7 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
               </div>
             ) : (
               filteredProducts.map((product) => (
-                <div key={product.id} className="relative">
+                <div key={product.id} className="relative px-2">
                   <ProductSummaryRow
                     product={product}
                     selectable={true}

@@ -166,20 +166,20 @@ const formatCurrency = (value: number): string => {
 
 export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = false }: ProductFormProps) => {
     // Parse tags embedded in description if present
-    const parseDescriptionForTags = (desc?: string) => {
-        if (!desc) return { descPlain: '', parsedTags: [] as tag[] }
-        const idx = desc.indexOf(TAGS_SEPARATOR)
-        if (idx === -1) return { descPlain: desc, parsedTags: [] as tag[] }
-        const before = desc.substring(0, idx)
-        const after = desc.substring(idx + TAGS_SEPARATOR.length)
-        try {
-            const parsed = JSON.parse(after)
-            if (Array.isArray(parsed)) return { descPlain: before, parsedTags: parsed as tag[] }
-        } catch {
-            // ignore parse errors and treat whole desc as plain
-        }
-        return { descPlain: desc, parsedTags: [] as tag[] }
+const parseDescriptionForTags = (desc?: string) => {
+    if (!desc) return { descPlain: '', parsedTags: [] as tag[] }
+    const idx = desc.indexOf(TAGS_SEPARATOR)
+    if (idx === -1) return { descPlain: desc, parsedTags: [] as tag[] }
+    const before = desc.substring(0, idx)
+    const after = desc.substring(idx + TAGS_SEPARATOR.length)
+    try {
+        const parsed = JSON.parse(after)
+        if (Array.isArray(parsed)) return { descPlain: before, parsedTags: parsed as tag[] }
+    } catch {
+        // ignore parse errors and treat whole desc as plain
     }
+    return { descPlain: desc, parsedTags: [] as tag[] }
+}
 
     const initialParsed = parseDescriptionForTags(initialValues?.description)
 

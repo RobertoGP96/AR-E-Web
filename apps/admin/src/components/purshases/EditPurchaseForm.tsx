@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,12 +23,13 @@ import {
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { buyingAccountService, shoppingReceipService } from '@/services/api';
-import type { BuyingAccount, CreateProductBuyedData, Product, ShoppingReceip } from '@/types/models';
+import type { BuyingAccount, CreateProductBuyedData, Product, ProductBuyed } from '@/types/models';
 import { SHOPPING_STATUSES } from '@/types/models/base';
 import SelectedProductsForPurchase from '../products/selected-products-for-purchase';
 import { DatePicker } from '@/components/utils/DatePicker';
 import ProductBuyedShopping from '../products/buyed/product-buyed-shopping';
 import { useShops } from '@/hooks/useShops';
+import { useShoppingReceipt } from '@/hooks/shopping-receipts/useShoppingReceipt';
 
 // Schema de validación
 const editShoppingReceipSchema = z.object({
@@ -42,96 +43,31 @@ const editShoppingReceipSchema = z.object({
 type EditShoppingReceipFormData = z.infer<typeof editShoppingReceipSchema>;
 
 interface EditPurchaseFormProps {
-  receipt: ShoppingReceip;
+  receiptId: number;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function EditPurchaseForm({ receipt, onSuccess, onCancel }: EditPurchaseFormProps) {
+export function EditPurchaseForm({ receiptId, onSuccess, onCancel }: EditPurchaseFormProps) {
   const [buyingAccounts, setBuyingAccounts] = useState<BuyingAccount[]>([]);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<CreateProductBuyedData[]>([]);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
-  // Función para convertir Product a CreateProductBuyedData
-  const convertProductToCreateProductBuyed = (product: Product): CreateProductBuyedData => {
-    return {
-      original_product: product.id,
-      amount_buyed: product.amount_requested || 1,
-    };
-  };
-
-  // Función para manejar la confirmación de selección de productos
-  const handleProductsConfirmed = (products: Product[]) => {
-    const newProductBuyedList = products.map(product =>
-      convertProductToCreateProductBuyed(product)
-    );
-    setSelectedProducts(prevProducts => [...prevProducts, ...newProductBuyedList]);
-  };
-
+  // Usar el hook para cargar los datos del recibo
+  const { shoppingReceipt, isLoading: isLoadingReceipt, error } = useShoppingReceipt(receiptId);
   const { shops, isLoading: isLoadingShops } = useShops();
 
-  const form = useForm<EditShoppingReceipFormData>({
-    resolver: zodResolver(editShoppingReceipSchema),
-    defaultValues: {
-      shop_of_buy_id: undefined,
-      shopping_account_id: undefined,
-      status_of_shopping: undefined,
-      buy_date: undefined,
-      total_cost_of_shopping: undefined,
-    },
-  });
-
-  // Cargar cuentas iniciales para el receipt
+  // Si hay un error al cargar el recibo, mostrar mensaje
   useEffect(() => {
-    if (receipt && shops.length > 0 && !initialDataLoaded) {
-      const shop = shops.find(s => s.name === receipt.shop_of_buy);
-      if (shop) {
-        loadBuyingAccounts(shop.id).then(() => {
-          setInitialDataLoaded(true);
-        });
-      }
+    if (error) {
+      toast.error('Error al cargar los datos de la compra');
     }
-  }, [receipt, shops, initialDataLoaded]);
+  }, [error]);
 
-  // Resetear form cuando las cuentas iniciales estén cargadas
-  useEffect(() => {
-    if (receipt && initialDataLoaded && buyingAccounts.length > 0) {
-      const shop = shops.find(s => s.name === receipt.shop_of_buy);
-      const account = buyingAccounts.find(a => a.account_name === receipt.shopping_account);
-      form.reset({
-        shop_of_buy_id: shop?.id,
-        shopping_account_id: account?.id,
-        status_of_shopping: receipt.status_of_shopping as 'No pagado' | 'Pagado' | 'Parcial',
-        buy_date: receipt.buy_date,
-        total_cost_of_shopping: receipt.total_cost_of_shopping,
-      });
-
-      // Prellenar productos existentes
-      if (receipt.buyed_products) {
-        setSelectedProducts(receipt.buyed_products.map(pb => ({
-          original_product: pb.product_id,
-          amount_buyed: pb.amount_buyed,
-        })));
-      }
-    }
-  }, [receipt, shops, buyingAccounts, form, initialDataLoaded]);
-
-  // Cargar cuentas de compra cuando se selecciona una tienda
-  const selectedShopId = form.watch('shop_of_buy_id');
-
-  useEffect(() => {
-    if (selectedShopId) {
-      form.setValue('shopping_account_id', undefined);
-      loadBuyingAccounts(selectedShopId);
-    } else {
-      setBuyingAccounts([]);
-      form.setValue('shopping_account_id', undefined);
-    }
-  }, [selectedShopId, form]);
-
-  const loadBuyingAccounts = async (shopId: number) => {
+  // Función para cargar cuentas de compra
+  const loadBuyingAccounts = useCallback(async (shopId: number) => {
     setIsLoadingAccounts(true);
     try {
       const response = await buyingAccountService.getBuyingAccounts({
@@ -145,9 +81,72 @@ export function EditPurchaseForm({ receipt, onSuccess, onCancel }: EditPurchaseF
     } finally {
       setIsLoadingAccounts(false);
     }
-  };
+  }, []);
 
-  const onSubmit = async (data: EditShoppingReceipFormData) => {
+  // Cargar cuentas iniciales para el receipt
+  useEffect(() => {
+    if (shoppingReceipt && shops.length > 0 && !initialDataLoaded) {
+      const shop = shops.find(s => s.name === shoppingReceipt.shop_of_buy);
+      if (shop) {
+        loadBuyingAccounts(shop.id).then(() => {
+          setInitialDataLoaded(true);
+        });
+      }
+    }
+  }, [shoppingReceipt, shops, initialDataLoaded, loadBuyingAccounts]);
+
+  const form = useForm<EditShoppingReceipFormData>({
+    resolver: zodResolver(editShoppingReceipSchema),
+    defaultValues: {
+      shop_of_buy_id: undefined,
+      shopping_account_id: undefined,
+      status_of_shopping: undefined,
+      buy_date: undefined,
+      total_cost_of_shopping: undefined,
+    },
+  });
+
+  // Resetear form cuando los datos del recibo y las cuentas iniciales estén cargados
+  useEffect(() => {
+    if (shoppingReceipt && initialDataLoaded && buyingAccounts.length > 0) {
+      const shop = shops.find(s => s.name === shoppingReceipt.shop_of_buy);
+      const account = buyingAccounts.find(a => a.account_name === shoppingReceipt.shopping_account);
+
+      form.reset({
+        shop_of_buy_id: shop?.id,
+        shopping_account_id: account?.id,
+        status_of_shopping: shoppingReceipt.status_of_shopping as 'No pagado' | 'Pagado' | 'Parcial',
+        buy_date: shoppingReceipt.buy_date ? new Date(shoppingReceipt.buy_date).toISOString().split('T')[0] : undefined,
+        total_cost_of_shopping: shoppingReceipt.total_cost_of_shopping,
+      });
+
+      // Cargar productos comprados si existen
+      if (shoppingReceipt.buyed_products && shoppingReceipt.buyed_products.length > 0) {
+        const products = shoppingReceipt.buyed_products.map((pb: ProductBuyed) => ({
+          original_product: pb.original_product_details.id,
+          amount_buyed: pb.amount_buyed,
+        }));
+        setSelectedProducts(products);
+      }
+    }
+  }, [shoppingReceipt, shops, buyingAccounts, form, initialDataLoaded]);
+
+  // Cargar cuentas de compra cuando se selecciona una tienda
+  const selectedShopId = form.watch('shop_of_buy_id');
+
+  useEffect(() => {
+    if (selectedShopId) {
+      form.setValue('shopping_account_id', undefined);
+      loadBuyingAccounts(selectedShopId);
+    } else {
+      setBuyingAccounts([]);
+      form.setValue('shopping_account_id', undefined);
+    }
+  }, [selectedShopId, form, loadBuyingAccounts]);
+
+  const handleSubmit = async (data: EditShoppingReceipFormData) => {
+    if (!shoppingReceipt) return;
+
     setIsSubmitting(true);
     try {
       // Encontrar los nombres de la cuenta y tienda seleccionadas
@@ -159,17 +158,17 @@ export function EditPurchaseForm({ receipt, onSuccess, onCancel }: EditPurchaseF
         return;
       }
 
-      const payload = {
-        shopping_account: data.shopping_account_id, // Send the ID instead of the name
-        shop_of_buy: selectedShop.name,
+      // Crear el objeto de actualización con los tipos correctos
+      const updateData = {
+        shop_of_buy_id: data.shop_of_buy_id,
+        shopping_account_id: data.shopping_account_id,
         status_of_shopping: data.status_of_shopping,
         buy_date: data.buy_date,
         total_cost_of_shopping: data.total_cost_of_shopping,
-        buyed_products: selectedProducts,
+        // Agregar productos comprados si es necesario
       };
 
-      await shoppingReceipService.updateShoppingReceipt(receipt.id, payload as Partial<unknown>);
-
+      await shoppingReceipService.updateShoppingReceipt(shoppingReceipt.id, updateData);
       toast.success('Recibo de compra actualizado exitosamente');
       onSuccess?.();
     } catch (error) {
@@ -180,9 +179,34 @@ export function EditPurchaseForm({ receipt, onSuccess, onCancel }: EditPurchaseF
     }
   };
 
+  // Función para manejar la confirmación de selección de productos
+  const handleProductsConfirmed = (products: Product[]) => {
+    const newProducts = products.map(product => ({
+      original_product: product.id,
+      amount_buyed: product.amount_requested || 1,
+    }));
+    setSelectedProducts(prev => [...prev, ...newProducts]);
+  };
+
+  if (isLoadingReceipt || isLoadingShops) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-500">Error al cargar los datos de la compra</p>
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <div className='grid grid-cols-2 gap-2'>
 
           {/* Seleccionar tienda */}
@@ -315,7 +339,6 @@ export function EditPurchaseForm({ receipt, onSuccess, onCancel }: EditPurchaseF
 
         </div>
 
-
         {/* Costo total de la compra */}
         <FormField
           control={form.control}
@@ -344,13 +367,10 @@ export function EditPurchaseForm({ receipt, onSuccess, onCancel }: EditPurchaseF
             <div className={selectedShopId ? '' : 'pointer-events-none opacity-50'}>
               <SelectedProductsForPurchase
                 filters={{ status: 'Encargado' }}
-                orderId={123}
-                shoppingReceiptId={receipt.id}
+                orderId={0}
+                shoppingReceiptId={receiptId}
                 selectionMode={true}
                 onProductsConfirmed={handleProductsConfirmed}
-                onProductBuyedCreated={(productBuyed) => {
-                  console.log('Producto comprado creado:', productBuyed);
-                }}
               />
             </div>
           </div>
