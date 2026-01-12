@@ -18,6 +18,9 @@ importers:
         specifier: link:...@testing-library\user-event@^14.0.0
         version: link:...@testing-library/user-event@^14.0.0
     devDependencies:
+      '@types/lodash':
+        specifier: ^4.17.23
+        version: 4.17.23
       concurrently:
         specifier: ^8.2.2
         version: 8.2.2
@@ -96,6 +99,9 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.84.2
         version: 5.90.2(@tanstack/react-query@5.90.2)(react@19.2.0)
+      '@types/lodash':
+        specifier: ^4.17.23
+        version: 4.17.23
       axios:
         specifier: ^1.11.0
         version: 1.12.2
@@ -111,6 +117,9 @@ importers:
       jest-dom@^6.0.0:
         specifier: link:...@testing-library\jest-dom@^6.0.0
         version: link:...@testing-library/jest-dom@^6.0.0
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       lucide-react:
         specifier: ^0.539.0
         version: 0.539.0(react@19.2.0)
@@ -2787,18 +2796,17 @@ packages:
   /@types/lodash.clonedeep@4.5.9:
     resolution: {integrity: sha512-19429mWC+FyaAhOLzsS8kZUsI+/GmBAQ0HFiCPsKGU+7pBXOQWhyrY6xNNDwUSX8SMZMJvuFVMF9O5dQOlQK9Q==}
     dependencies:
-      '@types/lodash': 4.17.20
+      '@types/lodash': 4.17.23
     dev: false
 
   /@types/lodash.debounce@4.0.9:
     resolution: {integrity: sha512-Ma5JcgTREwpLRwMM+XwBR7DaWe96nC38uCBDFKZWbNKD+osjVzdpnUSwBcqCptrp16sSOLBAUb50Car5I0TCsQ==}
     dependencies:
-      '@types/lodash': 4.17.20
+      '@types/lodash': 4.17.23
     dev: false
 
-  /@types/lodash@4.17.20:
-    resolution: {integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==}
-    dev: false
+  /@types/lodash@4.17.23:
+    resolution: {integrity: sha512-RDvF6wTulMPjrNdCoYRC8gNR880JNGT8uB+REUpC2Ns4pRqQJhGz90wh7rgdXDPpCczF3VGktDuFGVnz8zP7HA==}
 
   /@types/node@14.18.63:
     resolution: {integrity: sha512-fAtCfv4jJg+ExtXhvCkCqUKZ+4ok/JQk01qDKhL5BDDoS3AxKXhV5/MAVUZyQnSEd2GT92fkgZl0pz0Q0AzcIQ==}

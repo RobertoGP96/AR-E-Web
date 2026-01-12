@@ -26,6 +26,7 @@
     "type-check": "pnpm --filter \"./apps/*\" exec tsc --noEmit"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.23",
     "concurrently": "^8.2.2"
   },
   "engines": {
