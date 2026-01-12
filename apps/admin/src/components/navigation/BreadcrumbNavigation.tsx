@@ -49,7 +49,7 @@ const routeNames: Record<string, string> = {
   '/settings': 'Configuración',
   '/profile': 'Mi Perfil',
   '/categories': 'Categorías',
-  '/invoices': 'Costos',
+  '/invoices': 'Costos de Envío',
   '/expenses': 'Gastos',
   '/analitics': 'Análisis',
   '/balance': 'Balance',

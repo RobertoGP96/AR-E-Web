@@ -230,7 +230,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
     useEffect(() => {
         const currentLink = newProduct.link?.trim() || ''
         const currentShop = newProduct.shop || ''
-        
+
         // Solo procesar si el link cambió realmente
         if (currentLink && currentLink !== previousLinkRef.current) {
             const shopName = extractShopName(currentLink)
@@ -247,7 +247,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         const currentShop = newProduct.shop || ''
         const currentShopTaxes = newProduct.shop_taxes
         const currentLink = newProduct.link?.trim() || ''
-        
+
         // Solo procesar si hay cambios relevantes
         if (!currentShop || !availableShops || availableShops.length === 0) {
             // Si no hay shop, resetear estados
@@ -262,7 +262,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         // Solo procesar si el shop cambió o si las shops disponibles cambiaron
         const shopChanged = currentShop !== previousShopRef.current
         const linkChanged = currentLink !== previousLinkRef.current
-        
+
         if (!shopChanged && !linkChanged && previousMatchedShopIdRef.current !== undefined) {
             // No hay cambios relevantes, evitar procesamiento
             return
@@ -289,7 +289,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
         if (matched) {
             const matchedId = matched.id
             const isNewMatch = matchedId !== previousMatchedShopIdRef.current
-            
+
             setIsShopInDatabase(true)
             const updates: Partial<CreateProductData> = {}
 
@@ -304,7 +304,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             if (Object.keys(updates).length > 0) {
                 setNewProduct(prev => ({ ...prev, ...updates }))
             }
-            
+
             setMatchedShopId(matchedId)
             previousMatchedShopIdRef.current = matchedId
             previousShopRef.current = matched.name || currentShop
@@ -313,7 +313,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             setIsShopInDatabase(false)
             setMatchedShopId(undefined)
             previousMatchedShopIdRef.current = undefined
-            
+
             // Si la tienda no está en BD y no hay shop_taxes definido, usar auto-detectado
             if (currentShopTaxes === undefined || currentShopTaxes === 0) {
                 const autoRate = getShopTaxRate(currentShop)
@@ -404,7 +404,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                     const found2 = availableShops.find(s => s.name && s.name.toLowerCase() === fromLink.toLowerCase())
                     if (found2) shopPayload = found2.id
                 }
-                    // Si aún no existe, dejamos undefined y validamos más abajo
+                // Si aún no existe, dejamos undefined y validamos más abajo
             }
         }
         const quantity = Number(newProduct.amount_requested) || 1
@@ -422,7 +422,7 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
             shopDisplayName = (newProduct.shop || (newProduct.link ? extractShopName(newProduct.link) : '')) || 'Unknown'
         }
 
-        const calculation = calculateTotalCost(unit, quantity,shippingCost, shopDisplayName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
+        const calculation = calculateTotalCost(unit, quantity, shippingCost, shopDisplayName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
         const computedTotal = calculation.total
 
         // category: backend espera PK; soportamos que el form guarde nombre -> mapear a id
@@ -851,72 +851,58 @@ export const ProductForm = ({ onSubmit, orderId, initialValues, isEditing = fals
                             </div>
 
 
+                            <div className="col-span-3 grid grid-cols-2 gap-4">
 
-                            {/* Impuesto de tienda (calculado) */}
-                            <div className="space-y-1.5">
-                                {(() => {
-                                    const price = Number(newProduct.shop_cost) || 0
-                                    const shippingCost = Number(newProduct.shop_delivery_cost) || 0
-                                    const shopTaxRate = newProduct.shop_taxes ?? getShopTaxRate(newProduct.shop || '')
-                                    const chargeIva = newProduct.charge_iva ?? true
+                                {/* Impuesto de tienda (calculado) */}
+                                <div className="space-y-1.5 ">
+                                    {(() => {
+                                        const price = Number(newProduct.shop_cost) || 0
+                                        const shippingCost = Number(newProduct.shop_delivery_cost) || 0
+                                        const shopTaxRate = newProduct.shop_taxes ?? getShopTaxRate(newProduct.shop || '')
+                                        const chargeIva = newProduct.charge_iva ?? true
 
-                                    // Calcular el valor del impuesto de tienda en dólares
-                                    const base = price + shippingCost
-                                    const baseImpuesto = chargeIva ? base * 0.07 : 0
-                                    const baseParaTarifa = base + baseImpuesto
-                                    const valorImpuestoTienda = baseParaTarifa * (shopTaxRate / 100)
+                                        // Calcular el valor del impuesto de tienda en dólares
+                                        const base = price + shippingCost
+                                        const baseImpuesto = chargeIva ? base * 0.07 : 0
+                                        const baseParaTarifa = base + baseImpuesto
+                                        const valorImpuestoTienda = baseParaTarifa * (shopTaxRate / 100)
 
-                                    return (
-                                        <>
-                                            <label htmlFor="shop_taxes" className="text-sm font-medium text-foreground">
-                                                Impuesto Tienda ({shopTaxRate}%)
-                                            </label>
-                                            <Input
-                                                id="shop_taxes"
-                                                type="text"
-                                                value={valorImpuestoTienda > 0 ? `$${formatCurrency(valorImpuestoTienda)}` : ''}
-                                                readOnly
-                                                className="h-10 bg-muted/50 cursor-default"
-                                                placeholder="$0.00"
-                                            />
-                                        </>
-                                    )
-                                })()}
+                                        return (
+                                            <>
+                                                <label htmlFor="shop_taxes" className="text-sm font-medium text-foreground">
+                                                    Impuesto Tienda ({shopTaxRate}%)
+                                                </label>
+                                                <Input
+                                                    id="shop_taxes"
+                                                    type="text"
+                                                    value={valorImpuestoTienda > 0 ? `$${formatCurrency(valorImpuestoTienda)}` : ''}
+                                                    readOnly
+                                                    className="h-10 bg-muted/50 cursor-default"
+                                                    placeholder="$0.00"
+                                                />
+                                            </>
+                                        )
+                                    })()}
+                                </div>
+
+                                {/* Impuesto adicional */}
+                                <div className="space-y-1.5">
+                                    <label htmlFor="added_taxes" className="text-sm font-medium text-foreground">
+                                        Impuesto Adicional
+                                    </label>
+                                    <DecimalInput
+                                        id="added_taxes"
+                                        value={newProduct.added_taxes}
+                                        onChange={(value) => setNewProduct({ ...newProduct, added_taxes: value || 0 })}
+                                        decimalPlaces={2}
+                                        min={0}
+                                        className="h-10"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+
+
                             </div>
-
-                            {/* Impuesto adicional */}
-                            <div className="space-y-1.5">
-                                <label htmlFor="added_taxes" className="text-sm font-medium text-foreground">
-                                    Impuesto Adicional
-                                </label>
-                                <DecimalInput
-                                    id="added_taxes"
-                                    value={newProduct.added_taxes}
-                                    onChange={(value) => setNewProduct({ ...newProduct, added_taxes: value || 0 })}
-                                    decimalPlaces={2}
-                                    min={0}
-                                    className="h-10"
-                                    placeholder="0.00"
-                                />
-                            </div>
-
-                            {/* Impuestos propios */}
-                            <div className="space-y-1.5">
-                                <label htmlFor="own_taxes" className="text-sm font-medium text-foreground">
-                                    Impuestos Propios ($)
-                                </label>
-                                <DecimalInput
-                                    id="own_taxes"
-                                    value={newProduct.own_taxes}
-                                    onChange={(value) => setNewProduct({ ...newProduct, own_taxes: value || 0 })}
-                                    decimalPlaces={2}
-                                    min={0}
-                                    className="h-10"
-                                    placeholder="0.00"
-                                />
-                            </div>
-                        </div>
-                        <div>
                             {/* Cobrar IVA */}
                             <div className="flex items-center space-x-2">
                                 <Switch

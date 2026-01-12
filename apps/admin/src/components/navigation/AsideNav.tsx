@@ -113,7 +113,7 @@ const navigationGroups = [
     items: [
       
       {
-        name: 'Costos',
+        name: 'Costos de Envío',
         href: '/invoices',
         icon: BaggageClaim
       },

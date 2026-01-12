@@ -324,7 +324,7 @@ export default function AddMultipleProductsToOrderPage() {
           open={showProductDialog.open} 
           onOpenChange={(open) => setShowProductDialog({...showProductDialog, open})}
         >
-          <DialogContent>
+          <DialogContent className="min-w-2xl max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {showProductDialog.editIndex !== null ? 'Editar Producto' : 'Agregar Producto'}

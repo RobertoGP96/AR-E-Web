@@ -38,7 +38,12 @@ export default function Products() {
   }, [productFilters]);
 
   // Obtener productos desde la API con filtros
-  const { products, isLoading, error } = useProducts(apiFilters);
+  const { products, isLoading, error, refetch, isFetching } = useProducts(apiFilters);
+  
+  // Función para manejar la actualización manual
+  const handleRefresh = () => {
+    refetch();
+  };
 
 
   const [visibleColumns, setVisibleColumns] = useState<VisibleColumn[]>(['name','category','status','total_cost','actions', 'shop', 'amount_requested']);
@@ -77,6 +82,8 @@ export default function Products() {
           <ProductFilters
             filters={productFilters}
             onFiltersChange={setProductFilters}
+            onRefresh={handleRefresh}
+            isRefreshing={isFetching}
             resultCount={products.length}
           />
         </div>

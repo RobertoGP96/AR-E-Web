@@ -194,7 +194,6 @@ const OrderTable: React.FC<OrderTableProps> = ({
             <TableHeader className="bg-gray-100 ">
               <TableRow>
                 <TableHead>#</TableHead>
-                <TableHead>ID</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Manager</TableHead>
                 <TableHead>Cliente</TableHead>
@@ -209,13 +208,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
               {paginatedOrders.map((order, index) => (
                 <TableRow key={order.id}>
                   <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                  <TableCell>
-                    <div className='flex flex-row items-center'>
-                      <span className='rounded-full bg-gray-200 px-2  py-1 text-xs font-medium'>
-                        {"#" + order.id}
-                      </span>
-                    </div>
-                  </TableCell>
+                  
                   <TableCell>
                     <div className='flex flex-row items-center gap-1'>
                       <CalendarIcon className="h-4 w-4 text-gray-500" />

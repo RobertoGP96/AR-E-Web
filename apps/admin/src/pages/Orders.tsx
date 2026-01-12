@@ -19,7 +19,12 @@ const Orders = () => {
   });
 
   // Obtener órdenes de la API
-  const { orders, isLoading, error } = useOrders(filters);
+  const { orders, isLoading, error, refetch, isFetching } = useOrders(filters);
+  
+  // Función para manejar la actualización manual
+  const handleRefresh = () => {
+    refetch();
+  };
 
   // Filtrar órdenes basado en la búsqueda
   const filteredOrders = useMemo(() => {
@@ -137,6 +142,8 @@ const Orders = () => {
         filters={filters}
         onSearchChange={(value) => setFilters(prev => ({ ...prev, search: value }))}
         onFiltersChange={(newFilters) => setFilters(newFilters)}
+        onRefresh={handleRefresh}
+        isRefreshing={isFetching}
         resultCount={filteredOrders.length}
       />
 

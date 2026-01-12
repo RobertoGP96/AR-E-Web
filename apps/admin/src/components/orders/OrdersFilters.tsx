@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Search, RefreshCw } from 'lucide-react';
+import { debounce } from 'lodash';
 import OrderFilters, { type OrderFilterState } from '@/components/filters/order-filters';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -11,7 +12,9 @@ interface OrdersFiltersProps {
   filters: OrderFilterState;
   onSearchChange?: (value: string) => void;
   onFiltersChange?: (filters: OrderFilterState) => void;
+  onRefresh?: () => void;
   resultCount?: number;
+  isRefreshing?: boolean;
 }
 
 export default function OrdersFilters({
@@ -19,9 +22,32 @@ export default function OrdersFilters({
   filters = { search: '', status: 'all', pay_status: 'all', sales_manager: undefined, date_from: '', date_to: '' },
   onSearchChange,
   onFiltersChange = () => {},
+  onRefresh,
+  isRefreshing = false,
 }: OrdersFiltersProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+
+  // Update local state when searchTerm prop changes
+  useEffect(() => {
+    setLocalSearchTerm(searchTerm);
+  }, [searchTerm]);
+
+  // Create debounced search handler
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      onSearchChange?.(value);
+    }, 300), // 300ms debounce delay
+    [onSearchChange]
+  );
+
+  // Handle search input change with debounce
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocalSearchTerm(value);
+    debouncedSearch(value);
+  };
 
   return (
     <>
@@ -32,17 +58,30 @@ export default function OrdersFilters({
             <Input
               type="text"
               placeholder="Buscar por ID, cliente, email o manager..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange?.(e.target.value)}
-              className="pl-10 border-gray-200 focus:border-orange-300 focus:ring-orange-200  shadow-sm"
+              value={localSearchTerm}
+              onChange={handleSearchChange}
+              className="pl-10 border-gray-200 focus:border-orange-300 focus:ring-orange-200 shadow-sm"
             />
           </div>
         </div>
         <OrderFilters filters={filters} onFiltersChange={(newFilters) => { onFiltersChange?.(newFilters); }} resultCount={undefined} />
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="h-5 w-5" />
-          Agregar Pedido
-        </Button>
+        <div className="flex gap-2">
+          {onRefresh && (
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              title="Actualizar lista"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          )}
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Agregar Pedido
+          </Button>
+        </div>
       </div>
 
       {/* TODO: Active filter summary is shown inside OrderFilters popover */}

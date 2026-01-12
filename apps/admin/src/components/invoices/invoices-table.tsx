@@ -93,7 +93,7 @@ export default function InvoicesTable({
       <div className="flex items-center justify-center h-64 rounded-lg border border-muted bg-background shadow">
         <div className="text-center">
           <BaggageClaim className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">No hay costos registradas</p>
+          <p className="text-gray-600">No hay costos registrados</p>
         </div>
       </div>
     );

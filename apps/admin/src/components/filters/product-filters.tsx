@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Filter, Search } from 'lucide-react';
+import { Filter, Search, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -33,14 +33,16 @@ export interface ProductFilterState {
 interface ProductFiltersProps {
   filters: ProductFilterState;
   onFiltersChange: (filters: ProductFilterState) => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   resultCount?: number;
-
-  
 }
 
 export const ProductFilters: React.FC<ProductFiltersProps> = ({
   filters,
   onFiltersChange,
+  onRefresh,
+  isRefreshing = false,
   resultCount,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -67,7 +69,20 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <div className="flex items-center gap-2">
+      {onRefresh && (
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          title="Actualizar lista"
+          className="h-9 w-9"
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+        </Button>
+      )}
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" className="relative cursor-pointer gap-2">
           <Filter className="h-4 w-4" />
@@ -185,6 +200,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         </div>
       </PopoverContent>
     </Popover>
+    </div>
   );
 };
 
