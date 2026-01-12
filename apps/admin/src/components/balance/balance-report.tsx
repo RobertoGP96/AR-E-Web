@@ -499,7 +499,7 @@ export default function BalanceReport() {
               <div className="flex flex-row gap-4 items-center">
                 <BaggageClaim className="h-6 w-6 text-orange-500" />
                 <div>
-                  <CardTitle className="text-lg">Costos - Resumen</CardTitle>
+                  <CardTitle className="text-lg">Costos de envío - Resumen</CardTitle>
                   <CardDescription className="text-xs mt-1">Resumen agregado de tags y costos de envío</CardDescription>
                 </div>
               </div>

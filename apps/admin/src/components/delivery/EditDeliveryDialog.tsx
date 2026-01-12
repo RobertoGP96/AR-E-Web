@@ -323,7 +323,7 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
             {/* Costos adicionales (colapsables) */}
             <details className="border border-gray-200 rounded-lg p-3">
               <summary className="cursor-pointer text-sm font-medium text-gray-700">
-                Costos Adicionales (Opcional)
+                Costos de envío Adicionales (Opcional)
               </summary>
               <div className="grid gap-3 mt-3">
                 <div className="grid gap-2">
@@ -380,7 +380,7 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
 
             {/* Resumen de costos */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm font-medium text-blue-900 mb-2">Resumen de Costos</p>
+              <p className="text-sm font-medium text-blue-900 mb-2">Resumen de Costos de Envío</p>
               <div className="space-y-1 text-sm text-blue-800">
                 {formData.category_id && categoryList && (
                   <div className="flex justify-between">

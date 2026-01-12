@@ -89,7 +89,7 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
         <div className="p-4 space-y-4 max-h-[520px] overflow-y-auto">
           {resultCount !== undefined && (
             <div className="bg-muted/50 rounded-lg p-3">
-              <p className="text-xs text-muted-foreground">Mostrando <span className="font-semibold text-foreground">{resultCount}</span> pedidos</p>
+              <p className="text-xs text-muted-foreground">Mostrando <span className="font-semibold text-foreground">{resultCount}</span> ordenes</p>
             </div>
           )}
 

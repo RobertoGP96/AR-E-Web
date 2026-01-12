@@ -91,7 +91,7 @@ const ExpectedMetricsPage = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Balances</h1>
           <p className="text-muted-foreground">
-            Compara costos y ganancias esperadas
+            Compara costos de envío y ganancias esperadas
           </p>
         </div>
 
