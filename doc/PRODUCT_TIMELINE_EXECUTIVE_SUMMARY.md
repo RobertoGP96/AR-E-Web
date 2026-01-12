@@ -106,7 +106,7 @@ Authorization: Bearer {token}
 ✅ Fácil de mantener y extender  
 
 ### Para Negocio
-✅ Mejor seguimiento de pedidos  
+✅ Mejor seguimiento de órdenes  
 ✅ Reduce consultas de clientes  
 ✅ Análisis de tiempo entre estados  
 ✅ Herramienta de auditoría  

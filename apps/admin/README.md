@@ -128,7 +128,7 @@ nginx -c nginx.conf
 
 ### Métricas Principales
 
-- **KPIs en Tiempo Real** - Ventas, usuarios, pedidos
+- **KPIs en Tiempo Real** - Ventas, usuarios, órdenes
 - **Gráficos Interactivos** - Recharts con drill-down
 - **Reportes Financieros** - Ganancias, márgenes, ROI
 - **Análisis de Tendencias** - Crecimiento mensual/anual

@@ -71,7 +71,7 @@ describe('BalanceReport', () => {
     render(<BalanceReport />);
     expect(screen.getByText(/Reportes Financieros/i)).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText(/Ingresos/i)).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText(/Pedidos/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/órdenes/i)).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText(/Entregas por Categoría/i)).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText(/Test Cat/i)).toBeInTheDocument());
   });

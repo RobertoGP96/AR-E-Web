@@ -49,7 +49,7 @@ export interface UpdateOrderData extends Partial<CreateOrderData> {
   id: ID;
 }
 
-// Filtros para pedidos
+// Filtros para órdenes
 export interface OrderFilters {
   status?: OrderStatus;
   pay_status?: PayStatus;

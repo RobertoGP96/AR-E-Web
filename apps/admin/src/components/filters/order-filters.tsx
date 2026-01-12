@@ -80,10 +80,10 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
-              <h4 className="font-semibold text-sm">Filtros de pedidos</h4>
+              <h4 className="font-semibold text-sm">Filtros de ordenes</h4>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">Filtra pedidos por búsqueda, estado, tipo de pago, manager y rango de fechas</p>
+          <p className="text-xs text-muted-foreground">Filtra ordenes por búsqueda, estado, tipo de pago, manager y rango de fechas</p>
         </div>
 
         <div className="p-4 space-y-4 max-h-[520px] overflow-y-auto">

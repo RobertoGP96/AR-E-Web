@@ -366,7 +366,7 @@ export default function Introduction() {
                   <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
                     Compra Previsoria
                   </h4>
-                  <p>Realice sus compras con suficiente tiempo de antelación para evitar complicaciones ajenas a nuestro servicio y sus pedidos puedan llegar en tiempo.</p>
+                  <p>Realice sus compras con suficiente tiempo de antelación para evitar complicaciones ajenas a nuestro servicio y sus órdenes puedan llegar en tiempo.</p>
                 </div>
               </li>
 

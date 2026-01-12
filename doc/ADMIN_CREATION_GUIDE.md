@@ -163,7 +163,7 @@ Después de crear el superusuario, verifica que funcione:
 El proyecto ya tiene configuración personalizada del admin en `api/admin.py`. Puedes:
 
 - Gestionar usuarios
-- Ver y modificar pedidos
+- Ver y modificar órdenes
 - Administrar productos
 - Configurar tiendas
 - Revisar paquetes y entregas

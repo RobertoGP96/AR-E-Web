@@ -2,7 +2,7 @@
 
 ## Descripción General
 
-Este documento describe el sistema de cálculo de costos para productos en la aplicación de gestión de pedidos. El sistema calcula automáticamente el precio total que se cobrará a los clientes basándose en reglas específicas de impuestos y tarifas por tienda.
+Este documento describe el sistema de cálculo de costos para productos en la aplicación de gestión de órdenes. El sistema calcula automáticamente el precio total que se cobrará a los clientes basándose en reglas específicas de impuestos y tarifas por tienda.
 
 ## Fórmula de Cálculo
 

@@ -27,7 +27,7 @@ export default function OrdersStats({ stats = defaultStats }: OrdersStatsProps) 
       <CardStats stats={
         {
           title: "Total",
-          description: "Total de pedidos",
+          description: "Total de ordenes",
           color: "gray",
           value: `${stats.pending}`,
           icon: Package
@@ -48,7 +48,7 @@ export default function OrdersStats({ stats = defaultStats }: OrdersStatsProps) 
       <CardStats stats={
         {
           title: "Pendientes",
-          description: "Pedidos pendientes",
+          description: "Órdenes pendientes",
           color: "yellow",
           value: `${stats.pending}`,
           icon: Package

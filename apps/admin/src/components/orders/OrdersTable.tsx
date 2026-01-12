@@ -177,7 +177,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
         <div className="flex flex-col items-center justify-center h-64 text-center p-4">
           <ShoppingCart className="h-16 w-16 text-gray-300 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">No hay pedidos</h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">No hay órdenes</h3>
           <p className="text-sm text-gray-500">
             Comienza creando un nuevo pedido usando el botón "Agregar Pedido"
           </p>

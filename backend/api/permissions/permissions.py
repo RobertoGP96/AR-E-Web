@@ -134,8 +134,8 @@ from rest_framework import permissions
 class ClientOrderViewPermission(permissions.BasePermission):
     """
     Permiso personalizado para clientes:
-    - Solo pueden ver sus propios pedidos
-    - No pueden crear, editar ni eliminar pedidos
+    - Solo pueden ver sus propios órdenes
+    - No pueden crear, editar ni eliminar órdenes
     """
     def has_permission(self, request, view):
         # Solo permitir métodos GET, HEAD, OPTIONS (solo lectura)
@@ -148,7 +148,7 @@ class ClientOrderViewPermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         # Solo métodos de lectura para clientes
         if request.method in permissions.SAFE_METHODS:
-            # El cliente solo puede ver sus propios pedidos
+            # El cliente solo puede ver sus propios órdenes
             return obj.client == request.user.client
         
         # Administradores y agentes pueden realizar todas las acciones

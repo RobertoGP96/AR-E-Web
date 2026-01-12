@@ -55,14 +55,14 @@ Se actualizó también el endpoint de métricas para incluir los ingresos de ent
 
 **Fórmula:**
 ```
-Ingresos Totales = Suma(total_cost de productos en pedidos pagados) + Suma(client_charge de todas las entregas)
+Ingresos Totales = Suma(total_cost de productos en órdenes pagados) + Suma(client_charge de todas las entregas)
 ```
 
 ## Componentes del Ingreso
 
 ### 1. Ingresos de Productos
-- **Fuente**: Pedidos con `pay_status = 'Pagado'`
-- **Cálculo**: Suma del `total_cost` de todos los productos en los pedidos
+- **Fuente**: órdenes con `pay_status = 'Pagado'`
+- **Cálculo**: Suma del `total_cost` de todos los productos en los órdenes
 - **Campo**: `Order.products.total_cost`
 
 ### 2. Ingresos de Entregas

@@ -119,8 +119,8 @@ const Orders = () => {
 
   // Mostrar error si existe
   if (error) {
-    toast.error('Error al cargar pedidos', {
-      description: error.message || 'No se pudieron cargar los pedidos'
+    toast.error('Error al cargar órdenes', {
+      description: error.message || 'No se pudieron cargar los órdenes'
     });
   }
 

@@ -2,7 +2,7 @@
 """
 Script de verificación del cálculo de ingresos.
 Este script verifica que los ingresos se calculen correctamente sumando:
-1. El costo total de todos los productos en pedidos pagados
+1. El costo total de todos los productos en órdenes pagados
 2. El cobro al cliente de todas las entregas
 """
 import os
@@ -30,7 +30,7 @@ def test_revenue_calculation():
     print("-" * 80)
     
     paid_orders = Order.objects.filter(pay_status=PaymentStatusEnum.PAGADO.value)
-    print(f"   Total de pedidos pagados: {paid_orders.count()}")
+    print(f"   Total de órdenes pagados: {paid_orders.count()}")
     
     revenue_products = paid_orders.aggregate(
         total=Sum('products__total_cost')

@@ -55,7 +55,7 @@ export interface UpdateOrderData extends Partial<CreateOrderData> {
   observations?: string;
 }
 
-// Filtros para pedidos
+// Filtros para órdenes
 export interface OrderFilters {
   status?: OrderStatus;
   pay_status?: PayStatus;
@@ -65,7 +65,7 @@ export interface OrderFilters {
   date_to?: string;
 }
 
-// Estadísticas de pedidos
+// Estadísticas de órdenes
 export interface OrderStats {
   total_cost: number;
   products_count: number;

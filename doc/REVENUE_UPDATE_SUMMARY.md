@@ -2,10 +2,10 @@
 
 ## 📊 Cambio Principal
 
-**Antes:** Los ingresos solo incluían el costo total de los productos en pedidos pagados.
+**Antes:** Los ingresos solo incluían el costo total de los productos en órdenes pagados.
 
 **Ahora:** Los ingresos incluyen:
-1. ✅ Costo total de productos en pedidos pagados
+1. ✅ Costo total de productos en órdenes pagados
 2. ✅ Cobro al cliente por todas las entregas
 
 ## 🔄 Fórmula Actualizada
@@ -18,7 +18,7 @@ INGRESOS TOTALES = Suma(costo de productos) + Suma(cobro al cliente por entregas
 
 **1. Ingresos de Productos:**
 - Fuente: `Order.products.total_cost` 
-- Filtro: Pedidos con `pay_status = 'Pagado'`
+- Filtro: órdenes con `pay_status = 'Pagado'`
 
 **2. Ingresos de Entregas:**
 - Fuente: `DeliverReceip.client_charge`

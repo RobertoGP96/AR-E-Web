@@ -40,10 +40,10 @@ export default function UserOrders() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-foreground">
-                                Mis Pedidos
+                                Mis Órdenes
                             </h1>
                             <p className="text-sm text-muted-foreground">
-                                Gestiona todos tus pedidos en un solo lugar
+                                Gestiona todos tus órdenes en un solo lugar
                             </p>
                         </div>
                     </div>
@@ -78,7 +78,7 @@ export default function UserOrders() {
                             <div className="flex-1 relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Buscar pedidos por ID, cliente o estado..."
+                                    placeholder="Buscar órdenes por ID, cliente o estado..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/30"
@@ -91,7 +91,7 @@ export default function UserOrders() {
                             <div className="mt-3 pt-3 border-t border-muted-foreground/10">
                                 <p className="text-sm text-muted-foreground">
                                     {filteredOrders.length === 0 
-                                        ? "No se encontraron pedidos"
+                                        ? "No se encontraron órdenes"
                                         : `${filteredOrders.length} pedido${filteredOrders.length !== 1 ? 's' : ''} encontrado${filteredOrders.length !== 1 ? 's' : ''}`
                                     } para "{searchTerm}"
                                 </p>
@@ -123,10 +123,10 @@ export default function UserOrders() {
                                 <ShoppingBag className="h-12 w-12 text-muted-foreground/50" />
                             </div>
                             <h3 className="text-xl font-semibold text-foreground/80 mb-2">
-                                ¡Empieza a realizar pedidos!
+                                ¡Empieza a realizar órdenes!
                             </h3>
                             <p className="text-muted-foreground mb-6 max-w-sm">
-                                Tus pedidos aparecerán aquí una vez que comiences a realizar compras. Ponte en contacto con nuestros agentes para empezar.
+                                Tus órdenes aparecerán aquí una vez que comiences a realizar compras. Ponte en contacto con nuestros agentes para empezar.
                             </p>
                         </CardContent>
                     </Card>
@@ -138,7 +138,7 @@ export default function UserOrders() {
                         <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
                             <Search className="h-12 w-12 text-muted-foreground/50 mb-4" />
                             <h3 className="text-lg font-semibold text-foreground/80 mb-2">
-                                No se encontraron pedidos
+                                No se encontraron órdenes
                             </h3>
                             <p className="text-muted-foreground mb-4">
                                 Intenta con otros términos de búsqueda

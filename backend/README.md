@@ -14,7 +14,7 @@ API RESTful desarrollada con Django REST Framework para gestionar operaciones de
 
 - ✅ **Autenticación JWT** - Tokens seguros con refresh
 - ✅ **Gestión de usuarios** - Roles (Admin, Agent, Buyer, Logistical, Client)
-- ✅ **Sistema de órdenes** - Ciclo completo de pedidos
+- ✅ **Sistema de órdenes** - Ciclo completo de órdenes
 - ✅ **Catálogo de productos** - Gestión completa de inventario
 - ✅ **Sistema de entregas** - Seguimiento y gestión logística
 - ✅ **Scraping de Amazon** - Extracción automática de datos

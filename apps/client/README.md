@@ -130,12 +130,12 @@ nginx -c nginx.conf
 
 - **Dashboard Administrativo** - Gestión completa del sistema
 - **Panel de Agentes** - Gestión de órdenes y clientes
-- **Panel de Compradores** - Catálogo y pedidos
-- **Panel de Clientes** - Seguimiento de pedidos
+- **Panel de Compradores** - Catálogo y órdenes
+- **Panel de Clientes** - Seguimiento de órdenes
 - **Sistema de Autenticación** - Login/registro seguro
 - **Gestión de Usuarios** - CRUD completo con roles
 - **Catálogo de Productos** - Búsqueda y filtros avanzados
-- **Sistema de Órdenes** - Ciclo completo de pedidos
+- **Sistema de Órdenes** - Ciclo completo de órdenes
 - **Gestión de Entregas** - Seguimiento logístico
 
 ### Tema y Diseño

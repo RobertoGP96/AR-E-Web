@@ -48,8 +48,8 @@ Content-Type: application/json
 - `PUT /arye_system/api_data/user/{id}/` - Actualizar usuario
 - `DELETE /arye_system/api_data/user/{id}/` - Eliminar usuario
 
-### 🛒 Pedidos (Orders)
-- `GET /arye_system/api_data/order/` - Listar pedidos
+### 🛒 órdenes (Orders)
+- `GET /arye_system/api_data/order/` - Listar órdenes
 - `POST /arye_system/api_data/order/` - Crear pedido
 - `GET /arye_system/api_data/order/{id}/` - Detalle pedido
 - `PUT /arye_system/api_data/order/{id}/` - Actualizar pedido

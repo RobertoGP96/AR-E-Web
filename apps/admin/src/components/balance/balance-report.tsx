@@ -321,14 +321,14 @@ export default function BalanceReport() {
       </div>
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 gap-5">
-        {/* Pedidos */}
+        {/* Órdenes */}
         <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow">
           <CardHeader className="pb-3 ">
             <div className="flex items-center justify-between">
               <div className='flex flex-row gap-4 items-center'>
                 <ShoppingCart className="h-6 w-6 text-blue-500 mb-1" />
                 <div>
-                  <CardTitle className="text-lg">Pedidos - Resumen</CardTitle>
+                  <CardTitle className="text-lg">Órdenes - Resumen</CardTitle>
                   <CardDescription className="text-xs mt-1">Análisis de órdenes en el rango seleccionado</CardDescription>
                 </div>
               </div>
@@ -336,13 +336,13 @@ export default function BalanceReport() {
           </CardHeader>
           <CardContent className="pt-4">
             {ordersError ? (
-              <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-sm">Error cargando pedidos: {ordersError.message}</div>
+              <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-sm">Error cargando órdenes: {ordersError.message}</div>
             ) : !ordersAnalysis ? (
-              <div className="text-center py-8 text-muted-foreground">No hay datos de pedidos para el rango seleccionado</div>
+              <div className="text-center py-8 text-muted-foreground">No hay datos de órdenes para el rango seleccionado</div>
             ) : (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                  <MetricCard label="Pedidos" value={ordersAnalysis?.count || 0} />
+                  <MetricCard label="órdenes" value={ordersAnalysis?.count || 0} />
                   <MetricCard label="Ingresos" value={formatUSD(ordersAnalysis?.total_revenue || 0)} highlight />
                   <MetricCard label="Costo" value={formatUSD(ordersAnalysis?.total_cost || 0)} />
                   <MetricCard label="Ganancia" value={formatUSD(ordersAnalysis?.total_profit || 0)} />

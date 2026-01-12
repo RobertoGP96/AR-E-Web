@@ -53,7 +53,7 @@ Modelos organizados por dominio de negocio:
 models/
 ├── common.py           # Modelos compartidos (CommonInformation)
 ├── deliveries.py       # Modelos de entregas (DeliverReceip, ProductDelivery)
-├── orders.py           # Modelos de pedidos (Order)
+├── orders.py           # Modelos de órdenes (Order)
 ├── products.py         # Modelos de productos (Product, ProductBuyed, etc.)
 ├── shops.py            # Modelos de tiendas (Shop)
 ├── users.py            # Modelos de usuarios (CustomUser)
@@ -88,7 +88,7 @@ serializers/
 ├── amazon_serializers.py       # Serializers para Amazon API
 ├── common_serializers.py       # Serializers comunes
 ├── deliveries_serializers.py   # Serializers de entregas
-├── orders_serializers.py       # Serializers de pedidos
+├── orders_serializers.py       # Serializers de órdenes
 ├── products_serializers.py     # Serializers de productos
 ├── serializers_expected_metrics.py  # Serializers de métricas
 ├── shops_serializers.py        # Serializers de tiendas
@@ -107,7 +107,7 @@ views/
 ├── common_views.py             # Vistas comunes
 ├── dashboard_views.py          # Vistas del dashboard
 ├── delivery_views.py           # Vistas de entregas
-├── order_views.py              # Vistas de pedidos
+├── order_views.py              # Vistas de órdenes
 ├── product_views.py            # Vistas de productos
 ├── shop_views.py               # Vistas de tiendas
 ├── user_views.py               # Vistas de usuarios
