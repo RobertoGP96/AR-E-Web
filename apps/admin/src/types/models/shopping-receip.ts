@@ -12,6 +12,7 @@ export interface ShoppingReceip {
   shopping_account: string;
   shopping_account_name?: string;
   shop_of_buy: string;
+  card_id: string;
   status_of_shopping: string;
   buy_date: DateTime;
   
@@ -34,6 +35,7 @@ export interface ShoppingReceip {
 export interface CreateShoppingReceipData {
   shopping_account_id: ID;
   shop_of_buy_id: ID;
+  card_id: string;
   status_of_shopping?: ShoppingStatus;
   buy_date?: DateTime;
   buyed_products?: CreateProductBuyedData[];
@@ -43,6 +45,3 @@ export interface CreateShoppingReceipData {
 export interface UpdateShoppingReceipData extends Partial<CreateShoppingReceipData> {
   id: ID;
 }
-
-
-export interface EditShoppingReceipFilters {} 

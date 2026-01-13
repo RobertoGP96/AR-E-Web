@@ -16,7 +16,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet para gestión de usuarios.
     """
-    queryset = CustomUser.objects.all()
+    queryset = CustomUser.objects.all().order_by('name')
     permission_classes = [IsAuthenticated, AdminPermission | ReadOnly]
     # Habilitar filtros y búsqueda para que los query params funcionen desde el frontend
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
