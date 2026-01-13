@@ -121,24 +121,6 @@ class ShoppingReceip(models.Model):
         """
         return float(self.total_cost_of_purchase - self.total_refunded)
 
-    @property
-    def operational_expenses(self):
-        """
-        Gastos operativos de la compra = diferencia entre lo realmente pagado (después de reembolsos)
-        y la suma de los costos reales de los productos comprados (sin reembolsados).
-        Representa los gastos adicionales (shipping, fees, etc.) de esta compra específica.
-        """
-        from django.db.models import Sum, Q, F
-        # Sumar el costo real de productos NO reembolsados (real_cost_of_product * amount_buyed)
-        total_real_cost_products = self.buyed_products.filter(
-            Q(is_refunded=False) | Q(is_refunded__isnull=True)
-        ).aggregate(
-            total=Sum(F('real_cost_of_product') * F('amount_buyed'))
-        )['total'] or 0
-
-        # Gastos operativos = lo pagado (menos reembolsos) - costo real de productos
-        return float(self.real_cost_paid - float(total_real_cost_products))
-
     class Meta:
         ordering = ['-buy_date']
         verbose_name = "Recibo de Compra"

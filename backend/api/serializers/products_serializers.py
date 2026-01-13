@@ -245,7 +245,6 @@ class ProductBuyedSerializer(serializers.ModelSerializer):
             "offer_discount",
             "buy_date",
             "observation",
-            "real_cost_of_product",
             "is_refunded",
             "refund_date",
             "refund_amount",

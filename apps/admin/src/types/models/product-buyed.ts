@@ -18,7 +18,6 @@ export interface ProductBuyed {
   amount_buyed: number;
   quantity_refunded: number;
   observation?: string;
-  real_cost_of_product?: number;
   is_refunded: boolean;
   refund_date?: DateTime | null;
   refund_amount: number;

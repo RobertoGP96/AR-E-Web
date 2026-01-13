@@ -93,7 +93,6 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
       const actualCost = data.actual_cost_of_product || 0;
       const shopDiscount = data.shop_discount || 0;
       const offerDiscount = data.offer_discount || 0;
-      const realCost = actualCost - shopDiscount - offerDiscount;
 
       const payload = {
         original_product: productId.toString(),
@@ -105,7 +104,6 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
         shoping_receip: data.shoping_receip,
         amount_buyed: data.amount_buyed,
         observation: data.observation || '',
-        real_cost_of_product: realCost,
       };
 
       await createProductBuyed(payload);

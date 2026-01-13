@@ -86,7 +86,6 @@ const SelectedProductsForPurchase: React.FC<SelectedProductsForPurchaseProps> = 
             shoping_receip: shoppingReceiptId,
             amount_buyed: 1, // Default to 1, can be modified later
             observation: '',
-            real_cost_of_product: product.total_cost || 0,
           };
           return await createProductBuyed(data);
         })

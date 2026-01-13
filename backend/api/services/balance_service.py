@@ -74,7 +74,7 @@ class BalanceService:
             )
 
             purchase_data = products_bought.aggregate(
-                total_purchase_cost=Sum('real_cost_of_product')
+                total_purchase_cost=Sum('total_cost_of_purchase')
             )
             total_purchase_cost_raw = purchase_data['total_purchase_cost'] or 0
             total_purchase_cost = Decimal(str(total_purchase_cost_raw)) if total_purchase_cost_raw is not None else Decimal('0')

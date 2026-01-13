@@ -17,6 +17,7 @@ interface RefundPopoverProps {
 
 interface RefundData {
   is_refunded: boolean;
+  quantity_refunded?: number;
   refund_date: string;
   refund_amount: number;
   refund_notes: string;
@@ -30,7 +31,7 @@ export const RefundPopover: React.FC<RefundPopoverProps> = ({
   const [refundData, setRefundData] = useState<RefundData>({
     is_refunded: true,
     refund_date: new Date().toISOString().split('T')[0],
-    refund_amount: productBuyed.real_cost_of_product || productBuyed.actual_cost_of_product || 0,
+    refund_amount: 0,
     refund_notes: '',
   });
 
@@ -69,7 +70,7 @@ export const RefundPopover: React.FC<RefundPopoverProps> = ({
     setRefundData({
       is_refunded: true,
       refund_date: new Date().toISOString().split('T')[0],
-      refund_amount: productBuyed.real_cost_of_product || productBuyed.actual_cost_of_product || 0,
+      refund_amount:  0,
       refund_notes: '',
     });
   };
@@ -142,9 +143,6 @@ export const RefundPopover: React.FC<RefundPopoverProps> = ({
                 required
                 className="h-9"
               />
-              <p className="text-xs text-muted-foreground">
-                Costo original: ${(productBuyed.real_cost_of_product || productBuyed.actual_cost_of_product || 0).toFixed(2)}
-              </p>
             </div>
 
             {/* Notas del reembolso */}

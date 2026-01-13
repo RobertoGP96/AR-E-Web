@@ -105,10 +105,8 @@ const PurchaseProductsList: React.FC<PurchaseProductsListProps> = ({
               <TableHead>Producto</TableHead>
               <TableHead>SKU</TableHead>
               <TableHead className="text-center">Cantidad</TableHead>
-              <TableHead className="text-right">Costo Actual</TableHead>
               <TableHead className="text-right">Desc. Tienda</TableHead>
               <TableHead className="text-right">Desc. Oferta</TableHead>
-              <TableHead className="text-right">Costo Real</TableHead>
               <TableHead>Observación</TableHead>
               <TableHead className="text-center">Acciones</TableHead>
             </TableRow>
@@ -128,17 +126,11 @@ const PurchaseProductsList: React.FC<PurchaseProductsListProps> = ({
                 <TableCell className="text-center font-semibold">
                   {purchase.amount_buyed}
                 </TableCell>
-                <TableCell className="text-right">
-                  ${purchase.actual_cost_of_product?.toFixed(2) || '0.00'}
-                </TableCell>
                 <TableCell className="text-right text-green-600">
                   -${purchase.shop_discount?.toFixed(2) || '0.00'}
                 </TableCell>
                 <TableCell className="text-right text-green-600">
                   -${purchase.offer_discount?.toFixed(2) || '0.00'}
-                </TableCell>
-                <TableCell className="text-right font-semibold">
-                  ${purchase.real_cost_of_product?.toFixed(2) || '0.00'}
                 </TableCell>
                 <TableCell className="max-w-xs truncate">
                   {purchase.observation || '-'}
@@ -147,7 +139,7 @@ const PurchaseProductsList: React.FC<PurchaseProductsListProps> = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDeleteClick(purchase.id)}
+                    onClick={() => handleDeleteClick(purchase.id as number)}
                     className="hover:bg-red-50 hover:text-red-600"
                   >
                     <Trash2 className="h-4 w-4" />

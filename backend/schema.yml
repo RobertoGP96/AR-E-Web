@@ -6930,9 +6930,6 @@ components:
           type: string
           nullable: true
           maxLength: 200
-        real_cost_of_product:
-          type: number
-          format: double
         is_refunded:
           type: boolean
           description: Indica si este producto comprado ha sido reembolsado
@@ -7351,9 +7348,6 @@ components:
           type: string
           nullable: true
           maxLength: 200
-        real_cost_of_product:
-          type: number
-          format: double
         is_refunded:
           type: boolean
           description: Indica si este producto comprado ha sido reembolsado
@@ -7410,9 +7404,6 @@ components:
           type: string
           nullable: true
           maxLength: 200
-        real_cost_of_product:
-          type: number
-          format: double
         is_refunded:
           type: boolean
           description: Indica si este producto comprado ha sido reembolsado

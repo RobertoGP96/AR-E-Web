@@ -19,7 +19,6 @@ const createProductBuyedSchema = z.object({
   offer_discount: z.number().min(0).optional(),
   buy_date: z.string().optional(),
   observation: z.string().optional(),
-  real_cost_of_product: z.number().min(0, 'El costo real debe ser mayor o igual a 0'),
 });
 
 type CreateProductBuyedFormData = z.infer<typeof createProductBuyedSchema>;
@@ -44,7 +43,6 @@ export function ProductBuyedForm({ onSubmit, isLoading = false, products = [] }:
       offer_discount: 0,
       buy_date: '',
       observation: '',
-      real_cost_of_product: 0,
     },
   });
 
@@ -238,27 +236,6 @@ export function ProductBuyedForm({ onSubmit, isLoading = false, products = [] }:
                 <Textarea
                   placeholder="Agrega una observación..."
                   {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Costo Real del Producto */}
-        <FormField
-          control={form.control}
-          name="real_cost_of_product"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Costo Real del Producto</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
                 />
               </FormControl>
               <FormMessage />

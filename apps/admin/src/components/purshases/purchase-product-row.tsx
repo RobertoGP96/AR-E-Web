@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Store, Tag, DollarSign, Package, Box } from 'lucide-react';
+import { Store, Tag, Package, Box } from 'lucide-react';
 import { parseTagsFromDescriptionBlock } from '@/lib/tags';
 import type { ProductBuyed } from '@/types/models/product-buyed';
 import QRLink from '../products/qr-link';
@@ -83,22 +83,6 @@ const PurchaseProductRow: React.FC<PurchaseProductRowProps> = ({ productBuyed })
                                 <Badge variant="outline" className="text-xs">
                                     {product.status}
                                 </Badge>
-                            )}
-                        </div>
-
-                        {/* Costos */}
-                        <div className="flex items-center space-x-4 mt-2 text-sm">
-                            {productBuyed.actual_cost_of_product && (
-                                <div className="flex items-center gap-1">
-                                    <DollarSign className="h-4 w-4 text-green-600" />
-                                    Costo real: ${productBuyed.actual_cost_of_product.toFixed(2)}
-                                </div>
-                            )}
-                            {productBuyed.real_cost_of_product && (
-                                <div className="flex items-center gap-1">
-                                    <DollarSign className="h-4 w-4 text-blue-600" />
-                                    Costo calculado: ${productBuyed.real_cost_of_product.toFixed(2)}
-                                </div>
                             )}
                         </div>
 

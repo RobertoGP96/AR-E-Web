@@ -242,7 +242,7 @@ def analyze_product_buys(start_date=None, end_date=None) -> Dict[str, Any]:
             pass
         
         try:
-            total_cost += float(buy.real_cost_of_product or 0.0) * buy.amount_buyed
+            total_cost += buy.amount_buyed
         except Exception:
             pass
         
