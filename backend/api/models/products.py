@@ -141,16 +141,16 @@ class ProductBuyed(models.Model):
     original_product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="buys"
     )
-    actual_cost_of_product = models.FloatField(default=0)
     shop_discount = models.FloatField(default=0)
     offer_discount = models.FloatField(default=0)
     buy_date = models.DateTimeField(default=timezone.now)
     shoping_receip = models.ForeignKey(
         'api.ShoppingReceip', on_delete=models.CASCADE, related_name="buyed_products", null=True, blank=True
     )
-    amount_buyed = models.IntegerField()
-    observation = models.TextField(max_length=200, null=True, blank=True)
-    real_cost_of_product = models.FloatField(default=0)
+    amount_buyed = models.IntegerField(default=0)
+    quantity_refuned = models.IntegerField(default=0)
+    
+    #Refuned data
     is_refunded = models.BooleanField(
         default=False,
         help_text="Indica si este producto comprado ha sido reembolsado"
@@ -170,6 +170,8 @@ class ProductBuyed(models.Model):
         blank=True,
         help_text="Notas sobre el reembolso"
     )
+    observation = models.TextField(max_length=200, null=True, blank=True)
+    
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -203,29 +205,31 @@ class ProductBuyed(models.Model):
 
     def delete(self, *args, **kwargs):
         """
-        Al eliminar un ProductBuyed, recalcula el amount_purchased y estado del producto original
+        Al eliminar un ProductBuyed, descuenta la cantidad comprada del producto original
+        y actualiza el estado a ENCARGADO si la cantidad encargada y comprada son diferentes
         """
         product = self.original_product
+        
+        # Guardar la cantidad comprada que se va a eliminar
+        amount_to_remove = self.amount_buyed
 
+        # Llamar al delete original
         super().delete(*args, **kwargs)
 
-        # Recalcular el total comprado del producto
         if product:
-            total_purchased = sum(
-                pb.amount_buyed
-                for pb in product.buys.all()
-            )
-            product.amount_purchased = total_purchased
-
-            # Si después de eliminar ya no está completamente comprado, volver a ENCARGADO
-            if total_purchased < product.amount_requested:
-                if product.status == ProductStatusEnum.COMPRADO.value:
-                    product.status = ProductStatusEnum.ENCARGADO.value
-                    product.save(update_fields=['amount_purchased', 'status', 'updated_at'])
-                else:
-                    product.save(update_fields=['amount_purchased', 'updated_at'])
-            else:
-                product.save(update_fields=['amount_purchased', 'updated_at'])
+            # Restar la cantidad comprada del total
+            product.amount_purchased -= amount_to_remove
+            
+            # Asegurarse de que no tengamos valores negativos
+            if product.amount_purchased < 0:
+                product.amount_purchased = 0
+            
+            # Si la cantidad comprada es menor que la solicitada, cambiar el estado a ENCARGADO
+            if product.amount_purchased < product.amount_requested:
+                product.status = ProductStatusEnum.ENCARGADO.value
+            
+            # Guardar los cambios
+            product.save(update_fields=['amount_purchased', 'status', 'updated_at'])
 
     def __str__(self):
         return f"{self.original_product.name} - Comprado: {self.amount_buyed}"

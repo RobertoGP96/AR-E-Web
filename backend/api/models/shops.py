@@ -12,6 +12,13 @@ class Shop(models.Model):
     link = models.URLField(unique=True)
     is_active = models.BooleanField(default=True)
     tax_rate = models.FloatField(default=0.0, help_text="Tasa de impuestos para esta tienda")
+    card_id=models.TextField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="Numero de tarjeta"
+    )
+
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -55,6 +62,7 @@ class ShoppingReceip(models.Model):
         choices=[(tag.value, tag.value) for tag in PaymentStatusEnum],
         default=PaymentStatusEnum.NO_PAGADO.value
     )
+
     buy_date = models.DateTimeField(default=timezone.now)
     total_cost_of_purchase = models.FloatField(
         default=0,

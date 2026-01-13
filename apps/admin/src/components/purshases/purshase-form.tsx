@@ -36,6 +36,7 @@ const createShoppingReceipSchema = z.object({
   shopping_account_id: z.number().min(1, 'Debes seleccionar una cuenta de compra').optional(),
   status_of_shopping: z.enum(['No pagado', 'Pagado', 'Parcial']).optional(),
   buy_date: z.string().optional(),
+  card_id: z.string().optional(),
   total_cost_of_purchase: z.number().min(0, 'El costo debe ser mayor o igual a 0').optional(),
 });
 
@@ -200,6 +201,27 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
               </FormItem>
             )}
           />
+
+           {/* Seleccionar cuenta de compra */}
+          <FormField
+            control={form.control}
+            name="card_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tarjeta</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    placeholder="Ingresa número de tarjeta"
+                    value={field.value || ''}
+                    onChange={(e) => field.onChange(e.target.value)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
 
           {/* Estado de compra */}
           <FormField

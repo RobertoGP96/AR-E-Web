@@ -43,3 +43,6 @@ export interface CreateShoppingReceipData {
 export interface UpdateShoppingReceipData extends Partial<CreateShoppingReceipData> {
   id: ID;
 }
+
+
+export interface EditShoppingReceipFilters {} 

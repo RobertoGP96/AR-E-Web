@@ -9,14 +9,14 @@ import type { ShoppingReceip } from './shopping-receip';
 
 // Modelo principal
 export interface ProductBuyed {
-  id: ID;
+  id?: ID;
   product_id: string;
-  actual_cost_of_product?: number;
   shop_discount?: number;
   offer_discount?: number;
   buy_date?: DateTime;
   shopping_receip: ShoppingReceip;
   amount_buyed: number;
+  quantity_refunded: number;
   observation?: string;
   real_cost_of_product?: number;
   is_refunded: boolean;
@@ -32,12 +32,17 @@ export interface ProductBuyed {
 export interface CreateProductBuyedData {
   original_product: string; // Product ID
   amount_buyed: number;
-  is_refunded?: boolean;
-  refund_date?: DateTime | null;
-  refund_amount?: number;
-  refund_notes?: string | null;
 }
 
 export interface UpdateProductBuyedData extends Partial<CreateProductBuyedData> {
   id: ID;
+}
+
+
+export type RefunedInfo = {
+  is_refuned: boolean;
+  refund_date: DateTime | null;
+  refund_amount: number;
+  refund_notes: string | null;
+  quantity_refunded: number;
 }

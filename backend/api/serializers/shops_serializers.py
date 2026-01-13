@@ -121,6 +121,7 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
             "shopping_account",
             "shopping_account_name",
             "shop_of_buy",
+            "card_id",
             "total_cost_of_purchase",
             "total_cost_of_shopping",
             "total_cost_excluding_refunds",

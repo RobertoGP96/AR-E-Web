@@ -4,8 +4,9 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .forms import CustomUserCreationForm, CustomUserChangeForm
-from .models import CustomUser, Order, Expense
+from .models import CustomUser, Order, Expense, ProductBuyed
 from .models.balance import Balance
+from .models.shops import ShoppingReceip
 from decimal import Decimal
 
 
@@ -71,6 +72,110 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Order)
+
+@admin.register(ProductBuyed)
+class ProductBuyedAdmin(admin.ModelAdmin):
+    """Admin interface for ProductBuyed model"""
+    
+    list_display = (
+        'id',
+        'original_product',
+        'amount_buyed',
+        'quantity_refuned',
+        'shop_discount',
+        'offer_discount',
+        'buy_date',
+        'is_refunded',
+        'created_at',
+    )
+    
+    list_filter = (
+        'is_refunded',
+        'buy_date',
+        'created_at',
+    )
+    
+    search_fields = (
+        'original_product__name',
+        'original_product__sku',
+        'observation',
+    )
+    
+    readonly_fields = (
+        'created_at',
+        'updated_at',
+    )
+    
+    fieldsets = (
+        ('Información del Producto', {
+            'fields': ('original_product', 'amount_buyed', 'quantity_refuned')
+        }),
+        ('Descuentos', {
+            'fields': ('shop_discount', 'offer_discount')
+        }),
+        ('Información de Reembolso', {
+            'fields': (
+                'is_refunded',
+                'refund_date',
+                'refund_amount',
+                'refund_notes'
+            )
+        }),
+        ('Información Adicional', {
+            'fields': ('observation', 'created_at', 'updated_at')
+        }),
+    )
+
+
+@admin.register(ShoppingReceip)
+class ShoppingReceipAdmin(admin.ModelAdmin):
+    """Admin interface for ShoppingReceip model"""
+    
+    list_display = (
+        'id',
+        'shop_of_buy',
+        'shopping_account',
+        'status_of_shopping',
+        'buy_date',
+        'total_cost_of_purchase',
+        'created_at',
+    )
+    
+    list_filter = (
+        'status_of_shopping',
+        'shop_of_buy',
+        'buy_date',
+    )
+    
+    search_fields = (
+        'shop_of_buy__name',
+        'shopping_account__account_name',
+        'id',
+    )
+    
+    readonly_fields = (
+        'created_at',
+        'updated_at',
+    )
+    
+    fieldsets = (
+        ('Información del Recibo', {
+            'fields': (
+                'shop_of_buy',
+                'shopping_account',
+                'status_of_shopping',
+                'buy_date',
+            )
+        }),
+        ('Costos', {
+            'fields': ('total_cost_of_purchase',)
+        }),
+        ('Información Adicional', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+
 @admin.register(Expense)
 class ExpenseAdmin(admin.ModelAdmin):
     list_display = ('id', 'date', 'amount', 'category', 'created_by')
