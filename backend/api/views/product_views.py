@@ -28,7 +28,14 @@ class ProductViewSet(viewsets.ModelViewSet):
         return ProductSerializer
 
     def get_queryset(self):
-        queryset = Product.objects.all().order_by('-created_at')
+        queryset = Product.objects.select_related(
+            'order',
+            'order__client',
+            'order__sales_manager',
+            'shop',
+            'category'
+        ).all().order_by('-created_at')
+        
         user = self.request.user
 
         # Filtros por rol
