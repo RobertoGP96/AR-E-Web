@@ -10,20 +10,20 @@ import type { ShoppingReceip } from './shopping-receip';
 // Modelo principal
 export interface ProductBuyed {
   id?: ID;
-  product_id: string;
+  product_id?: string;
   shop_discount?: number;
   offer_discount?: number;
   buy_date?: DateTime;
-  shopping_receip: ShoppingReceip;
+  shopping_receip?: ShoppingReceip;
   amount_buyed: number;
-  quantity_refunded: number;
+  quantity_refunded?: number;
   observation?: string;
-  is_refunded: boolean;
+  is_refunded?: boolean;
   refund_date?: DateTime | null;
-  refund_amount: number;
+  refund_amount?: number;
   refund_notes?: string | null;
-  created_at: DateTime;
-  updated_at: DateTime;
+  created_at?: DateTime;
+  updated_at?: DateTime;
   original_product_details: Product;
 }
 

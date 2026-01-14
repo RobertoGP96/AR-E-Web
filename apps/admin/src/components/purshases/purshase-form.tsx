@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { CreditCard, Loader2 } from 'lucide-react';
 import { shoppingReceipService } from '@/services/api';
 import type { CreateProductBuyedData, Product, ShoppingReceip } from '@/types/models';
 import { SHOPPING_STATUSES } from '@/types/models/base';
@@ -29,6 +29,7 @@ import SelectedProductsForPurchase from '../products/selected-products-for-purch
 import { DatePicker } from '@/components/utils/DatePicker';
 import ProductBuyedShopping from '../products/buyed/product-buyed-shopping';
 import { useShops } from '@/hooks/useShops';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '../ui/input-group';
 
 // Schema de validación
 const createShoppingReceipSchema = z.object({
@@ -121,10 +122,11 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
     }
   };
 
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className='grid grid-cols-2 gap-2'>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className='grid grid-cols-2 gap-3 text-sm'>
 
           {/* Seleccionar tienda */}
           <FormField
@@ -139,7 +141,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                   disabled={isLoadingShops}
                 >
                   <FormControl>
-                    <SelectTrigger className='min-w-[200px]'>
+                    <SelectTrigger className='w-full'>
                       {isLoadingShops ? (
                         <div className="flex items-center">
                           <span>Cargando tiendas...</span>
@@ -176,9 +178,9 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                   disabled={!selectedShopId || buyingAccounts.length === 0}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className='w-full'>
                       <SelectValue
-                        className='min-w-[150px] truncate'
+                        className='truncate'
                         placeholder={
                           !selectedShopId
                             ? "Selecciona una tienda primero"
@@ -202,27 +204,6 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
             )}
           />
 
-           {/* Seleccionar cuenta de compra */}
-          <FormField
-            control={form.control}
-            name="card_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tarjeta</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    placeholder="Ingresa número de tarjeta"
-                    value={field.value || ''}
-                    onChange={(e) => field.onChange(e.target.value)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-
           {/* Estado de compra */}
           <FormField
             control={form.control}
@@ -235,7 +216,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                   value={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className='w-full'>
                       <SelectValue className="truncate" placeholder="Selecciona un estado" />
                     </SelectTrigger>
                   </FormControl>
@@ -247,6 +228,46 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                     ))}
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Seleccionar cuenta de compra */}
+          <FormField
+            control={form.control}
+            name="card_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tarjeta de Pago</FormLabel>
+                <FormControl>
+                  <InputGroup className='w-full'>
+                    <InputGroupInput
+                      placeholder="---- ---- ---- ----"
+                      value={field.value}
+                      onChange={(e) => {
+                        // Remover todo lo que no sea número
+                        const rawValue = e.target.value.replace(/\D/g, '');
+
+                        // Limitar a 16 dígitos
+                        const limitedValue = rawValue.slice(0, 16);
+
+                        // Formatear en grupos de 4
+                        const formattedValue = limitedValue
+                          .replace(/(\d{4})(?=\d)/g, '$1 ')
+                          .trim();
+
+                        field.onChange(formattedValue);
+                      }}
+                      maxLength={19} // 16 dígitos + 3 espacios
+                    />
+
+                    <InputGroupAddon>
+                      <CreditCard className="inline-start text-muted-foreground" />
+                    </InputGroupAddon>
+
+                  </InputGroup>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -270,11 +291,15 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
               </FormItem>
             )}
           />
-        </div>
-        <div className='w-full'>
-          <div className='w-full flex flex-row nowrap  items-center justify-between'>
 
-            <h2 className="text-lg font-medium mt-6 mb-4">Productos Seleccionados para la Compra</h2>
+
+
+
+
+        </div>
+        <div className='w-full mt-2'>
+          <div className='w-full flex flex-row nowrap items-center justify-between'>
+            <h2 className="text-base font-medium">Productos Seleccionados para la Compra</h2>
             <div className={selectedShopId ? '' : 'pointer-events-none opacity-50'}>
               <SelectedProductsForPurchase
                 filters={{ status: 'Encargado' }}
@@ -332,7 +357,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
         </div>
 
         {/* Botones */}
-        <div className="flex justify-end space-x-2">
+        <div className="mt-4 flex justify-end space-x-3">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancelar
