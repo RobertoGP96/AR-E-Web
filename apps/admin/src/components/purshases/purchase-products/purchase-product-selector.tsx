@@ -134,7 +134,7 @@ export function ProductSelector({ products, onCartChange }: ProductSelectorProps
                                                         </>
                                                     )}
                                                 </div>
-                                                <p className="text-sm font-semibold text-primary">${product.total_cost.toFixed(2)}</p>
+                                                <p className="text-sm font-semibold text-primary">${product.}</p>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 {cartQty > 0 ? (
