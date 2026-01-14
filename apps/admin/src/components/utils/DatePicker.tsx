@@ -13,18 +13,20 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-function formatDate(date: Date | undefined, locale = "es-ES") {
+function formatDate(date: Date | undefined) {
   if (!date) {
     return ""
   }
-  // Use shorter month name (e.g., "01 jun 2025")
-  // Use short month and remove any trailing dot coming from abbreviations ("jun." -> "jun")
-  const formatted = date.toLocaleDateString(locale, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  })
-  return formatted.replace(/\./g, "")
+  // Use getDate(), getMonth(), getFullYear() to avoid timezone issues
+  const day = String(date.getDate()).padStart(2, '0')
+  const monthNames = [
+    'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+    'jul', 'ago', 'sep', 'oct', 'nov', 'dic'
+  ]
+  const month = monthNames[date.getMonth()]
+  const year = date.getFullYear()
+  
+  return `${day} ${month} ${year}`
 }
 
 function parseDateFromInput(value: string) {
@@ -37,13 +39,10 @@ function parseDateFromInput(value: string) {
     const day = Number(numericMatch[1])
     const month = Number(numericMatch[2]) - 1
     const year = Number(numericMatch[3])
-    const d = new Date(year, month, day)
+    // Use noon to avoid timezone issues
+    const d = new Date(year, month, day, 12, 0, 0, 0)
     if (!isNaN(d.getTime())) return d
   }
-
-  // Try native parse (works for many formats)
-  const parsed = new Date(v)
-  if (!isNaN(parsed.getTime())) return parsed
 
   // Spanish text formats, a la "01 de junio de 2025" or "01 jun 2025"
   const textRegex = /^(\d{1,2})\s*(?:de\s+)?([a-záéíóúñ.]+)\s*(?:de\s+)?(\d{4})$/i
@@ -62,9 +61,18 @@ function parseDateFromInput(value: string) {
       monthIdx = months.findIndex(mn => mn.slice(0,3) === monthStr.slice(0,3))
     }
     if (monthIdx >= 0) {
-      const d = new Date(year, monthIdx, day)
+      // Use noon to avoid timezone issues
+      const d = new Date(year, monthIdx, day, 12, 0, 0, 0)
       if (!isNaN(d.getTime())) return d
     }
+  }
+
+  // Try native parse as last resort (can have timezone issues)
+  const parsed = new Date(v)
+  if (!isNaN(parsed.getTime())) {
+    // Reset to noon to avoid timezone shifts
+    parsed.setHours(12, 0, 0, 0)
+    return parsed
   }
 
   return undefined
@@ -127,14 +135,14 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
 
     // value shown in input (string)
     const [internalValue, setInternalValue] = React.useState<string>(
-      controlledValue !== undefined ? String(controlledValue) : formatDate(internalDate, locale)
+      controlledValue !== undefined ? String(controlledValue) : formatDate(internalDate)
     )
 
     // Sync when controlled props change
     React.useEffect(() => {
       if (selected !== undefined) {
         setInternalDate(selected)
-        setInternalValue(formatDate(selected, locale))
+        setInternalValue(formatDate(selected))
         setMonth(selected)
       }
     }, [selected, locale])
@@ -144,7 +152,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
         if (controlledValueIsDate) {
           const asDate = controlledValue as unknown as Date
           setInternalDate(asDate)
-          setInternalValue(formatDate(asDate, locale))
+          setInternalValue(formatDate(asDate))
           setMonth(asDate)
         } else {
           setInternalValue(String(controlledValue))
@@ -226,7 +234,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
                 onMonthChange={setMonth}
                 onSelect={(date) => {
                   setInternalDate(date)
-                  setInternalValue(formatDate(date, locale))
+                  setInternalValue(formatDate(date))
                   if (onChangeProp && controlledValueIsDate) {
                     const oc = onChangeProp as unknown as OnChangeAny
                     oc(date)
@@ -244,4 +252,3 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
 )
 
 DatePicker.displayName = "DatePicker"
-

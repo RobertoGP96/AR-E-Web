@@ -123,6 +123,28 @@ export const RefundPopover: React.FC<RefundPopoverProps> = ({
               />
             </div>
 
+            {/* Cantidad del reembolso */}
+            <div className="space-y-1">
+              <Label htmlFor="quantity_refunded" className="text-xs">
+                Cantidad Reembolsada
+              </Label>
+              <Input
+                id="quantity_refuned"
+                type="number"
+                step="1"
+                min="1"
+                value={refundData.quantity_refunded}
+                onChange={(e) =>
+                  setRefundData({
+                    ...refundData,
+                    quantity_refunded: parseInt(e.target.value) || 0,
+                  })
+                }
+                required
+                className="h-9"
+              />
+            </div>
+
             {/* Monto del reembolso */}
             <div className="space-y-1">
               <Label htmlFor="refund_amount" className="text-xs">

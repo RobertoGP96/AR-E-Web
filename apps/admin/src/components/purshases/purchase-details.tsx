@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from './StatusBadge';
 import { formatDate } from '@/lib/format-date';
 import ProductPurchaseRow from '../products/buyed/product-purchase-row';
+import { maskCardNumberAdvanced } from '@/lib/format-card';
 
 const PurchaseDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -33,7 +34,7 @@ const PurchaseDetails: React.FC = () => {
         );
     }
 
-    const profit= shoppingReceipt.total_cost_of_shopping - shoppingReceipt.total_cost_of_purchase;
+    const profit = shoppingReceipt.total_cost_of_shopping - shoppingReceipt.total_cost_of_purchase;
 
     return (
         <div className="container mx-auto p-4">
@@ -73,6 +74,11 @@ const PurchaseDetails: React.FC = () => {
                                             <p className="text-sm text-gray-900">
                                                 {shoppingReceipt.shopping_account_name || 'N/A'}
                                             </p>
+
+                                            <Badge variant={"outline"}>
+                                                <CreditCard className="h-4 w-4 inline-block mr-1" />
+                                                <p className=" text-sm">{shoppingReceipt.card_id && maskCardNumberAdvanced(shoppingReceipt.card_id)}</p>
+                                            </Badge>
                                         </div>
 
                                         <div className='border-2 border-dotted p-3 rounded-2xl'>
@@ -125,90 +131,90 @@ const PurchaseDetails: React.FC = () => {
                             </CardHeader>
                             <CardContent className="space-y-2">
                                 <div className="grid grid-cols-1 gap-2">
-                            <div className="p-2 rounded-lg">
-                                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-                                    Costo Real de Compra
-                                </h4>
-                                <p className="text-2xl font-bold text-blue-700">
-                                    ${(shoppingReceipt.total_cost_of_purchase || 0).toFixed(2)}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">Lo que se pagó efectivamente</p>
-                            </div>
-                            
-                            <div className="p-2 rounded-lg">
-                                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-                                    Valor de Productos
-                                </h4>
-                                <p className="text-2xl font-bold text-green-700">
-                                    ${(shoppingReceipt.total_cost_of_shopping || 0).toFixed(2)}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">Suma del costo total de productos</p>
-                            </div>
-                            
-                            {shoppingReceipt.total_refunded > 0 && (
-                                <>
-                                    <div className="p-2 rounded-lg bg-amber-50 border border-amber-200">
-                                        <h4 className="text-sm font-medium text-amber-700 uppercase tracking-wide mb-2">
-                                            Total Reembolsado
-                                        </h4>
-                                        <p className="text-2xl font-bold text-amber-700">
-                                            ${(shoppingReceipt.total_refunded || 0).toFixed(2)}
-                                        </p>
-                                        <p className="text-xs text-amber-600 mt-1">
-                                            Monto devuelto al sistema
-                                        </p>
-                                    </div>
-                                    
                                     <div className="p-2 rounded-lg">
                                         <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-                                            Valor Neto (Sin Reembolsos)
+                                            Costo Real de Compra
                                         </h4>
-                                        <p className="text-2xl font-bold text-purple-700">
-                                            ${(shoppingReceipt.total_cost_excluding_refunds || 0).toFixed(2)}
+                                        <p className="text-2xl font-bold text-blue-700">
+                                            ${(shoppingReceipt.total_cost_of_purchase || 0).toFixed(2)}
                                         </p>
-                                        <p className="text-xs text-gray-500 mt-1">Valor real de productos activos</p>
+                                        <p className="text-xs text-gray-500 mt-1">Lo que se pagó efectivamente</p>
                                     </div>
-                                </>
-                            )}
-                            
-                            <div className={"p-2 rounded-lg  border "+ (profit! > 0 ? "border-green-200 bg-green-50":"border-amber-200 bg-amber-50")}>
-                                <h4 className={"text-sm font-medium uppercase tracking-wide mb-2 "+(profit! > 0 ? "text-green-600":"text-amber-700")}>
-                                    Diferencia
-                                </h4>
-                                <p className={"text-2xl font-bold "+(profit! > 0 ? "text-green-700":"text-amber-700")}>
-                                    ${(profit || 0).toFixed(2)}
-                                </p>
-                                <p className={"text-xs  mt-1 "+(profit! > 0 ? "text-green-500":"text-amber-600")}>
-                                    Diferencia entre costo real y valor neto
-                                </p>
-                            </div>
-                            
-                            <div className="p-2 rounded-lg">
-                                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-                                    Detalle de Productos
-                                </h4>
-                                {shoppingReceipt.buyed_products && shoppingReceipt.buyed_products.length > 0 ? (
-                                    <div className="space-y-1">
-                                        {shoppingReceipt.buyed_products.map((product) => (
-                                            <div key={product.id} className={`flex justify-between text-sm ${product.is_refunded ? 'text-gray-400 line-through' : ''}`}>
-                                                <span className="flex items-center gap-1">
-                                                    {product.original_product_details.name} (x{product.amount_buyed})
-                                                    {product.is_refunded && (
-                                                        <span className="text-xs text-amber-600 font-medium ml-1">
-                                                            [Reemb.]
-                                                        </span>
-                                                    )}
-                                                </span>
-                                                <span>${((product.original_product_details.total_cost || 0) * (product.amount_buyed || 0)).toFixed(2)}</span>
+
+                                    <div className="p-2 rounded-lg">
+                                        <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                                            Valor de Productos
+                                        </h4>
+                                        <p className="text-2xl font-bold text-green-700">
+                                            ${(shoppingReceipt.total_cost_of_shopping || 0).toFixed(2)}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Suma del costo total de productos</p>
+                                    </div>
+
+                                    {shoppingReceipt.total_refunded > 0 && (
+                                        <>
+                                            <div className="p-2 rounded-lg bg-amber-50 border border-amber-200">
+                                                <h4 className="text-sm font-medium text-amber-700 uppercase tracking-wide mb-2">
+                                                    Total Reembolsado
+                                                </h4>
+                                                <p className="text-2xl font-bold text-amber-700">
+                                                    ${(shoppingReceipt.total_refunded || 0).toFixed(2)}
+                                                </p>
+                                                <p className="text-xs text-amber-600 mt-1">
+                                                    Monto devuelto al sistema
+                                                </p>
                                             </div>
-                                        ))}
+
+                                            <div className="p-2 rounded-lg">
+                                                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                                                    Valor Neto (Sin Reembolsos)
+                                                </h4>
+                                                <p className="text-2xl font-bold text-purple-700">
+                                                    ${(shoppingReceipt.total_cost_excluding_refunds || 0).toFixed(2)}
+                                                </p>
+                                                <p className="text-xs text-gray-500 mt-1">Valor real de productos activos</p>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    <div className={"p-2 rounded-lg  border " + (profit! > 0 ? "border-green-200 bg-green-50" : "border-amber-200 bg-amber-50")}>
+                                        <h4 className={"text-sm font-medium uppercase tracking-wide mb-2 " + (profit! > 0 ? "text-green-600" : "text-amber-700")}>
+                                            Diferencia
+                                        </h4>
+                                        <p className={"text-2xl font-bold " + (profit! > 0 ? "text-green-700" : "text-amber-700")}>
+                                            ${(profit || 0).toFixed(2)}
+                                        </p>
+                                        <p className={"text-xs  mt-1 " + (profit! > 0 ? "text-green-500" : "text-amber-600")}>
+                                            Diferencia entre costo real y valor neto
+                                        </p>
                                     </div>
-                                ) : (
-                                    <div className="text-center py-4">
-                                        <p className="text-xs text-gray-400">Sin productos</p>
+
+                                    <div className="p-2 rounded-lg">
+                                        <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                                            Detalle de Productos
+                                        </h4>
+                                        {shoppingReceipt.buyed_products && shoppingReceipt.buyed_products.length > 0 ? (
+                                            <div className="space-y-1">
+                                                {shoppingReceipt.buyed_products.map((product) => (
+                                                    <div key={product.id} className={`flex justify-between text-sm ${product.is_refunded ? 'text-gray-400 line-through' : ''}`}>
+                                                        <span className="flex items-center gap-1">
+                                                            {product.original_product_details.name} (x{product.amount_buyed})
+                                                            {product.is_refunded && (
+                                                                <span className="text-xs text-amber-600 font-medium ml-1">
+                                                                    [Reemb.]
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                        <span>${((product.original_product_details.total_cost || 0) * (product.amount_buyed || 0)).toFixed(2)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-4">
+                                                <p className="text-xs text-gray-400">Sin productos</p>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
                                 </div>
                             </CardContent>
                         </Card>

@@ -1,9 +1,11 @@
-import { Plus, Search } from 'lucide-react';
+import { Plus, RefreshCw, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 import { UserForm } from './UserForm';
 import { UserFilters, type UserFilterState } from '@/components/filters/user-filters';
 import type { CreateUserData, UpdateUserData } from '../../types/models/user';
+
+import { useUsers,  } from '@/hooks/user';
 
 interface UsersFiltersProps {
   searchTerm?: string;
@@ -24,8 +26,21 @@ export default function UsersFilters({
   isCreatingUser = false,
   resultCount,
 }: UsersFiltersProps) {
+  const { isLoading, refetch } = useUsers();
   return (
+
     <div className="flex flex-col sm:flex-row gap-4">
+
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => refetch()}
+        disabled={isLoading}
+        title="Actualizar lista"
+      >
+        <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+      </Button>
+
       <div className="flex-1">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -38,14 +53,14 @@ export default function UsersFilters({
           />
         </div>
       </div>
-      
+
       <UserFilters
         filters={filters}
         onFiltersChange={onFiltersChange}
         resultCount={resultCount}
       />
-      
-      <UserForm 
+
+      <UserForm
         mode="create"
         onSubmit={onCreateUser}
         loading={isCreatingUser}

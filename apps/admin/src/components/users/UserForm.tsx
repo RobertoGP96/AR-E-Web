@@ -786,7 +786,7 @@ export const UserForm: React.FC<UserFormProps> = ({
               )}
 
               {/* Solo mostrar agente asignado si el rol es 'client' */}
-              {(selectedRole === 'client' || selectedRole=== 'agent') && (
+              { (
                 <div className="space-y-2">
                   <Label htmlFor="assigned_agent" className="flex items-center gap-2">
                     <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
@@ -814,7 +814,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                               .filter(user => user.role === 'agent')
                               .map((user: CustomUser) => (
                                 <SelectItem key={user.id} value={user.id.toString()}>
-                                  {user.name} {user.last_name} ({user.email})
+                                  {user.name} {user.last_name}
                                 </SelectItem>
                               ))}
                           </SelectGroup>
@@ -824,7 +824,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                               .filter(user => user.role === 'admin')
                               .map((user: CustomUser) => (
                                 <SelectItem key={user.id} value={user.id.toString()}>
-                                  {user.name} {user.last_name} ({user.email})
+                                  {user.name} {user.last_name}
                                 </SelectItem>
                               ))}
                           </SelectGroup>

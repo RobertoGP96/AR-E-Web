@@ -10,8 +10,8 @@ import { AppRoutes } from '@/routes';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutos
-      gcTime: 10 * 60 * 1000, // 10 minutos (cacheTime en versiones anteriores)
+      staleTime: 2 * 60 * 1000, // 5 minutos
+      gcTime: 2 * 60 * 1000, // 10 minutos (cacheTime en versiones anteriores)
       retry: 1,
       refetchOnWindowFocus: false,
     },

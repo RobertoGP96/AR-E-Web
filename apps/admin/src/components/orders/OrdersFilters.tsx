@@ -52,6 +52,17 @@ export default function OrdersFilters({
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-4">
+        {onRefresh && (
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              title="Actualizar lista"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          )}
         <div className="flex-1">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -66,17 +77,7 @@ export default function OrdersFilters({
         </div>
         <OrderFilters filters={filters} onFiltersChange={(newFilters) => { onFiltersChange?.(newFilters); }} resultCount={undefined} />
         <div className="flex gap-2">
-          {onRefresh && (
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={onRefresh}
-              disabled={isRefreshing}
-              title="Actualizar lista"
-            >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            </Button>
-          )}
+          
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-1" />
             Agregar Pedido

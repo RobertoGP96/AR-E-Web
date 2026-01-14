@@ -20,6 +20,7 @@ import {
   ExternalLink,
   CalendarIcon,
   ShoppingCart,
+  CreditCard,
 } from "lucide-react";
 import { useShoppingReceipts } from "@/hooks/shopping-receipts/useShoppingReceipts";
 import { useState, useMemo, useEffect } from "react";
@@ -56,6 +57,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { maskCardNumberAdvanced } from "@/lib/format-card";
+import { Badge } from "../ui/badge";
 
 interface PurshasesTableProps {
   onDelete?: (receipt: ShoppingReceip) => void;
@@ -235,8 +238,20 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({
                       {formatDayMonth(purchase.buy_date)}
                     </div>
                   </TableCell>
-                  <TableCell>{purchase.shop_of_buy + ""}</TableCell>
-                  <TableCell>{purchase.shopping_account_name + ""}</TableCell>
+                  <TableCell>
+                    {purchase.shop_of_buy + ""}
+                  </TableCell>
+                  <TableCell>
+                    <p>
+
+                      {purchase.shopping_account_name + ""}
+                    </p>
+                    <Badge variant={"outline"}>
+                      <CreditCard className="h-4 w-4 inline-block mr-1" />
+                      <p className=" text-sm">{purchase.card_id && maskCardNumberAdvanced(purchase.card_id)}</p>
+                    </Badge>
+
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-row text-gray-600 gap-1">
                       <Box className="h-5 w-5" />

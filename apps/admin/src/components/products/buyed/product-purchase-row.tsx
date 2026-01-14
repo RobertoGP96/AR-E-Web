@@ -41,7 +41,7 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({ product }) =>
                                 </h3>
                                 <QRLink link={product.original_product_details.link || 'https://arye-shipps.netlify.app'} />
                                 <RefundBadge
-                                    isRefunded={product.is_refunded}
+                                    isRefunded={product.is_refunded as boolean}
                                     refundDate={product.refund_date}
                                     refundAmount={product.refund_amount}
                                     refundNotes={product.refund_notes}
@@ -114,9 +114,9 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({ product }) =>
                                 <Store className="h-4 w-4" />
                                 <span>${(product.original_product_details.shop_cost || 0).toFixed(2)}</span>
                             </div>
-                            {product.is_refunded && product.refund_amount > 0 && (
+                            {product.is_refunded && product?.refund_amount as number > 0 && (
                                 <div className="flex items-center gap-1 text-sm font-medium text-amber-700">
-                                    <span>Reembolsado: ${product.refund_amount.toFixed(2)}</span>
+                                    <span>Reembolsado: ${product.refund_amount?.toFixed(2)}</span>
                                 </div>
                             )}
                         </div>

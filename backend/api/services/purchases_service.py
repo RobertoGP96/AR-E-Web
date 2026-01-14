@@ -3,11 +3,14 @@ Service: Purchase analysis helpers
 
 Functions that aggregate and analyze ShoppingReceip data for reports and dashboards.
 """
-from typing import Dict, Any, List
+from typing import Dict, Any, List, DefaultDict
+from collections import defaultdict
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
-from django.db.models import Sum, Count, Q, F
+from django.db.models import Sum, Count, Q, F, Case, When, Value, CharField
+from django.db.models.functions import Coalesce
 from api.models import ShoppingReceip, ProductBuyed
+from api.enums import PaymentStatusEnum
 
 
 def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[str, Any]:
@@ -97,7 +100,74 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
             purchases_by_shop[shop_name]['total_real_cost_paid'] += float(purchase.real_cost_paid or 0.0)
             purchases_by_shop[shop_name]['total_operational_expenses'] += float(purchase.operational_expenses or 0.0)
             purchases_by_shop[shop_name]['total_products'] += purchase.buyed_products.count()
-        except Exception:
+        except Exception as e:
+            print(f"Error processing shop data for purchase {purchase.id}: {str(e)}")
+            
+    # By card
+    card_breakdown = {}
+    for purchase in purchases_list:
+        card = purchase.card_id or 'Sin tarjeta'
+        
+        if card not in card_breakdown:
+            card_breakdown[card] = {
+                'count': 0,
+                'total_purchase_amount': 0.0,
+                'total_refunded': 0.0,
+                'total_real_cost_paid': 0.0,
+                'total_operational_expenses': 0.0,
+                'by_payment_status': {
+                    status: {
+                        'count': 0,
+                        'total_amount': 0.0,
+                        'total_refunded': 0.0
+                    } for status in PaymentStatusEnum.values
+                }
+            }
+        
+        try:
+            card_breakdown[card]['count'] += 1
+            card_breakdown[card]['total_purchase_amount'] += float(purchase.total_cost_of_purchase or 0.0)
+            card_breakdown[card]['total_refunded'] += float(purchase.total_refunded or 0.0)
+            card_breakdown[card]['total_real_cost_paid'] += float(purchase.real_cost_paid or 0.0)
+            card_breakdown[card]['total_operational_expenses'] += float(purchase.operational_expenses or 0.0)
+            
+            # Update payment status breakdown for this card
+            status = purchase.status_of_shopping or PaymentStatusEnum.NO_PAGADO.value
+            card_breakdown[card]['by_payment_status'][status]['count'] += 1
+            card_breakdown[card]['by_payment_status'][status]['total_amount'] += float(purchase.total_cost_of_purchase or 0.0)
+            card_breakdown[card]['by_payment_status'][status]['total_refunded'] += float(purchase.total_refunded or 0.0)
+        except Exception as e:
+            print(f"Error processing card data for purchase {purchase.id}: {str(e)}")
+    
+    # By payment status
+    payment_status_breakdown = {
+        status: {
+            'count': 0,
+            'total_amount': 0.0,
+            'total_refunded': 0.0,
+            'avg_amount': 0.0
+        } for status in PaymentStatusEnum.values
+    }
+    
+    for purchase in purchases_list:
+        status = purchase.status_of_shopping or PaymentStatusEnum.NO_PAGADO.value
+        try:
+            amount = float(purchase.total_cost_of_purchase or 0.0)
+            refunded = float(purchase.total_refunded or 0.0)
+            
+            payment_status_breakdown[status]['count'] += 1
+            payment_status_breakdown[status]['total_amount'] += amount
+            payment_status_breakdown[status]['total_refunded'] += refunded
+        except Exception as e:
+            print(f"Error processing payment status for purchase {purchase.id}: {str(e)}")
+    
+    # Calculate averages for payment status breakdown
+    for status in payment_status_breakdown:
+        count = payment_status_breakdown[status]['count']
+        if count > 0:
+            payment_status_breakdown[status]['avg_amount'] = (
+                payment_status_breakdown[status]['total_amount'] / count
+            )
             pass
 
     # By buying account
@@ -166,26 +236,28 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
             'month': mo.strftime('%Y-%m') if mo else None,
             'count': month_count,
             'total_purchase_amount': float(month_total_purchase),
-            'total_refunded': float(month_total_refunded),
-            'net_cost': float(month_total_purchase - month_total_refunded),
+            'total_refunded': float(month_total_refunded)
         })
-
     return {
-        'count': int(count),
-        'total_purchase_amount': float(total_purchase_amount),
-        'total_refunded': float(total_refunded),
-        'total_real_cost_paid': float(total_real_cost_paid),
-        'total_operational_expenses': float(total_operational_expenses),
-        'total_products_bought': int(total_products_bought),
-        'average_purchase_amount': float(avg_purchase_amount),
-        'average_refund_amount': float(avg_refund_amount),
+        'totals': {
+            'count': count,
+            'total_purchase_amount': total_purchase_amount,
+            'total_refunded': total_refunded,
+            'total_real_cost_paid': total_real_cost_paid,
+            'total_operational_expenses': total_operational_expenses,
+            'total_products_bought': total_products_bought,
+            'avg_purchase_amount': avg_purchase_amount,
+            'avg_refund_amount': avg_refund_amount,
+        },
+        'by_status': purchases_by_status,
+        'by_shop': purchases_by_shop,
+        'by_card': card_breakdown,
+        'by_payment_status': payment_status_breakdown,
+        'by_account': purchases_by_account,
+        'monthly_trend': monthly_trend,
         'refunded_purchases_count': int(refunded_purchases_count),
         'non_refunded_purchases_count': int(non_refunded_count),
         'refund_rate_percentage': float(refund_rate),
-        'purchases_by_status': purchases_by_status,
-        'purchases_by_shop': purchases_by_shop,
-        'purchases_by_account': purchases_by_account,
-        'monthly_trend': monthly_trend,
     }
 
 
