@@ -120,7 +120,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
                         'count': 0,
                         'total_amount': 0.0,
                         'total_refunded': 0.0
-                    } for status in PaymentStatusEnum.values
+                    } for status in list(PaymentStatusEnum.__members__.values())
                 }
             }
         

@@ -104,7 +104,7 @@ def analyze_orders(start_date=None, end_date=None, months_back=12, limit_per_ord
         total_profit += order_profit
 
     # If the queryset contains more than limit_per_order, still compute total cost, expenses and profit by iterating through all orders
-    if count > limit_per_order:
+    if total_count > limit_per_order:
         for order in qs[limit_per_order:]:
             try:
                 order_cost = sum(float(p.total_cost or 0.0) for p in order.products.all())
