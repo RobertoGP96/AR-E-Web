@@ -141,12 +141,12 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
     
     # By payment status
     payment_status_breakdown = {
-        status: {
+        status.value: {
             'count': 0,
             'total_amount': 0.0,
             'total_refunded': 0.0,
             'avg_amount': 0.0
-        } for status in PaymentStatusEnum.values
+        } for status in PaymentStatusEnum
     }
     
     for purchase in purchases_list:
