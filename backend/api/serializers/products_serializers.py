@@ -11,6 +11,12 @@ class ProductSerializer(serializers.ModelSerializer):
     """
     """Product information provided by the agent"""
 
+    # Información del cliente
+    client_name = serializers.CharField(
+        source='order.client.full_name', 
+        read_only=True
+    )
+    
     shop = serializers.SlugRelatedField(
         queryset=Shop.objects.all(),
         slug_field="name",
@@ -84,6 +90,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "system_profit",
             "created_at",
             "updated_at",
+            "client_name",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
