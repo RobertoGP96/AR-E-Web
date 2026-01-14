@@ -91,15 +91,3 @@ export interface OrderAnalysisPerOrder {
   status: OrderStatus;
   created_at: DateTime;
 }
-
-export interface OrderAnalysisResponse {
-  total_revenue: number;
-  average_revenue: number;
-  count: number;
-  total_cost: number;
-  total_expenses: number;
-  total_profit: number;
-  orders_by_status: Record<string, number>;
-  monthly_trend: OrderAnalysisMonthly[];
-  orders: OrderAnalysisPerOrder[];
-}
