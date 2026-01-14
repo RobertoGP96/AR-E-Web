@@ -23,7 +23,6 @@ export function useCreateOrder({start, end}:{start: string, end: string}) {
     queryFn: async ()  => getOrderReportsAnalysis({ start_date: start, end_date: end }),
   });
 
-
   const invalidateOrdersAnalysis = () => {
     queryClient.invalidateQueries({ queryKey: ['order-analysis'] });
   };
