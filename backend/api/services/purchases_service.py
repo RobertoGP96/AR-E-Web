@@ -116,11 +116,11 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
                 'total_real_cost_paid': 0.0,
                 'total_operational_expenses': 0.0,
                 'by_payment_status': {
-                    status: {
+                    status.value: {
                         'count': 0,
                         'total_amount': 0.0,
                         'total_refunded': 0.0
-                    } for status in list(PaymentStatusEnum.__members__.values())
+                    } for status in PaymentStatusEnum
                 }
             }
         
