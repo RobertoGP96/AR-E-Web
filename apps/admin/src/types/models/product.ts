@@ -22,6 +22,7 @@ export interface Product {
   observation?: string;
   category?: string;
   image_url?: string;
+  client_name?: string;
   
   // Cantidades (alineado con backend)
   amount_requested: number;

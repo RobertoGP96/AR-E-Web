@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Plus, Minus, ShoppingCart, Trash2, Package, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -13,19 +13,35 @@ import type { ProductBuyed } from "@/types/models/product-buyed"
 interface ProductSelectorProps {
     products: Product[]
     onCartChange?: (cart: ProductBuyed[]) => void
+    shopFilter?: string
+    statusFilter?: string
 }
 
-export function ProductSelector({ products, onCartChange }: ProductSelectorProps) {
+export function ProductSelector({ products, onCartChange, shopFilter, statusFilter }: ProductSelectorProps) {
     const [searchTerm, setSearchTerm] = useState("")
     const [cart, setCart] = useState<ProductBuyed[]>([])
 
-    const filteredProducts = products.filter(
-        (product) =>
-            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.category?.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
+    const filteredProducts = useMemo(() => {
+        return products.filter((product) => {
+            // Filtro por tienda (si está definido)
+            if (shopFilter && product.client_name !== shopFilter) {
+                return false
+            }
 
+            // Filtro por estado (si está definido)
+            if (statusFilter && product.status !== statusFilter) {
+                return false
+            }
+
+            // Filtro por búsqueda de texto
+            const matchesSearch = 
+                product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                product.category?.toLowerCase().includes(searchTerm.toLowerCase())
+
+            return matchesSearch
+        })
+    }, [products, shopFilter, statusFilter, searchTerm])
     const updateCart = (newCart: ProductBuyed[]) => {
         setCart(newCart)
         onCartChange?.(newCart)
@@ -61,7 +77,7 @@ export function ProductSelector({ products, onCartChange }: ProductSelectorProps
         updateCart(cart.filter((item) => item.product_id !== productId))
     }
 
-    const updateQuantity = (productId:string, delta: number) => {
+    const updateQuantity = (productId: string, delta: number) => {
         const newCart = cart
             .map((item) => {
                 if (item.product_id === productId) {
@@ -94,7 +110,11 @@ export function ProductSelector({ products, onCartChange }: ProductSelectorProps
                         <Package className="h-5 w-5" />
                         Productos Disponibles
                     </CardTitle>
-                    <CardDescription>Selecciona productos para agregar a la compra</CardDescription>
+                    <CardDescription>
+                        {shopFilter && `Tienda: ${shopFilter}`}
+                        {shopFilter && statusFilter && " • "}
+                        {statusFilter && `Estado: ${statusFilter}`}
+                    </CardDescription>
                     <div className="relative pt-2">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 translate-y-[-25%] text-muted-foreground" />
                         <Input
@@ -134,7 +154,7 @@ export function ProductSelector({ products, onCartChange }: ProductSelectorProps
                                                         </>
                                                     )}
                                                 </div>
-                                                <p className="text-sm font-semibold text-primary">${product.}</p>
+                                                <p className="text-sm font-semibold text-primary">{"@" + product.client_name}</p>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 {cartQty > 0 ? (
@@ -235,7 +255,7 @@ export function ProductSelector({ products, onCartChange }: ProductSelectorProps
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </div>
-                                        
+
                                     </div>
                                 ))}
                             </div>
