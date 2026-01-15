@@ -432,7 +432,8 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
         
         card_operations[card]['operations'].append(operation)
         card_operations[card]['total_purchases'] += float(purchase.total_cost_of_purchase)
-        card_operations[card]['total_refunded'] += float(purchase.total_refunded)
+        # Usar el valor anotado de total_refunded que ya calculamos en la consulta
+        card_operations[card]['total_refunded'] += float(purchase.total_refunded or 0)
         card_operations[card]['net_amount'] = card_operations[card]['total_purchases'] - card_operations[card]['total_refunded']
         
         # Si hay reembolsos, agregarlos como operaciones separadas
