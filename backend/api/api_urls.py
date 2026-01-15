@@ -29,7 +29,7 @@ router.register(r"expense", views.ExpenseViewSet)
 
 from api.views.expense_views import ExpenseViewSet
 from api.views.invoice_views import InvoiceViewSet
-from api.views.tag_views import TagViewSet
+
 from api.views.card_views import CardOperationsView
 
 urlpatterns = [
