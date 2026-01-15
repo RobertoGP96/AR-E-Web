@@ -372,7 +372,7 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
     Returns:
         dict: Diccionario con las operaciones agrupadas por tarjeta, ordenadas por fecha
     """
-    from django.db.models import Sum, F, Case, When, Value, IntegerField, FloatField
+    from django.db.models import Sum, Count, Q, FloatField, IntegerField
     from django.db.models.functions import Coalesce
     
     # Filtrar compras por fechas y tarjeta si se especifica
@@ -386,14 +386,15 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
         purchases_qs = purchases_qs.filter(card_id=card_id)
     
     # Obtener las compras con información de reembolsos
+    # CAMBIO: Usar nombres diferentes para las anotaciones
     purchases = purchases_qs.annotate(
-        total_refunded=Coalesce(
+        refunded_total=Coalesce(
             Sum('buyed_products__refund_amount', 
                 filter=Q(buyed_products__is_refunded=True)),
             0.0,
             output_field=FloatField()
         ),
-        refund_count=Coalesce(
+        refunded_count=Coalesce(
             Count('buyed_products__id', 
                  filter=Q(buyed_products__is_refunded=True)),
             0,
@@ -418,8 +419,8 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
                 'operations': []
             }
         
-        # Obtener el valor de total_refunded del objeto anotado
-        total_refunded = float(getattr(purchase, 'total_refunded', 0) or 0)
+        # Obtener el valor de refunded_total del objeto anotado
+        refunded_total = float(getattr(purchase, 'refunded_total', 0) or 0)
         
         # Agregar la operación de compra
         operation = {
@@ -429,18 +430,17 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
             'status': purchase.status_of_shopping,
             'shop': purchase.shop_of_buy.name if purchase.shop_of_buy else 'Tienda desconocida',
             'shopping_account': purchase.shopping_account.account_name if purchase.shopping_account else 'Cuenta desconocida',
-            'refunded_amount': total_refunded,
-            'refund_count': getattr(purchase, 'refund_count', 0)
+            'refunded_amount': refunded_total,
+            'refund_count': getattr(purchase, 'refunded_count', 0)
         }
         
         card_operations[card]['operations'].append(operation)
         card_operations[card]['total_purchases'] += float(purchase.total_cost_of_purchase)
-        # Usar el valor de total_refunded que ya obtuvimos
-        card_operations[card]['total_refunded'] += total_refunded
+        card_operations[card]['total_refunded'] += refunded_total
         card_operations[card]['net_amount'] = card_operations[card]['total_purchases'] - card_operations[card]['total_refunded']
         
         # Si hay reembolsos, agregarlos como operaciones separadas
-        if purchase.refund_count > 0:
+        if purchase.refunded_count > 0:
             refund_operations = ProductBuyed.objects.filter(
                 shoping_receip=purchase,
                 is_refunded=True
@@ -457,7 +457,7 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
                     'type': 'REEMBOLSO',
                     'amount': float(refund['refund_amount']) * -1,  # Negativo para indicar salida
                     'status': 'REEMBOLSADO',
-                    'shop': purchase.shop_of_buy.name,
+                    'shop': purchase.shop_of_buy.name if purchase.shop_of_buy else 'Tienda desconocida',
                     'product': refund['original_product__name'],
                     'notes': refund['refund_notes'] or ''
                 }
