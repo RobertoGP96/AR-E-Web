@@ -418,22 +418,25 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
                 'operations': []
             }
         
+        # Obtener el valor de total_refunded del objeto anotado
+        total_refunded = float(getattr(purchase, 'total_refunded', 0) or 0)
+        
         # Agregar la operación de compra
         operation = {
             'date': purchase.buy_date,
             'type': 'COMPRA',
             'amount': float(purchase.total_cost_of_purchase),
             'status': purchase.status_of_shopping,
-            'shop': purchase.shop_of_buy.name,
-            'shopping_account': purchase.shopping_account.account_name,
-            'refunded_amount': float(purchase.total_refunded),
-            'refund_count': purchase.refund_count
+            'shop': purchase.shop_of_buy.name if purchase.shop_of_buy else 'Tienda desconocida',
+            'shopping_account': purchase.shopping_account.account_name if purchase.shopping_account else 'Cuenta desconocida',
+            'refunded_amount': total_refunded,
+            'refund_count': getattr(purchase, 'refund_count', 0)
         }
         
         card_operations[card]['operations'].append(operation)
         card_operations[card]['total_purchases'] += float(purchase.total_cost_of_purchase)
-        # Usar el valor anotado de total_refunded que ya calculamos en la consulta
-        card_operations[card]['total_refunded'] += float(purchase.total_refunded or 0)
+        # Usar el valor de total_refunded que ya obtuvimos
+        card_operations[card]['total_refunded'] += total_refunded
         card_operations[card]['net_amount'] = card_operations[card]['total_purchases'] - card_operations[card]['total_refunded']
         
         # Si hay reembolsos, agregarlos como operaciones separadas
