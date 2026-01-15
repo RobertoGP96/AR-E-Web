@@ -43,13 +43,18 @@ import {
   ArrowBigRight,
   Save,
   CheckCircle2,
+  CreditCard,
+  Store,
 } from "lucide-react";
 import useBalanceData from "@/hooks/useBalanceData";
 import type { OrderAnalysis } from "@/types/services/order";
 import type { DeliveryAnalysisResponse } from "@/types/models/delivery";
-import type { PurchaseAnalysisResponse } from "@/services/purchases";
+
 import type { ExpenseAnalysisResponse } from "@/services/api";
 import type { InvoiceRangeData } from "@/types/models/invoice";
+import type { PurchaseAnalysis } from "@/types/services/purchase";
+import { maskCardNumberAdvanced } from "@/lib/format-card";
+import { CardTransactionsDialog } from "./components/card-transactions-dialog";
 
 // Componente BalanceReport: reutilizable en pages y widgets
 export default function BalanceReport() {
@@ -117,8 +122,6 @@ export default function BalanceReport() {
     deliveryAnalysis,
     ordersAnalysis,
     purchasesAnalysis,
-    summary,
-
     // Loading states
     isLoading,
     isLoadingInvoices,
@@ -126,7 +129,6 @@ export default function BalanceReport() {
     isLoadingDeliveryAnalysis,
     isLoadingOrders,
     isLoadingPurchases,
-
     // Errors
     error,
     expenseError,
@@ -157,13 +159,50 @@ export default function BalanceReport() {
     setEndDate(e);
   }, [preset, useCustomRange]);
 
+  type SummaryData = {
+    costs_weighted: number;
+    delivery_weighted: number;
+
+
+    revenue_paid: number;
+    purchase_paid: number;
+    costs: number;
+    expenses: number;
+
+    delivery_profit: number;
+    purchase_profit: number;
+
+    netProfit: number;
+  }
+
+  const [ balanceData ] = React.useState<SummaryData>({
+    costs_weighted: 0,
+    delivery_weighted: 0,
+    revenue_paid: 0,
+    purchase_paid: 0,
+    costs: 0,
+    expenses: 0,
+    delivery_profit: 0,
+    purchase_profit: 0,
+    netProfit: 0,
+  });
+
   React.useEffect(() => {
-    if (!summary) return;
-    const { averageProfit, monthCount, revenue, expenses, profit } = summary;
-    const margin =
-      revenue > 0 ? (averageProfit / revenue) * 100 : 0;
-    summary.profit = margin;
-  }, [summary]);
+    if (!ordersAnalysis && !purchasesAnalysis && !deliveryAnalysis && !invoicesRangeData && expensesAnalysis) return;
+    const income: SummaryData = { 
+      costs_weighted: invoicesRangeData?.total_tag_weight   || 0,
+      delivery_weighted: deliveryAnalysis?.total_weight || 0,
+      revenue_paid: ordersAnalysis?.paid_revenue as number || 0,
+      purchase_paid: purchasesAnalysis?.totals.total_real_cost_paid || 0,
+      costs: invoicesRangeData?.total_invoices_amount || 0,
+      expenses: expensesAnalysis?.total_expenses || 0,
+      delivery_profit: deliveryAnalysis?.total_system_profit || 0,
+      purchase_profit: purchasesAnalysis?.totals.total_profit || 0,
+      netProfit: 0,
+     };
+    income.netProfit = (income.revenue_paid - income.purchase_paid - income.costs - income.expenses + income.delivery_profit);
+
+  }, [ordersAnalysis, purchasesAnalysis, deliveryAnalysis, invoicesRangeData, expensesAnalysis]);
 
   if (
     isLoading ||
@@ -408,63 +447,69 @@ export default function BalanceReport() {
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   <MetricCard
                     label="Compras"
-                    value={purchasesAnalysis?.count || 0}
+                    value={(purchasesAnalysis.totals.count || 0)+" : "+purchasesAnalysis.totals.total_products_bought+" prod."}
                   />
-                  <MetricCard
-                    label="Monto Total"
-                    value={formatUSD(
-                      purchasesAnalysis?.total_purchase_amount || 0
-                    )}
-                  />
+                  
                   <MetricCard
                     label="Reembolsos"
-                    value={formatUSD(purchasesAnalysis?.total_refunded || 0)}
+                    value={formatUSD(purchasesAnalysis?.totals.total_refunded || 0)}
                   />
                   <MetricCard
-                    label="Gastos Op."
+                    label="Costos Registrados"
                     value={formatUSD(
-                      purchasesAnalysis?.total_operational_expenses || 0
+                      purchasesAnalysis?.totals.total_real_cost_paid || 0
                     )}
                   />
                   <MetricCard
-                    label="Costo Neto"
+                    label="Pagado"
                     value={formatUSD(
-                      purchasesAnalysis?.total_real_cost_paid || 0
+                     
+                      purchasesAnalysis?.totals.total_purchase_amount || 0
                     )}
                     highlight
+                  />
+
+                  <MetricCard
+                    label="Ganacia"
+                    value={
+                       purchasesAnalysis.totals.total_profit || 0
+                    }
                   />
                 </div>
 
                 {/* Desglose por Tienda */}
-                {purchasesAnalysis?.purchases_by_shop &&
-                  Object.keys(purchasesAnalysis.purchases_by_shop).length >
-                    0 && (
+                {purchasesAnalysis?.by_shop &&
+                  Object.keys(purchasesAnalysis.by_shop).length >
+                  0 && (
                     <div className="border-t pt-4">
-                      <h4 className="text-sm font-semibold text-foreground mb-3">
-                        Desglose por Tienda
-                      </h4>
+                      <div className="flex">
+                        <Store className="h-5 w-5 inline-block mr-2 text-foreground" />
+                        <h4 className="text-sm font-semibold text-foreground mb-3">
+                          Desglose por Tienda
+                        </h4>
+                      </div>
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-muted/50">
-                              <TableHead>Tienda</TableHead>
-                              <TableHead className="text-right">
+                              <TableHead className="w-[25%]">Tienda</TableHead>
+                              <TableHead className="text-right w-[15%]">
                                 Compras
                               </TableHead>
-                              <TableHead className="text-right">
+                              <TableHead className="text-right w-[20%]">
                                 Monto
                               </TableHead>
-                              <TableHead className="text-right">
+                              <TableHead className="text-right w-[20%]">
                                 Reembolsos
                               </TableHead>
-                              <TableHead className="text-right">
+                              <TableHead className="text-right w-[20%]">
                                 Costo Neto
                               </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {Object.entries(
-                              purchasesAnalysis.purchases_by_shop
+                              purchasesAnalysis.by_shop
                             ).map(([shop, stats]) => (
                               <TableRow
                                 key={shop}
@@ -485,6 +530,60 @@ export default function BalanceReport() {
                                 <TableCell className="text-right text-blue-600 font-semibold">
                                   {formatUSD(stats.total_real_cost_paid || 0)}
                                 </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Desglose por Tarjeta */}
+                {purchasesAnalysis?.by_card &&
+                  Object.keys(purchasesAnalysis.by_card).length > 0 && (
+                    <div className="border-t pt-4 mt-6">
+                      <div className="flex">
+                        <CreditCard className="h-5 w-5 inline-block mr-2 text-foreground" />
+                        <h4 className="text-sm font-semibold text-foreground mb-3">
+                          Desglose por Tarjeta
+                        </h4>
+                        <CardTransactionsDialog />
+                      </div>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/50">
+                              <TableHead className="w-[25%]">Tarjeta</TableHead>
+                              <TableHead className="text-right w-[15%]">Compras</TableHead>
+                              <TableHead className="text-right w-[20%]">Monto Total</TableHead>
+                              <TableHead className="text-right w-[20%]">Reembolsos</TableHead>
+                              <TableHead className="text-right w-[20%]">Pagado</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {Object.entries(purchasesAnalysis.by_card).map(([card, stats]) => (
+                              <TableRow
+                                key={card}
+                                className="hover:bg-muted/50 transition-colors"
+                              >
+                                <TableCell className="font-medium">
+                                  <Badge variant="outline">
+                                    {card !== "Sin tarjeta" ? maskCardNumberAdvanced(card) : 'Sin tarjeta'}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {stats.count || 0}
+                                </TableCell>
+                                <TableCell className="text-right text-green-600 font-semibold">
+                                  {formatUSD(stats.total_purchase_amount || 0)}
+                                </TableCell>
+                                <TableCell className="text-right text-orange-600 font-semibold">
+                                  {formatUSD(stats.total_refunded || 0)}
+                                </TableCell>
+                                <TableCell className="text-right text-blue-600 font-semibold">
+                                  {formatUSD(stats.total_real_cost_paid || 0)}
+                                </TableCell>
+
                               </TableRow>
                             ))}
                           </TableBody>
@@ -564,7 +663,7 @@ export default function BalanceReport() {
 
                 {deliveryAnalysis?.deliveries_by_category &&
                   Object.keys(deliveryAnalysis.deliveries_by_category).length >
-                    0 && (
+                  0 && (
                     <div className="border-t pt-4">
                       <h4 className="text-sm font-semibold text-foreground mb-3">
                         Desglose por Categoría
@@ -797,7 +896,7 @@ function ExecutiveSummary({
 }: {
   ordersAnalysis: OrderAnalysis | null | undefined;
   deliveryAnalysis: DeliveryAnalysisResponse | null | undefined;
-  purchasesAnalysis: PurchaseAnalysisResponse | null | undefined;
+  purchasesAnalysis: PurchaseAnalysis | null | undefined;
   expensesAnalysis: ExpenseAnalysisResponse | null | undefined;
   invoicesRangeData: InvoiceRangeData | null | undefined;
   isLoading: boolean;
@@ -821,10 +920,10 @@ function ExecutiveSummary({
 
     // Costos totales
     const orderCosts = ordersAnalysis?.total_cost || 0;
-    const purchaseCosts = purchasesAnalysis?.total_real_cost_paid || 0;
+    const purchaseCosts = purchasesAnalysis?.totals.total_real_cost_paid || 0;
     const invoiceCosts = invoicesRangeData?.total_invoices_amount || 0;
     const operationalExpenses =
-      purchasesAnalysis?.total_operational_expenses || 0;
+      purchasesAnalysis?.totals.total_operational_expenses || 0;
     const totalExpenses = expensesAnalysis?.total_expenses || 0;
     const deliveryExpenses = deliveryAnalysis?.total_delivery_expenses || 0;
 
@@ -840,8 +939,8 @@ function ExecutiveSummary({
       (ordersAnalysis?.total_revenue || 0) - (ordersAnalysis?.total_cost || 0);
     const deliveryProfit = deliveryAnalysis?.total_system_profit || 0;
     const purchaseProfit =
-      (purchasesAnalysis?.total_purchase_amount || 0) -
-      (purchasesAnalysis?.total_real_cost_paid || 0);
+      (purchasesAnalysis?.totals.total_purchase_amount || 0) -
+      (purchasesAnalysis?.totals.total_real_cost_paid || 0);
 
     return {
       totalIncome,
@@ -1068,37 +1167,8 @@ function ExecutiveSummary({
               <span className="h-2 w-2 rounded-full bg-blue-500"></span>
               Ganancias
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div
-                className={cn(
-                  "p-4 rounded-lg border-2 transition-all",
-                  summary.orderProfit >= 0
-                    ? "border-blue-300 bg-blue-50"
-                    : "border-orange-300 bg-orange-50"
-                )}
-              >
-                <div className="text-sm font-medium text-muted-foreground mb-2">
-                  Ganancia Órdenes
-                </div>
-                <div
-                  className={cn(
-                    "text-2xl font-bold",
-                    summary.orderProfit >= 0
-                      ? "text-blue-600"
-                      : "text-orange-600"
-                  )}
-                >
-                  {formatUSD(summary.orderProfit)}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {(
-                    (summary.orderProfit / summary.totalOrderRevenue) *
-                    100
-                  ).toFixed(1)}
-                  % margen
-                </div>
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
               <div
                 className={cn(
                   "p-4 rounded-lg border-2 transition-all",
@@ -1108,7 +1178,7 @@ function ExecutiveSummary({
                 )}
               >
                 <div className="text-sm font-medium text-muted-foreground mb-2">
-                  Ganancia Entregas
+                  Ganancia se Compras
                 </div>
                 <div
                   className={cn(
@@ -1138,7 +1208,7 @@ function ExecutiveSummary({
                 )}
               >
                 <div className="text-sm font-medium text-muted-foreground mb-2">
-                  Ganancia Compras
+                  Ganancia de Entregas
                 </div>
                 <div
                   className={cn(
@@ -1153,7 +1223,7 @@ function ExecutiveSummary({
                 <div className="text-xs text-muted-foreground mt-1">
                   {(
                     (summary.purchaseProfit /
-                      (purchasesAnalysis?.total_purchase_amount || 1)) *
+                      (purchasesAnalysis?.totals.total_purchase_amount || 1)) *
                     100
                   ).toFixed(1)}
                   % margen

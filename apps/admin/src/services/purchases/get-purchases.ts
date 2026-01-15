@@ -1,43 +1,6 @@
 import { apiClient } from '@/lib/api-client';
+import type { PurchaseAnalysis } from '@/types/services/purchase';
 
-/**
- * Response types for purchases analysis
- */
-export interface PurchaseAnalysisResponse {
-  count: number;
-  total_purchase_amount: number;
-  total_refunded: number;
-  total_real_cost_paid: number;
-  total_operational_expenses: number;
-  total_products_bought: number;
-  average_purchase_amount: number;
-  average_refund_amount: number;
-  refunded_purchases_count: number;
-  non_refunded_purchases_count: number;
-  refund_rate_percentage: number;
-  purchases_by_status: Record<string, number>;
-  purchases_by_shop: Record<string, {
-    count: number;
-    total_purchase_amount: number;
-    total_refunded: number;
-    total_real_cost_paid: number;
-    total_operational_expenses: number;
-    total_products: number;
-  }>;
-  purchases_by_account: Record<string, {
-    count: number;
-    total_purchase_amount: number;
-    total_refunded: number;
-    total_real_cost_paid: number;
-  }>;
-  monthly_trend: Array<{
-    month: string;
-    count: number;
-    total_purchase_amount: number;
-    total_refunded: number;
-    net_cost: number;
-  }>;
-}
 
 export interface PurchasesSummary {
   purchases_count: number;
@@ -71,9 +34,9 @@ export interface ProductBuysAnalysis {
 export async function getPurchasesAnalysis(params: {
   start_date?: string;
   end_date?: string;
-}): Promise<{ data: PurchaseAnalysisResponse }> {
+}): Promise<{ data: PurchaseAnalysis }> {
   try {
-    const response = await apiClient.get<{ data: PurchaseAnalysisResponse }>(
+    const response = await apiClient.get<{ data: PurchaseAnalysis }>(
       '/api_data/reports/purchases/',
       {
         params,

@@ -359,3 +359,126 @@ def analyze_product_buys(start_date=None, end_date=None) -> Dict[str, Any]:
         'refund_percentage': float(refund_percentage),
         'top_refunded_products': top_refunded,
     }
+
+
+def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[str, Any]:
+    """Obtiene las operaciones por tarjeta, ordenadas por fecha, separando compras y reembolsos.
+    
+    Args:
+        start_date (datetime, optional): Fecha de inicio del rango
+        end_date (datetime, optional): Fecha de fin del rango
+        card_id (str, optional): ID de la tarjeta específica a filtrar
+        
+    Returns:
+        dict: Diccionario con las operaciones agrupadas por tarjeta, ordenadas por fecha
+    """
+    from django.db.models import Sum, F, Case, When, Value, IntegerField, FloatField
+    from django.db.models.functions import Coalesce
+    
+    # Filtrar compras por fechas y tarjeta si se especifica
+    purchases_qs = ShoppingReceip.objects.all()
+    
+    if start_date:
+        purchases_qs = purchases_qs.filter(buy_date__gte=start_date)
+    if end_date:
+        purchases_qs = purchases_qs.filter(buy_date__lte=end_date)
+    if card_id:
+        purchases_qs = purchases_qs.filter(card_id=card_id)
+    
+    # Obtener las compras con información de reembolsos
+    purchases = purchases_qs.annotate(
+        total_refunded=Coalesce(
+            Sum('buyed_products__refund_amount', 
+                filter=Q(buyed_products__is_refunded=True)),
+            0.0,
+            output_field=FloatField()
+        ),
+        refund_count=Coalesce(
+            Count('buyed_products__id', 
+                 filter=Q(buyed_products__is_refunded=True)),
+            0,
+            output_field=IntegerField()
+        )
+    ).order_by('buy_date')
+    
+    # Procesar las compras para agrupar por tarjeta
+    card_operations = {}
+    
+    for purchase in purchases:
+        # Si no hay tarjeta, la agrupamos como 'SIN_TARJETA'
+        card = purchase.card_id or 'SIN_TARJETA'
+        
+        # Inicializar la estructura de la tarjeta si no existe
+        if card not in card_operations:
+            card_operations[card] = {
+                'card_id': card,
+                'total_purchases': 0,
+                'total_refunded': 0,
+                'net_amount': 0,
+                'operations': []
+            }
+        
+        # Agregar la operación de compra
+        operation = {
+            'date': purchase.buy_date,
+            'type': 'COMPRA',
+            'amount': float(purchase.total_cost_of_purchase),
+            'status': purchase.status_of_shopping,
+            'shop': purchase.shop_of_buy.name,
+            'shopping_account': purchase.shopping_account.account_name,
+            'refunded_amount': float(purchase.total_refunded),
+            'refund_count': purchase.refund_count
+        }
+        
+        card_operations[card]['operations'].append(operation)
+        card_operations[card]['total_purchases'] += float(purchase.total_cost_of_purchase)
+        card_operations[card]['total_refunded'] += float(purchase.total_refunded)
+        card_operations[card]['net_amount'] = card_operations[card]['total_purchases'] - card_operations[card]['total_refunded']
+        
+        # Si hay reembolsos, agregarlos como operaciones separadas
+        if purchase.refund_count > 0:
+            refund_operations = ProductBuyed.objects.filter(
+                shoping_receip=purchase,
+                is_refunded=True
+            ).values(
+                'refund_date',
+                'refund_amount',
+                'original_product__name',
+                'refund_notes'
+            )
+            
+            for refund in refund_operations:
+                refund_op = {
+                    'date': refund['refund_date'] or purchase.buy_date,
+                    'type': 'REEMBOLSO',
+                    'amount': float(refund['refund_amount']) * -1,  # Negativo para indicar salida
+                    'status': 'REEMBOLSADO',
+                    'shop': purchase.shop_of_buy.name,
+                    'product': refund['original_product__name'],
+                    'notes': refund['refund_notes'] or ''
+                }
+                card_operations[card]['operations'].append(refund_op)
+    
+    # Ordenar las operaciones por fecha para cada tarjeta
+    for card in card_operations.values():
+        card['operations'].sort(key=lambda x: x['date'])
+    
+    # Convertir las fechas a string para la respuesta JSON
+    result = []
+    for card_data in card_operations.values():
+        card_data['operations'] = [
+            {**op, 'date': op['date'].isoformat() if op['date'] else None}
+            for op in card_data['operations']
+        ]
+        result.append(card_data)
+    
+    # Ordenar las tarjetas por ID
+    result.sort(key=lambda x: x['card_id'])
+    
+    return {
+        'cards': result,
+        'total_cards': len(result),
+        'start_date': start_date.isoformat() if start_date else None,
+        'end_date': end_date.isoformat() if end_date else None,
+        'card_filter': card_id
+    }

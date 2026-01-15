@@ -8,6 +8,7 @@
     total_products_bought: number;
     avg_purchase_amount: number;
     avg_refund_amount: number;
+    total_profit: number;
   };
   by_status: Record<string, number>;
   by_shop: Record<string, {

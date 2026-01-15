@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getPurchasesAnalysis } from '@/services/purchases/get-purchases';
-import type { PurchaseAnalysisResponse } from '@/services/purchases/get-purchases';
+import type { PurchaseAnalysis } from '@/types/services/purchase';
+
 
 interface UsePurchasesAnalysisProps {
   startDate?: string;
@@ -8,7 +9,7 @@ interface UsePurchasesAnalysisProps {
 }
 
 export function usePurchasesAnalysis({ startDate, endDate }: UsePurchasesAnalysisProps) {
-  return useQuery<PurchaseAnalysisResponse | null, Error>({
+  return useQuery<PurchaseAnalysis | null, Error>({
     queryKey: ['purchasesReportsAnalysis', startDate, endDate],
     queryFn: async () => {
       if (!startDate || !endDate) return null;

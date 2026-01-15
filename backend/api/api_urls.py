@@ -27,6 +27,11 @@ router.register(r"invoice", views.InvoiceViewSet)
 router.register(r"tag", views.TagViewSet)
 router.register(r"expense", views.ExpenseViewSet)
 
+from api.views.expense_views import ExpenseViewSet
+from api.views.invoice_views import InvoiceViewSet
+from api.views.tag_views import TagViewSet
+from api.views.card_views import CardOperationsView
+
 urlpatterns = [
     # Inclusión de las rutas del router bajo el prefijo `api_data/`
     path("api_data/", include(router.urls)),
@@ -48,6 +53,8 @@ urlpatterns = [
     path("amazon/scrape/", views.AmazonScrapingView.as_view(), name="amazon_scraping"),
     # Admin User Creation URL
     path("admin/create/", views.CreateAdminView.as_view(), name="create_admin_user"),
+    # Card Operations URL
+    path("cards/operations/", CardOperationsView.as_view(), name="card_operations"),
     
     # Dashboard URLs
     path("api_data/dashboard/stats/", views.DashboardMetricsView.as_view(), name="dashboard_stats"),
