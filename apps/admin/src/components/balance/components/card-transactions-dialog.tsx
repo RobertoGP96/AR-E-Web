@@ -12,8 +12,8 @@ type CardTransactionsDialogProps = {
 
 export function CardTransactionsDialog({
   triggerText = 'Ver Transacciones',
-  triggerVariant = 'default',
-  triggerClassName,
+  triggerVariant = 'ghost',
+  triggerClassName = 'cursor-pointer',
   cardId,
 }: CardTransactionsDialogProps) {
   const [isOpen, setIsOpen] = useState(false);

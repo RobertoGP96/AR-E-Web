@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getDeliveryReportsAnalysis } from '@/services/delivery/get-deliveries';
-import type { DeliveryAnalysisResponse } from '@/types/models/delivery';
+import type { DeliveryAnalysisResponse } from '@/types/services/delivery';
+
 
 interface UseDeliveryAnalysisProps {
   startDate?: string;

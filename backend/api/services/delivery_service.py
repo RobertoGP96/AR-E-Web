@@ -3,11 +3,12 @@ Service: Delivery analysis helpers
 
 Functions that aggregate and analyze DeliverReceip data for reports and dashboards.
 """
-from typing import Dict, Any, List
+from typing import Dict, Any, List, DefaultDict
+from collections import defaultdict
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
-from django.db.models import Count
-from api.models import DeliverReceip
+from django.db.models import Count, F, Sum
+from api.models import DeliverReceip, CustomUser
 
 
 def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[str, Any]:
@@ -19,9 +20,18 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
         months_back (int): When start_date/end_date is not provided, compute monthly trend for last `months_back` months
 
     Returns:
-        dict: contains totals and breakdown by status and monthly trend
+        dict: contains totals, breakdown by status, monthly trend, and agent breakdown
+              agent_breakdown includes:
+                - agent_id: ID del agente (o None si no tiene)
+                - agent_name: Nombre completo del agente (o 'Sin Agente' si no tiene)
+                - delivery_count: Número de entregas
+                - total_weight: Peso total entregado
+                - total_revenue: Ingresos totales generados
+                - total_expenses: Gastos totales
+                - agent_commission: Comisión total del agente
+                - total_profit: Ganancia neta (ingresos - gastos - comisión)
     """
-    qs = DeliverReceip.objects.all()
+    qs = DeliverReceip.objects.select_related('client__assigned_agent').all()
     if start_date:
         qs = qs.filter(deliver_date__gte=start_date)
     if end_date:
@@ -35,27 +45,83 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
     total_weight = 0.0
     count = qs.count()
 
+    # Initialize agent breakdown
+    agent_profits: DefaultDict[str, Dict[str, Any]] = defaultdict(lambda: {
+        'agent_id': None,
+        'agent_name': 'Sin Agente',
+        'delivery_count': 0,
+        'total_weight': 0.0,
+        'total_revenue': 0.0,
+        'total_expenses': 0.0,
+        'total_profit': 0.0,
+        'agent_commission': 0.0
+    })
+
     for d in qs:
+        # Existing calculations
         try:
-            total_delivery_revenue += float(d.weight_cost or 0.0)
+            weight_cost = float(d.weight_cost or 0.0)
+            total_delivery_revenue += weight_cost
         except Exception:
+            weight_cost = 0.0
             total_delivery_revenue += 0.0
+            
         try:
-            total_delivery_expenses += float(d.delivery_expenses or 0.0)
+            delivery_expenses = float(d.delivery_expenses or 0.0)
+            total_delivery_expenses += delivery_expenses
         except Exception:
+            delivery_expenses = 0.0
             total_delivery_expenses += 0.0
+            
         try:
-            total_manager_profit += float(d.manager_profit or 0.0)
+            manager_profit = float(d.manager_profit or 0.0)
+            total_manager_profit += manager_profit
         except Exception:
+            manager_profit = 0.0
             total_manager_profit += 0.0
+            
         try:
-            total_system_profit += float(d.system_delivery_profit or 0.0)
+            system_profit = float(d.system_delivery_profit or 0.0)
+            total_system_profit += system_profit
         except Exception:
+            system_profit = 0.0
             total_system_profit += 0.0
+            
         try:
-            total_weight += float(d.weight or 0.0)
+            weight = float(d.weight or 0.0)
+            total_weight += weight
         except Exception:
+            weight = 0.0
             total_weight += 0.0
+            
+        # Process agent information
+        agent = d.client.assigned_agent if hasattr(d, 'client') and hasattr(d.client, 'assigned_agent') else None
+        agent_key = str(agent.id) if agent and agent.id else 'unassigned'
+        
+        # Initialize agent data if not exists
+        if agent_key not in agent_profits and agent:
+            agent_profits[agent_key] = {
+                'agent_id': agent.id,
+                'agent_name': agent.full_name,
+                'delivery_count': 0,
+                'total_weight': 0.0,
+                'total_revenue': 0.0,
+                'total_expenses': 0.0,
+                'total_profit': 0.0,
+                'agent_commission': 0.0
+            }
+        
+        # Update agent stats
+        agent_profits[agent_key]['delivery_count'] += 1
+        agent_profits[agent_key]['total_weight'] += weight
+        agent_profits[agent_key]['total_revenue'] += weight_cost
+        agent_profits[agent_key]['total_expenses'] += delivery_expenses
+        agent_profits[agent_key]['agent_commission'] += manager_profit
+        agent_profits[agent_key]['total_profit'] = (
+            agent_profits[agent_key]['total_revenue'] - 
+            agent_profits[agent_key]['total_expenses'] - 
+            agent_profits[agent_key]['agent_commission']
+        )
 
     avg_delivery_cost = (total_delivery_expenses / count) if count else 0.0
     avg_weight = (total_weight / count) if count else 0.0
@@ -132,6 +198,13 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
                 month_weight += 0.0
         monthly_trend.append({'month': mo.strftime('%Y-%m') if mo else None, 'total': float(month_total), 'total_weight': float(month_weight)})
 
+    # Convert agent_profits to list and sort by total_revenue (descending)
+    agent_breakdown = sorted(
+        agent_profits.values(),
+        key=lambda x: x['total_revenue'],
+        reverse=True
+    )
+
     return {
         'total_delivery_revenue': float(total_delivery_revenue),
         'total_delivery_expenses': float(total_delivery_expenses),
@@ -144,4 +217,5 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
         'deliveries_by_status': deliveries_by_status,
         'deliveries_by_category': deliveries_by_category,
         'monthly_trend': monthly_trend,
+        'agent_breakdown': agent_breakdown,  # Add agent breakdown to results
     }

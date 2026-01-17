@@ -19,8 +19,12 @@ export function useCreateOrder({start, end}:{start: string, end: string}) {
     refetch,
   } = useQuery<OrderAnalysis, Error>({
     queryKey: ['order-analysis', start, end],
-
-    queryFn: async ()  => getOrderReportsAnalysis({ start_date: start, end_date: end }),
+    queryFn: async (): Promise<OrderAnalysis>  => {
+       const resp = getOrderReportsAnalysis({ start_date: start, end_date: end });
+       return (await resp).data ?? null;
+    },
+    enabled: !!start && !!end,
+    staleTime: 1000 * 60 * 5,
   });
 
   const invalidateOrdersAnalysis = () => {

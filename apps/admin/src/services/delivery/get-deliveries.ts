@@ -5,7 +5,7 @@
 import { apiClient } from '../../lib/api-client';
 import type { BaseFilters, PaginatedApiResponse } from '../../types/api';
 import type { DeliverReceip } from '../../types';
-import type { DeliveryAnalysisResponse } from '../../types/models/delivery';
+import type { DeliveryAnalysisResponse } from '@/types/services/delivery';
 
 /**
  * Obtiene lista paginada de deliveries

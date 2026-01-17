@@ -179,29 +179,47 @@ class ProductBuyed(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Al guardar un ProductBuyed, actualiza el amount_purchased y el estado del producto original
+        Al guardar un ProductBuyed, actualiza el amount_purchased y el estado del producto original.
+        También maneja la lógica de reembolso actualizando las cantidades y estados correspondientes.
         """
         is_new = self.pk is None
-
+        
+        # Si es una actualización, obtener el estado anterior
+        old_instance = None
+        if not is_new:
+            old_instance = ProductBuyed.objects.get(pk=self.pk)
+        
         super().save(*args, **kwargs)
 
-        # Recalcular el total comprado del producto
         if self.original_product:
+            # Si se está realizando un reembolso
+            if not is_new and old_instance and self.is_refunded != old_instance.is_refunded and self.is_refunded:
+                # Restar la cantidad reembolsada del total comprado
+                self.original_product.amount_purchased = max(0, self.original_product.amount_purchased - self.quantity_refuned)
+                
+                # Si la cantidad comprada es menor a la solicitada, volver a estado ENCARGADO
+                if self.original_product.amount_purchased < self.original_product.amount_requested:
+                    self.original_product.status = ProductStatusEnum.ENCARGADO.value
+                
+                # Guardar los cambios
+                self.original_product.save(update_fields=['amount_purchased', 'status', 'updated_at'])
+                return
+                
+            # Recalcular el total comprado del producto
             total_purchased = sum(
                 pb.amount_buyed
                 for pb in self.original_product.buys.all()
             )
             self.original_product.amount_purchased = total_purchased
 
-            # Actualizar estado si se ha comprado toda la cantidad solicitada
+            # Actualizar estado según la cantidad comprada
             if total_purchased >= self.original_product.amount_requested:
                 if self.original_product.status == ProductStatusEnum.ENCARGADO.value:
                     self.original_product.status = ProductStatusEnum.COMPRADO.value
-                    self.original_product.save(update_fields=['amount_purchased', 'status', 'updated_at'])
-                else:
-                    self.original_product.save(update_fields=['amount_purchased', 'updated_at'])
             else:
-                self.original_product.save(update_fields=['amount_purchased', 'updated_at'])
+                self.original_product.status = ProductStatusEnum.ENCARGADO.value
+                
+            self.original_product.save(update_fields=['amount_purchased', 'status', 'updated_at'])
 
     def delete(self, *args, **kwargs):
         """

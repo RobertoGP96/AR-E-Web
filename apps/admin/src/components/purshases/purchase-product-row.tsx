@@ -12,7 +12,7 @@ interface PurchaseProductRowProps {
 }
 
 const PurchaseProductRow: React.FC<PurchaseProductRowProps> = ({ productBuyed }) => {
-    const { product } = useProduct(productBuyed.product_id);
+    const { product } = useProduct(productBuyed.product_id as string);
 
     const tags = parseTagsFromDescriptionBlock(product?.description);
 
