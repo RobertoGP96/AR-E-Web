@@ -75,6 +75,18 @@ class Product(models.Model):
 
     objects = models.Manager()
 
+    def save(self, *args, **kwargs):
+        # Round financial fields
+        self.shop_cost = round(self.shop_cost or 0.0, 2)
+        self.shop_delivery_cost = round(self.shop_delivery_cost or 0.0, 2)
+        self.shop_taxes = round(self.shop_taxes or 0.0, 2)
+        self.base_tax = round(self.base_tax or 0.0, 2)
+        self.shop_tax_amount = round(self.shop_tax_amount or 0.0, 2)
+        self.own_taxes = round(self.own_taxes or 0.0, 2)
+        self.added_taxes = round(self.added_taxes or 0.0, 2)
+        self.total_cost = round(self.total_cost or 0.0, 2)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.name} - {self.sku}"
 
@@ -118,7 +130,7 @@ class Product(models.Model):
         base_tax = (base_price * 0.07) if self.charge_iva else 0
         additional_tax = self.added_taxes
 
-        return base_price + shipping + base_tax + additional_tax
+        return round(base_price + shipping + base_tax + additional_tax, 2)
 
     @property
     def system_profit(self):
@@ -129,7 +141,7 @@ class Product(models.Model):
         El campo own_taxes representa impuestos adicionales que se suman a las ganancias del sistema.
         """
         base_profit = float(self.total_cost) - self.system_expenses
-        return base_profit + self.own_taxes
+        return round(base_profit + self.own_taxes, 2)
 
     class Meta:
         ordering = ['-created_at']

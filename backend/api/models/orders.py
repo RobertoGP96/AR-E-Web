@@ -53,7 +53,7 @@ class Order(models.Model):
         Recalcula el costo total de la orden basado en sus productos
         y guarda el resultado en el campo total_costs.
         """
-        total = sum(product.total_cost for product in self.products.all())
+        total = round(sum(product.total_cost for product in self.products.all()), 2)
         if self.total_costs != total:
             self.total_costs = total
             self.save(update_fields=['total_costs', 'updated_at'])
@@ -80,9 +80,6 @@ class Order(models.Model):
         """
         Añade una cantidad a `received_value_of_client` y actualiza `pay_status` en base
         al costo total de la orden. Guarda la instancia con los campos necesarios.
-
-        Este método centraliza la lógica de acumulación y el cálculo del estado de pago
-        para mantener el comportamiento consistente en todo el backend.
         """
         if amount is None:
             return
@@ -90,14 +87,12 @@ class Order(models.Model):
         try:
             amount_float = float(amount)
         except (TypeError, ValueError):
-            # No se puede procesar la cantidad proporcionada
             return
 
         if amount_float <= 0:
-            # No sumar valores no positivos
             return
 
-        self.received_value_of_client += amount_float
+        self.received_value_of_client = round(self.received_value_of_client + amount_float, 2)
 
         # Calcular el costo total de la orden
         total_costs = self.total_costs
@@ -129,7 +124,7 @@ class Order(models.Model):
         Un balance positivo indica que el cliente pagó de más
         Un balance negativo indica que falta por cobrar
         """
-        return float(self.received_value_of_client - self.total_costs)
+        return round(float(self.received_value_of_client - self.total_costs), 2)
 
     @property
     def total_products_requested(self):
@@ -177,7 +172,7 @@ class Order(models.Model):
                 total += product_expenses
             except (AttributeError, TypeError, ValueError):
                 continue
-        return float(total)
+        return round(float(total), 2)
 
     @property
     def total_profit(self):
@@ -197,7 +192,7 @@ class Order(models.Model):
                 total += product_profit
             except (AttributeError, TypeError, ValueError):
                 continue
-        return float(total)
+        return round(float(total), 2)
 
     @property
     def available_for_delivery(self):
@@ -263,4 +258,7 @@ class Order(models.Model):
                 else:
                     self.pay_status = 'No pagado'
 
+        # Asegurar que el valor recibido esté redondeado antes de guardar
+        self.received_value_of_client = round(self.received_value_of_client, 2)
+        
         super().save(*args, **kwargs)
