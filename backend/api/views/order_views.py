@@ -196,7 +196,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             pending_orders=Count('id', filter=Q(status='pending')),
             completed_orders=Count('id', filter=Q(status='completed')),
             cancelled_orders=Count('id', filter=Q(status='cancelled')),
-            total_amount=Sum('total_amount')
+            total_amount=Sum('total_costs')
         )
 
         return Response(stats)

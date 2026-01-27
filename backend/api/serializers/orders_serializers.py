@@ -43,14 +43,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(float)
     def get_total_cost(self, obj):
-        val = getattr(obj, 'total_cost', None)
-        # Si el atributo es un método, llamarlo; si es un valor (ej. anotación), retornarlo
-        if callable(val):
-            try:
-                return float(val())
-            except Exception:
-                return 0.0
-        return float(val) if val is not None else 0.0
+        """Mantiene la compatibilidad con el campo calculado anterior"""
+        return float(obj.total_costs)
 
     class Meta:
         """Class of model"""
@@ -69,6 +63,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "observations",
             "created_at",
             "updated_at",
+            "total_costs",
             "total_cost",
             "products",
             "received_value_of_client",
@@ -149,8 +144,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             "pay_status",
             "observations",
             "received_value_of_client",
+            "total_costs",
         ]
-        read_only_fields = ["id"]  # Marcar el ID como solo lectura
+        read_only_fields = ["id", "total_costs"]  # Marcar el ID como solo lectura
 
     def validate_sales_manager(self, value):
         if value and value.role != 'agent':
@@ -188,8 +184,10 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
             "pay_status",
             "observations",
             "received_value_of_client",
-            "payment_date"
+            "payment_date",
+            "total_costs"
         ]
+        read_only_fields = ["total_costs"]
 
     def validate_sales_manager(self, value):
         if value and value.role != 'agent':

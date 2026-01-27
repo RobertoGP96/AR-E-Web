@@ -40,7 +40,24 @@ class Order(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Costos totales calculados y almacenados
+    total_costs = models.FloatField(
+        default=0,
+        help_text="Costo total acumulado de todos los productos en la orden"
+    )
+
     objects = models.Manager()
+
+    def update_total_costs(self):
+        """
+        Recalcula el costo total de la orden basado en sus productos
+        y guarda el resultado en el campo total_costs.
+        """
+        total = sum(product.total_cost for product in self.products.all())
+        if self.total_costs != total:
+            self.total_costs = total
+            self.save(update_fields=['total_costs', 'updated_at'])
+        return total
 
     def __str__(self):
         return f"Pedido #{self.pk} - {self.client.full_name}"
@@ -83,11 +100,11 @@ class Order(models.Model):
         self.received_value_of_client += amount_float
 
         # Calcular el costo total de la orden
-        total_cost = self.total_cost() if callable(self.total_cost) else self.total_cost
+        total_costs = self.total_costs
 
         # Redondear ambos valores para evitar problemas de precisión en punto flotante
         received_rounded = round(self.received_value_of_client, 2)
-        total_rounded = round(total_cost, 2)
+        total_rounded = round(total_costs, 2)
 
         # Actualizar el pay_status
         if received_rounded >= total_rounded and total_rounded > 0:
@@ -102,8 +119,8 @@ class Order(models.Model):
 
     @property
     def total_cost(self):
-        """Total cost of order"""
-        return sum(product.total_cost for product in self.products.all())
+        """Total cost of order (alias for field total_costs)"""
+        return self.total_costs
 
     @property
     def balance(self):
@@ -112,7 +129,7 @@ class Order(models.Model):
         Un balance positivo indica que el cliente pagó de más
         Un balance negativo indica que falta por cobrar
         """
-        return float(self.received_value_of_client - self.total_cost())
+        return float(self.received_value_of_client - self.total_costs)
 
     @property
     def total_products_requested(self):
@@ -212,14 +229,11 @@ class Order(models.Model):
         valor de `received_value_of_client` no ha cambiado.
         """
         # Determinar el costo total para poder comparar
-        try:
-            total_cost = self.total_cost
-        except Exception:
-            total_cost = 0
+        total_costs = self.total_costs
 
         # Redondear ambos valores para evitar problemas de precisión en punto flotante
         received_rounded = round(self.received_value_of_client, 2)
-        total_rounded = round(total_cost, 2)
+        total_rounded = round(total_costs, 2)
 
         if not self.pk:
             # Nueva instancia en create: calcular pay_status en base a received_value_of_client

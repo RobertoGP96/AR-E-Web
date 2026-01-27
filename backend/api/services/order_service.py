@@ -47,7 +47,7 @@ def analyze_orders(
     # ===== MAIN SUMMARY METRICS =====
     summary_metrics = orders.aggregate(
         # Ingresos generales: suma total de lo que deben pagar los clientes
-        total_revenue=Sum('total_cost'),
+        total_revenue=Sum('total_costs'),
         
         # Ingresos pagados: suma de pedidos con estado 'paid'
         paid_revenue=Sum(
@@ -138,7 +138,7 @@ def analyze_orders(
         month=TruncMonth('created_at')
     ).values('month').annotate(
         order_count=Count('id'),
-        total_revenue=Sum('total_cost'),
+        total_revenue=Sum('total_costs'),
         paid_revenue=Sum(
             Case(
                 When(pay_status='Pagado', then='received_value_of_client'),
