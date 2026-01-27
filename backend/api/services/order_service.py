@@ -52,7 +52,7 @@ def analyze_orders(
         # Ingresos pagados: suma de pedidos con estado 'paid'
         paid_revenue=Sum(
             Case(
-                When(pay_status='paid', then='received_value_of_client'),
+                When(pay_status='Pagado', then='received_value_of_client'),
                 default=0,
                 output_field=FloatField()
             )
@@ -60,7 +60,7 @@ def analyze_orders(
         
         # Contadores
         total_orders=Count('id'),
-        paid_orders=Count('id', filter=Q(pay_status='paid')),
+        paid_orders=Count('id', filter=Q(pay_status='Pagado')),
     )
     
     # Extract and calculate summary values
@@ -109,10 +109,10 @@ def analyze_orders(
     status_breakdown = orders.values('status').annotate(
         order_count=Count('id'),
         revenue=Sum('received_value_of_client'),
-        paid_count=Count('id', filter=Q(pay_status='paid')),
+        paid_count=Count('id', filter=Q(pay_status='Pagado')),
         paid_revenue=Sum(
             Case(
-                When(pay_status='paid', then='received_value_of_client'),
+                When(pay_status='Pagado', then='received_value_of_client'),
                 default=0,
                 output_field=FloatField()
             )
@@ -141,12 +141,12 @@ def analyze_orders(
         total_revenue=Sum('received_value_of_client'),
         paid_revenue=Sum(
             Case(
-                When(pay_status='paid', then='received_value_of_client'),
+                When(pay_status='Pagado', then='received_value_of_client'),
                 default=0,
                 output_field=FloatField()
             )
         ),
-        paid_count=Count('id', filter=Q(pay_status='paid')),
+        paid_count=Count('id', filter=Q(pay_status='Pagado')),
     ).order_by('month')
     
     trends = [
