@@ -100,6 +100,7 @@ class Order(models.Model):
         # Guardar cambios mínimamente
         self.save(update_fields=['received_value_of_client', 'pay_status', 'updated_at'])
 
+    @property
     def total_cost(self):
         """Total cost of order"""
         return sum(product.total_cost for product in self.products.all())
@@ -212,7 +213,7 @@ class Order(models.Model):
         """
         # Determinar el costo total para poder comparar
         try:
-            total_cost = self.total_cost() if callable(self.total_cost) else self.total_cost
+            total_cost = self.total_cost
         except Exception:
             total_cost = 0
 

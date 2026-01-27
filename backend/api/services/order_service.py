@@ -5,10 +5,10 @@ Functions that aggregate and analyze Order data for reports and dashboards.
 """
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
-from django.db.models import Sum, Count, Case, When, FloatField, Q, Avg
+from django.db.models import Sum, Count, Case, When, FloatField, Q, Avg, Subquery, OuterRef
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
-from api.models import Order
+from api.models import Order, Product
 
 
 def analyze_orders(
@@ -138,7 +138,7 @@ def analyze_orders(
         month=TruncMonth('created_at')
     ).values('month').annotate(
         order_count=Count('id'),
-        total_revenue=Sum('received_value_of_client'),
+        total_revenue=Sum('total_cost'),
         paid_revenue=Sum(
             Case(
                 When(pay_status='Pagado', then='received_value_of_client'),
