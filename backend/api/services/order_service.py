@@ -89,8 +89,8 @@ def analyze_orders(
     # ===== PAYMENT STATUS BREAKDOWN =====
     payment_breakdown = orders.values('pay_status').annotate(
         order_count=Count('id'),
-        revenue=Sum('received_value_of_client'),
-        avg_value=Avg('received_value_of_client')
+        revenue=Sum('total_costs'),
+        avg_value=Avg('total_costs'),
     ).order_by('-revenue')
     
     payment_analysis = {
