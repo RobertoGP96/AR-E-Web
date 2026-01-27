@@ -58,6 +58,11 @@ export interface OrderAnalysis {
   total_unpaid_cost: number;
   total_unpaid_expenses: number;
   total_unpaid_profit: number;
+
+  payments_out_date: {
+    total_revenue: number;
+    total_payments: number;
+  };
   
   // Breakdowns
   payment_breakdown: Record<string, PaymentBreakdownItem>;

@@ -43,7 +43,17 @@ def analyze_orders(
         created_at__gte=start_date,
         created_at__lte=end_date
     )
+
+    payment_out_date = Order.objects.filter(
+        payment_date__gte=start_date,
+        payment_date__lte=end_date
+    )
     
+    summary_payment_out_date = payment_out_date.aggregate(
+        total_revenue=Sum('received_value_of_client'),
+        total_payments=Count('id'),
+    )
+
     # ===== MAIN SUMMARY METRICS =====
     summary_metrics = orders.aggregate(
         # Ingresos generales: suma total de lo que deben pagar los clientes
@@ -68,6 +78,10 @@ def analyze_orders(
     paid_revenue = float(summary_metrics['paid_revenue'] or 0)
     total_orders = int(summary_metrics['total_orders'] or 0)
     paid_orders = int(summary_metrics['paid_orders'] or 0)
+
+    #Out Date Metrics
+    total_revenue_out_date = float(summary_payment_out_date['total_revenue'] or 0)
+    total_payments_out_date = int(summary_payment_out_date['total_payments'] or 0)
     
     # Derived metrics
     unpaid_revenue = total_revenue - paid_revenue
@@ -86,6 +100,11 @@ def analyze_orders(
         'avg_order_value': avg_order_value,
     }
     
+    summary_out_date = {
+        'total_revenue': round(total_revenue_out_date, 2),
+        'total_payments': total_payments_out_date,
+    }   
+
     # ===== PAYMENT STATUS BREAKDOWN =====
     payment_breakdown = orders.values('pay_status').annotate(
         order_count=Count('id'),
@@ -176,6 +195,7 @@ def analyze_orders(
             'end_date': end_date.strftime('%Y-%m-%d'),
         },
         'summary': summary,
+        'payment_out_date': summary_out_date,
         'payment_analysis': payment_analysis,
         'status_analysis': status_analysis,
         'trends': trends,
