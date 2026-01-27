@@ -52,7 +52,11 @@ def analyze_orders(
     summary_payment_out_date = payment_out_date.aggregate(
         total_revenue=Sum('received_value_of_client'),
         total_payments=Count('id'),
-    )
+    ).exclude(
+    # created_at dentro del rango (lo excluimos)
+    created_at__gte=start_date,
+    created_at__lte=end_date
+)
 
     # ===== MAIN SUMMARY METRICS =====
     summary_metrics = orders.aggregate(
