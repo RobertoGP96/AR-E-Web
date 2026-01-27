@@ -47,7 +47,7 @@ def analyze_orders(
     # ===== MAIN SUMMARY METRICS =====
     summary_metrics = orders.aggregate(
         # Ingresos generales: suma total de lo que deben pagar los clientes
-        total_revenue=Sum('received_value_of_client'),
+        total_revenue=Sum('total_cost'),
         
         # Ingresos pagados: suma de pedidos con estado 'paid'
         paid_revenue=Sum(
