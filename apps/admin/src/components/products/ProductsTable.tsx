@@ -1,8 +1,8 @@
 import * as React from "react";
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from "react";
 // no local state for visible columns; controlled by parent
 import type { Product, UpdateProductData } from "../../types/models/product";
-import type { VisibleColumn } from './ProductsColumnsSelector';
+import type { VisibleColumn } from "./ProductsColumnsSelector";
 import {
   Table,
   TableHeader,
@@ -12,26 +12,43 @@ import {
   TableHead,
 } from "@/components/ui/table";
 import { Button } from "../ui/button";
-import { Edit2, Trash2, ExternalLink, MoreHorizontal, Loader2, Box, ShoppingBag, Truck, Briefcase } from "lucide-react";
+import {
+  Edit2,
+  Trash2,
+  ExternalLink,
+  MoreHorizontal,
+  Loader2,
+  Box,
+  ShoppingBag,
+  Truck,
+  Briefcase,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { parseTagsFromDescriptionBlock } from '@/lib/tags';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useDeleteProduct } from '@/hooks/product/useDeleteProduct';
-import { useUpdateProduct } from '@/hooks/product/useUpdateProduct';
-import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
+import { parseTagsFromDescriptionBlock } from "@/lib/tags";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useDeleteProduct } from "@/hooks/product/useDeleteProduct";
+import { useUpdateProduct } from "@/hooks/product/useUpdateProduct";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import QRLink from "./qr-link";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { TablePagination } from "../utils/TablePagination";
 
 interface ProductsTableProps {
   products: Product[];
@@ -45,11 +62,14 @@ interface ProductsTableProps {
 
 // Función helper para obtener el color del badge según el estado
 const getStatusBadgeVariant = (status: string) => {
-  const statusMap: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    "Encargado": "default",
-    "Comprado": "secondary",
-    "Completado": "outline",
-    "Cancelado": "destructive",
+  const statusMap: Record<
+    string,
+    "default" | "secondary" | "destructive" | "outline"
+  > = {
+    Encargado: "default",
+    Comprado: "secondary",
+    Completado: "outline",
+    Cancelado: "destructive",
   };
   return statusMap[status] || "default";
 };
@@ -63,35 +83,48 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
   onGoToOrder,
   isLoading = false,
   visibleColumns: visibleColumnsProp,
-  itemsPerPage = 10,
+  itemsPerPage: initialItemsPerPage = 10,
 }) => {
-  const defaultCols: VisibleColumn[] = ['name', 'category', 'status', 'total_cost', 'actions'];
+  const defaultCols: VisibleColumn[] = [
+    "name",
+    "category",
+    "status",
+    "total_cost",
+    "actions",
+  ];
   const visibleColumns = (visibleColumnsProp ?? defaultCols) as VisibleColumn[];
 
-  const [dialogState, setDialogState] = useState<{ type: 'delete' | 'set_image' | null; product: Product | null; imageUrl?: string }>({ type: null, product: null, imageUrl: '' });
+  const [dialogState, setDialogState] = useState<{
+    type: "delete" | "set_image" | null;
+    product: Product | null;
+    imageUrl?: string;
+  }>({ type: null, product: null, imageUrl: "" });
 
   const deleteMutation = useDeleteProduct();
   const [isDeleting, setIsDeleting] = useState(false);
   const updateMutation = useUpdateProduct();
-  const isUpdating = Boolean((updateMutation.isPending));
+  const isUpdating = Boolean(updateMutation.isPending);
   // Estado para preview de URL de imagen
-  const [previewStatus, setPreviewStatus] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
-  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [previewStatus, setPreviewStatus] = useState<
+    "idle" | "loading" | "loaded" | "error"
+  >("idle");
+  const [previewUrl, setPreviewUrl] = useState<string>("");
 
   // Sync preview cuando cambia la URL en el diálogo
   useEffect(() => {
-    const url = dialogState.imageUrl?.trim() || '';
+    const url = dialogState.imageUrl?.trim() || "";
     if (!url) {
-      setPreviewUrl('');
-      setPreviewStatus('idle');
+      setPreviewUrl("");
+      setPreviewStatus("idle");
       return;
     }
     setPreviewUrl(url);
-    setPreviewStatus('loading');
+    setPreviewStatus("loading");
   }, [dialogState.imageUrl]);
 
   // Estado de paginación
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(initialItemsPerPage);
 
   // Calcular productos paginados
   const paginatedProducts = useMemo(() => {
@@ -103,48 +136,10 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
   // Calcular total de páginas
   const totalPages = Math.ceil(products.length / itemsPerPage);
 
-  // Resetear a la primera página cuando cambian los productos
+  // Resetear a la primera página cuando cambian los productos o el tamaño de página
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [products.length]);
-
-  // Generar números de página para mostrar
-  const getPageNumbers = () => {
-    const pages: (number | 'ellipsis')[] = [];
-    const showPages = 5; // Número de páginas a mostrar
-
-    if (totalPages <= showPages) {
-      // Mostrar todas las páginas
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Mostrar páginas con elipsis
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push('ellipsis');
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push('ellipsis');
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push(1);
-        pages.push('ellipsis');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push('ellipsis');
-        pages.push(totalPages);
-      }
-    }
-
-    return pages;
-  };
+  }, [products.length, itemsPerPage]);
 
   const handleDeleteConfirm = async () => {
     if (!dialogState.product) return;
@@ -152,17 +147,18 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
     setIsDeleting(true);
     try {
       await deleteMutation.mutateAsync(dialogState.product.id);
-      toast.success('Producto eliminado');
+      toast.success("Producto eliminado");
     } catch (err) {
-      console.error('Error deleting product', err);
-      toast.error('No se pudo eliminar el producto');
+      console.error("Error deleting product", err);
+      toast.error("No se pudo eliminar el producto");
     } finally {
       setIsDeleting(false);
       setDialogState({ type: null, product: null });
     }
   };
 
-  const handleDeleteCancel = () => setDialogState({ type: null, product: null });
+  const handleDeleteCancel = () =>
+    setDialogState({ type: null, product: null });
 
   if (isLoading) {
     return (
@@ -179,7 +175,9 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
         <div className="flex flex-col items-center justify-center h-64 text-center p-4">
           <Box className="h-16 w-16 text-gray-300 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">No hay productos</h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            No hay productos
+          </h3>
           <p className="text-sm text-gray-500">
             Comienza creando añadiendo algun producto a un pedido.
           </p>
@@ -196,32 +194,70 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
             <TableHeader className="bg-gray-100">
               <TableRow>
                 <TableHead className="w-12">#</TableHead>
-                {visibleColumns.includes('index') && <TableHead className="w-12">#</TableHead>}
-                {visibleColumns.includes('sku') && <TableHead>SKU</TableHead>}
-                {visibleColumns.includes('name') && <TableHead>Nombre</TableHead>}
-                {visibleColumns.includes('shop') && <TableHead>Tienda</TableHead>}
-                {visibleColumns.includes('category') && <TableHead>Categoría</TableHead>}
-                {visibleColumns.includes('amount_requested') && <TableHead className="text-center">Cantidades</TableHead>}
-                {visibleColumns.includes('amount_purchased') && <TableHead className="text-center">Comprado</TableHead>}
-                {visibleColumns.includes('amount_delivered') && <TableHead className="text-center">Entregado</TableHead>}
-                {visibleColumns.includes('status') && <TableHead className="text-center">Estado</TableHead>}
-                {visibleColumns.includes('total_cost') && <TableHead className="text-right">Costo Total</TableHead>}
-                {visibleColumns.includes('actions') && <TableHead className="text-center">Acciones</TableHead>}
-                {visibleColumns.includes('picture') && <TableHead className="text-center">Imagen</TableHead>}
+                {visibleColumns.includes("index") && (
+                  <TableHead className="w-12">#</TableHead>
+                )}
+                {visibleColumns.includes("sku") && <TableHead>SKU</TableHead>}
+                {visibleColumns.includes("name") && (
+                  <TableHead>Nombre</TableHead>
+                )}
+                {visibleColumns.includes("shop") && (
+                  <TableHead>Tienda</TableHead>
+                )}
+                {visibleColumns.includes("category") && (
+                  <TableHead>Categoría</TableHead>
+                )}
+                {visibleColumns.includes("amount_requested") && (
+                  <TableHead className="text-center">Cantidades</TableHead>
+                )}
+                {visibleColumns.includes("amount_purchased") && (
+                  <TableHead className="text-center">Comprado</TableHead>
+                )}
+                {visibleColumns.includes("amount_delivered") && (
+                  <TableHead className="text-center">Entregado</TableHead>
+                )}
+                {visibleColumns.includes("status") && (
+                  <TableHead className="text-center">Estado</TableHead>
+                )}
+                {visibleColumns.includes("total_cost") && (
+                  <TableHead className="text-right">Costo Total</TableHead>
+                )}
+                {visibleColumns.includes("actions") && (
+                  <TableHead className="text-center">Acciones</TableHead>
+                )}
+                {visibleColumns.includes("picture") && (
+                  <TableHead className="text-center">Imagen</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedProducts.map((product, idx) => (
                 <TableRow key={product.id}>
-                  <TableCell className="font-medium">{(currentPage - 1) * itemsPerPage + idx + 1}</TableCell>
-                  {visibleColumns.includes('index') && <TableCell className="font-medium">{(currentPage - 1) * itemsPerPage + idx + 1}</TableCell>}
-                  {visibleColumns.includes('sku') && <TableCell className="font-mono text-sm">{product.sku}</TableCell>}
-                  {visibleColumns.includes('name') && (
+                  <TableCell className="font-medium">
+                    {(currentPage - 1) * itemsPerPage + idx + 1}
+                  </TableCell>
+                  {visibleColumns.includes("index") && (
+                    <TableCell className="font-medium">
+                      {(currentPage - 1) * itemsPerPage + idx + 1}
+                    </TableCell>
+                  )}
+                  {visibleColumns.includes("sku") && (
+                    <TableCell className="font-mono text-sm">
+                      {product.sku}
+                    </TableCell>
+                  )}
+                  {visibleColumns.includes("name") && (
                     <TableCell className="flex flex-row items-center gap-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium capitalize">{product.name}</span>
-                        <QRLink link={product.link || 'https://arye-shipps.netlify.app'} />
-                        {visibleColumns.includes('link') && product.link && (
+                        <span className="font-medium capitalize">
+                          {product.name}
+                        </span>
+                        <QRLink
+                          link={
+                            product.link || "https://arye-shipps.netlify.app"
+                          }
+                        />
+                        {visibleColumns.includes("link") && product.link && (
                           <a
                             href={product.link}
                             target="_blank"
@@ -235,14 +271,21 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                       </div>
                       {/* Mostrar tags como badges en formato Badge(name:value) debajo de la descripción */}
                       {(() => {
-                        const description = product.description as string | undefined;
+                        const description = product.description as
+                          | string
+                          | undefined;
                         const tags = parseTagsFromDescriptionBlock(description);
                         if (!tags || tags.length === 0) return null;
                         return (
                           <div className=" flex flex-row flex-wrap items-start gap-1">
                             {tags.map((tag, i) => (
-                              <Badge key={i} variant="secondary" className="text-xs">
-                                {tag.name}{tag.value ? `: ${tag.value}` : ''}
+                              <Badge
+                                key={i}
+                                variant="secondary"
+                                className="text-xs"
+                              >
+                                {tag.name}
+                                {tag.value ? `: ${tag.value}` : ""}
                               </Badge>
                             ))}
                           </div>
@@ -250,25 +293,29 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                       })()}
                     </TableCell>
                   )}
-                  {visibleColumns.includes('shop') && (
+                  {visibleColumns.includes("shop") && (
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-medium">{product.shop || "N/A"}</span>
+                        <span className="font-medium">
+                          {product.shop || "N/A"}
+                        </span>
                       </div>
                     </TableCell>
                   )}
-                  {visibleColumns.includes('category') && (
+                  {visibleColumns.includes("category") && (
                     <TableCell>
                       {product.category ? (
                         <div className="flex items-center gap-2">
                           <Badge variant="outline">{product.category}</Badge>
                         </div>
                       ) : (
-                        <span className="text-muted-foreground">Sin categoría</span>
+                        <span className="text-muted-foreground">
+                          Sin categoría
+                        </span>
                       )}
                     </TableCell>
                   )}
-                  {visibleColumns.includes('amount_requested') && (
+                  {visibleColumns.includes("amount_requested") && (
                     <TableCell>
                       <div className="flex flex-row gap-1 items-center justify-center min-w-[140px]">
                         <div className="flex items-center gap-1">
@@ -291,9 +338,15 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                       </div>
                     </TableCell>
                   )}
-                  {visibleColumns.includes('amount_purchased') && (
+                  {visibleColumns.includes("amount_purchased") && (
                     <TableCell className="text-center">
-                      <span className={product.is_fully_purchased ? "font-semibold text-green-600" : ""}>
+                      <span
+                        className={
+                          product.is_fully_purchased
+                            ? "font-semibold text-green-600"
+                            : ""
+                        }
+                      >
                         {product.amount_purchased}
                       </span>
                       {product.pending_purchase > 0 && (
@@ -304,9 +357,15 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                     </TableCell>
                   )}
 
-                  {visibleColumns.includes('amount_delivered') && (
+                  {visibleColumns.includes("amount_delivered") && (
                     <TableCell className="text-center">
-                      <span className={product.is_fully_delivered ? "font-semibold text-green-600" : ""}>
+                      <span
+                        className={
+                          product.is_fully_delivered
+                            ? "font-semibold text-green-600"
+                            : ""
+                        }
+                      >
                         {product.amount_delivered}
                       </span>
                       {product.pending_delivery > 0 && (
@@ -316,28 +375,25 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                       )}
                     </TableCell>
                   )}
-                  {visibleColumns.includes('status') && (
+                  {visibleColumns.includes("status") && (
                     <TableCell className="text-center">
                       <Badge variant={getStatusBadgeVariant(product.status)}>
                         {product.status}
                       </Badge>
                     </TableCell>
                   )}
-                  {visibleColumns.includes('total_cost') && (
+                  {visibleColumns.includes("total_cost") && (
                     <TableCell className="text-right font-semibold">
                       ${product.total_cost.toFixed(2)}
                     </TableCell>
                   )}
 
-                  {visibleColumns.includes('picture') && (
-                    <TableCell>
-
-                    </TableCell>
+                  {visibleColumns.includes("picture") && (
+                    <TableCell></TableCell>
                   )}
-                  {visibleColumns.includes('actions') && (
+                  {visibleColumns.includes("actions") && (
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
-
                         {/* Dropdown con acciones: Ver detalles, Ir a pedido */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -349,11 +405,18 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-48 rounded-xl shadow-xl border-gray-200"
+                          >
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setDialogState({ type: 'set_image', product, imageUrl: product.image_url || '' });
+                                setDialogState({
+                                  type: "set_image",
+                                  product,
+                                  imageUrl: product.image_url || "",
+                                });
                               }}
                               className="flex items-center gap-2 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg"
                             >
@@ -389,12 +452,12 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                               className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
                             >
                               <Link
-                                to={`/orders/${typeof product.order === 'number' ? product.order : product.order?.id}`}
+                                to={`/orders/${typeof product.order === "number" ? product.order : product.order?.id}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                 }}
                                 className="inline-flex items-center gap-2"
-                                title={`Ir al pedido ${typeof product.order === 'number' ? product.order : product.order?.id}`}
+                                title={`Ir al pedido ${typeof product.order === "number" ? product.order : product.order?.id}`}
                               >
                                 <ExternalLink className="h-4 w-4" />
                                 Ir a pedido
@@ -418,10 +481,13 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!product || !product.id) {
-                                  console.error('Producto sin ID válido', product);
+                                  console.error(
+                                    "Producto sin ID válido",
+                                    product,
+                                  );
                                   return;
                                 }
-                                setDialogState({ type: 'delete', product });
+                                setDialogState({ type: "delete", product });
                               }}
                               className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
                             >
@@ -437,36 +503,55 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
               ))}
             </TableBody>
           </Table>
-
-
         </div>
 
-
-        <AlertDialog open={dialogState.type === 'delete' || dialogState.type === 'set_image' || isDeleting || isUpdating} onOpenChange={(open) => {
-          // Prevent closing while deleting or updating image
-          if (!open && (isDeleting || isUpdating)) return;
-          if (!open) setDialogState({ type: null, product: null, imageUrl: '' });
-        }}>
+        <AlertDialog
+          open={
+            dialogState.type === "delete" ||
+            dialogState.type === "set_image" ||
+            isDeleting ||
+            isUpdating
+          }
+          onOpenChange={(open) => {
+            // Prevent closing while deleting or updating image
+            if (!open && (isDeleting || isUpdating)) return;
+            if (!open)
+              setDialogState({ type: null, product: null, imageUrl: "" });
+          }}
+        >
           <AlertDialogContent>
             {/* Delete dialog */}
-            {dialogState.type === 'delete' && (
+            {dialogState.type === "delete" && (
               <>
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    ¿Estás seguro de que deseas eliminar el producto {dialogState.product ? `#${dialogState.product.id} - ${dialogState.product.name}` : ''}? Esta acción no se puede deshacer.
+                    ¿Estás seguro de que deseas eliminar el producto{" "}
+                    {dialogState.product
+                      ? `#${dialogState.product.id} - ${dialogState.product.name}`
+                      : ""}
+                    ? Esta acción no se puede deshacer.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel onClick={handleDeleteCancel} disabled={isDeleting}>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700" disabled={isDeleting}>
+                  <AlertDialogCancel
+                    onClick={handleDeleteCancel}
+                    disabled={isDeleting}
+                  >
+                    Cancelar
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteConfirm}
+                    className="bg-red-600 hover:bg-red-700"
+                    disabled={isDeleting}
+                  >
                     {isDeleting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Eliminando...
                       </>
                     ) : (
-                      'Eliminar'
+                      "Eliminar"
                     )}
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -474,12 +559,16 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
             )}
 
             {/* Set image by URL dialog */}
-            {dialogState.type === 'set_image' && (
+            {dialogState.type === "set_image" && (
               <>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Definir imagen por URL</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Introduce la URL de la imagen para el producto {dialogState.product ? `#${dialogState.product.id} - ${dialogState.product.name}` : ''}.
+                    Introduce la URL de la imagen para el producto{" "}
+                    {dialogState.product
+                      ? `#${dialogState.product.id} - ${dialogState.product.name}`
+                      : ""}
+                    .
                   </AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -487,48 +576,68 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                   <Input
                     placeholder="https://.../imagen.jpg"
                     value={dialogState.imageUrl}
-                    onChange={(e) => setDialogState(prev => ({ ...(prev || {}), imageUrl: e.target.value }))}
+                    onChange={(e) =>
+                      setDialogState((prev) => ({
+                        ...(prev || {}),
+                        imageUrl: e.target.value,
+                      }))
+                    }
                   />
                 </div>
 
                 {/* Preview area */}
                 <div className="p-4">
-                  {previewStatus === 'idle' && (
-                    <div className="text-sm text-muted-foreground">Pega una URL para ver la previsualización.</div>
+                  {previewStatus === "idle" && (
+                    <div className="text-sm text-muted-foreground">
+                      Pega una URL para ver la previsualización.
+                    </div>
                   )}
 
-                  {previewStatus === 'loading' && (
+                  {previewStatus === "loading" && (
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-5 w-5 animate-spin" />
                       <span className="text-sm">Cargando preview...</span>
                     </div>
                   )}
 
-                  {previewStatus === 'loaded' && previewUrl && (
+                  {previewStatus === "loaded" && previewUrl && (
                     <div className="border rounded-md overflow-hidden max-w-xs">
                       <img
                         src={previewUrl}
                         alt="Preview"
                         className="w-full h-40 object-contain bg-white"
-                        onLoad={() => setPreviewStatus('loaded')}
-                        onError={() => setPreviewStatus('error')}
+                        onLoad={() => setPreviewStatus("loaded")}
+                        onError={() => setPreviewStatus("error")}
                       />
                     </div>
                   )}
 
-                  {previewStatus === 'error' && (
-                    <div className="text-sm text-red-600">No se pudo cargar la imagen. Revisa la URL o el dominio.</div>
+                  {previewStatus === "error" && (
+                    <div className="text-sm text-red-600">
+                      No se pudo cargar la imagen. Revisa la URL o el dominio.
+                    </div>
                   )}
                 </div>
 
                 <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setDialogState({ type: null, product: null, imageUrl: '' })} disabled={isUpdating}>Cancelar</AlertDialogCancel>
+                  <AlertDialogCancel
+                    onClick={() =>
+                      setDialogState({
+                        type: null,
+                        product: null,
+                        imageUrl: "",
+                      })
+                    }
+                    disabled={isUpdating}
+                  >
+                    Cancelar
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={async () => {
                       if (!dialogState.product) return;
                       const url = dialogState.imageUrl?.trim();
                       if (!url) {
-                        toast.error('Por favor introduce una URL válida');
+                        toast.error("Por favor introduce una URL válida");
                         return;
                       }
 
@@ -537,12 +646,19 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                       const newPicture = url;
 
                       try {
-                        await updateMutation.mutateAsync({ id: dialogState.product.id, product_pictures: newPicture } as unknown as UpdateProductData);
-                        toast.success('Imagen actualizada');
-                        setDialogState({ type: null, product: null, imageUrl: '' });
+                        await updateMutation.mutateAsync({
+                          id: dialogState.product.id,
+                          product_pictures: newPicture,
+                        } as unknown as UpdateProductData);
+                        toast.success("Imagen actualizada");
+                        setDialogState({
+                          type: null,
+                          product: null,
+                          imageUrl: "",
+                        });
                       } catch (err) {
-                        console.error('Error updating image', err);
-                        toast.error('No se pudo actualizar la imagen');
+                        console.error("Error updating image", err);
+                        toast.error("No se pudo actualizar la imagen");
                       }
                     }}
                     disabled={isUpdating}
@@ -554,7 +670,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                         Guardando...
                       </>
                     ) : (
-                      'Definir imagen'
+                      "Definir imagen"
                     )}
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -565,43 +681,14 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
       </div>
 
       {/* Componente de paginación */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-4">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                />
-              </PaginationItem>
-
-              {getPageNumbers().map((page, index) => (
-                <PaginationItem key={index}>
-                  {page === 'ellipsis' ? (
-                    <PaginationEllipsis />
-                  ) : (
-                    <PaginationLink
-                      onClick={() => setCurrentPage(page as number)}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  )}
-                </PaginationItem>
-              ))}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
-
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+        onItemsPerPageChange={setItemsPerPage}
+        totalItems={products.length}
+      />
     </>
   );
 };

@@ -48,15 +48,7 @@ import {
 import { Link } from "react-router-dom";
 import type { ShoppingReceip } from "@/types";
 import { formatDayMonth } from "@/lib/format-date";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { TablePagination } from "../utils/TablePagination";
 import { maskCardNumberAdvanced } from "@/lib/format-card";
 import { Badge } from "../ui/badge";
 
@@ -68,13 +60,13 @@ interface PurshasesTableProps {
 
 const PurshasesTable: React.FC<PurshasesTableProps> = ({
   onDelete,
-  itemsPerPage = 10,
+  itemsPerPage: initialItemsPerPage = 10,
   filters,
 }) => {
   const { shoppingReceipts, isLoading, error } = useShoppingReceipts(filters);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [selectedReceipt, setSelectedReceipt] = useState<ShoppingReceip | null>(
-    null
+    null,
   );
   const navigate = useNavigate();
   const deleteReceiptMutation = useDeleteShoppingReceipt();
@@ -83,6 +75,7 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({
 
   // Estado de paginación
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(initialItemsPerPage);
 
   // Calcular receipts paginados
   const paginatedReceipts = useMemo(() => {
@@ -94,46 +87,10 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({
   // Calcular total de páginas
   const totalPages = Math.ceil(shoppingReceipts.length / itemsPerPage);
 
-  // Resetear a la primera página cuando cambian los receipts
+  // Resetear a la primera página cuando cambian los receipts o el tamaño de página
   useEffect(() => {
     setCurrentPage(1);
-  }, [shoppingReceipts.length]);
-
-  // Generar números de página para mostrar
-  const getPageNumbers = () => {
-    const pages: (number | "ellipsis")[] = [];
-    const showPages = 5;
-
-    if (totalPages <= showPages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push("ellipsis");
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push("ellipsis");
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push(1);
-        pages.push("ellipsis");
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push("ellipsis");
-        pages.push(totalPages);
-      }
-    }
-
-    return pages;
-  };
+  }, [shoppingReceipts.length, itemsPerPage]);
 
   const handleDelete = async () => {
     if (!selectedReceipt) return;
@@ -238,19 +195,16 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({
                       {formatDayMonth(purchase.buy_date)}
                     </div>
                   </TableCell>
+                  <TableCell>{purchase.shop_of_buy + ""}</TableCell>
                   <TableCell>
-                    {purchase.shop_of_buy + ""}
-                  </TableCell>
-                  <TableCell>
-                    <p>
-
-                      {purchase.shopping_account_name + ""}
-                    </p>
+                    <p>{purchase.shopping_account_name + ""}</p>
                     <Badge variant={"outline"}>
                       <CreditCard className="h-4 w-4 inline-block mr-1" />
-                      <p className=" text-sm">{purchase.card_id && maskCardNumberAdvanced(purchase.card_id)}</p>
+                      <p className=" text-sm">
+                        {purchase.card_id &&
+                          maskCardNumberAdvanced(purchase.card_id)}
+                      </p>
                     </Badge>
-
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-row text-gray-600 gap-1">
@@ -370,46 +324,14 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({
       </div>
 
       {/* Componente de paginación */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-4">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  disabled={currentPage === 1}
-                />
-              </PaginationItem>
-
-              {getPageNumbers().map((page, idx) => (
-                <PaginationItem key={idx}>
-                  {page === "ellipsis" ? (
-                    <PaginationEllipsis />
-                  ) : (
-                    <PaginationLink
-                      onClick={() => setCurrentPage(page as number)}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  )}
-                </PaginationItem>
-              ))}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  disabled={currentPage === totalPages}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+        onItemsPerPageChange={setItemsPerPage}
+        totalItems={shoppingReceipts.length}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
