@@ -1,27 +1,66 @@
-import { Edit, Trash2, MoreHorizontal, Shield, User, ShoppingCart, Truck, Calculator, Megaphone, Clock, Phone, Handshake, Eye, CheckCircle, XCircle, UserCheck, Mail, Key, TriangleAlert } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import type { CustomUser, UserRole } from '@/types/models/user';
-import { roleLabels } from '@/types/models/user';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { formatDate } from '@/lib/format-date';
-import { useDeleteUser, useVerifyUser, useToggleUserActive, useChangePassword } from '@/hooks/user';
-import { toast } from 'sonner';
-import { useState, useMemo, useEffect } from 'react';
-import UserDetailsDialog from './UserDetailsDialog';
-import { ChangePasswordDialog } from './ChangePasswordDialog';
 import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+  Edit,
+  Trash2,
+  MoreHorizontal,
+  Shield,
+  User,
+  ShoppingCart,
+  Truck,
+  Calculator,
+  Megaphone,
+  Clock,
+  Phone,
+  Handshake,
+  Eye,
+  CheckCircle,
+  XCircle,
+  UserCheck,
+  Mail,
+  Key,
+  TriangleAlert,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import type { CustomUser, UserRole } from "@/types/models/user";
+import { roleLabels } from "@/types/models/user";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import { formatDate } from "@/lib/format-date";
+import {
+  useDeleteUser,
+  useVerifyUser,
+  useToggleUserActive,
+  useChangePassword,
+} from "@/hooks/user";
+import { toast } from "sonner";
+import { useState, useMemo, useEffect } from "react";
+import UserDetailsDialog from "./UserDetailsDialog";
+import { ChangePasswordDialog } from "./ChangePasswordDialog";
+import { TablePagination } from "../utils/TablePagination";
 
 interface UsersTableProps {
   users?: CustomUser[];
@@ -32,7 +71,6 @@ interface UsersTableProps {
   onToggleUserActive?: (userId: number, isActive: boolean) => void;
   isLoading?: boolean;
   error?: string | null;
-  itemsPerPage?: number;
 }
 
 // Iconos para los roles
@@ -48,13 +86,12 @@ const roleIcons: Record<UserRole, React.ElementType> = {
 };
 
 // Tipos para el diálogo de confirmación
-type DialogType = 'delete' | 'verify' | 'activate' | 'deactivate' | null;
+type DialogType = "delete" | "verify" | "activate" | "deactivate" | null;
 
 interface DialogState {
   type: DialogType;
   user: CustomUser | null;
 }
-
 
 export default function UsersTable({
   users = [],
@@ -65,12 +102,11 @@ export default function UsersTable({
   onToggleUserActive,
   isLoading = false,
   error = null,
-  itemsPerPage = 10
 }: UsersTableProps) {
   // Estados para los diálogos de confirmación
   const [dialogState, setDialogState] = useState<DialogState>({
     type: null,
-    user: null
+    user: null,
   });
 
   // Estado para el diálogo de detalles
@@ -79,10 +115,12 @@ export default function UsersTable({
 
   // Estado para el popover de cambio de contraseña
   const [showPasswordPopover, setShowPasswordPopover] = useState(false);
-  const [userToChangePassword, setUserToChangePassword] = useState<CustomUser | null>(null);
+  const [userToChangePassword, setUserToChangePassword] =
+    useState<CustomUser | null>(null);
 
   // Estado de paginación
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Calcular datos paginados
   const paginatedUsers = useMemo(() => {
@@ -91,48 +129,10 @@ export default function UsersTable({
     return users.slice(startIndex, endIndex);
   }, [users, currentPage, itemsPerPage]);
 
-  // Calcular total de páginas
-  const totalPages = Math.ceil(users.length / itemsPerPage);
-
-  // Reiniciar a la página 1 cuando cambien los usuarios
+  // Reiniciar a la página 1 cuando cambien los usuarios o itemsPerPage
   useEffect(() => {
     setCurrentPage(1);
-  }, [users.length]);
-
-  // Función para generar números de página con puntos suspensivos
-  const getPageNumbers = () => {
-    const pages: (number | 'ellipsis')[] = [];
-
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push('ellipsis');
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push('ellipsis');
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push(1);
-        pages.push('ellipsis');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push('ellipsis');
-        pages.push(totalPages);
-      }
-    }
-
-    return pages;
-  };
+  }, [users.length, itemsPerPage]);
 
   // Hooks de mutación (solo para eliminar desde la tabla)
   const deleteUserMutation = useDeleteUser();
@@ -155,19 +155,19 @@ export default function UsersTable({
 
     // Debug: verificar que el ID sea válido
     if (!userId || userId === undefined) {
-      console.error('Error: ID de usuario inválido', dialogState.user);
-      toast.error('Error: ID de usuario inválido');
+      console.error("Error: ID de usuario inválido", dialogState.user);
+      toast.error("Error: ID de usuario inválido");
       setDialogState({ type: null, user: null });
       return;
     }
 
     try {
       await deleteUserMutation.mutateAsync(userId);
-      toast.success('Usuario eliminado exitosamente');
+      toast.success("Usuario eliminado exitosamente");
       onDeleteUser?.(dialogState.user);
     } catch (error) {
-      toast.error('Error al eliminar usuario');
-      console.error('Error al eliminar usuario:', error);
+      toast.error("Error al eliminar usuario");
+      console.error("Error al eliminar usuario:", error);
     } finally {
       setDialogState({ type: null, user: null });
     }
@@ -183,13 +183,13 @@ export default function UsersTable({
       } else {
         await verifyUserMutation.mutateAsync({
           userId: dialogState.user.id,
-          verified: true
+          verified: true,
         });
       }
-      toast.success('Usuario verificado exitosamente');
+      toast.success("Usuario verificado exitosamente");
     } catch (error) {
-      toast.error('Error al verificar usuario');
-      console.error('Error al verificar usuario:', error);
+      toast.error("Error al verificar usuario");
+      console.error("Error al verificar usuario:", error);
     } finally {
       setDialogState({ type: null, user: null });
     }
@@ -198,7 +198,7 @@ export default function UsersTable({
   const handleToggleActiveConfirm = async () => {
     if (!dialogState.user) return;
 
-    const isActivating = dialogState.type === 'activate';
+    const isActivating = dialogState.type === "activate";
 
     try {
       // Usar prop si está disponible, sino usar mutación interna
@@ -207,13 +207,20 @@ export default function UsersTable({
       } else {
         await toggleUserActiveMutation.mutateAsync({
           userId: dialogState.user.id,
-          isActive: isActivating
+          isActive: isActivating,
         });
       }
-      toast.success(`Usuario ${isActivating ? 'activado' : 'desactivado'} exitosamente`);
+      toast.success(
+        `Usuario ${isActivating ? "activado" : "desactivado"} exitosamente`,
+      );
     } catch (error) {
-      toast.error(`Error al ${isActivating ? 'activar' : 'desactivar'} usuario`);
-      console.error(`Error al ${isActivating ? 'activar' : 'desactivar'} usuario:`, error);
+      toast.error(
+        `Error al ${isActivating ? "activar" : "desactivar"} usuario`,
+      );
+      console.error(
+        `Error al ${isActivating ? "activar" : "desactivar"} usuario:`,
+        error,
+      );
     } finally {
       setDialogState({ type: null, user: null });
     }
@@ -223,24 +230,24 @@ export default function UsersTable({
     try {
       await changePasswordMutation.mutateAsync({
         userId,
-        password: newPassword
+        password: newPassword,
       });
     } catch (error) {
-      console.error('Error al cambiar contraseña:', error);
+      console.error("Error al cambiar contraseña:", error);
       throw error; // Re-lanzar para que el popover lo maneje
     }
   };
 
   const handleConfirm = () => {
     switch (dialogState.type) {
-      case 'delete':
+      case "delete":
         handleDeleteConfirm();
         break;
-      case 'verify':
+      case "verify":
         handleVerifyConfirm();
         break;
-      case 'activate':
-      case 'deactivate':
+      case "activate":
+      case "deactivate":
         handleToggleActiveConfirm();
         break;
     }
@@ -252,43 +259,43 @@ export default function UsersTable({
 
   // Función para obtener el contenido del diálogo según el tipo
   const getDialogContent = () => {
-    if (!dialogState.user) return { title: '', description: '' };
+    if (!dialogState.user) return { title: "", description: "" };
 
     switch (dialogState.type) {
-      case 'delete':
+      case "delete":
         return {
-          title: '¿Eliminar usuario?',
+          title: "¿Eliminar usuario?",
           description: `¿Estás seguro de que deseas eliminar a ${dialogState.user.full_name}? Esta acción no se puede deshacer.`,
-          actionText: 'Eliminar',
-          variant: 'destructive' as const
+          actionText: "Eliminar",
+          variant: "destructive" as const,
         };
-      case 'verify':
+      case "verify":
         return {
-          title: '¿Verificar usuario?',
+          title: "¿Verificar usuario?",
           description: `¿Deseas marcar a ${dialogState.user.full_name} como verificado?`,
-          actionText: 'Verificar',
-          variant: 'default' as const
+          actionText: "Verificar",
+          variant: "default" as const,
         };
-      case 'activate':
+      case "activate":
         return {
-          title: '¿Activar usuario?',
+          title: "¿Activar usuario?",
           description: `¿Deseas activar la cuenta de ${dialogState.user.full_name}?`,
-          actionText: 'Activar',
-          variant: 'default' as const
+          actionText: "Activar",
+          variant: "default" as const,
         };
-      case 'deactivate':
+      case "deactivate":
         return {
-          title: '¿Desactivar usuario?',
+          title: "¿Desactivar usuario?",
           description: `¿Deseas desactivar la cuenta de ${dialogState.user.full_name}? El usuario no podrá acceder al sistema.`,
-          actionText: 'Desactivar',
-          variant: 'destructive' as const
+          actionText: "Desactivar",
+          variant: "destructive" as const,
         };
       default:
         return {
-          title: '',
-          description: '',
-          actionText: 'Confirmar',
-          variant: 'default' as const
+          title: "",
+          description: "",
+          actionText: "Confirmar",
+          variant: "default" as const,
         };
     }
   };
@@ -315,7 +322,9 @@ export default function UsersTable({
               <TriangleAlert className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-red-900">Error al cargar usuarios</p>
+              <p className="text-sm font-semibold text-red-900">
+                Error al cargar usuarios
+              </p>
               <p className="text-xs text-red-700 mt-1">{error}</p>
             </div>
           </div>
@@ -332,8 +341,12 @@ export default function UsersTable({
           <div className="flex flex-col items-center gap-3 text-center px-4">
             <User className="h-12 w-12 text-gray-400" />
             <div>
-              <p className="text-sm font-semibold text-gray-900">No hay usuarios registrados</p>
-              <p className="text-xs text-gray-500 mt-1">Los usuarios aparecerán aquí cuando se registren</p>
+              <p className="text-sm font-semibold text-gray-900">
+                No hay usuarios registrados
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Los usuarios aparecerán aquí cuando se registren
+              </p>
             </div>
           </div>
         </div>
@@ -345,7 +358,7 @@ export default function UsersTable({
     <>
       <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(100vh-15rem)]">
         <Table>
-          <TableHeader className='bg-gray-100 rounded-sm sticky top-0 z-10'>
+          <TableHeader className="bg-gray-100 rounded-sm sticky top-0 z-10">
             <TableRow>
               <TableHead className="text-center bg-gray-100">#</TableHead>
               <TableHead className="bg-gray-100">Usuario</TableHead>
@@ -363,10 +376,7 @@ export default function UsersTable({
               const RoleIcon = roleIcons[user.role];
 
               return (
-                <TableRow
-                  key={user.id}
-                  className="group"
-                >
+                <TableRow key={user.id} className="group">
                   <TableCell className="py-4 px-3 text-center w-16">
                     <span className="inline-flex items-center justify-center w-8 h-8 text-gray-700 text-sm font-medium">
                       {(currentPage - 1) * itemsPerPage + index + 1}
@@ -376,7 +386,8 @@ export default function UsersTable({
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-10 w-10">
                         <AvatarFallback className="bg-gradient-to-br from-orange-400 to-yellow-200 font-semibold">
-                          {user.name.charAt(0)}{user.last_name.charAt(0)}
+                          {user.name.charAt(0)}
+                          {user.last_name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
@@ -394,12 +405,19 @@ export default function UsersTable({
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
                       <span className="text-sm text-gray-700">
-                        {user.email || <span className="text-gray-400 italic">Sin email</span>}
+                        {user.email || (
+                          <span className="text-gray-400 italic">
+                            Sin email
+                          </span>
+                        )}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={"secondary"} className="rounded-full px-3 py-1 flex items-center gap-1 w-fit">
+                    <Badge
+                      variant={"secondary"}
+                      className="rounded-full px-3 py-1 flex items-center gap-1 w-fit"
+                    >
                       <RoleIcon className="h-5 w-5" />
                       {roleLabels[user.role]}
                     </Badge>
@@ -413,7 +431,9 @@ export default function UsersTable({
                         </span>
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-400 italic">Sin agente</span>
+                      <span className="text-sm text-gray-400 italic">
+                        Sin agente
+                      </span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -445,7 +465,7 @@ export default function UsersTable({
                   </TableCell>
 
                   <TableCell>
-                    <div className='flex items-center'>
+                    <div className="flex items-center">
                       <Clock className="h-4 w-4 inline-block mr-1" />
                       <span>{formatDate(user.date_joined)}</span>
                     </div>
@@ -462,7 +482,10 @@ export default function UsersTable({
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-48 rounded-xl shadow-xl border-gray-200"
+                      >
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
@@ -480,7 +503,7 @@ export default function UsersTable({
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              setDialogState({ type: 'verify', user });
+                              setDialogState({ type: "verify", user });
                             }}
                             className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
                           >
@@ -493,7 +516,7 @@ export default function UsersTable({
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              setDialogState({ type: 'deactivate', user });
+                              setDialogState({ type: "deactivate", user });
                             }}
                             className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
                           >
@@ -504,7 +527,7 @@ export default function UsersTable({
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              setDialogState({ type: 'activate', user });
+                              setDialogState({ type: "activate", user });
                             }}
                             className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
                           >
@@ -546,12 +569,17 @@ export default function UsersTable({
 
                             // Validación: verificar que el usuario tenga un ID válido
                             if (!user || !user.id) {
-                              console.error('Error: Usuario sin ID válido', user);
-                              toast.error('Error: No se puede eliminar un usuario sin ID');
+                              console.error(
+                                "Error: Usuario sin ID válido",
+                                user,
+                              );
+                              toast.error(
+                                "Error: No se puede eliminar un usuario sin ID",
+                              );
                               return;
                             }
 
-                            setDialogState({ type: 'delete', user });
+                            setDialogState({ type: "delete", user });
                           }}
                           className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
                         >
@@ -569,7 +597,10 @@ export default function UsersTable({
       </div>
 
       {/* Diálogo de confirmación */}
-      <AlertDialog open={dialogState.type !== null} onOpenChange={(open) => !open && handleCancel()}>
+      <AlertDialog
+        open={dialogState.type !== null}
+        onOpenChange={(open) => !open && handleCancel()}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{dialogContent.title}</AlertDialogTitle>
@@ -578,10 +609,16 @@ export default function UsersTable({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancel}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel onClick={handleCancel}>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirm}
-              className={dialogContent.variant === 'destructive' ? 'bg-red-600 hover:bg-red-700' : ''}
+              className={
+                dialogContent.variant === "destructive"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : ""
+              }
             >
               {dialogContent.actionText}
             </AlertDialogAction>
@@ -614,47 +651,14 @@ export default function UsersTable({
       )}
 
       {/* Paginación */}
-      {totalPages > 1 && (
-        <Pagination className="mt-4">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-
-            {getPageNumbers().map((page, index) => {
-              if (page === 'ellipsis') {
-                return (
-                  <PaginationItem key={`ellipsis-${index}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                );
-              }
-
-              return (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(page)}
-                    isActive={currentPage === page}
-                    className="cursor-pointer"
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              );
-            })}
-
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      )}
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={Math.ceil(users.length / itemsPerPage)}
+        onPageChange={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+        onItemsPerPageChange={setItemsPerPage}
+        totalItems={users.length}
+      />
     </>
   );
 }

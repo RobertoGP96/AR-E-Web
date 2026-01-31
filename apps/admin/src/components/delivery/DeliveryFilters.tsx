@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, RefreshCw, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import DeliveryFiltersComponent, { type DeliveryFilterState } from '@/components/filters/delivery-filters';
 import { Button } from '../ui/button';
 import CreateDeliveryDialog from './CreateDeliveryDialog';
+import { useDeliveries } from '@/hooks/delivery';
 
 interface DeliveryFiltersProps {
   searchTerm?: string;
@@ -23,10 +24,22 @@ export default function DeliveryFilters({
   onFiltersChange = () => {},
 }: DeliveryFiltersProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-
+  const { isFetching, refetch } = useDeliveries();
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-4">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => {
+            refetch();
+          }}
+          disabled={isFetching}
+          title="Actualizar lista"
+          className="border-gray-200 hover:bg-gray-50 cursor-pointer"
+        >
+          <RefreshCw className={isFetching ? "animate-spin" : "" + "h-4 w-4"} />
+        </Button>
         <div className="flex-1">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -35,7 +48,7 @@ export default function DeliveryFilters({
               placeholder="Buscar por orden, cliente o delivery..."
               value={searchTerm}
               onChange={(e) => onSearchChange?.(e.target.value)}
-              className="pl-10 border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl shadow-sm"
+              className="pl-10 border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-sm shadow-sm"
             />
           </div>
         </div>

@@ -1,37 +1,70 @@
-
-import PackageStatusBadge from './PackageStatusBadge';
-import EditPackageDialog from './EditPackageDialog';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import type { Package as PackageType } from '@/types';
-import { Camera, Clock, Edit2, Trash2, MoreHorizontal, ExternalLink, Loader2, Package, CheckCircle2, Box, Image, } from 'lucide-react';
-import { formatDate } from '@/lib/format-date';
-import { Link } from 'react-router-dom';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useState, useMemo, useEffect } from 'react';
-import { useDeletePackage } from '@/hooks/package/useDeletePackage';
-import { useUpdatePackage, useUpdatePackageStatus } from '@/hooks/package';
-import { toast } from 'sonner';
+import PackageStatusBadge from "./PackageStatusBadge";
+import EditPackageDialog from "./EditPackageDialog";
+import { Button } from "@/components/ui/button";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import type { Package as PackageType } from "@/types";
+import {
+  Camera,
+  Clock,
+  Edit2,
+  Trash2,
+  MoreHorizontal,
+  ExternalLink,
+  Loader2,
+  Package,
+  CheckCircle2,
+  Box,
+  Image,
+} from "lucide-react";
+import { formatDate } from "@/lib/format-date";
+import { Link } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { QuickImageUpload } from '@/components/images/QuickImageUpload';
-// No parseProductPictures helper used; product_pictures is a single URL string
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card';
+import { QuickImageUpload } from "@/components/images/QuickImageUpload";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../ui/hover-card";
+import { useState, useMemo, useEffect } from "react";
+import { useDeletePackage } from "@/hooks/package/useDeletePackage";
+import { useUpdatePackage, useUpdatePackageStatus } from "@/hooks/package";
+import { toast } from "sonner";
+import { TablePagination } from "../utils/TablePagination";
 
 interface PackagesTableProps {
   packages: PackageType[];
@@ -39,7 +72,6 @@ interface PackagesTableProps {
   onEdit?: (pkg: PackageType) => void;
   onDelete?: (pkg: PackageType) => void;
   onCapture?: (pkg: PackageType) => void;
-  itemsPerPage?: number;
 }
 
 const PackagesTable: React.FC<PackagesTableProps> = ({
@@ -48,14 +80,19 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   onEdit,
   onDelete,
   onCapture,
-  itemsPerPage = 10,
 }) => {
-  const [dialogState, setDialogState] = useState<{ type: 'delete' | null; pkg: PackageType | null }>({ type: null, pkg: null });
+  const [dialogState, setDialogState] = useState<{
+    type: "delete" | null;
+    pkg: PackageType | null;
+  }>({ type: null, pkg: null });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null);
-  
+  const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(
+    null,
+  );
+
   const [showImageDialog, setShowImageDialog] = useState(false);
-  const [imageDialogPackage, setImageDialogPackage] = useState<PackageType | null>(null);
+  const [imageDialogPackage, setImageDialogPackage] =
+    useState<PackageType | null>(null);
 
   const deletePackageMutation = useDeletePackage();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -65,6 +102,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
   // Estado de paginación
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Calcular packages paginados
   const paginatedPackages = useMemo(() => {
@@ -73,49 +111,10 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     return packages.slice(startIndex, endIndex);
   }, [packages, currentPage, itemsPerPage]);
 
-  // Calcular total de páginas
-  const totalPages = Math.ceil(packages.length / itemsPerPage);
-
-  // Resetear a la primera página cuando cambian los packages
+  // Resetear a la primera página cuando cambien los packages o itemsPerPage
   useEffect(() => {
     setCurrentPage(1);
-  }, [packages.length]);
-
-  // Generar números de página para mostrar
-  const getPageNumbers = () => {
-    const pages: (number | 'ellipsis')[] = [];
-    const showPages = 5;
-
-    if (totalPages <= showPages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push('ellipsis');
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push('ellipsis');
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push(1);
-        pages.push('ellipsis');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push('ellipsis');
-        pages.push(totalPages);
-      }
-    }
-
-    return pages;
-  };
+  }, [packages.length, itemsPerPage]);
 
   // Hook para actualizar producto (imagenes)
   const updatePackageMutation = useUpdatePackage();
@@ -123,9 +122,12 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   // Helper para validar si la imagen es válida (no vacía)
   const isValidImage = (image: unknown): boolean => {
     if (!image) return false;
-    if (typeof image === 'string') return image.trim().length > 0;
+    if (typeof image === "string") return image.trim().length > 0;
     if (Array.isArray(image)) {
-      return image.length > 0 && (typeof image[0] === 'string' ? image[0].trim().length > 0 : !!image[0]);
+      return (
+        image.length > 0 &&
+        (typeof image[0] === "string" ? image[0].trim().length > 0 : !!image[0])
+      );
     }
     return false;
   };
@@ -133,13 +135,16 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   const handleImageUploaded = async (pkg: PackageType, url: string) => {
     try {
       // API expects a single URL string for product_pictures
-      await updatePackageMutation.mutateAsync({ id: pkg.id, data: { package_picture: url } });
-      toast.success('Imagen añadida correctamente');
+      await updatePackageMutation.mutateAsync({
+        id: pkg.id,
+        data: { package_picture: url },
+      });
+      toast.success("Imagen añadida correctamente");
       setShowImageDialog(false);
       setImageDialogPackage(null);
     } catch (err) {
-      console.error('Error actualizando imagen del producto:', err);
-      toast.error('Error al guardar la imagen');
+      console.error("Error actualizando imagen del producto:", err);
+      toast.error("Error al guardar la imagen");
     }
   };
 
@@ -155,8 +160,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
         toast.success(`Paquete #${dialogState.pkg.id} eliminado`);
       }
     } catch (err) {
-      console.error('Error al eliminar paquete:', err);
-      toast.error('Error al eliminar el paquete');
+      console.error("Error al eliminar paquete:", err);
+      toast.error("Error al eliminar el paquete");
     } finally {
       setIsDeleting(false);
       setDialogState({ type: null, pkg: null });
@@ -168,32 +173,36 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   // Función para obtener el siguiente estado del paquete
   const getNextStatus = (currentStatus: string): string | null => {
     // Normalizar el estado actual
-    const normalized = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1).toLowerCase();
+    const normalized =
+      currentStatus.charAt(0).toUpperCase() +
+      currentStatus.slice(1).toLowerCase();
 
-    if (normalized === 'Enviado') return 'Recibido';
-    if (normalized === 'Recibido') return 'Procesado';
+    if (normalized === "Enviado") return "Recibido";
+    if (normalized === "Recibido") return "Procesado";
     return null;
   };
 
   // Función para obtener el ícono del siguiente estado
   const getNextStatusIcon = (nextStatus: string) => {
-    if (nextStatus === 'Recibido') return Package;
-    if (nextStatus === 'Procesado') return CheckCircle2;
+    if (nextStatus === "Recibido") return Package;
+    if (nextStatus === "Procesado") return CheckCircle2;
     return Package;
   };
 
   // Función para obtener el color del siguiente estado
   const getNextStatusColor = (nextStatus: string) => {
-    if (nextStatus === 'Recibido') return 'hover:bg-yellow-50 hover:text-yellow-600';
-    if (nextStatus === 'Procesado') return 'hover:bg-green-50 hover:text-green-600';
-    return 'hover:bg-purple-50 hover:text-purple-600';
+    if (nextStatus === "Recibido")
+      return "hover:bg-yellow-50 hover:text-yellow-600";
+    if (nextStatus === "Procesado")
+      return "hover:bg-green-50 hover:text-green-600";
+    return "hover:bg-purple-50 hover:text-purple-600";
   };
 
   // Función para obtener el label del siguiente estado
   const getNextStatusLabel = (nextStatus: string) => {
     const labels: Record<string, string> = {
-      'Recibido': 'Recibir Paquete',
-      'Procesado': 'Procesar Paquete',
+      Recibido: "Recibir Paquete",
+      Procesado: "Procesar Paquete",
     };
     return labels[nextStatus] || `Marcar como ${nextStatus}`;
   };
@@ -202,7 +211,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     const newStatus = getNextStatus(pkg.status_of_processing);
 
     if (!newStatus) {
-      toast.error('No se puede cambiar el estado de este paquete');
+      toast.error("No se puede cambiar el estado de este paquete");
       return;
     }
 
@@ -212,14 +221,17 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
       // Mensaje personalizado según el nuevo estado
       const messages: Record<string, string> = {
-        'Recibido': `Paquete #${pkg.agency_name} marcado como Recibido`,
-        'Procesado': `Paquete #${pkg.agency_name} marcado como Procesado`,
+        Recibido: `Paquete #${pkg.agency_name} marcado como Recibido`,
+        Procesado: `Paquete #${pkg.agency_name} marcado como Procesado`,
       };
 
-      toast.success(messages[newStatus] || `Estado del paquete #${pkg.agency_name} cambiado a ${newStatus}`);
+      toast.success(
+        messages[newStatus] ||
+          `Estado del paquete #${pkg.agency_name} cambiado a ${newStatus}`,
+      );
     } catch (err) {
-      console.error('Error al cambiar estado del paquete:', err);
-      toast.error('Error al cambiar el estado del paquete');
+      console.error("Error al cambiar estado del paquete:", err);
+      toast.error("Error al cambiar el estado del paquete");
     } finally {
       setUpdatingStatusId(null);
     }
@@ -240,7 +252,9 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
         <div className="flex flex-col items-center justify-center h-64 text-center p-4">
           <Package className="h-16 w-16 text-gray-300 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">No hay paquetes</h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            No hay paquetes
+          </h3>
           <p className="text-sm text-gray-500">
             Comienza creando un nuevo paquete usando el botón "Agregar Paquete"
           </p>
@@ -252,7 +266,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   return (
     <>
       <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(90vh-16rem)]">
-
         <Table>
           <TableHeader className="bg-gray-100 ">
             <TableRow>
@@ -269,17 +282,19 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
           <TableBody>
             {paginatedPackages.map((pkg, index) => (
               <TableRow key={pkg.id}>
-                <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                 <TableCell>
-                  <div className='flex flex-row items-center'>
-                    <span className='rounded-full bg-gray-200 px-2 py-1 text-xs font-medium'>
+                  {(currentPage - 1) * itemsPerPage + index + 1}
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-row items-center">
+                    <span className="rounded-full bg-gray-200 px-2 py-1 text-xs font-medium">
                       {"#" + pkg.agency_name}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell>{pkg.number_of_tracking}</TableCell>
                 <TableCell>
-                  <div className='flex flex-row items-center text-gray-500'>
+                  <div className="flex flex-row items-center text-gray-500">
                     <Clock className="mr-2 inline h-4 w-4" />
                     {formatDate(pkg.arrival_date)}
                   </div>
@@ -299,12 +314,17 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                         {pkg.contained_products?.length || 0}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-80 max-h-96 overflow-y-auto" align="start">
+                    <PopoverContent
+                      className="w-80 max-h-96 overflow-y-auto"
+                      align="start"
+                    >
                       <div className="space-y-2">
                         <h4 className="font-semibold text-sm border-b pb-2">
-                          Productos Recibidos ({pkg.contained_products?.length || 0})
+                          Productos Recibidos (
+                          {pkg.contained_products?.length || 0})
                         </h4>
-                        {pkg.contained_products && pkg.contained_products.length > 0 ? (
+                        {pkg.contained_products &&
+                        pkg.contained_products.length > 0 ? (
                           <ul className="space-y-2">
                             {pkg.contained_products.map((product) => (
                               <li
@@ -314,7 +334,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                                 <div className="flex-1">
                                   {/* Thumbnail / botón para subir imagen */}
                                   <div className="flex items-center gap-3 mb-2">
-                                    { product.original_product.product_pictures ? (
+                                    {product.original_product
+                                      .product_pictures ? (
                                       <button
                                         type="button"
                                         onClick={() => {
@@ -325,7 +346,10 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                                         title="Ver imágenes"
                                       >
                                         <img
-                                          src={product.original_product.product_pictures}
+                                          src={
+                                            product.original_product
+                                              .product_pictures
+                                          }
                                           alt={product.original_product.name}
                                           className="w-full h-full object-cover"
                                         />
@@ -357,7 +381,10 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                                     </p>
                                   )}
                                 </div>
-                                <Badge variant="secondary" className="ml-2 shrink-0">
+                                <Badge
+                                  variant="secondary"
+                                  className="ml-2 shrink-0"
+                                >
                                   x{product.amount_received}
                                 </Badge>
                               </li>
@@ -366,7 +393,9 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                         ) : (
                           <div className="text-center py-4 text-gray-500">
                             <Package className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                            <p className="text-sm">No hay productos recibidos</p>
+                            <p className="text-sm">
+                              No hay productos recibidos
+                            </p>
                           </div>
                         )}
                       </div>
@@ -374,24 +403,28 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                   </Popover>
                 </TableCell>
                 <TableCell>
-                  <div className='flex flex-row gap-2'>
+                  <div className="flex flex-row gap-2">
                     {isValidImage(pkg.package_picture) ? (
                       <HoverCard>
                         <HoverCardTrigger asChild>
-                          <div className='flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer'>
-                            <Image className='h-5 w-5 text-gray-500' />
+                          <div className="flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer">
+                            <Image className="h-5 w-5 text-gray-500" />
                           </div>
                         </HoverCardTrigger>
                         <HoverCardContent className="w-32 h-32 flex items-center justify-center">
                           <img
                             src={(() => {
                               const pic = pkg.package_picture;
-                              if (!pic) return '';
+                              if (!pic) return "";
                               if (Array.isArray(pic)) {
                                 const first = pic[0];
-                                return (typeof first === 'string' ? first : first?.picture) || '';
+                                return (
+                                  (typeof first === "string"
+                                    ? first
+                                    : first?.picture) || ""
+                                );
                               }
-                              return typeof pic === 'string' ? pic : '';
+                              return typeof pic === "string" ? pic : "";
                             })()}
                             alt={`Entrega ${pkg.id}`}
                             className="h-25 w-30 object-cover rounded-md"
@@ -401,14 +434,14 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                     ) : (
                       <button
                         type="button"
-                        className='text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50'
+                        className="text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50"
                         onClick={() => {
                           setImageDialogPackage(pkg);
                           setShowImageDialog(true);
                         }}
-                        title='Subir imagen de paquete'
+                        title="Subir imagen de paquete"
                       >
-                        <Camera className='h-5 w-5' />
+                        <Camera className="h-5 w-5" />
                       </button>
                     )}
                   </div>
@@ -425,7 +458,10 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-gray-200">
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-48 rounded-xl shadow-xl border-gray-200"
+                      >
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
@@ -528,8 +564,11 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                                 </>
                               ) : (
                                 (() => {
-                                  const nextStatus = getNextStatus(pkg.status_of_processing)!;
-                                  const IconComponent = getNextStatusIcon(nextStatus);
+                                  const nextStatus = getNextStatus(
+                                    pkg.status_of_processing,
+                                  )!;
+                                  const IconComponent =
+                                    getNextStatusIcon(nextStatus);
                                   const label = getNextStatusLabel(nextStatus);
                                   return (
                                     <>
@@ -569,11 +608,14 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                             e.stopPropagation();
 
                             if (!pkg || !pkg.id) {
-                              console.error('Error: Paquete sin ID válido', pkg);
+                              console.error(
+                                "Error: Paquete sin ID válido",
+                                pkg,
+                              );
                               return;
                             }
 
-                            setDialogState({ type: 'delete', pkg });
+                            setDialogState({ type: "delete", pkg });
                           }}
                           className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
                         >
@@ -591,66 +633,52 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
       </div>
 
       {/* Componente de paginación */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-4">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                />
-              </PaginationItem>
-
-              {getPageNumbers().map((page, idx) => (
-                <PaginationItem key={idx}>
-                  {page === 'ellipsis' ? (
-                    <PaginationEllipsis />
-                  ) : (
-                    <PaginationLink
-                      onClick={() => setCurrentPage(page as number)}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  )}
-                </PaginationItem>
-              ))}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={Math.ceil(packages.length / itemsPerPage)}
+        onPageChange={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+        onItemsPerPageChange={setItemsPerPage}
+        totalItems={packages.length}
+      />
 
       {/* Diálogo de confirmación para eliminar paquete */}
-      <AlertDialog open={dialogState.type === 'delete' || isDeleting} onOpenChange={(open) => {
-        // Prevent closing while deleting
-        if (!open && isDeleting) return;
-        if (!open) handleDeleteCancel();
-      }}>
+      <AlertDialog
+        open={dialogState.type === "delete" || isDeleting}
+        onOpenChange={(open) => {
+          // Prevent closing while deleting
+          if (!open && isDeleting) return;
+          if (!open) handleDeleteCancel();
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar paquete?</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás seguro de que deseas eliminar el paquete {dialogState.pkg ? `#${dialogState.pkg.agency_name}` : ''}? Esta acción no se puede deshacer.
+              ¿Estás seguro de que deseas eliminar el paquete{" "}
+              {dialogState.pkg ? `#${dialogState.pkg.agency_name}` : ""}? Esta
+              acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleDeleteCancel} disabled={isDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700" disabled={isDeleting}>
+            <AlertDialogCancel
+              onClick={handleDeleteCancel}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
+            >
               {isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Eliminando...
                 </>
               ) : (
-                'Eliminar'
+                "Eliminar"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -664,36 +692,51 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
         package={selectedPackage}
       />
       {/* Diálogo para ver/subir imágenes del producto */}
-      <Dialog open={showImageDialog} onOpenChange={(open) => { if (!open) { setShowImageDialog(false); setImageDialogPackage(null); } }}>
+      <Dialog
+        open={showImageDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowImageDialog(false);
+            setImageDialogPackage(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Imágenes del paquete {imageDialogPackage ? `- ${imageDialogPackage.agency_name}` : ''}</DialogTitle>
+            <DialogTitle>
+              Imágenes del paquete{" "}
+              {imageDialogPackage ? `- ${imageDialogPackage.agency_name}` : ""}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="py-2">
-              {imageDialogPackage ? (
+            {imageDialogPackage ? (
               <QuickImageUpload
                 entityType="products"
-                  currentImage={(() => {
-                    const pic = imageDialogPackage.package_picture;
-                    if (!pic) return undefined;
-                    if (Array.isArray(pic)) {
-                      const first = pic[0];
-                      return typeof first === 'string' ? first : first?.picture;
-                    }
-                    return typeof pic === 'string' ? pic : undefined;
-                  })()}
-                onImageUploaded={(url: string) => handleImageUploaded(imageDialogPackage, url)}
+                currentImage={(() => {
+                  const pic = imageDialogPackage.package_picture;
+                  if (!pic) return undefined;
+                  if (Array.isArray(pic)) {
+                    const first = pic[0];
+                    return typeof first === "string" ? first : first?.picture;
+                  }
+                  return typeof pic === "string" ? pic : undefined;
+                })()}
+                onImageUploaded={(url: string) =>
+                  handleImageUploaded(imageDialogPackage, url)
+                }
                 folder={undefined}
               />
             ) : (
-              <div className="p-4 text-sm text-gray-500">Producto no seleccionado</div>
+              <div className="p-4 text-sm text-gray-500">
+                Producto no seleccionado
+              </div>
             )}
           </div>
         </DialogContent>
       </Dialog>
     </>
   );
-}
+};
 
 export default PackagesTable;
