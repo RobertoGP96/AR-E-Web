@@ -5,9 +5,6 @@
  * y carritos de compra de Amazon a través de la API del backend.
  */
 
-import { apiClient } from '../../lib/api-client';
-
-// Tipos para las respuestas del scraping de Amazon
 
 export interface AmazonProductData {
   asin: string | null;
@@ -77,37 +74,7 @@ export function isProductData(data: AmazonScrapeData): data is AmazonProductData
  * @returns Promise con los datos scrapeados o error
  *
  * @example
- * ```typescript
- * const result = await scrapeAmazon('https://amazon.com/dp/B08N5WRWNW');
- * if (result.success) {
- *   if (isProductData(result.data)) {
- *     console.log('Producto:', result.data.title);
- *   } else if (isCartData(result.data)) {
- *     console.log('Carrito con', result.data.total_items, 'items');
- *   }
- * } else {
- *   console.error('Error:', result.error);
- * }
- * ```
- */
-export async function scrapeAmazon(url: string): Promise<AmazonScrapeResult> {
-  try {
-    const response = await apiClient.post<AmazonScrapeResult>('/amazon/scrape/', {
-      url: url.trim(),
-    });
 
-    return response;
-  } catch (error) {
-    console.error('Error scraping Amazon:', error);
-
-    // El apiClient ya maneja los errores y los formatea
-    // Retornar un error genérico si no se puede determinar el tipo
-    return {
-      success: false,
-      error: 'Error inesperado al hacer scraping de Amazon',
-    };
-  }
-}
 
 /**
  * Realiza scraping de un producto individual de Amazon
@@ -116,7 +83,7 @@ export async function scrapeAmazon(url: string): Promise<AmazonScrapeResult> {
  * @returns Promise con los datos del producto o error
  */
 export async function scrapeAmazonProduct(productUrl: string): Promise<AmazonScrapeResponse | AmazonScrapeError> {
-  const result = await scrapeAmazon(productUrl);
+  const result = await scrapeAmazonCart(productUrl);
 
   if (!result.success) {
     return result;
@@ -140,7 +107,7 @@ export async function scrapeAmazonProduct(productUrl: string): Promise<AmazonScr
  * @returns Promise con los datos del carrito o error
  */
 export async function scrapeAmazonCart(cartUrl: string): Promise<AmazonScrapeResponse | AmazonScrapeError> {
-  const result = await scrapeAmazon(cartUrl);
+  const result = await scrapeAmazonCart(cartUrl);
 
   if (!result.success) {
     return result;

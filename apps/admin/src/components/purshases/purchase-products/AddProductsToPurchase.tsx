@@ -13,8 +13,7 @@ const AddProductsToPurchase: React.FC<AddProductsToPurchaseProps> = ({
   onProductsAdded,
 }) => {
   const handleProductBuyedCreated = (productBuyed: ProductBuyed) => {
-    console.log('Product buyed created:', productBuyed);
-    toast.success('Producto agregado a la compra');
+    toast.success(`Producto agregado a la compra: ${productBuyed.id}`);
     onProductsAdded?.();
   };
 

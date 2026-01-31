@@ -161,17 +161,6 @@ def notification_sse_view(request):
     """
     Vista para manejar conexión SSE de notificaciones.
     
-    Uso desde frontend:
-        const eventSource = new EventSource('/arye_system/api_data/notifications/stream');
-        
-        eventSource.addEventListener('notification', (event) => {
-            const data = JSON.parse(event.data);
-            console.log('Nueva notificación:', data);
-        });
-        
-        eventSource.addEventListener('heartbeat', (event) => {
-            console.log('Heartbeat recibido');
-        });
     """
     # Verificar autenticación
     if not request.user.is_authenticated:

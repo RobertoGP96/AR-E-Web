@@ -1,4 +1,4 @@
-import { apiClient, ApiError } from '@/lib/api-client';
+import { apiClient, type ApiErrorResponse } from '@/lib/api-client';
 
 export interface MonthlyReport {
   month: string;
@@ -80,9 +80,9 @@ export const fetchProfitReports = async (): Promise<ProfitReportsData> => {
     throw new Error('No se pudieron cargar los reportes. Respuesta inesperada del servidor.');
   } catch (error) {
     console.error('Error en fetchProfitReports:', error);
-    // apiClient already formats errors and throws ApiError; map to friendly messages when possible
-    if (error instanceof ApiError) {
-      const { status, message } = error as ApiError;
+    // apiClient already formats errors and throws ApiErrorResponse ; map to friendly messages when possible
+    if (error && typeof error === 'object' && 'status' in (error as Record<string, unknown>)) {
+      const { status, message } = error as ApiErrorResponse;
       if (status === 401) {
         throw new Error('Sesión expirada. Por favor, inicie sesión nuevamente.');
       } else if (status === 403) {

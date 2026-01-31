@@ -49,7 +49,6 @@ export class NotificationSSEClient {
 
       // Evento de conexión
       this.eventSource.onopen = () => {
-        console.log('SSE: Conectado al stream de notificaciones');
         this.state.isConnected = true;
         this.state.error = undefined;
         this.reconnectAttempts = 0;
@@ -62,7 +61,6 @@ export class NotificationSSEClient {
       this.eventSource.addEventListener('notification', (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('SSE: Nueva notificación recibida', data);
           this.onNotification?.(data);
           this.resetHeartbeatTimeout();
         } catch (error) {
@@ -76,14 +74,8 @@ export class NotificationSSEClient {
         this.resetHeartbeatTimeout();
       });
 
-      // Evento de conexión confirmada
-      this.eventSource.addEventListener('connected', (event) => {
-        console.log('SSE: Conexión confirmada', event.data);
-      });
-
       // Evento de error
       this.eventSource.onerror = (error) => {
-        console.error('SSE: Error en la conexión', error);
         this.state.isConnected = false;
         this.state.error = 'Connection error';
         this.onError?.(error);
@@ -91,8 +83,7 @@ export class NotificationSSEClient {
         this.handleReconnect();
       };
 
-    } catch (error) {
-      console.error('SSE: Error creando EventSource', error);
+    } catch {
       this.handleReconnect();
     }
   }
@@ -129,12 +120,8 @@ export class NotificationSSEClient {
       console.error('SSE: Máximo número de intentos de reconexión alcanzado');
       return;
     }
-
     this.reconnectAttempts++;
     const delay = this.config.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1); // Exponential backoff
-
-    console.log(`SSE: Intentando reconectar en ${delay}ms (intento ${this.reconnectAttempts})`);
-
     this.reconnectTimeout = setTimeout(() => {
       this.connect();
     }, delay);

@@ -46,7 +46,6 @@ const PackageProductsList: React.FC<PackageProductsListProps> = ({
   useEffect(() => {
     // The query will be refetched automatically when refreshTrigger changes
     // due to query invalidation in the mutation
-    console.log('Trigger changed:', refreshTrigger);
   }, [refreshTrigger]);
 
   const handleDeleteClick = (id: number) => {

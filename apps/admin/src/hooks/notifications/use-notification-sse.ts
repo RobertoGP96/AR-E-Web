@@ -43,13 +43,7 @@ export const useNotificationSSE = (
     setLastNotification(notification);
   }, []);
 
-  const handleConnected = useCallback(() => {
-    console.log('SSE: Conectado exitosamente');
-  }, []);
 
-  const handleDisconnected = useCallback(() => {
-    console.log('SSE: Desconectado');
-  }, []);
 
   const handleError = useCallback((error: Event) => {
     console.error('SSE: Error de conexión', error);
@@ -65,14 +59,12 @@ export const useNotificationSSE = (
 
     // Configurar callbacks
     client.setOnNotification(handleNotification);
-    client.setOnConnected(handleConnected);
-    client.setOnDisconnected(handleDisconnected);
     client.setOnError(handleError);
     client.setOnStateChange(handleStateChange);
 
     // Conectar
     client.connect();
-  }, [config, handleNotification, handleConnected, handleDisconnected, handleError, handleStateChange]);
+  }, [config, handleNotification, handleStateChange, handleError]);
 
   // Función para desconectar
   const disconnect = useCallback(() => {

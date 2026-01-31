@@ -73,7 +73,6 @@ export const markOrderAsPaid = async (id: number, amountReceived?: number, payme
   }
   
   // Si no se proporciona cantidad, marcamos como Pagado directamente
-  console.log(`[markOrderAsPaid] Actualizando orden ${id} a estado Pagado sin cantidad específica`);
   return await updateOrderPaymentStatus(id, 'Pagado');
 };
 

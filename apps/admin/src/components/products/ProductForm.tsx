@@ -67,8 +67,6 @@ const extractShopName = (url: string): string => {
                 return shopName
             }
         }
-
-        console.log("Extract-Link")
         // Si no encuentra coincidencia, capitalizar el dominio principal
         const domainParts = cleanHostname.split('.')
         const mainDomain = domainParts[0]

@@ -58,7 +58,7 @@ interface RequestConfig extends ExtendedAxiosRequestConfig {
 }
 
 // Interface para errores de API
-interface ApiErrorResponse {
+type ApiErrorResponse = {
   message: string;
   status?: number;
   code?: string;

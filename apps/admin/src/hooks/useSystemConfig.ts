@@ -47,7 +47,6 @@ export const useSystemConfig = () => {
             return results[0];
           }
           // Si está vacío, crear uno por defecto mediante POST
-          console.log('No hay configuración, creando valores por defecto...');
           const newConfig = await apiClient.post<SystemConfig>('/api_data/common_information/', {
             change_rate: 20.0,
             cost_per_pound: 5.0

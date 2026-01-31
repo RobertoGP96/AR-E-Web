@@ -51,22 +51,16 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
       return;
     }
 
-    console.log(`[ConfirmPaymentDialog] Preparando confirmación de pago:`, {
-      orderId: order.id,
-      amount: amount,
-      orderData: order
-    });
+
 
     setIsSubmitting(true);
     setError('');
 
     try {
-      console.log(`[ConfirmPaymentDialog] Confirmando pago - Order ID: ${order.id}, Amount: ${amount}`);
       await onConfirm(order.id, amount, paymentDate);
       handleClose();
-    } catch (err) {
+    } catch {
       setError('Error al confirmar el pago. Intenta nuevamente.');
-      console.error('[ConfirmPaymentDialog] Error al confirmar pago:', err);
     } finally {
       setIsSubmitting(false);
     }

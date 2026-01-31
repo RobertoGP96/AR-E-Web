@@ -132,13 +132,6 @@ const OrderTable: React.FC<OrderTableProps> = ({
     amountReceived: number,
     paymentDate: Date | undefined,
   ) => {
-    console.log(`[OrdersTable] handlePaymentConfirm llamado con:`, {
-      orderId,
-      amountReceived,
-      paymentDate,
-      selectedOrder: selectedOrderForPayment,
-    });
-
     if (!orderId || orderId === undefined) {
       console.error(
         "[OrdersTable] ERROR: orderId es undefined o inválido",
@@ -151,15 +144,9 @@ const OrderTable: React.FC<OrderTableProps> = ({
     try {
       if (onConfirmPayment && selectedOrderForPayment) {
         // Si se proporciona un callback personalizado, pásale el id, la cantidad recibida y la fecha de pago
-        console.log(
-          "[OrdersTable] Usando callback personalizado onConfirmPayment con amount",
-        );
         await onConfirmPayment(orderId, amountReceived, paymentDate);
       } else {
         // Usar el hook de mutación
-        console.log(
-          `[OrdersTable] Llamando a markOrderAsPaidMutation con orderId: ${orderId}, amount: ${amountReceived}`,
-        );
         await markOrderAsPaidMutation.mutateAsync({ orderId, amountReceived });
         toast.success(`Pago confirmado para el pedido #${orderId}`, {
           description: `Se registró ${formatCurrency(amountReceived)} como cantidad recibida.`,
