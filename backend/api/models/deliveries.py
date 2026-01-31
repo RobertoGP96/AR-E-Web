@@ -60,6 +60,40 @@ class DeliverReceip(models.Model):
         """
         return float(self.weight_cost - self.manager_profit - self.delivery_expenses)
 
+    def delete(self, *args, **kwargs):
+        """
+        Al eliminar un DeliverReceip, descuenta las cantidades entregadas de los productos originales
+        y actualiza sus estados antes de eliminar el recibo y sus productos entregados.
+        """
+        from api.enums import ProductStatusEnum
+        
+        # Obtener todos los productos entregados antes de eliminar
+        delivered_products = list(self.delivered_products.all())
+        
+        # Para cada producto entregado, descontar la cantidad del producto original
+        for delivered_product in delivered_products:
+            product = delivered_product.original_product
+            if product:
+                # Descontar la cantidad entregada
+                product.amount_delivered = max(0, product.amount_delivered - delivered_product.amount_delivered)
+                
+                # Actualizar el estado basado en las cantidades
+                # Si ya no está completamente entregado, volver a RECIBIDO (si tiene productos recibidos)
+                if product.amount_delivered < product.amount_received:
+                    if product.status == ProductStatusEnum.ENTREGADO.value:
+                        # Si tiene productos recibidos, volver a RECIBIDO
+                        if product.amount_received > 0:
+                            product.status = ProductStatusEnum.RECIBIDO.value
+                        # Si no tiene productos recibidos pero sí comprados, volver a COMPRADO
+                        elif product.amount_purchased > 0:
+                            product.status = ProductStatusEnum.COMPRADO.value
+                
+                # Guardar los cambios en el producto
+                product.save(update_fields=['amount_delivered', 'status', 'updated_at'])
+        
+        # Ahora eliminar el recibo (esto eliminará en cascada los ProductDelivery)
+        super().delete(*args, **kwargs)
+
     class Meta:
         ordering = ['-deliver_date']
         verbose_name = "Recibo de Entrega"
@@ -85,6 +119,41 @@ class Package(models.Model):
 
     def __str__(self):
         return f"{self.agency_name} - {self.number_of_tracking}"
+
+    def delete(self, *args, **kwargs):
+        """
+        Al eliminar un Package, descuenta las cantidades recibidas de los productos originales
+        y actualiza sus estados antes de eliminar el paquete y sus productos recibidos.
+        """
+        from api.enums import ProductStatusEnum
+        
+        # Obtener todos los productos recibidos en este paquete antes de eliminar
+        # La relación es: Package -> ProductReceived (related_name='package_products')
+        received_products = list(self.package_products.all())
+        
+        # Para cada producto recibido, descontar la cantidad del producto original
+        for received_product in received_products:
+            product = received_product.original_product
+            if product:
+                # Descontar la cantidad recibida
+                product.amount_received = max(0, product.amount_received - received_product.amount_received)
+                
+                # Actualizar el estado basado en las cantidades
+                # Si ya no está completamente recibido, volver a COMPRADO (si tiene productos comprados)
+                if product.amount_received < product.amount_purchased:
+                    if product.status == ProductStatusEnum.RECIBIDO.value:
+                        # Si tiene productos comprados, volver a COMPRADO
+                        if product.amount_purchased > 0:
+                            product.status = ProductStatusEnum.COMPRADO.value
+                        # Si no tiene productos comprados, volver a ENCARGADO
+                        else:
+                            product.status = ProductStatusEnum.ENCARGADO.value
+                
+                # Guardar los cambios en el producto
+                product.save(update_fields=['amount_received', 'status', 'updated_at'])
+        
+        # Ahora eliminar el paquete (esto eliminará en cascada los ProductReceived asociados)
+        super().delete(*args, **kwargs)
 
     class Meta:
         ordering = ['-created_at']

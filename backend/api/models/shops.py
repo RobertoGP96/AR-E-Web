@@ -121,6 +121,33 @@ class ShoppingReceip(models.Model):
         """
         return float(self.total_cost_of_purchase - self.total_refunded)
 
+    def delete(self, *args, **kwargs):
+        """
+        Al eliminar un ShoppingReceip, descuenta las cantidades compradas de los productos originales
+        y actualiza sus estados antes de eliminar el recibo y sus productos comprados.
+        """
+        from api.enums import ProductStatusEnum
+        
+        # Obtener todos los productos comprados antes de eliminar
+        buyed_products = list(self.buyed_products.all())
+        
+        # Para cada producto comprado, descontar la cantidad del producto original
+        for buyed_product in buyed_products:
+            product = buyed_product.original_product
+            if product:
+                # Descontar la cantidad comprada
+                product.amount_purchased = max(0, product.amount_purchased - buyed_product.amount_buyed)
+                
+                # Si la cantidad comprada es menor que la solicitada, cambiar el estado a ENCARGADO
+                if product.amount_purchased < product.amount_requested:
+                    product.status = ProductStatusEnum.ENCARGADO.value
+                
+                # Guardar los cambios en el producto
+                product.save(update_fields=['amount_purchased', 'status', 'updated_at'])
+        
+        # Ahora eliminar el recibo (esto eliminará en cascada los ProductBuyed)
+        super().delete(*args, **kwargs)
+
     class Meta:
         ordering = ['-buy_date']
         verbose_name = "Recibo de Compra"
