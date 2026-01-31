@@ -186,7 +186,7 @@ export default function BalanceReport() {
     const income: SummaryData = {
       costs_weighted: invoicesRangeData?.total_tag_weight || 0,
       delivery_weighted: deliveryAnalysis?.total_weight || 0,
-      revenue_paid: (ordersAnalysis?.paid_revenue as number) || 0,
+      revenue_paid: (ordersAnalysis?.summary.paid_revenue as number) || 0,
       purchase_paid: purchasesAnalysis?.totals.total_real_cost_paid || 0,
       costs: invoicesRangeData?.total_invoices_amount || 0,
       expenses: expensesAnalysis?.total_expenses || 0,
@@ -394,25 +394,26 @@ export default function BalanceReport() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   <MetricCard
-                    label="órdenes"
-                    value={ordersAnalysis.orders.length || 0}
+                    label="Total de órdenes"
+                    value={ordersAnalysis.summary.total_orders || 0}
                   />
                   <MetricCard
                     label="Ingresos Totales"
-                    value={formatUSD(ordersAnalysis.total_revenue || 0)}
-                    highlight
+                    value={formatUSD(ordersAnalysis.summary.total_revenue || 0)}
+                    
                   />
                   <MetricCard
                     label="Ingesos Pendientes"
-                    value={formatUSD(ordersAnalysis.unpaid_revenue || 0)}
+                    value={formatUSD(ordersAnalysis.summary.unpaid_revenue || 0)}
                   />
                   <MetricCard
                     label="Ingresos Pagados"
-                    value={formatUSD(ordersAnalysis.paid_revenue || 0)}
+                    value={formatUSD(ordersAnalysis.summary.paid_revenue || 0)+(`${ordersAnalysis.payment_out_date.total_payments ? ` + ${formatUSD(ordersAnalysis.payment_out_date.total_payments)}` : ""}`)}
+                    highlight
                   />
                   <MetricCard
                     label="Indice de Pago"
-                    value={ordersAnalysis.average_paid + " %"}
+                    value={ordersAnalysis.summary.payment_index+"%" || 0}
                   />
                 </div>
               </div>
@@ -936,12 +937,12 @@ function ExecutiveSummary({
     }
 
     // Ingresos totales (de órdenes + entregas)
-    const totalOrderRevenue = ordersAnalysis?.total_revenue || 0;
+    const totalOrderRevenue = (ordersAnalysis?.summary.paid_revenue || 0) + (ordersAnalysis?.payment_out_date.total_payments || 0);
     const totalDeliveryRevenue = deliveryAnalysis?.total_delivery_revenue || 0;
     const totalIncome = totalOrderRevenue + totalDeliveryRevenue;
 
     // Costos totales
-    const orderCosts = ordersAnalysis?.total_cost || 0;
+    const orderCosts = ordersAnalysis?.summary.total_revenue || 0;
     const purchaseCosts = purchasesAnalysis?.totals.total_real_cost_paid || 0;
     const invoiceCosts = invoicesRangeData?.total_invoices_amount || 0;
     const operationalExpenses =
@@ -958,7 +959,7 @@ function ExecutiveSummary({
 
     // Desglose de ganancias
     const orderProfit =
-      (ordersAnalysis?.total_revenue || 0) - (ordersAnalysis?.total_cost || 0);
+      (ordersAnalysis?.summary.total_revenue || 0) - (ordersAnalysis?.summary.total_revenue || 0);
     const deliveryProfit = deliveryAnalysis?.total_system_profit || 0;
     const purchaseProfit =
       (purchasesAnalysis?.totals.total_purchase_amount || 0) -
@@ -1270,7 +1271,7 @@ function ExecutiveSummary({
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
                   {(
-                    (summary.netProfit / (ordersAnalysis?.total_revenue || 1)) *
+                    (summary.netProfit / (ordersAnalysis?.summary.total_revenue || 1)) *
                     100
                   ).toFixed(2)}
                   % margen

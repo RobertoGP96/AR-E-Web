@@ -1,14 +1,19 @@
 /**
  * Custom hooks para el manejo de autenticación
- * 
+ *
  * Proporciona hooks personalizados que utilizan el AuthContext
  * para facilitar el acceso a funcionalidades específicas de autenticación.
  */
 
-import { useContext, useMemo } from 'react';
-import { AuthContext } from '@/context/AuthContext';
-import type { CustomUser } from '@/types/models';
-import type { LoginCredentials, RegisterData, AuthResponse, ApiResponse } from '@/types/api';
+import { useContext, useMemo } from "react";
+import { AuthContext } from "@/context/AuthContext";
+import type { CustomUser, UserRole } from "@/types/models/user";
+import type {
+  LoginCredentials,
+  RegisterData,
+  AuthResponse,
+  ApiResponse,
+} from "@/types/api";
 
 // Tipo de retorno para el hook principal useAuth
 export interface UseAuthReturn {
@@ -19,15 +24,17 @@ export interface UseAuthReturn {
   error: string | null;
   permissions: string[];
   lastActivity: Date | null;
-  
+
   // Acciones
-  login: (credentials: LoginCredentials) => Promise<AuthResponse>;
+  login: (
+    credentials: LoginCredentials & { rememberMe?: boolean },
+  ) => Promise<AuthResponse>;
   register: (userData: RegisterData) => Promise<ApiResponse>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
   updateUser: (userData: Partial<CustomUser>) => Promise<void>;
   hasPermission: (permission: string) => boolean;
-  hasRole: (role: string) => boolean;
+  hasRole: (role: UserRole) => boolean;
   clearError: () => void;
   handleAuthStateChange: (isAuthenticated: boolean) => void;
 }
@@ -37,12 +44,12 @@ export interface UseAuthReturn {
  */
 export const useAuth = (): UseAuthReturn => {
   const context = useContext(AuthContext);
-  
+
   if (context === undefined) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
   }
-  
-  return context;
+
+  return context as UseAuthReturn;
 };
 
 /**
@@ -82,19 +89,19 @@ export const useAuthError = () => {
  */
 export const usePermissions = (requiredPermissions?: string | string[]) => {
   const { permissions, hasPermission } = useAuth();
-  
+
   return useMemo(() => {
     if (!requiredPermissions) {
       return { permissions, hasPermission };
     }
-    
-    const permsArray = Array.isArray(requiredPermissions) 
-      ? requiredPermissions 
+
+    const permsArray = Array.isArray(requiredPermissions)
+      ? requiredPermissions
       : [requiredPermissions];
-    
-    const hasAllPermissions = permsArray.every(perm => hasPermission(perm));
-    const hasSomePermissions = permsArray.some(perm => hasPermission(perm));
-    
+
+    const hasAllPermissions = permsArray.every((perm) => hasPermission(perm));
+    const hasSomePermissions = permsArray.some((perm) => hasPermission(perm));
+
     return {
       permissions,
       hasPermission,
@@ -108,21 +115,21 @@ export const usePermissions = (requiredPermissions?: string | string[]) => {
 /**
  * Hook para verificar roles específicos
  */
-export const useRoles = (requiredRoles?: string | string[]) => {
+export const useRoles = (requiredRoles?: UserRole | UserRole[]) => {
   const { user, hasRole } = useAuth();
-  
+
   return useMemo(() => {
     if (!requiredRoles) {
       return { user, hasRole };
     }
-    
-    const rolesArray = Array.isArray(requiredRoles) 
-      ? requiredRoles 
+
+    const rolesArray = Array.isArray(requiredRoles)
+      ? requiredRoles
       : [requiredRoles];
-    
-    const hasAllRoles = rolesArray.every(role => hasRole(role));
-    const hasSomeRoles = rolesArray.some(role => hasRole(role));
-    
+
+    const hasAllRoles = rolesArray.every((role) => hasRole(role));
+    const hasSomeRoles = rolesArray.some((role) => hasRole(role));
+
     return {
       user,
       hasRole,
@@ -139,7 +146,7 @@ export const useRoles = (requiredRoles?: string | string[]) => {
 export const useIsAdmin = () => {
   const { user } = useAuth();
   return useMemo(() => {
-    return user?.is_staff || false;
+    return user?.is_staff || user?.role === "admin";
   }, [user]);
 };
 
@@ -147,11 +154,12 @@ export const useIsAdmin = () => {
  * Hook para obtener acciones de autenticación
  */
 export const useAuthActions = () => {
-  const { login, register, logout, refreshAuth, updateUser, clearError } = useAuth();
-  
+  const { login, register, logout, refreshAuth, updateUser, clearError } =
+    useAuth();
+
   return {
     login,
-    register, 
+    register,
     logout,
     refreshAuth,
     updateUser,
@@ -159,5 +167,4 @@ export const useAuthActions = () => {
   };
 };
 
-// Exportación por defecto del hook principal
 export default useAuth;

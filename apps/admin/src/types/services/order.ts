@@ -1,72 +1,54 @@
-interface OrderDetail {
-  id: number;
-  revenue: number;
-  total_cost: number;
-  total_expenses: number;
-  total_profit: number;
-  balance: number;
-  pay_status: string;
-  status: string;
-  created_at: string; // or Date if you parse it
-}
-
-interface PaymentBreakdownItem {
-  count: number;
-  total: number;
-  percentage: number;
-}
-
-interface OrderStatusItem {
-  count: number;
-  total_revenue: number;
-  avg_revenue: number;
-  paid_count: number;
-  unpaid_count: number;
-}
-
-interface MonthlyTrendItem {
-  month: string | null;
-  total: number;
-  paid: number;
-  unpaid: number;
-  order_count: number;
-}
-
 export interface OrderAnalysis {
-  // Totals
-  total_revenue: number;
-  paid_revenue: number;
-  unpaid_revenue: number;
+  period: {
+    start_date: string; // Formato: 'YYYY-MM-DD'
+    end_date: string;   // Formato: 'YYYY-MM-DD'
+  };
   
-  // Counts
-  total_count: number;
-  paid_count: number;
-  unpaid_count: number;
+  summary: {
+    total_revenue: number;
+    paid_revenue: number;
+    unpaid_revenue: number;
+    payment_index: number;
+    total_orders: number;
+    paid_orders: number;
+    unpaid_orders: number;
+    avg_order_value: number;
+  };
   
-  // Averages
-  average_revenue: number;
-  average_paid: number;
-  average_unpaid: number;
-  
-  // Financials
-  total_cost: number;
-  total_expenses: number;
-  total_profit: number;
-  total_paid_cost: number;
-  total_paid_expenses: number;
-  total_paid_profit: number;
-  total_unpaid_cost: number;
-  total_unpaid_expenses: number;
-  total_unpaid_profit: number;
-
-  payments_out_date: {
+  payment_out_date: {
     total_revenue: number;
     total_payments: number;
   };
   
-  // Breakdowns
-  payment_breakdown: Record<string, PaymentBreakdownItem>;
-  orders_by_status: Record<string, OrderStatusItem>;
-  monthly_trend: MonthlyTrendItem[];
-  orders: OrderDetail[];
+  payment_analysis: {
+    [payStatus: string]: {
+      order_count: number;
+      revenue: number;
+      avg_value: number;
+      percentage_of_total: number;
+    };
+  };
+  
+  status_analysis: {
+    [status: string]: {
+      order_count: number;
+      revenue: number;
+      paid_count: number;
+      paid_revenue: number;
+      unpaid_count: number;
+      payment_rate: number;
+    };
+  };
+  
+  trends: Array<{
+    month: string; // Formato: 'YYYY-MM'
+    order_count: number;
+    total_revenue: number;
+    paid_revenue: number;
+    unpaid_revenue: number;
+    paid_count: number;
+    unpaid_count: number;
+    payment_index: number;
+    avg_order_value: number;
+  }>;
 }

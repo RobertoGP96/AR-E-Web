@@ -1,8 +1,8 @@
-import { type ReactNode, useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../hooks/auth/useAuth';
-import LoadingSpinner from './LoadingSpinner';
-import type { UserRole } from '@/types';
+import { type ReactNode, useEffect, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/auth/useAuth";
+import LoadingSpinner from "./LoadingSpinner";
+import type { UserRole } from "@/types/models/user";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -12,24 +12,32 @@ interface ProtectedRouteProps {
   fallback?: ReactNode;
 }
 
-export function ProtectedRoute({ 
-  children, 
+/**
+ * Componente que protege rutas basado en autenticación, roles y permisos.
+ */
+export function ProtectedRoute({
+  children,
   requireAuth = true,
   requiredPermission,
   requiredRole,
-  fallback = <div>Access denied</div>
+  fallback = (
+    <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center bg-white rounded-lg shadow-sm">
+      <h3 className="text-xl font-bold text-red-600 mb-2">Acceso Denegado</h3>
+      <p className="text-gray-600">
+        No tienes los permisos necesarios para ver esta sección.
+      </p>
+    </div>
+  ),
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, hasPermission, hasRole } = useAuth();
   const location = useLocation();
   const [shouldRedirect, setShouldRedirect] = useState(false);
 
-  // Usar un pequeño delay antes de redirigir para evitar parpadeos
-  // si la autenticación se está verificando
   useEffect(() => {
     if (!isLoading && requireAuth && !isAuthenticated) {
       const timer = setTimeout(() => {
         setShouldRedirect(true);
-      }, 100); // 100ms de delay mínimo
+      }, 150);
 
       return () => clearTimeout(timer);
     } else {
@@ -37,29 +45,23 @@ export function ProtectedRoute({
     }
   }, [isLoading, requireAuth, isAuthenticated]);
 
-  // Mostrar loading mientras se verifica la autenticación
   if (isLoading) {
     return <LoadingSpinner fullScreen text="Verificando acceso..." />;
   }
 
-  // Verificar autenticación con delay para evitar parpadeos
   if (requireAuth && !isAuthenticated) {
     if (shouldRedirect) {
-      // Guardar la ubicación actual para redirigir después del login
       return <Navigate to="/login" state={{ from: location }} replace />;
     }
-    // Mostrar loading brevemente antes de redirigir
-    return <LoadingSpinner fullScreen text="Verificando acceso..." />;
+    return <LoadingSpinner fullScreen text="Redirigiendo..." />;
   }
 
-  // Verificar permisos específicos
   if (requiredPermission && !hasPermission(requiredPermission)) {
-    return fallback;
+    return <>{fallback}</>;
   }
 
-  // Verificar rol específico
   if (requiredRole && !hasRole(requiredRole)) {
-    return fallback;
+    return <>{fallback}</>;
   }
 
   return <>{children}</>;

@@ -6,11 +6,11 @@
  */
 
 import axios from 'axios';
-import type { 
-  AxiosInstance, 
-  AxiosRequestConfig, 
+import { 
+  type AxiosInstance, 
+  type AxiosRequestConfig, 
   AxiosError,
-  InternalAxiosRequestConfig
+  type InternalAxiosRequestConfig
 } from 'axios';
 import type { 
   PaginatedApiResponse, 
@@ -19,7 +19,8 @@ import type {
   RegisterData,
   BaseFilters
 } from '../types/api';
-import type { CustomUser } from '../types/models';
+import type { CustomUser } from '../types/models/user';
+import { AUTH_ENDPOINTS } from '@/constants/auth';
 
 // Configuración base de la API
 const API_CONFIG = {
@@ -41,12 +42,14 @@ interface ApiClientConfig {
 interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
   skipAuth?: boolean;
   skipErrorHandling?: boolean;
+  _retry?: boolean; // Interno para evitar loops de reintento
 }
 
 // Interfaz extendida para InternalAxiosRequestConfig
 interface ExtendedInternalAxiosRequestConfig extends InternalAxiosRequestConfig {
   skipAuth?: boolean;
   skipErrorHandling?: boolean;
+  _retry?: boolean;
 }
 
 interface RequestConfig extends ExtendedAxiosRequestConfig {
@@ -65,21 +68,25 @@ interface ApiErrorResponse {
   isClientError?: boolean;
 }
 
-// Callback para redirigir al login (se puede configurar desde fuera)
+// Callback para redirigir al login
 let redirectToLoginCallback: (() => void) | null = null;
 
-// Callback para mostrar notificaciones (se puede configurar desde fuera)
+// Callback para mostrar notificaciones
 let showNotificationCallback: ((message: string, type: 'success' | 'error' | 'info' | 'warning') => void) | null = null;
 
-// Callback para actualizar el estado de autenticación (se puede configurar desde fuera)
+// Callback para actualizar el estado de autenticación
 let authStateChangeCallback: ((isAuthenticated: boolean) => void) | null = null;
 
 // Flag para evitar múltiples redirecciones simultáneas
 let isRedirecting = false;
 
-// Timestamp de la última redirección para evitar loops
+// Variables para el manejo del refresh token
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+// Timestamp de la última redirección
 let lastRedirectTime = 0;
-const REDIRECT_COOLDOWN = 1000; // 1 segundo entre redirecciones
+const REDIRECT_COOLDOWN = 1000;
 
 export function setRedirectToLoginCallback(callback: () => void) {
   redirectToLoginCallback = callback;
@@ -109,17 +116,29 @@ export class ApiClient {
   }
 
   /**
+   * Suscribe peticiones fallidas a la espera del nuevo token
+   */
+  private subscribeTokenRefresh(cb: (token: string) => void) {
+    refreshSubscribers.push(cb);
+  }
+
+  /**
+   * Notifica a todos los suscriptores con el nuevo token
+   */
+  private onTokenRefreshed(token: string) {
+    refreshSubscribers.forEach((cb) => cb(token));
+    refreshSubscribers = [];
+  }
+
+  /**
    * Configura los interceptors para requests y responses
    */
   private setupInterceptors() {
-    // Request interceptor - añade token de autorización
     this.client.interceptors.request.use(
       (config: ExtendedInternalAxiosRequestConfig) => {
-        // Añadir token de autorización si existe
         if (this.authToken && !config.skipAuth) {
           config.headers.Authorization = `Bearer ${this.authToken}`;
         }
-
         return config;
       },
       (error) => {
@@ -128,15 +147,42 @@ export class ApiClient {
       }
     );
 
-    // Response interceptor - maneja respuestas y errores
     this.client.interceptors.response.use(
-      (response) => {
-        
-
-        return response;
-      },
+      (response) => response,
       async (error: AxiosError) => {
-        // Manejo de errores centralizados
+        const originalRequest = error.config as ExtendedInternalAxiosRequestConfig;
+
+        // Error 401 - Token expirado o inválido
+        if (error.response?.status === 401 && !originalRequest?.skipAuth && !originalRequest?._retry) {
+          
+          if (isRefreshing) {
+            return new Promise((resolve) => {
+              this.subscribeTokenRefresh((token) => {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                resolve(this.client(originalRequest));
+              });
+            });
+          }
+
+          originalRequest._retry = true;
+          isRefreshing = true;
+
+          try {
+            const newToken = await this.refreshAuthToken();
+            isRefreshing = false;
+            this.onTokenRefreshed(newToken);
+            
+            // Reintentar la petición original con el nuevo token
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return this.client(originalRequest);
+          } catch {
+            isRefreshing = false;
+            refreshSubscribers = [];
+            await this.handleUnauthorized();
+            return Promise.reject(this.formatError(error));
+          }
+        }
+
         return this.handleResponseError(error);
       }
     );
@@ -147,9 +193,7 @@ export class ApiClient {
    */
   private async handleResponseError(error: AxiosError): Promise<never> {
     const { response, config } = error;
-    const extendedConfig = config as ExtendedInternalAxiosRequestConfig;
 
-    // Log de errores en desarrollo
     if (import.meta.env.DEV) {
       console.error(`❌ ${response?.status} ${config?.url}`, {
         status: response?.status,
@@ -158,22 +202,14 @@ export class ApiClient {
       });
     }
 
-    // Error 401 - Token expirado o inválido
-    if (response?.status === 401 && !extendedConfig?.skipAuth) {
-      await this.handleUnauthorized();
-    }
-
-    // Error 403 - Sin permisos
     if (response?.status === 403) {
       this.handleForbidden();
     }
 
-    // Error 429 - Rate limiting
     if (response?.status === 429) {
       this.handleRateLimit();
     }
 
-    // Formatear error para el cliente
     const apiError = this.formatError(error);
     return Promise.reject(apiError);
   }
@@ -182,76 +218,45 @@ export class ApiClient {
    * Maneja errores 401 - Unauthorized
    */
   private async handleUnauthorized() {
-    // Evitar procesamiento múltiple de errores 401 simultáneos
     const now = Date.now();
     if (isRedirecting || (now - lastRedirectTime < REDIRECT_COOLDOWN)) {
       return;
     }
     
     isRedirecting = true;
-    
-    // Limpiar token local
     this.clearAuthToken();
     
-    // Notificar cambio de estado de autenticación
     if (authStateChangeCallback) {
       authStateChangeCallback(false);
     }
     
-    // Intentar refresh del token si existe refresh token
-    const refreshToken = this.getRefreshToken();
-    if (refreshToken) {
-      try {
-        await this.refreshAuthToken();
-        // Si el refresh fue exitoso, notificar que está autenticado nuevamente
-        if (authStateChangeCallback) {
-          authStateChangeCallback(true);
-        }
-        isRedirecting = false;
-        return;
-      } catch (refreshError) {
-        console.error('Error refreshing token:', refreshError);
-      }
-    }
-
-    // Mostrar notificación de sesión expirada (solo una vez)
-    if (showNotificationCallback && !isRedirecting) {
+    if (showNotificationCallback) {
       showNotificationCallback('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning');
     }
 
-    // Actualizar timestamp antes de redirigir
     lastRedirectTime = now;
-    
-    // Redirigir a login si no se puede refreshear
     this.redirectToLogin();
     
-    // Reset flag después de un tiempo
     setTimeout(() => {
       isRedirecting = false;
     }, REDIRECT_COOLDOWN);
   }
 
-  /**
-   * Maneja errores 403 - Forbidden
-   */
   private handleForbidden() {
-    // Mostrar mensaje de error de permisos
     console.warn('Access denied: Insufficient permissions');
-    // Aquí podrías disparar una notificación global
+    if (showNotificationCallback) {
+      showNotificationCallback('No tienes permisos para realizar esta acción.', 'error');
+    }
   }
 
-  /**
-   * Maneja errores 429 - Rate Limit
-   */
   private handleRateLimit() {
     console.warn('Rate limit exceeded. Please try again later.');
-    // Aquí podrías implementar retry con backoff exponencial
+    if (showNotificationCallback) {
+      showNotificationCallback('Demasiadas solicitudes. Por favor, intenta más tarde.', 'warning');
+    }
   }
 
-  /**
-   * Formatea errores para consumo del cliente
-   */
-  private formatError(error: AxiosError): ApiErrorResponse {
+  public formatError(error: AxiosError): ApiErrorResponse {
     const { response } = error;
     
     return {
@@ -265,84 +270,71 @@ export class ApiClient {
     };
   }
 
-  /**
-   * Extrae mensaje de error legible
-   */
-  private getErrorMessage(error: AxiosError): string {
+  public getErrorMessage(error: AxiosError | Error): string {
+    if (!(error instanceof AxiosError)) {
+      return error.message || 'An unexpected error occurred';
+    }
+
     const { response } = error;
     
-    // Mensajes desde el servidor
     if (response?.data) {
       const data = response.data as Record<string, unknown>;
       
-      // Django REST Framework error format
       if (data.detail) return String(data.detail);
       if (data.message) return String(data.message);
       if (data.error) return String(data.error);
       
-      // Errores de validación
       if (data.non_field_errors) {
         const errors = data.non_field_errors;
         return Array.isArray(errors) ? String(errors[0]) : String(errors);
       }
       
-      // Primer error de campo encontrado
       for (const [field, errors] of Object.entries(data)) {
+        if (field === 'code') continue;
         if (Array.isArray(errors) && errors.length > 0) {
           return `${field}: ${String(errors[0])}`;
         }
+        if (typeof errors === 'string') return errors;
       }
     }
 
-    // Mensajes por código de estado
     if (response?.status) {
       switch (response.status) {
-        case 400: return 'Bad request - Please check your input';
-        case 401: return 'Authentication required';
-        case 403: return 'Access denied';
-        case 404: return 'Resource not found';
-        case 408: return 'Request timeout';
-        case 409: return 'Conflict - Resource already exists';
-        case 422: return 'Validation error';
-        case 429: return 'Too many requests - Please try again later';
-        case 500: return 'Internal server error';
-        case 502: return 'Bad gateway';
-        case 503: return 'Service unavailable';
-        case 504: return 'Gateway timeout';
-        default: return `HTTP ${response.status}: ${error.message}`;
+        case 400: return 'Petición inválida - Por favor verifica tus datos';
+        case 401: return 'Autenticación requerida';
+        case 403: return 'Acceso denegado';
+        case 404: return 'Recurso no encontrado';
+        case 408: return 'Tiempo de espera agotado';
+        case 422: return 'Error de validación';
+        case 429: return 'Demasiadas solicitudes - Intenta más tarde';
+        case 500: return 'Error interno del servidor';
+        default: return `Error ${response.status}: ${error.message}`;
       }
     }
 
-    // Error de red
-    if (error.code === 'NETWORK_ERROR' || !response) {
-      return 'Network error - Please check your connection';
+    if (error.code === 'ERR_NETWORK') {
+      return 'Error de red - Verifica tu conexión a internet';
     }
 
-    return error.message || 'An unexpected error occurred';
+    return error.message || 'Ocurrió un error inesperado';
   }
 
-  /**
-   * Carga token de autenticación desde localStorage
-   */
   private loadAuthToken() {
     try {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        this.authToken = token;
-      }
+      this.authToken = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
     } catch (error) {
       console.warn('Error loading auth token:', error);
     }
   }
 
-  /**
-   * Establece token de autenticación
-   */
-  public setAuthToken(token: string) {
+  public setAuthToken(token: string, persist: boolean = true) {
     this.authToken = token;
     try {
-      localStorage.setItem('access_token', token);
-      // Notificar que el usuario está autenticado
+      if (persist) {
+        localStorage.setItem('access_token', token);
+      } else {
+        sessionStorage.setItem('access_token', token);
+      }
       if (authStateChangeCallback) {
         authStateChangeCallback(true);
       }
@@ -351,15 +343,13 @@ export class ApiClient {
     }
   }
 
-  /**
-   * Limpia token de autenticación
-   */
   public clearAuthToken() {
     this.authToken = null;
     try {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-      // Notificar que el usuario ya no está autenticado
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
       if (authStateChangeCallback) {
         authStateChangeCallback(false);
       }
@@ -368,319 +358,145 @@ export class ApiClient {
     }
   }
 
-  /**
-   * Obtiene refresh token
-   */
   private getRefreshToken(): string | null {
     try {
-      return localStorage.getItem('refresh_token');
+      return localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
     } catch {
       return null;
     }
   }
 
-  /**
-   * Refresca el token de autenticación
-   */
-  private async refreshAuthToken(): Promise<void> {
+  private async refreshAuthToken(): Promise<string> {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) throw new Error('No refresh token available');
 
-    const response = await this.client.post('/auth/refresh/', {
+    const isPersistent = !!localStorage.getItem('refresh_token');
+
+    // Usamos axios directamente para evitar interceptores que podrían causar bucles
+    const response = await axios.post(`${API_CONFIG.baseURL}${AUTH_ENDPOINTS.REFRESH}`, {
       refresh: refreshToken,
-    }, { skipAuth: true } as ExtendedAxiosRequestConfig);
+    });
 
     const { access, refresh } = response.data;
-    this.setAuthToken(access);
+    this.setAuthToken(access, isPersistent);
     
     if (refresh) {
-      localStorage.setItem('refresh_token', refresh);
+      if (isPersistent) {
+        localStorage.setItem('refresh_token', refresh);
+      } else {
+        sessionStorage.setItem('refresh_token', refresh);
+      }
     }
+
+    return access;
   }
 
-  /**
-   * Redirige a la página de login
-   */
   private redirectToLogin() {
-    // Evitar redirecciones múltiples
-    if (isRedirecting) {
-      return;
-    }
-    
-    // Usar callback si está configurado (React Router)
     if (redirectToLoginCallback) {
       redirectToLoginCallback();
     } else {
-      // Fallback a redirección directa
       window.location.href = '/login';
     }
   }
 
-  // Métodos HTTP públicos
-
-  /**
-   * GET request
-   * Django REST Framework devuelve directamente los datos, no envueltos en ApiResponse
-   */
-  public async get<T = unknown>(
-    url: string, 
-    config?: RequestConfig
-  ): Promise<T> {
+  public async get<T = unknown>(url: string, config?: RequestConfig): Promise<T> {
     const response = await this.client.get<T>(url, config);
     return response.data;
   }
 
-  /**
-   * POST request
-   * Django REST Framework devuelve directamente los datos, no envueltos en ApiResponse
-   */
-  public async post<T = unknown>(
-    url: string, 
-    data?: unknown, 
-    config?: RequestConfig
-  ): Promise<T> {
+  public async post<T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<T> {
     const response = await this.client.post<T>(url, data, config);
     return response.data;
   }
 
-  /**
-   * PUT request
-   * Django REST Framework devuelve directamente los datos, no envueltos en ApiResponse
-   */
-  public async put<T = unknown>(
-    url: string, 
-    data?: unknown, 
-    config?: RequestConfig
-  ): Promise<T> {
+  public async put<T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<T> {
     const response = await this.client.put<T>(url, data, config);
     return response.data;
   }
 
-  /**
-   * PATCH request
-   * Django REST Framework devuelve directamente los datos, no envueltos en ApiResponse
-   */
-  public async patch<T = unknown>(
-    url: string, 
-    data?: unknown, 
-    config?: RequestConfig
-  ): Promise<T> {
+  public async patch<T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<T> {
     const response = await this.client.patch<T>(url, data, config);
     return response.data;
   }
 
-  /**
-   * DELETE request
-   * Django REST Framework devuelve directamente los datos, no envueltos en ApiResponse
-   */
-  public async delete<T = unknown>(
-    url: string, 
-    config?: RequestConfig
-  ): Promise<T> {
+  public async delete<T = unknown>(url: string, config?: RequestConfig): Promise<T> {
     const response = await this.client.delete<T>(url, config);
     return response.data;
   }
 
-  /**
-   * GET request para respuestas paginadas
-   */
   public async getPaginated<T = unknown>(
     url: string, 
     params?: BaseFilters & Record<string, unknown>, 
     config?: RequestConfig
   ): Promise<PaginatedApiResponse<T>> {
-    // Filtrar parámetros inválidos (valores 'all' y undefined/null/empty strings)
     const cleanParams: Record<string, unknown> = {};
-    
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
-        // Incluir el parámetro solo si:
-        // - No es 'all' (valor por defecto para filtros)
-        // - No es undefined o null
-        // - No es una cadena vacía
-        // - No es 0 (para permitir IDs que sean 0 en caso de existir)
-        if (
-          value !== 'all' && 
-          value !== undefined && 
-          value !== null && 
-          value !== ''
-        ) {
+        if (value !== 'all' && value !== undefined && value !== null && value !== '') {
           cleanParams[key] = value;
         }
       });
     }
-
     const response = await this.client.get<PaginatedApiResponse<T>>(url, {
       ...config,
-      params: {
-        page: 1,
-        page_size: 1000, // Aumentado para obtener todos los elementos
-        ...cleanParams,
-      },
+      params: { page: 1, page_size: 1000, ...cleanParams },
     });
     return response.data;
   }
 
-  /**
-   * Upload de archivos
-   */
-  public async uploadFile(
-    url: string,
-    file: File,
-    config?: RequestConfig & {
-      onUploadProgress?: (progressEvent: unknown) => void;
-    }
-  ): Promise<unknown> {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await this.client.post<unknown>(url, formData, {
-      ...config,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        ...config?.headers,
-      },
-    });
-
-    return response.data;
-  }
-
-  /**
-   * Download de archivos
-   */
-  public async downloadFile(
-    url: string,
-    filename?: string,
-    config?: RequestConfig
-  ): Promise<void> {
-    const response = await this.client.get(url, {
-      ...config,
-      responseType: 'blob',
-    });
-
-    // Crear enlace de descarga
-    const blob = new Blob([response.data]);
-    const downloadUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    
-    link.href = downloadUrl;
-    link.download = filename || 'download';
-    document.body.appendChild(link);
-    link.click();
-    
-    // Cleanup
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(downloadUrl);
-  }
-
-  // Métodos de autenticación
-
-  /**
-   * Login de usuario
-   */
-  public async login(credentials: LoginCredentials): Promise<AuthResponse> {
+  public async login(credentials: LoginCredentials & { rememberMe?: boolean }): Promise<AuthResponse> {
+    const { rememberMe, ...apiCredentials } = credentials;
     const response = await this.client.post<{
       access: string;
       refresh: string;
       user: CustomUser;
-    }>('/auth/', credentials, {
-      skipAuth: true,
-    } as ExtendedAxiosRequestConfig);
+    }>(AUTH_ENDPOINTS.LOGIN, apiCredentials, { skipAuth: true } as ExtendedAxiosRequestConfig);
 
     const backendData = response.data;
-    
-    // Mapear respuesta del backend al formato esperado por el frontend
     const authData: AuthResponse = {
       access_token: backendData.access,
       refresh_token: backendData.refresh,
       user: backendData.user,
-      expires_in: 3600, // Valor por defecto, ajustar según configuración JWT
+      expires_in: 3600,
     };
     
-    // Guardar tokens
-    this.setAuthToken(authData.access_token);
+    this.setAuthToken(authData.access_token, rememberMe);
     if (authData.refresh_token) {
-      localStorage.setItem('refresh_token', authData.refresh_token);
+      if (rememberMe) {
+        localStorage.setItem('refresh_token', authData.refresh_token);
+      } else {
+        sessionStorage.setItem('refresh_token', authData.refresh_token);
+      }
     }
-
-    // Notificar que el usuario está autenticado (ya se hace en setAuthToken)
-    // if (authStateChangeCallback) {
-    //   authStateChangeCallback(true);
-    // }
 
     return authData;
   }
 
-  /**
-   * Registro de usuario
-   */
   public async register(userData: RegisterData): Promise<unknown> {
-    return this.post('/register/', userData, { skipAuth: true });
+    return this.post(AUTH_ENDPOINTS.REGISTER, userData, { skipAuth: true });
   }
 
-  /**
-   * Logout de usuario
-   */
   public async logout(): Promise<void> {
     try {
       const refreshToken = this.getRefreshToken();
       if (refreshToken) {
-        await this.post('/logout/', { refresh_token: refreshToken });
+        await this.post(AUTH_ENDPOINTS.LOGOUT, { refresh_token: refreshToken });
       }
     } catch (error) {
       console.warn('Error during logout:', error);
     } finally {
       this.clearAuthToken();
-      // Notificar que el usuario ya no está autenticado (ya se hace en clearAuthToken)
-      // if (authStateChangeCallback) {
-      //   authStateChangeCallback(false);
-      // }
     }
   }
 
-  /**
-   * Verifica si el usuario está autenticado
-   */
   public isAuthenticated(): boolean {
     return !!this.authToken;
   }
 
-  /**
-   * Obtiene información del usuario actual
-   */
   public async getCurrentUser(): Promise<CustomUser> {
-    return this.get<CustomUser>('/user/');
+    return this.get<CustomUser>(AUTH_ENDPOINTS.CURRENT_USER);
   }
 }
 
-// Error personalizado para el API
-export class ApiError extends Error {
-  public status?: number;
-  public code?: string;
-  public details?: unknown;
-  public isNetworkError?: boolean;
-  public isServerError?: boolean;
-  public isClientError?: boolean;
-
-  constructor(
-    message: string,
-    status?: number,
-    code?: string,
-    details?: unknown
-  ) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-    this.code = code;
-    this.details = details;
-    this.isNetworkError = !status;
-    this.isServerError = status ? status >= 500 : false;
-    this.isClientError = status ? status >= 400 && status < 500 : false;
-  }
-}
-
-// Instancia singleton del cliente API
 export const apiClient = new ApiClient();
-
-// Export del tipo de error para uso en otras partes
 export type { RequestConfig, ApiErrorResponse };

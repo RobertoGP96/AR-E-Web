@@ -1,75 +1,77 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { Eye, EyeOff, LogIn, Loader2, Mail, Phone, Check } from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/auth/useAuth';
-import type { LoginCredentials } from '@/types/api';
-import logoSvg from '@/assets/logo/logo.svg';
-
-// Tipo para errores de Axios
-interface ApiError {
-  response?: {
-    status: number;
-    data?: {
-      message?: string;
-      detail?: string;
-      [key: string]: unknown;
-    };
-  };
-  code?: string;
-  message?: string;
-}
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { Eye, EyeOff, LogIn, Loader2, Mail, Phone, Check } from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/auth/useAuth";
+import type { LoginCredentials } from "@/types/api";
+import { apiClient } from "@/lib/api-client";
+import logoSvg from "@/assets/logo/logo.svg";
 
 // Función helper para detectar si es email o teléfono
-const detectInputType = (value: string): 'email' | 'phone' | 'unknown' => {
+const detectInputType = (value: string): "email" | "phone" | "unknown" => {
   const trimmedValue = value.trim();
 
-  // Detectar email (contiene @ y formato válido)
-  if (trimmedValue.includes('@') && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
-    return 'email';
+  // Detectar email
+  if (
+    trimmedValue.includes("@") &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)
+  ) {
+    return "email";
   }
 
-  // Detectar teléfono (solo números, +, espacios, guiones, paréntesis)
-  if (/^[+\d\s\-()]+$/.test(trimmedValue) && trimmedValue.replace(/[\s\-()]/g, '').length >= 8) {
-    return 'phone';
+  // Detectar teléfono
+  if (
+    /^[+\d\s\-()]+$/.test(trimmedValue) &&
+    trimmedValue.replace(/[\s\-()]/g, "").length >= 8
+  ) {
+    return "phone";
   }
 
-  return 'unknown';
+  return "unknown";
 };
 
-// Schema de validación con Zod - Campo flexible para email o teléfono
+// Schema de validación con Zod
 const loginSchema = z.object({
   emailOrPhone: z
     .string()
     .trim()
-    .min(1, 'El email o número de teléfono es requerido')
-    .refine(
-      (val) => {
-        const type = detectInputType(val);
-        return type === 'email' || type === 'phone';
-      },
-      'Ingresa un email válido o un número de teléfono válido'
-    ),
+    .min(1, "El email o número de teléfono es requerido")
+    .refine((val) => {
+      const type = detectInputType(val);
+      return type === "email" || type === "phone";
+    }, "Ingresa un email válido o un número de teléfono válido"),
   password: z
     .string()
-    .min(1, 'La contraseña es requerida')
-    .min(6, 'La contraseña debe tener al menos 6 caracteres')
-    .max(128, 'La contraseña es demasiado larga')
-    .refine(
-      (val) => val.trim().length === val.length,
-      'La contraseña no debe contener espacios al inicio o final'
-    ),
+    .min(1, "La contraseña es requerida")
+    .min(6, "La contraseña debe tener al menos 6 caracteres"),
   rememberMe: z.boolean(),
 });
 
@@ -83,39 +85,37 @@ interface LoginProps {
 
 export const Login: React.FC<LoginProps> = ({
   onSuccess,
-  redirectTo = '/',
-  className
+  redirectTo = "/",
+  className,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isLoading, error, clearError, isAuthenticated } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [inputType, setInputType] = useState<"email" | "phone" | "unknown">(
+    "unknown",
+  );
 
-  // Obtener la ubicación desde donde se redirigió o usar la ruta por defecto
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || redirectTo;
+  const from =
+    (location.state as { from?: { pathname: string } })?.from?.pathname ||
+    redirectTo;
 
-  // Configuración del formulario con react-hook-form y zod
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      emailOrPhone: '',
-      password: '',
+      emailOrPhone: "",
+      password: "",
       rememberMe: false,
     },
   });
 
-  // Estado para mostrar el icono según el tipo detectado
-  const [inputType, setInputType] = useState<'email' | 'phone' | 'unknown'>('unknown');
-
-  // Watch del campo para detectar el tipo en tiempo real
-  const emailOrPhoneValue = form.watch('emailOrPhone');
+  const emailOrPhoneValue = form.watch("emailOrPhone");
 
   useEffect(() => {
     if (emailOrPhoneValue) {
-      const detected = detectInputType(emailOrPhoneValue);
-      setInputType(detected);
+      setInputType(detectInputType(emailOrPhoneValue));
     } else {
-      setInputType('unknown');
+      setInputType("unknown");
     }
   }, [emailOrPhoneValue]);
 
@@ -130,38 +130,13 @@ export const Login: React.FC<LoginProps> = ({
     }
   }, [isAuthenticated, navigate, onSuccess, from]);
 
-  // Mostrar errores usando Sonner
+  // Mostrar error si existe
   useEffect(() => {
     if (error) {
-      // Determinar el tipo de error y mostrar mensaje descriptivo
-      let errorMessage = error;
-
-      if (error.toLowerCase().includes('credenciales') ||
-        error.toLowerCase().includes('credentials') ||
-        error.toLowerCase().includes('incorrect')) {
-        errorMessage = 'Credenciales incorrectas. El email/teléfono o la contraseña son incorrectos. Por favor, verifica tus datos.';
-      } else if (error.toLowerCase().includes('network') ||
-        error.toLowerCase().includes('conexión') ||
-        error.toLowerCase().includes('connection')) {
-        errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
-      } else if (error.toLowerCase().includes('bloqueado') ||
-        error.toLowerCase().includes('blocked') ||
-        error.toLowerCase().includes('disabled')) {
-        errorMessage = 'Tu cuenta ha sido bloqueada. Contacta al administrador del sistema.';
-      } else if (error.toLowerCase().includes('timeout')) {
-        errorMessage = 'El servidor tardó demasiado en responder. Por favor, intenta nuevamente.';
-      } else if (error.toLowerCase().includes('not found') ||
-        error.toLowerCase().includes('no existe')) {
-        errorMessage = 'No se encontró una cuenta con estas credenciales. Verifica tu información.';
-      } else if (error.toLowerCase().includes('inactiv')) {
-        errorMessage = 'Tu cuenta está inactiva. Por favor, activa tu cuenta para continuar.';
-      }
-
-      toast.error(errorMessage, {
+      toast.error(error, {
         duration: 5000,
-        position: 'top-center',
+        position: "top-center",
       });
-
       clearError();
     }
   }, [error, clearError]);
@@ -171,245 +146,187 @@ export const Login: React.FC<LoginProps> = ({
       const inputValue = data.emailOrPhone.trim();
       const type = detectInputType(inputValue);
 
-      // Validar tipo de entrada antes de enviar
-      if (type === 'unknown') {
-        toast.error('Por favor, ingresa un email válido (ejemplo@correo.com) o un número de teléfono válido (+53 1234 5678).', {
-          duration: 5000,
-          position: 'top-center',
-        });
-        return;
-      }
+      const credentials: LoginCredentials & { rememberMe: boolean } = {
+        password: data.password,
+        rememberMe: data.rememberMe,
+      };
 
-      // Crear credenciales según el tipo detectado
-      const credentials: LoginCredentials & { phone_number?: string } = type === 'email'
-        ? { email: inputValue.toLowerCase(), password: data.password }
-        : { email: '', phone_number: inputValue, password: data.password };
-
-      await login(credentials as LoginCredentials);
-
-      // Si llegamos aquí, el login fue exitoso
-      toast.success('¡Bienvenido! Redirigiendo al panel de administración...', {
-        duration: 2000,
-        position: 'top-center',
-      });
-
-      if (onSuccess) {
-        onSuccess();
+      if (type === "email") {
+        credentials.email = inputValue.toLowerCase();
       } else {
-        navigate(from, { replace: true });
+        credentials.phone_number = inputValue;
       }
+
+      await login(credentials);
+
+      toast.success("¡Bienvenido! Redirigiendo...", {
+        duration: 2000,
+        position: "top-center",
+      });
     } catch (err: unknown) {
-      // Manejo de errores más descriptivo
-      if (import.meta.env.DEV) {
-        console.error('Login failed:', err);
-      }
+      // El error se maneja en el hook AuthContext / useAuth
+      if (import.meta.env.DEV) console.error("Login failed:", err);
 
-      // El error ya se muestra en el useEffect, pero por si acaso
-      // el AuthContext no lo maneja, mostramos un error genérico
+      // Si por alguna razón el contexto no capturó el error, lo hacemos aquí usando apiClient
       if (!error) {
-        let errorMessage = 'Ocurrió un error inesperado. Por favor, intenta nuevamente.';
-
-        const apiError = err as ApiError;
-        const responseStatus = apiError?.response?.status;
-
-        if (responseStatus === 401) {
-          errorMessage = 'Credenciales incorrectas. Verifica tu email/teléfono y contraseña.';
-        } else if (responseStatus === 403) {
-          errorMessage = 'No tienes permisos para acceder al sistema. Contacta al administrador.';
-        } else if (responseStatus === 404) {
-          errorMessage = 'Usuario no encontrado. Verifica tus credenciales.';
-        } else if (responseStatus && responseStatus >= 500) {
-          errorMessage = 'Error del servidor. Por favor, intenta más tarde.';
-        } else if (apiError?.code === 'ERR_NETWORK') {
-          errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
-        } else if (apiError?.response?.data?.message) {
-          errorMessage = apiError.response.data.message;
-        } else if (apiError?.response?.data?.detail) {
-          errorMessage = apiError.response.data.detail;
-        } else if (apiError?.message) {
-          errorMessage = apiError.message;
-        }
-
-        toast.error(errorMessage, {
-          duration: 5000,
-          position: 'top-center',
-        });
+        toast.error(apiClient.getErrorMessage(err as Error));
       }
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const handleForgotPassword = () => {
-    navigate('/forgot-password');
-  };
-
-
   return (
-    <TooltipProvider>
-      <div className={cn("flex items-center justify-center min-h-screen bg-gradient-to-br from-orange-100 to-gray-500", className)}>
-        <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm drop-shadow-xl">
-          <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-2">
-              <img
-                src={logoSvg}
-                alt="Logo de la aplicación"
-                className="h-25 w-25 object-contain"
-              />
-            </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              Iniciar Sesión
-            </CardTitle>
-            <CardDescription className="text-gray-600">
-              Ingresa tus credenciales para acceder al sistema de administración
-            </CardDescription>
-          </CardHeader>
+    <div
+      className={cn(
+        "flex items-center justify-center min-h-screen bg-gradient-to-br from-orange-100 to-gray-500",
+        className,
+      )}
+    >
+      <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm drop-shadow-xl">
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-2">
+            <img
+              src={logoSvg}
+              alt="Logo"
+              className="h-24 w-auto object-contain"
+            />
+          </div>
+          <CardTitle className="text-2xl font-bold text-gray-900">
+            Iniciar Sesión
+          </CardTitle>
+          <CardDescription className="text-gray-600">
+            Panel de administración
+          </CardDescription>
+        </CardHeader>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="emailOrPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-700 font-medium flex items-center gap-1">
-                        <Mail className="h-4 w-4" />
-                        Email o
-                        <Phone className="h-4 w-4" />
-                        Teléfono
-                      </FormLabel>
-                      <FormControl>
-
-                        <InputGroup>
-                          <InputGroupInput disabled={isLoading} {...field} className="h-11 bg-white" placeholder="tu@email.com o +53 1234 5678" />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="emailOrPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700 font-medium flex items-center gap-1">
+                      <Mail className="h-4 w-4" />
+                      Email o
+                      <Phone className="h-4 w-4" />
+                      Teléfono
+                    </FormLabel>
+                    <FormControl>
+                      <InputGroup>
+                        <InputGroupInput
+                          {...field}
+                          disabled={isLoading}
+                          className="h-11 bg-white"
+                          placeholder="tu@email.com o +53..."
+                        />
+                        {inputType !== "unknown" && (
                           <InputGroupAddon align="inline-end">
                             <div className="bg-primary text-primary-foreground flex size-4 items-center justify-center rounded-full">
-                              {inputType !== 'unknown' && (
-                                <Check  />
-                              )}
+                              <Check className="h-2 w-2" />
                             </div>
                           </InputGroupAddon>
-                        </InputGroup>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                        )}
+                      </InputGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700 font-medium">
+                      Contraseña
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          placeholder="••••••••"
+                          type={showPassword ? "text" : "password"}
+                          disabled={isLoading}
+                          className="h-11 pr-10 bg-white"
+                          {...field}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          disabled={isLoading}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-gray-500" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-500" />
+                          )}
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex items-center justify-between">
                 <FormField
                   control={form.control}
-                  name="password"
+                  name="rememberMe"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">
-                        Contraseña
-                      </FormLabel>
+                    <FormItem className="flex flex-row items-center space-x-2 space-y-0">
                       <FormControl>
-                        <div className="relative">
-                          <Input
-                            placeholder="••••••••"
-                            type={showPassword ? 'text' : 'password'}
-                            disabled={isLoading}
-                            className="h-11 pr-10 bg-white"
-                            {...field}
-                          />
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                onClick={togglePasswordVisibility}
-                                disabled={isLoading}
-                              >
-                                {showPassword ? (
-                                  <EyeOff className="h-4 w-4 text-gray-500" />
-                                ) : (
-                                  <Eye className="h-4 w-4 text-gray-500" />
-                                )}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isLoading}
+                        />
                       </FormControl>
-                      <FormMessage />
+                      <FormLabel className="text-sm font-normal text-gray-600 cursor-pointer">
+                        Recordarme
+                      </FormLabel>
                     </FormItem>
                   )}
                 />
 
-                <div className="flex items-center justify-between">
-                  <FormField
-                    control={form.control}
-                    name="rememberMe"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            disabled={isLoading}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="text-sm font-normal text-gray-600">
-                            Recordarme
-                          </FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="px-0 text-sm "
-                        onClick={handleForgotPassword}
-                        disabled={isLoading}
-                      >
-                        ¿Olvidaste tu contraseña?
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Recuperar contraseña por email</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </CardContent>
-
-              <CardFooter className='p-4'>
                 <Button
-                  type="submit"
-                  className="w-full h-11  text-white font-medium"
+                  type="button"
+                  variant="link"
+                  className="px-0 text-sm h-auto"
+                  onClick={() => navigate("/forgot-password")}
                   disabled={isLoading}
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Iniciando sesión...
-                    </>
-                  ) : (
-                    <>
-                      <LogIn className="mr-2 h-4 w-4" />
-                      Iniciar Sesión
-                    </>
-                  )}
+                  ¿Olvidaste tu contraseña?
                 </Button>
-              </CardFooter>
-            </form>
-          </Form>
+              </div>
+            </CardContent>
 
-
-        </Card>
-      </div>
-    </TooltipProvider>
+            <CardFooter className="p-6 pt-2">
+              <Button
+                type="submit"
+                className="w-full h-11 text-white font-medium"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Iniciando sesión...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Iniciar Sesión
+                  </>
+                )}
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
+    </div>
   );
 };
 
