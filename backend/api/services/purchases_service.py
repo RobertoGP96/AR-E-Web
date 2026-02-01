@@ -31,12 +31,16 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
     if end_date:
         qs = qs.filter(buy_date__lte=end_date)
 
-    # 2. Annotate with Refund Totals for each receipt to avoid complex joins in aggregation
-    # Using Subquery for refunds per receipt is more robust but for now we use Sum per receipt
-    # and then aggregate in Python to avoid duplication issues in complex ORM queries.
+    # 2. Annotate with Refund Totals and Expected Cost for each receipt
     annotated_qs = qs.annotate(
         receipt_refunded=Coalesce(
             Sum('buyed_products__refund_amount', filter=Q(buyed_products__is_refunded=True)),
+            0.0,
+            output_field=FloatField()
+        ),
+        expected_cost=Coalesce(
+            Sum('buyed_products__original_product__total_cost', 
+                filter=Q(buyed_products__is_refunded=False)),
             0.0,
             output_field=FloatField()
         ),
@@ -47,6 +51,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
     total_count = 0
     total_gross = 0.0
     total_refunded = 0.0
+    total_expected = 0.0
     total_products = 0
     
     by_shop = {}
@@ -56,6 +61,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
     trend_map = defaultdict(lambda: {'count': 0, 'gross': 0.0, 'refunded': 0.0})
 
     for purchase in annotated_qs:
+        expected = float(purchase.expected_cost or 0.0)
         gross = float(purchase.total_cost_of_purchase or 0.0)
         refunded = float(purchase.receipt_refunded or 0.0)
         products = int(purchase.products_count or 0)
@@ -66,6 +72,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
         
         # Overall Totals
         total_count += 1
+        total_expected += expected
         total_gross += gross
         total_refunded += refunded
         total_products += products
@@ -81,7 +88,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
                 'total_products': 0
             }
         by_shop[shop_name]['count'] += 1
-        by_shop[shop_name]['total_purchase_amount'] += gross
+        by_shop[shop_name]['total_purchase_amount'] += expected
         by_shop[shop_name]['total_refunded'] += refunded
         by_shop[shop_name]['total_real_cost_paid'] += (gross - refunded)
         by_shop[shop_name]['total_products'] += products
@@ -97,7 +104,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
                 'by_payment_status': {}
             }
         card_breakdown[card]['count'] += 1
-        card_breakdown[card]['total_purchase_amount'] += gross
+        card_breakdown[card]['total_purchase_amount'] += expected
         card_breakdown[card]['total_refunded'] += refunded
         card_breakdown[card]['total_real_cost_paid'] += (gross - refunded)
         
@@ -127,19 +134,20 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
                 'total_real_cost_paid': 0.0
             }
         by_account[acc_name]['count'] += 1
-        by_account[acc_name]['total_purchase_amount'] += gross
+        by_account[acc_name]['total_purchase_amount'] += expected
         by_account[acc_name]['total_refunded'] += refunded
         by_account[acc_name]['total_real_cost_paid'] += (gross - refunded)
         
         # Monthly Trend
         month_key = purchase.buy_date.strftime('%Y-%m')
         trend_map[month_key]['count'] += 1
+        trend_map[month_key]['expected'] += expected
         trend_map[month_key]['gross'] += gross
         trend_map[month_key]['refunded'] += refunded
 
     # Finalize derived metrics
     total_net = total_gross - total_refunded
-    avg_purchase_amount = (total_gross / total_count) if total_count else 0.0
+    avg_purchase_amount = (total_expected / total_count) if total_count else 0.0
     avg_refund = (total_refunded / total_count) if total_count else 0.0
     
     for s_data in by_payment_status.values():
@@ -153,7 +161,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
         monthly_trend.append({
             'month': m_key,
             'count': m_data['count'],
-            'total_purchase_amount': m_data['gross'],
+            'total_purchase_amount': m_data['expected'],
             'total_refunded': m_data['refunded'],
             'net_cost': m_data['gross'] - m_data['refunded']
         })
@@ -166,7 +174,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
     return {
         'totals': {
             'count': total_count,
-            'total_purchase_amount': total_gross,
+            'total_purchase_amount': total_expected,
             'total_refunded': total_refunded,
             'total_real_cost_paid': total_net,
             'total_operational_expenses': 0.0,
