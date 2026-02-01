@@ -10,6 +10,7 @@ from django.contrib.auth import get_user_model
 from api.models import CustomUser
 from api.serializers import UserSerializer, UserCreateSerializer, UserUpdateSerializer
 from api.permissions.permissions import ReadOnly, AdminPermission, AgentPermission, BuyerPermission, LogisticalPermission
+from api.services.client_services import get_client_balance_report
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -169,6 +170,22 @@ class UserViewSet(viewsets.ModelViewSet):
             "active_users": active_users,
             "staff_users": staff_users
         })
+
+    @extend_schema(
+        summary="Reporte de balance del cliente",
+        description="Genera un reporte detallado de deudas y saldos a favor para un cliente.",
+        responses={200: OpenApiTypes.OBJECT},
+        tags=["Usuarios"]
+    )
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def balance_report(self, request, pk=None):
+        """
+        Endpoint que retorna el reporte de balance de un cliente.
+        """
+        report = get_client_balance_report(pk)
+        if "error" in report:
+            return Response(report, status=status.HTTP_404_NOT_FOUND)
+        return Response(report)
 
 
 class CurrentUserView(views.APIView):
