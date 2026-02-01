@@ -22,7 +22,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
         months_back (int): When start_date/end_date is not provided, compute monthly trend for last `months_back` months
 
     Returns:
-        dict: contains totals, by_status, by_shop, by_card, and monthly trend
+        dict: matches the frontend PurchaseAnalysis interface structure
     """
     # 1. Base Queryset Filtering
     qs = ShoppingReceip.objects.all()
@@ -32,7 +32,6 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
         qs = qs.filter(buy_date__lte=end_date)
 
     # 2. Annotate with Refund Totals for each receipt
-    # We use Coalesce to handle None values as 0.0
     annotated_qs = qs.annotate(
         receipt_refunded=Coalesce(
             Sum('buyed_products__refund_amount', filter=Q(buyed_products__is_refunded=True)),
@@ -40,7 +39,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
             output_field=FloatField()
         ),
         products_count=Count('buyed_products')
-    )
+    ).select_related('shop_of_buy', 'shopping_account')
 
     # 3. Overall Totals
     totals_agg = annotated_qs.aggregate(
@@ -55,75 +54,114 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
     total_refunded = float(totals_agg['total_refunded'] or 0.0)
     total_net = total_gross - total_refunded
     total_products = int(totals_agg['total_products'] or 0)
-    
     avg_purchase = (total_gross / total_count) if total_count else 0.0
+    avg_refund = (total_refunded / total_count) if total_count else 0.0
 
     # 4. Breakdown by Shop
     shop_qs = annotated_qs.values(
-        shop_id=F('shop_of_buy__id'),
-        shop_name=F('shop_of_buy__name')
+        name=F('shop_of_buy__name')
     ).annotate(
         count=Count('id'),
         gross=Sum('total_cost_of_purchase'),
         refunded=Sum('receipt_refunded'),
         products=Sum('products_count')
-    ).order_by('-gross')
+    )
 
     by_shop = {}
     for item in shop_qs:
-        name = item['shop_name'] or 'Sin tienda'
+        name = item['name'] or 'Sin tienda'
         by_shop[name] = {
             'count': item['count'],
             'total_purchase_amount': float(item['gross'] or 0.0),
             'total_refunded': float(item['refunded'] or 0.0),
             'total_real_cost_paid': float((item['gross'] or 0.0) - (item['refunded'] or 0.0)),
+            'total_operational_expenses': 0.0,
             'total_products': item['products']
         }
 
-    # 5. Breakdown by Card
-    card_qs = annotated_qs.values('card_id').annotate(
-        count=Count('id'),
-        gross=Sum('total_cost_of_purchase'),
-        refunded=Sum('receipt_refunded'),
-        products=Sum('products_count')
-    ).order_by('-gross')
-
-    by_card = {}
-    for item in card_qs:
-        card = item['card_id'] or 'Sin tarjeta'
-        by_card[card] = {
-            'count': item['count'],
-            'total_purchase_amount': float(item['gross'] or 0.0),
-            'total_refunded': float(item['refunded'] or 0.0),
-            'total_real_cost_paid': float((item['gross'] or 0.0) - (item['refunded'] or 0.0)),
-            'total_products': item['products']
-        }
+    # 5. Breakdown by Card (including nested payment status)
+    card_breakdown = {}
+    # We'll iterate to get the nested breakdown efficiently
+    for purchase in annotated_qs:
+        card = purchase.card_id or 'Sin tarjeta'
+        if card not in card_breakdown:
+            card_breakdown[card] = {
+                'count': 0,
+                'total_purchase_amount': 0.0,
+                'total_refunded': 0.0,
+                'total_real_cost_paid': 0.0,
+                'total_operational_expenses': 0.0,
+                'by_payment_status': {}
+            }
+        
+        gross = float(purchase.total_cost_of_purchase or 0.0)
+        refunded = float(purchase.receipt_refunded or 0.0)
+        status = purchase.status_of_shopping or PaymentStatusEnum.NO_PAGADO.value
+        
+        card_breakdown[card]['count'] += 1
+        card_breakdown[card]['total_purchase_amount'] += gross
+        card_breakdown[card]['total_refunded'] += refunded
+        card_breakdown[card]['total_real_cost_paid'] += (gross - refunded)
+        
+        if status not in card_breakdown[card]['by_payment_status']:
+            card_breakdown[card]['by_payment_status'][status] = {
+                'count': 0,
+                'total_amount': 0.0,
+                'total_refunded': 0.0
+            }
+        
+        card_breakdown[card]['by_payment_status'][status]['count'] += 1
+        card_breakdown[card]['by_payment_status'][status]['total_amount'] += gross
+        card_breakdown[card]['by_payment_status'][status]['total_refunded'] += refunded
 
     # 6. Breakdown by Payment Status
     status_qs = annotated_qs.values('status_of_shopping').annotate(
         count=Count('id'),
         gross=Sum('total_cost_of_purchase'),
-        refunded=Sum('receipt_refunded'),
-        products=Sum('products_count')
-    ).order_by('-gross')
+        refunded=Sum('receipt_refunded')
+    )
 
-    by_status = {}
+    by_payment_status = {}
+    by_status_counts = {}
     for item in status_qs:
         status = item['status_of_shopping'] or PaymentStatusEnum.NO_PAGADO.value
-        by_status[status] = {
-            'count': item['count'],
-            'total_amount': float(item['gross'] or 0.0),
-            'total_refunded': float(item['refunded'] or 0.0),
-            'net_amount': float((item['gross'] or 0.0) - (item['refunded'] or 0.0)),
-            'avg_amount': float(item['gross'] or 0.0) / item['count'] if item['count'] else 0.0
+        gross = float(item['gross'] or 0.0)
+        refunded = float(item['refunded'] or 0.0)
+        count = item['count']
+        
+        by_status_counts[status] = count
+        by_payment_status[status] = {
+            'count': count,
+            'total_amount': gross,
+            'total_refunded': refunded,
+            'avg_amount': gross / count if count else 0.0
         }
 
-    # 7. Refund Analysis (Count of receipts with it least one refund)
+    # 7. Breakdown by Account
+    account_qs = annotated_qs.values(
+        name=F('shopping_account__account_name')
+    ).annotate(
+        count=Count('id'),
+        gross=Sum('total_cost_of_purchase'),
+        refunded=Sum('receipt_refunded')
+    )
+
+    by_account = {}
+    for item in account_qs:
+        name = item['name'] or 'Sin cuenta'
+        by_account[name] = {
+            'count': item['count'],
+            'total_purchase_amount': float(item['gross'] or 0.0),
+            'total_refunded': float(item['refunded'] or 0.0),
+            'total_real_cost_paid': float((item['gross'] or 0.0) - (item['refunded'] or 0.0))
+        }
+
+    # 8. Refund Analysis
     refunded_receipts_count = annotated_qs.filter(receipt_refunded__gt=0).count()
     non_refunded_count = total_count - refunded_receipts_count
     refund_rate = (refunded_receipts_count / total_count * 100) if total_count else 0.0
 
-    # 8. Monthly Trend
+    # 9. Monthly Trend
     if not start_date and not end_date:
         now = timezone.now()
         end_date = now
@@ -142,11 +180,14 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
 
     monthly_trend = []
     for row in trend_qs:
+        gross = float(row['gross'] or 0.0)
+        refunded = float(row['refunded'] or 0.0)
         monthly_trend.append({
             'month': row['month'].strftime('%Y-%m') if row['month'] else None,
             'count': row['count'],
-            'total_purchase_amount': float(row['gross'] or 0.0),
-            'total_refunded': float(row['refunded'] or 0.0)
+            'total_purchase_amount': gross,
+            'total_refunded': refunded,
+            'net_cost': gross - refunded
         })
 
     return {
@@ -155,12 +196,17 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
             'total_purchase_amount': total_gross,
             'total_refunded': total_refunded,
             'total_real_cost_paid': total_net,
+            'total_operational_expenses': 0.0,
             'total_products_bought': total_products,
             'avg_purchase_amount': avg_purchase_amount,
+            'avg_refund_amount': avg_refund,
+            'total_profit': 0.0,  # Could be total_net - operational_expenses if tracked
         },
-        'by_status': by_status,
+        'by_status': by_status_counts,
         'by_shop': by_shop,
-        'by_card': by_card,
+        'by_card': card_breakdown,
+        'by_payment_status': by_payment_status,
+        'by_account': by_account,
         'monthly_trend': monthly_trend,
         'refunded_purchases_count': refunded_receipts_count,
         'non_refunded_purchases_count': non_refunded_count,

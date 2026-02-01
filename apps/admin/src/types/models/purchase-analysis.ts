@@ -6,21 +6,31 @@
  * Análisis detallado de compras para un rango de fechas
  */
 export interface PurchaseAnalysisData {
-  count: number;
-  total_purchase_amount: number;
-  total_refunded: number;
-  total_real_cost_paid: number;
-  total_operational_expenses: number;
-  total_products_bought: number;
-  average_purchase_amount: number;
-  average_refund_amount: number;
+  totals: {
+    count: number;
+    total_purchase_amount: number;
+    total_refunded: number;
+    total_real_cost_paid: number;
+    total_operational_expenses: number;
+    total_products_bought: number;
+    avg_purchase_amount: number;
+    avg_refund_amount: number;
+    total_profit: number;
+  };
+  by_status: Record<string, number>;
+  by_shop: Record<string, ShopPurchaseStats>;
+  by_card: Record<string, CardPurchaseStats>;
+  by_payment_status: Record<string, {
+    count: number;
+    total_amount: number;
+    total_refunded: number;
+    avg_amount: number;
+  }>;
+  by_account: Record<string, AccountPurchaseStats>;
+  monthly_trend: MonthlyPurchaseTrend[];
   refunded_purchases_count: number;
   non_refunded_purchases_count: number;
   refund_rate_percentage: number;
-  purchases_by_status: Record<string, number>;
-  purchases_by_shop: Record<string, ShopPurchaseStats>;
-  purchases_by_account: Record<string, AccountPurchaseStats>;
-  monthly_trend: MonthlyPurchaseTrend[];
 }
 
 /**
@@ -33,6 +43,22 @@ export interface ShopPurchaseStats {
   total_real_cost_paid: number;
   total_operational_expenses: number;
   total_products: number;
+}
+
+/**
+ * Estadísticas por tarjeta
+ */
+export interface CardPurchaseStats {
+  count: number;
+  total_purchase_amount: number;
+  total_refunded: number;
+  total_real_cost_paid: number;
+  total_operational_expenses: number;
+  by_payment_status: Record<string, {
+    count: number;
+    total_amount: number;
+    total_refunded: number;
+  }>;
 }
 
 /**
@@ -49,7 +75,7 @@ export interface AccountPurchaseStats {
  * Tendencia mensual de compras
  */
 export interface MonthlyPurchaseTrend {
-  month: string;
+  month: string | null;
   count: number;
   total_purchase_amount: number;
   total_refunded: number;
