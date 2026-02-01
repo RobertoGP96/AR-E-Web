@@ -58,7 +58,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
     card_breakdown = {}
     by_payment_status = {}
     by_account = {}
-    trend_map = defaultdict(lambda: {'count': 0, 'gross': 0.0, 'refunded': 0.0})
+    trend_map = defaultdict(lambda: {'count': 0, 'expected': 0.0, 'gross': 0.0, 'refunded': 0.0})
 
     for purchase in annotated_qs:
         expected = float(purchase.expected_cost or 0.0)
