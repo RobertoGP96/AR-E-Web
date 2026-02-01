@@ -7,7 +7,7 @@ from typing import Dict, Any, List, DefaultDict
 from collections import defaultdict
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
-from django.db.models import Sum, Count, Q, F, Case, When, Value, CharField
+from django.db.models import Sum, Count, Q, F, Case, When, Value, CharField, FloatField, IntegerField
 from django.db.models.functions import Coalesce
 from api.models import ShoppingReceip, ProductBuyed
 from api.enums import PaymentStatusEnum
@@ -54,7 +54,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
     total_refunded = float(totals_agg['total_refunded'] or 0.0)
     total_net = total_gross - total_refunded
     total_products = int(totals_agg['total_products'] or 0)
-    avg_purchase = (total_gross / total_count) if total_count else 0.0
+    avg_purchase_amount = (total_gross / total_count) if total_count else 0.0
     avg_refund = (total_refunded / total_count) if total_count else 0.0
 
     # 4. Breakdown by Shop
@@ -325,7 +325,6 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
     Returns:
         dict: Diccionario con las operaciones agrupadas por tarjeta, ordenadas por fecha
     """
-    from django.db.models import Sum, Count, Q, FloatField, IntegerField
     from django.db.models.functions import Coalesce
     
     # Filtrar compras por fechas y tarjeta si se especifica
