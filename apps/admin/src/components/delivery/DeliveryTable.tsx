@@ -72,6 +72,7 @@ import {
 } from "../ui/hover-card";
 import AvatarUser from "../utils/AvatarUser";
 import { TablePagination } from "../utils/TablePagination";
+import LoadingSpinner from "../utils/LoadingSpinner";
 
 interface DeliveryTableProps {
   deliveries: DeliverReceip[];
@@ -253,7 +254,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
     return (
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
+          <LoadingSpinner size="lg" text="Cargando entregas" />
         </div>
       </div>
     );

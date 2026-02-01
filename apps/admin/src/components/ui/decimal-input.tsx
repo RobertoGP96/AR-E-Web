@@ -1,16 +1,18 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { Input } from "./input";
 
-
-export interface DecimalInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
-  value?: number | string
-  onChange?: (value: number | undefined) => void
-  decimalPlaces?: number
-  allowNegative?: boolean
+export interface DecimalInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange" | "value"
+> {
+  value?: number | string;
+  onChange?: (value: number | undefined) => void;
+  decimalPlaces?: number;
+  allowNegative?: boolean;
 }
-
 
 export function DecimalInput({
   className,
@@ -20,59 +22,53 @@ export function DecimalInput({
   allowNegative = false,
   ...props
 }: DecimalInputProps) {
-  const [displayValue, setDisplayValue] = React.useState<string>("")
-
+  const [displayValue, setDisplayValue] = React.useState<string>("");
 
   // Sync external value with display
   React.useEffect(() => {
     if (value !== undefined && value !== "") {
-      const num = typeof value === "string" ? Number.parseFloat(value) : value
+      const num = typeof value === "string" ? Number.parseFloat(value) : value;
       if (!isNaN(num)) {
-        setDisplayValue(num.toString())
+        setDisplayValue(num.toString());
       }
     } else {
-      setDisplayValue("")
+      setDisplayValue("");
     }
-  }, [value])
-
+  }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value
-
+    const inputValue = e.target.value;
 
     // Allow empty input
     if (inputValue === "") {
-      setDisplayValue("")
-      onChange?.(undefined)
-      return
+      setDisplayValue("");
+      onChange?.(undefined);
+      return;
     }
 
-
     // Build regex pattern based on options
-    const negativePattern = allowNegative ? "-?" : ""
-    const decimalPattern = decimalPlaces > 0 ? `(\\.\\d{0,${decimalPlaces}})?` : ""
-    const regex = new RegExp(`^${negativePattern}\\d*${decimalPattern}$`)
-
+    const negativePattern = allowNegative ? "-?" : "";
+    const decimalPattern =
+      decimalPlaces > 0 ? `(\\.\\d{0,${decimalPlaces}})?` : "";
+    const regex = new RegExp(`^${negativePattern}\\d*${decimalPattern}$`);
 
     // Validate input format
     if (regex.test(inputValue)) {
-      setDisplayValue(inputValue)
-
+      setDisplayValue(inputValue);
 
       // Only call onChange with valid number
-      const num = Number.parseFloat(inputValue)
+      const num = Number.parseFloat(inputValue);
       if (!isNaN(num)) {
-        onChange?.(num)
+        onChange?.(num);
       } else if (inputValue === "-" || inputValue === ".") {
         // Allow partial input while typing
-        onChange?.(undefined)
+        onChange?.(undefined);
       }
     }
-  }
-
+  };
 
   return (
-    <input
+    <Input
       type="text"
       inputMode="decimal"
       className={cn(
@@ -83,5 +79,5 @@ export function DecimalInput({
       onChange={handleChange}
       {...props}
     />
-  )
+  );
 }

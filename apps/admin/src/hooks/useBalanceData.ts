@@ -26,37 +26,54 @@ export function useBalanceData({ startDate, endDate }: UseBalanceDataProps) {
   const { 
     data: reports, 
     isLoading: isLoadingReports, 
-    error: reportsError 
+    error: reportsError,
+    refetch: refetchReports
   } = useProfitReports();
 
   const { 
     data: invoicesRangeData, 
-    isLoading: isLoadingInvoices 
+    isLoading: isLoadingInvoices,
+    refetch: refetchInvoices
   } = useInvoiceRangeData({ startDate: startIso, endDate: endIso });
 
   const {
     data: expensesAnalysis,
     isLoading: isLoadingExpensesAnalysis,
     error: expenseError,
+    refetch: refetchExpensesAnalysis
   } = useExpensesAnalysis({ startDate: startIso, endDate: endIso });
 
   const { 
     data: deliveryAnalysis, 
     isLoading: isLoadingDeliveryAnalysis, 
-    error: deliveryAnalysisError 
+    error: deliveryAnalysisError,
+    refetch: refetchDeliveryAnalysis
   } = useDeliveryAnalysis({ startDate: startIso, endDate: endIso });
 
   const { 
     data: ordersAnalysis, 
     isLoading: isLoadingOrders, 
-    error: ordersError 
+    error: ordersError,
+    refetch: refetchOrders
   } = useOrdersAnalysis({ startDate: startIso, endDate: endIso });
 
   const { 
     data: purchasesAnalysis, 
     isLoading: isLoadingPurchases, 
-    error: purchasesError 
+    error: purchasesError,
+    refetch: refetchPurchases
   } = usePurchasesAnalysis({ startDate: startIso, endDate: endIso });
+
+  const refetch = async () => {
+    return Promise.all([
+      refetchReports(),
+      refetchInvoices(),
+      refetchExpensesAnalysis(),
+      refetchDeliveryAnalysis(),
+      refetchOrders(),
+      refetchPurchases(),
+    ]);
+  };
 
   // Filter monthly reports by selected date range
   const filteredMonthly = React.useMemo(() => {
@@ -149,6 +166,7 @@ export function useBalanceData({ startDate, endDate }: UseBalanceDataProps) {
     deliveryAnalysisError,
     ordersError,
     purchasesError,
+    refetch,
   };
 }
 

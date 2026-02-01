@@ -24,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import LoadingSpinner from "@/components/utils/LoadingSpinner";
+
 import { DatePicker } from "@/components/utils/DatePicker";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -45,6 +45,7 @@ import {
   CheckCircle2,
   CreditCard,
   Store,
+  RotateCw,
 } from "lucide-react";
 import useBalanceData from "@/hooks/useBalanceData";
 import type { OrderAnalysis } from "@/types/services/order";
@@ -53,8 +54,8 @@ import type { DeliveryAnalysisResponse } from "@/types/models/delivery";
 import type { ExpenseAnalysisResponse } from "@/services/api";
 import type { InvoiceRangeData } from "@/types/models/invoice";
 import type { PurchaseAnalysis } from "@/types/services/purchase";
-import { maskCardNumberAdvanced } from "@/lib/format-card";
 import { CardTransactionsDialog } from "./components/card-transactions-dialog";
+import { BalanceReportSkeleton } from "./balance-report-skeleton";
 
 // Componente BalanceReport: reutilizable en pages y widgets
 export default function BalanceReport() {
@@ -93,7 +94,7 @@ export default function BalanceReport() {
       setPreset(
         previousPresetRef.current && previousPresetRef.current !== "custom"
           ? previousPresetRef.current
-          : "6m"
+          : "6m",
       );
       previousPresetRef.current = null;
     }
@@ -135,7 +136,23 @@ export default function BalanceReport() {
     deliveryAnalysisError,
     ordersError,
     purchasesError,
+    refetch,
   } = useBalanceData({ startDate, endDate });
+
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      toast.success("Datos actualizados correctamente");
+    } catch (error) {
+      toast.error("Error al actualizar los datos");
+      console.error(error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Apply preset shortcuts
   React.useEffect(() => {
@@ -216,7 +233,7 @@ export default function BalanceReport() {
     isLoadingOrders ||
     isLoadingPurchases
   )
-    return <LoadingSpinner text="Cargando Reportes..." />;
+    return <BalanceReportSkeleton />;
   if (error)
     return (
       <Card>
@@ -233,14 +250,28 @@ export default function BalanceReport() {
     <div className="space-y-6">
       {/* Header Section */}
       <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-6 border border-primary/20">
-        <div className="space-y-2 mb-6">
-          <h2 className="text-3xl font-bold text-foreground">
-            Reportes Financieros
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Análisis detallado de ingresos, gastos y entregas en tu rango
-            seleccionado
-          </p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold text-foreground">
+              Reportes Financieros
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Análisis detallado de ingresos, gastos y entregas en tu rango
+              seleccionado
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing || isLoading}
+            className="bg-background/50 backdrop-blur-sm border-primary/20 hover:bg-background/80"
+          >
+            <RotateCw
+              className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")}
+            />
+            Actualizar Datos
+          </Button>
         </div>
 
         {/* Date Range Controls - Improved Layout */}
@@ -250,7 +281,7 @@ export default function BalanceReport() {
               "cursor-pointer transition-all duration-300 border-2 hover:border-primary/50",
               !useCustomRange
                 ? "border-primary shadow-md"
-                : "border-gray-200 bg-white hover:shadow-sm"
+                : "border-gray-200 bg-white hover:shadow-sm",
             )}
             onClick={() => handleUseCustomRangeChange(false)}
             aria-pressed={!useCustomRange}
@@ -267,7 +298,7 @@ export default function BalanceReport() {
                 <Label
                   className={cn(
                     "select-none cursor-pointer text-base font-semibold",
-                    !useCustomRange && "text-primary"
+                    !useCustomRange && "text-primary",
                   )}
                 >
                   Rango Estándar
@@ -286,7 +317,7 @@ export default function BalanceReport() {
                   value={preset}
                   onValueChange={(v) =>
                     handlePresetChange(
-                      v as "1m" | "3m" | "6m" | "12m" | "custom"
+                      v as "1m" | "3m" | "6m" | "12m" | "custom",
                     )
                   }
                 >
@@ -312,7 +343,7 @@ export default function BalanceReport() {
               "lg:col-span-2 cursor-pointer transition-all duration-300 border-2 hover:border-primary/50",
               useCustomRange
                 ? "border-primary  shadow-md"
-                : "border-gray-200 bg-white hover:shadow-sm"
+                : "border-gray-200 bg-white hover:shadow-sm",
             )}
             onClick={() => handleUseCustomRangeChange(true)}
             aria-pressed={useCustomRange}
@@ -329,7 +360,7 @@ export default function BalanceReport() {
                 <Label
                   className={cn(
                     "select-none cursor-pointer text-base font-semibold",
-                    useCustomRange && "text-primary"
+                    useCustomRange && "text-primary",
                   )}
                 >
                   Rango Personalizado
@@ -400,20 +431,24 @@ export default function BalanceReport() {
                   <MetricCard
                     label="Ingresos Totales"
                     value={formatUSD(ordersAnalysis.summary.total_revenue || 0)}
-                    
                   />
                   <MetricCard
                     label="Ingesos Pendientes"
-                    value={formatUSD(ordersAnalysis.summary.unpaid_revenue || 0)}
+                    value={formatUSD(
+                      ordersAnalysis.summary.unpaid_revenue || 0,
+                    )}
                   />
                   <MetricCard
                     label="Ingresos Pagados"
-                    value={formatUSD(ordersAnalysis.summary.paid_revenue || 0)+(`${ordersAnalysis.payment_out_date.total_payments ? ` + ${formatUSD(ordersAnalysis.payment_out_date.total_payments)}` : ""}`)}
+                    value={
+                      formatUSD(ordersAnalysis.summary.paid_revenue || 0) +
+                      `${ordersAnalysis.payment_out_date.total_payments ? ` + ${formatUSD(ordersAnalysis.payment_out_date.total_payments)}` : ""}`
+                    }
                     highlight
                   />
                   <MetricCard
                     label="Indice de Pago"
-                    value={ordersAnalysis.summary.payment_index+"%" || 0}
+                    value={ordersAnalysis.summary.payment_index + "%" || 0}
                   />
                 </div>
               </div>
@@ -461,19 +496,19 @@ export default function BalanceReport() {
                   <MetricCard
                     label="Reembolsos"
                     value={formatUSD(
-                      purchasesAnalysis?.totals.total_refunded || 0
+                      purchasesAnalysis?.totals.total_refunded || 0,
                     )}
                   />
                   <MetricCard
                     label="Costos Registrados"
                     value={formatUSD(
-                      purchasesAnalysis?.totals.total_real_cost_paid || 0
+                      purchasesAnalysis?.totals.total_real_cost_paid || 0,
                     )}
                   />
                   <MetricCard
                     label="Pagado"
                     value={formatUSD(
-                      purchasesAnalysis?.totals.total_purchase_amount || 0
+                      purchasesAnalysis?.totals.total_purchase_amount || 0,
                     )}
                     highlight
                   />
@@ -528,7 +563,7 @@ export default function BalanceReport() {
                                   </TableCell>
                                   <TableCell className="text-right text-orange-600 font-semibold">
                                     {formatUSD(
-                                      stats.total_purchase_amount || 0
+                                      stats.total_purchase_amount || 0,
                                     )}
                                   </TableCell>
                                   <TableCell className="text-right text-green-600 font-semibold">
@@ -538,7 +573,7 @@ export default function BalanceReport() {
                                     {formatUSD(stats.total_real_cost_paid || 0)}
                                   </TableCell>
                                 </TableRow>
-                              )
+                              ),
                             )}
                           </TableBody>
                         </Table>
@@ -588,7 +623,7 @@ export default function BalanceReport() {
                                   <TableCell className="font-medium">
                                     <Badge variant="outline">
                                       {card !== "Sin tarjeta"
-                                        ? maskCardNumberAdvanced(card)
+                                        ? card
                                         : "Sin tarjeta"}
                                     </Badge>
                                   </TableCell>
@@ -597,7 +632,7 @@ export default function BalanceReport() {
                                   </TableCell>
                                   <TableCell className="text-right text-orange-600 font-semibold">
                                     {formatUSD(
-                                      stats.total_purchase_amount || 0
+                                      stats.total_purchase_amount || 0,
                                     )}
                                   </TableCell>
                                   <TableCell className="text-right text-green-600 font-semibold">
@@ -607,7 +642,7 @@ export default function BalanceReport() {
                                     {formatUSD(stats.total_real_cost_paid || 0)}
                                   </TableCell>
                                 </TableRow>
-                              )
+                              ),
                             )}
                           </TableBody>
                         </Table>
@@ -660,25 +695,25 @@ export default function BalanceReport() {
                   <MetricCard
                     label="Ingresos"
                     value={formatUSD(
-                      deliveryAnalysis?.total_delivery_revenue || 0
+                      deliveryAnalysis?.total_delivery_revenue || 0,
                     )}
                   />
                   <MetricCard
                     label="Gastos"
                     value={formatUSD(
-                      deliveryAnalysis?.total_delivery_expenses || 0
+                      deliveryAnalysis?.total_delivery_expenses || 0,
                     )}
                   />
                   <MetricCard
                     label="Agentes"
                     value={formatUSD(
-                      deliveryAnalysis?.total_manager_profit || 0
+                      deliveryAnalysis?.total_manager_profit || 0,
                     )}
                   />
                   <MetricCard
                     label="Ganancia"
                     value={formatUSD(
-                      deliveryAnalysis?.total_system_profit || 0
+                      deliveryAnalysis?.total_system_profit || 0,
                     )}
                     highlight
                   />
@@ -716,7 +751,7 @@ export default function BalanceReport() {
                           </TableHeader>
                           <TableBody>
                             {Object.entries(
-                              deliveryAnalysis.deliveries_by_category
+                              deliveryAnalysis.deliveries_by_category,
                             ).map(([category, values]) => (
                               <TableRow
                                 key={category}
@@ -733,12 +768,12 @@ export default function BalanceReport() {
                                 </TableCell>
                                 <TableCell className="text-right text-blue-600 font-semibold">
                                   {formatUSD(
-                                    values.total_delivery_revenue || 0
+                                    values.total_delivery_revenue || 0,
                                   )}
                                 </TableCell>
                                 <TableCell className="text-right text-red-600 font-semibold">
                                   {formatUSD(
-                                    values.total_delivery_expenses || 0
+                                    values.total_delivery_expenses || 0,
                                   )}
                                 </TableCell>
                                 <TableCell className="text-right text-red-600 font-semibold">
@@ -937,7 +972,9 @@ function ExecutiveSummary({
     }
 
     // Ingresos totales (de órdenes + entregas)
-    const totalOrderRevenue = (ordersAnalysis?.summary.paid_revenue || 0) + (ordersAnalysis?.payment_out_date.total_payments || 0);
+    const totalOrderRevenue =
+      (ordersAnalysis?.summary.paid_revenue || 0) +
+      (ordersAnalysis?.payment_out_date.total_payments || 0);
     const totalDeliveryRevenue = deliveryAnalysis?.total_delivery_revenue || 0;
     const totalIncome = totalOrderRevenue + totalDeliveryRevenue;
 
@@ -959,7 +996,8 @@ function ExecutiveSummary({
 
     // Desglose de ganancias
     const orderProfit =
-      (ordersAnalysis?.summary.total_revenue || 0) - (ordersAnalysis?.summary.total_revenue || 0);
+      (ordersAnalysis?.summary.total_revenue || 0) -
+      (ordersAnalysis?.summary.total_revenue || 0);
     const deliveryProfit = deliveryAnalysis?.total_system_profit || 0;
     const purchaseProfit =
       (purchasesAnalysis?.totals.total_purchase_amount || 0) -
@@ -1056,7 +1094,7 @@ function ExecutiveSummary({
       costs: summary.invoiceCosts,
       expenses: summary.totalExpenses,
       notes: `Balance generado automáticamente para el período ${formatDate(
-        startDate
+        startDate,
       )} - ${formatDate(endDate)}`,
     };
 
@@ -1196,7 +1234,7 @@ function ExecutiveSummary({
                   "p-4 rounded-lg border-2 transition-all",
                   summary.deliveryProfit >= 0
                     ? "border-purple-300 bg-purple-50"
-                    : "border-orange-300 bg-orange-50"
+                    : "border-orange-300 bg-orange-50",
                 )}
               >
                 <div className="text-sm font-medium text-muted-foreground mb-2">
@@ -1207,7 +1245,7 @@ function ExecutiveSummary({
                     "text-2xl font-bold",
                     summary.deliveryProfit >= 0
                       ? "text-purple-600"
-                      : "text-orange-600"
+                      : "text-orange-600",
                   )}
                 >
                   {formatUSD(summary.deliveryProfit)}
@@ -1226,7 +1264,7 @@ function ExecutiveSummary({
                   "p-4 rounded-lg border-2 transition-all",
                   summary.purchaseProfit >= 0
                     ? "border-amber-300 bg-amber-50"
-                    : "border-orange-300 bg-orange-50"
+                    : "border-orange-300 bg-orange-50",
                 )}
               >
                 <div className="text-sm font-medium text-muted-foreground mb-2">
@@ -1237,7 +1275,7 @@ function ExecutiveSummary({
                     "text-2xl font-bold",
                     summary.purchaseProfit >= 0
                       ? "text-amber-600"
-                      : "text-orange-600"
+                      : "text-orange-600",
                   )}
                 >
                   {formatUSD(summary.purchaseProfit)}
@@ -1257,21 +1295,22 @@ function ExecutiveSummary({
                   "text-4xl font-bold border rounded-lg p-4",
                   isPositive
                     ? "bg-green-100 border-green-400 text-green-700"
-                    : "bg-red-100 border-red-400 text-red-700"
+                    : "bg-red-100 border-red-400 text-red-700",
                 )}
               >
                 <div className="text-sm font-medium  mb-2">Ganancia Neta</div>
                 <div
                   className={cn(
                     "text-2xl font-bold",
-                    isPositive ? "text-green-600" : "text-red-600"
+                    isPositive ? "text-green-600" : "text-red-600",
                   )}
                 >
                   {formatUSD(summary.netProfit)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
                   {(
-                    (summary.netProfit / (ordersAnalysis?.summary.total_revenue || 1)) *
+                    (summary.netProfit /
+                      (ordersAnalysis?.summary.total_revenue || 1)) *
                     100
                   ).toFixed(2)}
                   % margen
@@ -1303,7 +1342,7 @@ function MetricCard({
         "p-3 rounded-lg border transition-all",
         highlight
           ? "bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 shadow-sm"
-          : "bg-muted/30 border-muted-foreground/20 hover:bg-muted/50"
+          : "bg-muted/30 border-muted-foreground/20 hover:bg-muted/50",
       )}
     >
       <div className="text-xs font-medium text-muted-foreground mb-1">
@@ -1312,7 +1351,7 @@ function MetricCard({
       <div
         className={cn(
           "font-bold",
-          highlight ? "text-lg text-primary" : "text-base text-foreground"
+          highlight ? "text-lg text-primary" : "text-base text-foreground",
         )}
       >
         {value}

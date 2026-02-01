@@ -65,6 +65,7 @@ import { useDeletePackage } from "@/hooks/package/useDeletePackage";
 import { useUpdatePackage, useUpdatePackageStatus } from "@/hooks/package";
 import { toast } from "sonner";
 import { TablePagination } from "../utils/TablePagination";
+import LoadingSpinner from "../utils/LoadingSpinner";
 
 interface PackagesTableProps {
   packages: PackageType[];
@@ -241,7 +242,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     return (
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
+          <LoadingSpinner size="lg" text="Cargando paquetes" />
         </div>
       </div>
     );
