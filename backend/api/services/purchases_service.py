@@ -31,7 +31,9 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
     if end_date:
         qs = qs.filter(buy_date__lte=end_date)
 
-    # 2. Annotate with Refund Totals for each receipt
+    # 2. Annotate with Refund Totals for each receipt to avoid complex joins in aggregation
+    # Using Subquery for refunds per receipt is more robust but for now we use Sum per receipt
+    # and then aggregate in Python to avoid duplication issues in complex ORM queries.
     annotated_qs = qs.annotate(
         receipt_refunded=Coalesce(
             Sum('buyed_products__refund_amount', filter=Q(buyed_products__is_refunded=True)),
@@ -39,51 +41,52 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
             output_field=FloatField()
         ),
         products_count=Count('buyed_products')
-    ).select_related('shop_of_buy', 'shopping_account')
+    ).select_related('shop_of_buy', 'shopping_account').order_by('buy_date')
 
-    # 3. Overall Totals
-    totals_agg = annotated_qs.aggregate(
-        count=Count('id'),
-        total_gross=Sum('total_cost_of_purchase'),
-        total_refunded=Sum('receipt_refunded'),
-        total_products=Sum('products_count')
-    )
-
-    total_count = totals_agg['count'] or 0
-    total_gross = float(totals_agg['total_gross'] or 0.0)
-    total_refunded = float(totals_agg['total_refunded'] or 0.0)
-    total_net = total_gross - total_refunded
-    total_products = int(totals_agg['total_products'] or 0)
-    avg_purchase_amount = (total_gross / total_count) if total_count else 0.0
-    avg_refund = (total_refunded / total_count) if total_count else 0.0
-
-    # 4. Breakdown by Shop
-    shop_qs = annotated_qs.values(
-        name=F('shop_of_buy__name')
-    ).annotate(
-        count=Count('id'),
-        gross=Sum('total_cost_of_purchase'),
-        refunded=Sum('receipt_refunded'),
-        products=Sum('products_count')
-    )
-
+    # 3. Aggregation in Python to avoid "Sum over Sum" and Join Duplicate errors
+    total_count = 0
+    total_gross = 0.0
+    total_refunded = 0.0
+    total_products = 0
+    
     by_shop = {}
-    for item in shop_qs:
-        name = item['name'] or 'Sin tienda'
-        by_shop[name] = {
-            'count': item['count'],
-            'total_purchase_amount': float(item['gross'] or 0.0),
-            'total_refunded': float(item['refunded'] or 0.0),
-            'total_real_cost_paid': float((item['gross'] or 0.0) - (item['refunded'] or 0.0)),
-            'total_operational_expenses': 0.0,
-            'total_products': item['products']
-        }
-
-    # 5. Breakdown by Card (including nested payment status)
     card_breakdown = {}
-    # We'll iterate to get the nested breakdown efficiently
+    by_payment_status = {}
+    by_account = {}
+    trend_map = defaultdict(lambda: {'count': 0, 'gross': 0.0, 'refunded': 0.0})
+
     for purchase in annotated_qs:
+        gross = float(purchase.total_cost_of_purchase or 0.0)
+        refunded = float(purchase.receipt_refunded or 0.0)
+        products = int(purchase.products_count or 0)
+        status = purchase.status_of_shopping or PaymentStatusEnum.NO_PAGADO.value
         card = purchase.card_id or 'Sin tarjeta'
+        shop_name = purchase.shop_of_buy.name if purchase.shop_of_buy else 'Sin tienda'
+        acc_name = purchase.shopping_account.account_name if purchase.shopping_account else 'Sin cuenta'
+        
+        # Overall Totals
+        total_count += 1
+        total_gross += gross
+        total_refunded += refunded
+        total_products += products
+        
+        # Shop Breakdown
+        if shop_name not in by_shop:
+            by_shop[shop_name] = {
+                'count': 0,
+                'total_purchase_amount': 0.0,
+                'total_refunded': 0.0,
+                'total_real_cost_paid': 0.0,
+                'total_operational_expenses': 0.0,
+                'total_products': 0
+            }
+        by_shop[shop_name]['count'] += 1
+        by_shop[shop_name]['total_purchase_amount'] += gross
+        by_shop[shop_name]['total_refunded'] += refunded
+        by_shop[shop_name]['total_real_cost_paid'] += (gross - refunded)
+        by_shop[shop_name]['total_products'] += products
+        
+        # Card Breakdown
         if card not in card_breakdown:
             card_breakdown[card] = {
                 'count': 0,
@@ -93,11 +96,6 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
                 'total_operational_expenses': 0.0,
                 'by_payment_status': {}
             }
-        
-        gross = float(purchase.total_cost_of_purchase or 0.0)
-        refunded = float(purchase.receipt_refunded or 0.0)
-        status = purchase.status_of_shopping or PaymentStatusEnum.NO_PAGADO.value
-        
         card_breakdown[card]['count'] += 1
         card_breakdown[card]['total_purchase_amount'] += gross
         card_breakdown[card]['total_refunded'] += refunded
@@ -105,90 +103,65 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
         
         if status not in card_breakdown[card]['by_payment_status']:
             card_breakdown[card]['by_payment_status'][status] = {
-                'count': 0,
-                'total_amount': 0.0,
-                'total_refunded': 0.0
+                'count': 0, 'total_amount': 0.0, 'total_refunded': 0.0
             }
-        
         card_breakdown[card]['by_payment_status'][status]['count'] += 1
         card_breakdown[card]['by_payment_status'][status]['total_amount'] += gross
         card_breakdown[card]['by_payment_status'][status]['total_refunded'] += refunded
-
-    # 6. Breakdown by Payment Status
-    status_qs = annotated_qs.values('status_of_shopping').annotate(
-        count=Count('id'),
-        gross=Sum('total_cost_of_purchase'),
-        refunded=Sum('receipt_refunded')
-    )
-
-    by_payment_status = {}
-    by_status_counts = {}
-    for item in status_qs:
-        status = item['status_of_shopping'] or PaymentStatusEnum.NO_PAGADO.value
-        gross = float(item['gross'] or 0.0)
-        refunded = float(item['refunded'] or 0.0)
-        count = item['count']
         
-        by_status_counts[status] = count
-        by_payment_status[status] = {
-            'count': count,
-            'total_amount': gross,
-            'total_refunded': refunded,
-            'avg_amount': gross / count if count else 0.0
-        }
+        # Payment Status Breakdown
+        if status not in by_payment_status:
+            by_payment_status[status] = {
+                'count': 0, 'total_amount': 0.0, 'total_refunded': 0.0, 'avg_amount': 0.0
+            }
+        by_payment_status[status]['count'] += 1
+        by_payment_status[status]['total_amount'] += gross
+        by_payment_status[status]['total_refunded'] += refunded
+        
+        # Account Breakdown
+        if acc_name not in by_account:
+            by_account[acc_name] = {
+                'count': 0,
+                'total_purchase_amount': 0.0,
+                'total_refunded': 0.0,
+                'total_real_cost_paid': 0.0
+            }
+        by_account[acc_name]['count'] += 1
+        by_account[acc_name]['total_purchase_amount'] += gross
+        by_account[acc_name]['total_refunded'] += refunded
+        by_account[acc_name]['total_real_cost_paid'] += (gross - refunded)
+        
+        # Monthly Trend
+        month_key = purchase.buy_date.strftime('%Y-%m')
+        trend_map[month_key]['count'] += 1
+        trend_map[month_key]['gross'] += gross
+        trend_map[month_key]['refunded'] += refunded
 
-    # 7. Breakdown by Account
-    account_qs = annotated_qs.values(
-        name=F('shopping_account__account_name')
-    ).annotate(
-        count=Count('id'),
-        gross=Sum('total_cost_of_purchase'),
-        refunded=Sum('receipt_refunded')
-    )
+    # Finalize derived metrics
+    total_net = total_gross - total_refunded
+    avg_purchase_amount = (total_gross / total_count) if total_count else 0.0
+    avg_refund = (total_refunded / total_count) if total_count else 0.0
+    
+    for s_data in by_payment_status.values():
+        if s_data['count'] > 0:
+            s_data['avg_amount'] = s_data['total_amount'] / s_data['count']
 
-    by_account = {}
-    for item in account_qs:
-        name = item['name'] or 'Sin cuenta'
-        by_account[name] = {
-            'count': item['count'],
-            'total_purchase_amount': float(item['gross'] or 0.0),
-            'total_refunded': float(item['refunded'] or 0.0),
-            'total_real_cost_paid': float((item['gross'] or 0.0) - (item['refunded'] or 0.0))
-        }
+    # Convert Trend Map to list
+    monthly_trend = []
+    for m_key in sorted(trend_map.keys()):
+        m_data = trend_map[m_key]
+        monthly_trend.append({
+            'month': m_key,
+            'count': m_data['count'],
+            'total_purchase_amount': m_data['gross'],
+            'total_refunded': m_data['refunded'],
+            'net_cost': m_data['gross'] - m_data['refunded']
+        })
 
-    # 8. Refund Analysis
+    # Refund Analysis
     refunded_receipts_count = annotated_qs.filter(receipt_refunded__gt=0).count()
     non_refunded_count = total_count - refunded_receipts_count
     refund_rate = (refunded_receipts_count / total_count * 100) if total_count else 0.0
-
-    # 9. Monthly Trend
-    if not start_date and not end_date:
-        now = timezone.now()
-        end_date = now
-        from datetime import timedelta
-        start_date = (now.replace(day=1) - timedelta(days=months_back * 30)).replace(day=1)
-
-    trend_qs = annotated_qs.filter(buy_date__gte=start_date, buy_date__lte=end_date) \
-        .annotate(month=TruncMonth('buy_date')) \
-        .values('month') \
-        .annotate(
-            count=Count('id'),
-            gross=Sum('total_cost_of_purchase'),
-            refunded=Sum('receipt_refunded')
-        ) \
-        .order_by('month')
-
-    monthly_trend = []
-    for row in trend_qs:
-        gross = float(row['gross'] or 0.0)
-        refunded = float(row['refunded'] or 0.0)
-        monthly_trend.append({
-            'month': row['month'].strftime('%Y-%m') if row['month'] else None,
-            'count': row['count'],
-            'total_purchase_amount': gross,
-            'total_refunded': refunded,
-            'net_cost': gross - refunded
-        })
 
     return {
         'totals': {
@@ -200,9 +173,9 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
             'total_products_bought': total_products,
             'avg_purchase_amount': avg_purchase_amount,
             'avg_refund_amount': avg_refund,
-            'total_profit': 0.0,  # Could be total_net - operational_expenses if tracked
+            'total_profit': 0.0,
         },
-        'by_status': by_status_counts,
+        'by_status': {k: v['count'] for k, v in by_payment_status.items()},
         'by_shop': by_shop,
         'by_card': card_breakdown,
         'by_payment_status': by_payment_status,
@@ -215,15 +188,7 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
 
 
 def get_purchases_summary(start_date=None, end_date=None) -> Dict[str, Any]:
-    """Get a quick summary of purchases for a date range.
-    
-    Args:
-        start_date (datetime, optional): Start of the range
-        end_date (datetime, optional): End of the range
-    
-    Returns:
-        dict: Quick summary with key metrics
-    """
+    """Get a quick summary of purchases for a date range."""
     data = analyze_purchases(start_date=start_date, end_date=end_date)
     totals = data['totals']
     
@@ -239,15 +204,7 @@ def get_purchases_summary(start_date=None, end_date=None) -> Dict[str, Any]:
 
 
 def analyze_product_buys(start_date=None, end_date=None) -> Dict[str, Any]:
-    """Analyze individual product purchases with refund metrics.
-    
-    Args:
-        start_date (datetime, optional): Start of the range
-        end_date (datetime, optional): End of the range
-    
-    Returns:
-        dict: Contains aggregates and breakdown by product and refund status
-    """
+    """Analyze individual product purchases with refund metrics."""
     qs = ProductBuyed.objects.all()
     if start_date:
         qs = qs.filter(buy_date__gte=start_date)
@@ -315,16 +272,7 @@ def analyze_product_buys(start_date=None, end_date=None) -> Dict[str, Any]:
 
 
 def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[str, Any]:
-    """Obtiene las operaciones por tarjeta, ordenadas por fecha, separando compras y reembolsos.
-    
-    Args:
-        start_date (datetime, optional): Fecha de inicio del rango
-        end_date (datetime, optional): Fecha de fin del rango
-        card_id (str, optional): ID de la tarjeta específica a filtrar
-        
-    Returns:
-        dict: Diccionario con las operaciones agrupadas por tarjeta, ordenadas por fecha
-    """
+    """Obtiene las operaciones por tarjeta, ordenadas por fecha, separando compras y reembolsos."""
     from django.db.models.functions import Coalesce
     
     # Filtrar compras por fechas y tarjeta si se especifica
@@ -338,7 +286,6 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
         purchases_qs = purchases_qs.filter(card_id=card_id)
     
     # Obtener las compras con información de reembolsos
-    # CAMBIO: Usar nombres diferentes para las anotaciones
     purchases = purchases_qs.annotate(
         refunded_total=Coalesce(
             Sum('buyed_products__refund_amount', 
@@ -358,10 +305,8 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
     card_operations = {}
     
     for purchase in purchases:
-        # Si no hay tarjeta, la agrupamos como 'SIN_TARJETA'
         card = purchase.card_id or 'SIN_TARJETA'
         
-        # Inicializar la estructura de la tarjeta si no existe
         if card not in card_operations:
             card_operations[card] = {
                 'card_id': card,
@@ -371,10 +316,8 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
                 'operations': []
             }
         
-        # Obtener el valor de refunded_total del objeto anotado
         refunded_total = float(getattr(purchase, 'refunded_total', 0) or 0)
         
-        # Agregar la operación de compra
         operation = {
             'date': purchase.buy_date,
             'type': 'COMPRA',
@@ -391,7 +334,6 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
         card_operations[card]['total_refunded'] += refunded_total
         card_operations[card]['net_amount'] = card_operations[card]['total_purchases'] - card_operations[card]['total_refunded']
         
-        # Si hay reembolsos, agregarlos como operaciones separadas
         if purchase.refunded_count > 0:
             refund_operations = ProductBuyed.objects.filter(
                 shoping_receip=purchase,
@@ -407,7 +349,7 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
                 refund_op = {
                     'date': refund['refund_date'] or purchase.buy_date,
                     'type': 'REEMBOLSO',
-                    'amount': float(refund['refund_amount']) * -1,  # Negativo para indicar salida
+                    'amount': float(refund['refund_amount']) * -1,
                     'status': 'REEMBOLSADO',
                     'shop': purchase.shop_of_buy.name if purchase.shop_of_buy else 'Tienda desconocida',
                     'product': refund['original_product__name'],
@@ -415,11 +357,9 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
                 }
                 card_operations[card]['operations'].append(refund_op)
     
-    # Ordenar las operaciones por fecha para cada tarjeta
     for card in card_operations.values():
         card['operations'].sort(key=lambda x: x['date'])
     
-    # Convertir las fechas a string para la respuesta JSON
     result = []
     for card_data in card_operations.values():
         card_data['operations'] = [
@@ -428,7 +368,6 @@ def get_card_operations(start_date=None, end_date=None, card_id=None) -> Dict[st
         ]
         result.append(card_data)
     
-    # Ordenar las tarjetas por ID
     result.sort(key=lambda x: x['card_id'])
     
     return {
