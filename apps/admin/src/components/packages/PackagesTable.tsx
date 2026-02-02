@@ -19,7 +19,6 @@ import {
   Loader2,
   Package,
   CheckCircle2,
-  Box,
   Image,
 } from "lucide-react";
 import { formatDate } from "@/lib/format-date";
@@ -162,15 +161,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
   const handleDeleteCancel = () => setDialogState({ type: null, pkg: null });
 
-  const getNextStatus = (currentStatus: string): string | null => {
-    const normalized =
-      currentStatus.charAt(0).toUpperCase() +
-      currentStatus.slice(1).toLowerCase();
-
-    if (normalized === "Enviado") return "Recibido";
-    if (normalized === "Recibido") return "Procesado";
-    return null;
-  };
 
   const getNextStatusIcon = (nextStatus: string) => {
     if (nextStatus === "Recibido") return Package;
@@ -194,11 +184,9 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     return labels[nextStatus] || `Marcar como ${nextStatus}`;
   };
 
-  const handleStatusChange = async (pkg: PackageType) => {
-    const newStatus = getNextStatus(pkg.status_of_processing);
-
+  const handleUpdatePackageStatus = async (pkg: PackageType, newStatus: string) => {
     if (!newStatus) {
-      toast.error("No se puede cambiar el estado de este paquete");
+      toast.error("El nuevo estado no es válido.");
       return;
     }
 
@@ -213,7 +201,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
       toast.success(
         messages[newStatus] ||
-          `Estado del paquete #${pkg.agency_name} cambiado a ${newStatus}`,
+        `Estado del paquete #${pkg.agency_name} cambiado a ${newStatus}`,
       );
     } catch (err) {
       console.error("Error al cambiar estado del paquete:", err);
@@ -221,6 +209,45 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     } finally {
       setUpdatingStatusId(null);
     }
+  };
+
+  const isStatusTransitionAllowed = (currentStatus: string, targetStatus: string): boolean => {
+    const normalizedCurrent = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1).toLowerCase();
+    const normalizedTarget = targetStatus.charAt(0).toUpperCase() + targetStatus.slice(1).toLowerCase();
+
+    if (normalizedCurrent === "Enviado" && normalizedTarget === "Recibido") return true;
+    if (normalizedCurrent === "Recibido" && normalizedTarget === "Procesado") return true;
+    return false;
+  };
+
+  const renderStatusUpdateMenuItem = (
+    pkg: PackageType,
+    targetStatus: "Recibido" | "Procesado",
+  ) => {
+    const isAvailable = isStatusTransitionAllowed(pkg.status_of_processing, targetStatus);
+    const Icon = getNextStatusIcon(targetStatus);
+    const label = getNextStatusLabel(targetStatus);
+    const colorClass = getNextStatusColor(targetStatus);
+
+    if (!isAvailable) return null;
+
+    return (
+      <DropdownMenuItem
+        onClick={(e) => {
+          e.stopPropagation();
+          handleUpdatePackageStatus(pkg, targetStatus);
+        }}
+        className={`flex items-center gap-2 rounded-lg ${colorClass}`}
+        disabled={updatingStatusId === pkg.id}
+      >
+        {updatingStatusId === pkg.id ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Icon className="h-4 w-4" />
+        )}
+        {label}
+      </DropdownMenuItem>
+    );
   };
 
   if (isLoading) {
@@ -359,6 +386,23 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
+                          }}
+                          className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
+                        >
+                          <Link
+                            to={`/packages/${pkg.id}`}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                            }}
+                            className="inline-flex items-center gap-2 w-full"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Ver detalles
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
                             navigate(`/packages/${pkg.id}/edit`);
                           }}
                           className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
@@ -380,23 +424,11 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
-                        >
-                          <Link
-                            to={`/packages/${pkg.id}`}
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                            }}
-                            className="inline-flex items-center gap-2 w-full"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            Ver detalles
-                          </Link>
-                        </DropdownMenuItem>
+                        {renderStatusUpdateMenuItem(pkg, "Recibido")}
+                        {renderStatusUpdateMenuItem(pkg, "Procesado")}
+                        <DropdownMenuSeparator />
+
+
 
                         <DropdownMenuItem
                           onClick={(e) => {

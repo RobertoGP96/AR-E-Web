@@ -23,7 +23,7 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({
   product,
 }) => {
   const tags = parseTagsFromDescriptionBlock(
-    product.original_product_details.description,
+    product.original_product_details?.description,
   );
 
   return (
@@ -32,10 +32,10 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({
         <div className="flex items-start gap-4">
           {/* Imagen del producto */}
           <div className="flex-shrink-0">
-            {product.original_product_details.image_url ? (
+              {product.original_product_details?.image_url ? (
               <img
-                src={product.original_product_details.image_url}
-                alt={product.original_product_details.name}
+                src={product.original_product_details?.image_url}
+                alt={product.original_product_details?.name}
                 className="w-16 h-16 object-contain rounded-lg border border-gray-100 bg-gray-50"
               />
             ) : (
@@ -50,11 +50,11 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 max-w-[80%]">
                 <h3 className="text-base font-semibold text-gray-900 truncate capitalize leading-tight">
-                  {product.original_product_details.name}
+                  {product.original_product_details?.name}
                 </h3>
                 <QRLink
                   link={
-                    product.original_product_details.link ||
+                    product.original_product_details?.link ||
                     "https://arye-shipps.netlify.app"
                   }
                 />
@@ -65,12 +65,12 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({
                   refundNotes={product.refund_notes}
                 />
               </div>
-              {product.original_product_details.sku && (
+              {product.original_product_details?.sku && (
                 <Badge
                   variant="secondary"
                   className="text-[10px] px-1.5 py-0 h-5 font-mono text-gray-500 bg-gray-100 border-gray-200"
                 >
-                  {product.original_product_details.sku}
+                  {product.original_product_details?.sku}
                 </Badge>
               )}
             </div>
@@ -96,18 +96,18 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({
               <div className="flex items-center gap-1.5" title="Tienda">
                 <Store className="h-3.5 w-3.5 text-gray-400" />
                 <span className="font-medium text-gray-700">
-                  {product.original_product_details.shop}
+                  {product.original_product_details?.shop}
                 </span>
               </div>
 
-              {product.original_product_details.category && (
+              {product.original_product_details?.category && (
                 <div className="flex items-center gap-1.5" title="Categoría">
                   <Tag className="h-3.5 w-3.5 text-gray-400" />
-                  <span>{product.original_product_details.category}</span>
+                  <span>{product.original_product_details?.category}</span>
                 </div>
               )}
 
-              {product.original_product_details.amount_requested && (
+              {product.original_product_details?.amount_requested && (
                 <div
                   className="flex items-center gap-1.5"
                   title="Cantidad Solicitada"
@@ -115,7 +115,7 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({
                   <Box className="h-3.5 w-3.5 text-gray-400" />
                   <span>
                     Solicitado:{" "}
-                    {product.original_product_details.amount_requested}
+                    {product.original_product_details?.amount_requested}
                   </span>
                 </div>
               )}
@@ -149,7 +149,7 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({
                 }
               >
                 {(
-                  (product.original_product_details.shop_cost || 0) *
+                  (product.original_product_details?.shop_cost || 0) *
                   (product.amount_buyed || 1)
                 ).toFixed(2)}
               </span>
@@ -159,7 +159,7 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({
               <span className="flex items-center gap-1">
                 Envío: $
                 {(
-                  product.original_product_details.shop_delivery_cost || 0
+                  product.original_product_details?.shop_delivery_cost || 0
                 ).toFixed(2)}
               </span>
 

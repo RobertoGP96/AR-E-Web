@@ -113,7 +113,7 @@ export function PurchaseForm({
 
         // Encontrar la cuenta por nombre dentro de esa tienda
         const account = shop.buying_accounts?.find(
-          (a) => a.account_name === purchase.shopping_account,
+          (a) => a.id === purchase.shopping_account,
         );
         if (account) {
           form.setValue("shopping_account_id", account.id);

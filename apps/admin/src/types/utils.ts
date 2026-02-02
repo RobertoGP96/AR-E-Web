@@ -38,15 +38,17 @@ export const PAY_STATUS_COLORS: Record<PayStatus, string> = {
 export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
   "Encargado": "Encargado",
   "Procesando": "Procesando",
-  "Completado": "Completado",
+  "Comprado": "Comprado",
+  "Entregado": "Entregado",
   "Cancelado": "Cancelado"
 };
 
 export const PRODUCT_STATUS_COLORS: Record<ProductStatus, string> = {
   "Encargado": "blue",
   "Procesando": "orange",
-  "Completado": "green",
-  "Cancelado": "red"
+  "Comprado": "green",
+  "Cancelado": "red",
+  "Entregado": "cyan"
 };
 
 // Funciones de utilidad para usuarios

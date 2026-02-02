@@ -419,7 +419,7 @@ export class ApiClient {
     return response.data;
   }
 
-  public async uploadFile<T = unknown>(url: string, file: File, fieldName: string = 'image', additionalData: Record<string, unknown> = {}): Promise<T> {
+  public async uploadFile<T = unknown>(url: string, file: File, fieldName: string = 'image', additionalData: Record<string, unknown> = {}, config?: RequestConfig): Promise<T> {
     const formData = new FormData();
     formData.append(fieldName, file);
     
@@ -431,6 +431,7 @@ export class ApiClient {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      ...config,
     });
     return response.data;
   }
@@ -438,6 +439,21 @@ export class ApiClient {
   public async delete<T = unknown>(url: string, config?: RequestConfig): Promise<T> {
     const response = await this.client.delete<T>(url, config);
     return response.data;
+  }
+
+  public async downloadFile(url: string, filename?: string): Promise<void> {
+    const response = await this.client.get(url, {
+      responseType: 'blob', // Importante para descargar archivos
+    });
+
+    const blob = new Blob([response.data]);
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = filename || url.substring(url.lastIndexOf('/') + 1);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(link.href);
   }
 
   public async getPaginated<T = unknown>(

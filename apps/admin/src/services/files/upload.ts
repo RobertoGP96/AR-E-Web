@@ -17,7 +17,7 @@ export const uploadFile = async (
 ): Promise<ApiResponse<UploadedFile>> => {
   const url = options?.folder ? `/files/upload/${options.folder}/` : '/files/upload/';
   
-  const response = await apiClient.uploadFile(url, file, {
+  const response = await apiClient.uploadFile(url, file, "image", {}, {
     onUploadProgress: options?.onUploadProgress
   });
   

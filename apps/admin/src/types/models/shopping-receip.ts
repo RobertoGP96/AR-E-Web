@@ -9,11 +9,11 @@ import type { ProductBuyed, CreateProductBuyedData, UpdateProductBuyedData } fro
 // Modelo principal
 export interface ShoppingReceip {
   id: ID;
-  shopping_account: ID | string;
+  shopping_account: ID;
   shopping_account_name?: string;
   shop_of_buy: string;
   card_id: string;
-  status_of_shopping: string;
+  status_of_shopping: ShoppingStatus;
   buy_date: DateTime;
   
   // Campos de costo

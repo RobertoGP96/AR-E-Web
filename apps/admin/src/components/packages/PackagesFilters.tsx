@@ -1,10 +1,9 @@
-import { useState } from 'react';
 import { Plus, RefreshCw, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
-import CreatePackageDialog from './CreatePackageDialog';
 import PackageFilters, { type PackageFilterState } from '@/components/filters/package-filters';
 import { usePackages } from '@/hooks/package';
+import { useNavigate } from 'react-router-dom';
 
 interface PackagesFiltersProps {
   searchTerm?: string;
@@ -23,9 +22,8 @@ export default function PackagesFilters({
   filters = { search: '', status_of_processing: 'all' },
   onFiltersChange = () => {},
 }: PackagesFiltersProps) {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-
   const { isFetching, refetch } = usePackages(); // Placeholder for actual hook
+  const navigate = useNavigate();
 
   return (
     <>
@@ -56,7 +54,7 @@ export default function PackagesFilters({
         </div>
         <PackageFilters filters={filters} onFiltersChange={(newFilters) => onFiltersChange(newFilters)} resultCount={undefined} />
         <Button
-          onClick={() => setCreateDialogOpen(true)}
+          onClick={() => navigate("/packages/new")}
           className="flex items-center gap-2"
         >
           <Plus className="h-5 w-5" />
@@ -64,10 +62,7 @@ export default function PackagesFilters({
         </Button>
       </div>
 
-      <CreatePackageDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-      />
+      
     </>
   );
 }

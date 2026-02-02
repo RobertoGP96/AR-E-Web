@@ -67,7 +67,7 @@ const filteredProducts = useMemo(() => {
     const cartSummary = useMemo(() => {
         const totalItems = cart.reduce((sum, item) => sum + item.amount_buyed, 0)
         const totalCost = cart.reduce(
-            (sum, item) => sum + (item.original_product_details.total_cost * item.amount_buyed),
+            (sum, item) => sum + ((item.original_product_details?.total_cost || 0) * item.amount_buyed),
             0
         )
         return { totalItems, totalCost }
@@ -294,12 +294,12 @@ const filteredProducts = useMemo(() => {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-medium truncate text-sm">
-                                                {item.original_product_details.name}
+                                                {item.original_product_details?.name}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                ${item.original_product_details.total_cost.toFixed(2)} × {item.amount_buyed} =
+                                                ${(item.original_product_details?.total_cost || 0).toFixed(2)} × {item.amount_buyed} =
                                                 <span className="font-semibold ml-1">
-                                                    ${(item.original_product_details.total_cost * item.amount_buyed).toFixed(2)}
+                                                    ${((item.original_product_details?.total_cost || 0) * item.amount_buyed).toFixed(2)}
                                                 </span>
                                             </p>
                                         </div>
@@ -320,7 +320,7 @@ const filteredProducts = useMemo(() => {
                                                 size="icon"
                                                 className="h-8 w-8"
                                                 onClick={() => updateQuantity(item.product_id as string, 1)}
-                                                disabled={(item.original_product_details.amount_requested - item.original_product_details.amount_purchased - item.amount_buyed) <= 0}
+                                                disabled={((item.original_product_details?.amount_requested || 0) - (item.original_product_details?.amount_purchased || 0) - item.amount_buyed) <= 0}
                                             >
                                                 <Plus className="h-4 w-4" />
                                             </Button>

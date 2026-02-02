@@ -1,4 +1,3 @@
-import React from "react";
 import { Package, Trash2, ShoppingCart, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +23,7 @@ export function PurchaseProductListEditor({
   const totalItems = items.reduce((sum, item) => sum + item.amount_buyed, 0);
   const totalCost = items.reduce(
     (sum, item) =>
-      sum + (item.original_product_details.total_cost || 0) * item.amount_buyed,
+      sum + (item.original_product_details?.total_cost || 0) * item.amount_buyed,
     0,
   );
 
