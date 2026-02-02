@@ -3,8 +3,9 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { PackageForm } from "@/components/packages/package-form";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 import { usePackage } from "@/hooks/package/usePackage";
+import LoadingSpinner from "@/components/utils/LoadingSpinner";
 
 export default function EditPackagePage() {
   const { id } = useParams<{ id: string }>();
@@ -14,10 +15,7 @@ export default function EditPackagePage() {
   if (isLoading) {
     return (
       <div className="flex h-[80vh] w-full flex-col items-center justify-center gap-4">
-        <div className="relative">
-          <div className="h-20 w-20 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
-          <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 text-orange-500 animate-pulse" />
-        </div>
+          <LoadingSpinner size="lg" text=" Cargando datos del paquete..."/>
         <p className="text-slate-500 font-bold animate-pulse">
           Cargando información del paquete...
         </p>

@@ -7,6 +7,7 @@ export interface ClientBalanceEntry {
   name: string;
   phone: string;
   email: string;
+  agent_name: string;
   total_order_cost: number;
   total_order_received: number;
   total_deliver_cost: number;

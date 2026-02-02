@@ -1,0 +1,442 @@
+'use client'
+
+import { useState, useMemo } from 'react'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { 
+  TrendingDown, 
+  TrendingUp, 
+  CheckCircle, 
+  Users, 
+  UserCircle,
+  Phone,
+  DollarSign,
+  Receipt,
+  Truck,
+  Wallet,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
+} from 'lucide-react'
+import { AdvancedFilters, type FilterState } from './advanced-filters'
+import { useQuery } from '@tanstack/react-query'
+import { fetchClientBalancesReport } from '@/services/reports/reports'
+import type { ClientBalanceEntry } from '@/types'
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+  }).format(value)
+}
+
+function StatusBadge({ status }: { status: ClientBalanceEntry['status'] }) {
+  const variants = {
+    'DEUDA': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800',
+    'SALDO A FAVOR': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+    'AL DÍA': 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200 dark:border-sky-800',
+  }
+
+  return (
+    <Badge className={variants[status]} variant="outline">
+      {status}
+    </Badge>
+  )
+}
+
+function SummaryCards({ data }: { data: ClientBalanceEntry[] }) {
+  const summary = useMemo(() => {
+    const totalClients = data.length
+    const clientsWithDebt = data.filter(c => c.status === 'DEUDA').length
+    const clientsWithSurplus = data.filter(c => c.status === 'SALDO A FAVOR').length
+    const clientsUpToDate = data.filter(c => c.status === 'AL DÍA').length
+    const totalPendingToPay = data.reduce((sum, c) => sum + c.pending_to_pay, 0)
+    const totalSurplus = data.reduce((sum, c) => sum + c.surplus_balance, 0)
+
+    return {
+      totalClients,
+      clientsWithDebt,
+      clientsWithSurplus,
+      clientsUpToDate,
+      totalPendingToPay,
+      totalSurplus,
+    }
+  }, [data])
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Total Clientes
+          </CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="text-2xl font-bold">{summary.totalClients}</div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Con Deuda
+          </CardTitle>
+          <TrendingDown className="h-4 w-4 text-red-500" />
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+            {summary.clientsWithDebt}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {formatCurrency(summary.totalPendingToPay)} pendiente
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Saldo a Favor
+          </CardTitle>
+          <TrendingUp className="h-4 w-4 text-emerald-500" />
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            {summary.clientsWithSurplus}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {formatCurrency(summary.totalSurplus)} total
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Al Día
+          </CardTitle>
+          <CheckCircle className="h-4 w-4 text-sky-500" />
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="text-2xl font-bold text-sky-600 dark:text-sky-400">
+            {summary.clientsUpToDate}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {((summary.clientsUpToDate / summary.totalClients) * 100 || 0).toFixed(1)}% del total
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function TableSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="h-12 bg-muted animate-pulse rounded-md" />
+      ))}
+    </div>
+  )
+}
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
+
+export function ClientBalancesTable() {
+  const { data: clientBalances, isLoading } = useQuery<ClientBalanceEntry[], Error>({
+    queryKey: ['clientBalances'],
+    queryFn: fetchClientBalancesReport,
+  })
+
+  const data = clientBalances || []
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
+  // Calcular min/max de balance para el slider
+  const { balanceMin, balanceMax } = useMemo(() => {
+    if (data.length === 0) return { balanceMin: -10000, balanceMax: 10000 }
+    const balances = data.map(c => c.total_balance)
+    return {
+      balanceMin: Math.floor(Math.min(...balances) / 100) * 100,
+      balanceMax: Math.ceil(Math.max(...balances) / 100) * 100,
+    }
+  }, [data])
+
+  const [filters, setFilters] = useState<FilterState>({
+    searchTerm: '',
+    statusFilter: 'all',
+    agentFilter: 'all',
+    balanceRange: [balanceMin, balanceMax],
+  })
+
+  // Obtener lista única de agentes
+  const agents = useMemo(() => {
+    const uniqueAgents = [...new Set(data.map(client => client.agent_name))]
+    return uniqueAgents.sort()
+  }, [data])
+
+  const filteredData = useMemo(() => {
+    return data.filter((client) => {
+      const matchesSearch =
+        client.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        client.email.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        client.phone.includes(filters.searchTerm)
+
+      const matchesStatus =
+        filters.statusFilter === 'all' || client.status === filters.statusFilter
+
+      const matchesAgent =
+        filters.agentFilter === 'all' || client.agent_name === filters.agentFilter
+
+      const matchesBalance =
+        client.total_balance >= filters.balanceRange[0] &&
+        client.total_balance <= filters.balanceRange[1]
+
+      return matchesSearch && matchesStatus && matchesAgent && matchesBalance
+    })
+  }, [data, filters])
+
+  // Calcular paginacion
+  const totalPages = Math.ceil(filteredData.length / pageSize)
+  const startIndex = (currentPage - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedData = filteredData.slice(startIndex, endIndex)
+
+  const handleFiltersChange = (newFilters: FilterState) => {
+    setFilters(newFilters)
+    setCurrentPage(1)
+  }
+
+  const handlePageSizeChange = (value: string) => {
+    setPageSize(Number(value))
+    setCurrentPage(1)
+  }
+
+  return (
+    <div className="space-y-6">
+      <SummaryCards data={data} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Balance de Clientes</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Filtros avanzados */}
+          <AdvancedFilters
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            agents={agents}
+            balanceMin={balanceMin}
+            balanceMax={balanceMax}
+          />
+
+          {/* Tabla */}
+          {isLoading ? (
+            <TableSkeleton />
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Cliente
+                      </div>
+                    </TableHead>
+                    <TableHead className="hidden sm:table-cell">
+                      <div className="flex items-center gap-2">
+                        <UserCircle className="h-4 w-4" />
+                        Agente
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Receipt className="h-4 w-4" />
+                        <span className="hidden xl:inline">Costo Pedidos</span>
+                        <span className="xl:hidden">Pedidos</span>
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-right hidden lg:table-cell">
+                      <div className="flex items-center justify-end gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        Recibido
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-right hidden lg:table-cell">
+                      <div className="flex items-center justify-end gap-2">
+                        <Truck className="h-4 w-4" />
+                        Envio
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Wallet className="h-4 w-4" />
+                        Balance
+                      </div>
+                    </TableHead>
+                    <TableHead>Estado</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        <div className="flex flex-col items-center gap-2">
+                          <Users className="h-8 w-8 opacity-50" />
+                          No se encontraron clientes
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedData.map((client) => (
+                      <TableRow key={client.id}>
+                        <TableCell>
+                          <div className="font-medium">{client.name}</div>
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
+                            <Phone className="h-3 w-3" />
+                            {client.phone}
+                          </div>
+                          <div className="text-xs text-muted-foreground sm:hidden mt-1">
+                            <span className="inline-flex items-center gap-1">
+                              <UserCircle className="h-3 w-3" />
+                              {client.agent_name}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <div className="flex items-center gap-2">
+                            <UserCircle className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{client.agent_name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(client.total_order_cost)}
+                        </TableCell>
+                        <TableCell className="text-right hidden lg:table-cell">
+                          {formatCurrency(client.total_order_received)}
+                        </TableCell>
+                        <TableCell className="text-right hidden lg:table-cell">
+                          {formatCurrency(client.total_deliver_cost)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          <span
+                            className={
+                              client.total_balance < 0
+                                ? 'text-red-600 dark:text-red-400'
+                                : client.total_balance > 0
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : ''
+                            }
+                          >
+                            {formatCurrency(client.total_balance)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={client.status} />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* Paginacion */}
+          {!isLoading && filteredData.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Mostrar</span>
+                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                  <SelectTrigger className="w-[70px] h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAGE_SIZE_OPTIONS.map((size) => (
+                      <SelectItem key={size} value={size.toString()}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span>por pagina</span>
+              </div>
+              
+              <div className="text-sm text-muted-foreground">
+                Mostrando {startIndex + 1}-{Math.min(endIndex, filteredData.length)} de {filteredData.length} clientes
+              </div>
+
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 bg-transparent"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                  <span className="sr-only">Primera pagina</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 bg-transparent"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="sr-only">Pagina anterior</span>
+                </Button>
+                <div className="flex items-center gap-1 px-2">
+                  <span className="text-sm font-medium">{currentPage}</span>
+                  <span className="text-sm text-muted-foreground">de</span>
+                  <span className="text-sm font-medium">{totalPages}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 bg-transparent"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                  <span className="sr-only">Pagina siguiente</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 bg-transparent"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                  <span className="sr-only">Ultima pagina</span>
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

@@ -13,6 +13,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
+function normalizeToNoon(date: Date) {
+  const d = new Date(date);
+  d.setHours(12, 0, 0, 0);
+  return d;
+}
+
 function formatDate(date: Date | undefined) {
   if (!date) {
     return ""
@@ -127,7 +133,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
   ) => {
     const [open, setOpen] = React.useState(false)
     const [internalDate, setInternalDate] = React.useState<Date | undefined>(
-      selected ?? (defaultValue ? parseDateFromInput(String(defaultValue)) : undefined)
+      selected ?? (defaultValue ? normalizeToNoon(parseDateFromInput(String(defaultValue)) || new Date()) : undefined)
     )
     const [month, setMonth] = React.useState<Date | undefined>(internalDate)
 
@@ -141,16 +147,16 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
     // Sync when controlled props change
     React.useEffect(() => {
       if (selected !== undefined) {
-        setInternalDate(selected)
+        setInternalDate(normalizeToNoon(selected))
         setInternalValue(formatDate(selected))
-        setMonth(selected)
+        setMonth(normalizeToNoon(selected))
       }
     }, [selected, locale])
 
     React.useEffect(() => {
       if (controlledValue !== undefined) {
         if (controlledValueIsDate) {
-          const asDate = controlledValue as unknown as Date
+          const asDate = normalizeToNoon(controlledValue as unknown as Date)
           setInternalDate(asDate)
           setInternalValue(formatDate(asDate))
           setMonth(asDate)
@@ -170,7 +176,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
         if (controlledValueIsDate) {
           // parse and call with date (for backward compatibility)
           const parsed = parseDateFromInput(raw)
-          oc(parsed)
+          oc(parsed ? normalizeToNoon(parsed) : undefined)
         } else {
           // Treat as native input onChange (e.g., from react-hook-form register)
           oc(e)
@@ -179,9 +185,10 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
 
       const parsed = parseDateFromInput(raw)
       if (isValidDate(parsed)) {
-        setInternalDate(parsed)
-        setMonth(parsed)
-        onDateChange?.(parsed)
+        const normalizedDate = normalizeToNoon(parsed as Date)
+        setInternalDate(normalizedDate)
+        setMonth(normalizedDate)
+        onDateChange?.(normalizedDate)
       } else {
         onDateChange?.(undefined)
       }
@@ -233,13 +240,14 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
                 month={month}
                 onMonthChange={setMonth}
                 onSelect={(date) => {
-                  setInternalDate(date)
-                  setInternalValue(formatDate(date))
+                  const normalizedDate = date ? normalizeToNoon(date) : undefined
+                  setInternalDate(normalizedDate)
+                  setInternalValue(formatDate(normalizedDate))
                   if (onChangeProp && controlledValueIsDate) {
                     const oc = onChangeProp as unknown as OnChangeAny
-                    oc(date)
+                    oc(normalizedDate)
                   }
-                  onDateChange?.(date)
+                  onDateChange?.(normalizedDate)
                   setOpen(false)
                 }}
               />

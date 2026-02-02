@@ -37,6 +37,7 @@ import Invoices from "@/pages/Invoices";
 import Expenses from "@/pages/Expenses";
 import BalanceReport from "@/components/balance/balance-report";
 import BalancePage from "@/pages/Balance";
+import { ClientBalancesTable } from "@/components/client-balances/client-balances-table";
 
 const AppRoutes = () => {
   return (
@@ -114,6 +115,7 @@ const AppRoutes = () => {
 
         <Route path="balance" element={<BalancePage />} />
         <Route path="balance/new-balance" element={<BalanceReport />} />
+        <Route path="balance/client-balances" element={<ClientBalancesTable />} />
 
         <Route path="analytics" element={<Analytics />} />
 
