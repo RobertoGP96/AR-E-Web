@@ -23,8 +23,7 @@ import {
   CheckCircle2,
   Weight,
   Boxes,
-  ImageOff,
-  Image,
+  Image as ImageIcon,
 } from "lucide-react";
 import { formatDeliveryDate } from "@/lib/format-date";
 import { Link } from "react-router-dom";
@@ -52,12 +51,6 @@ import {
   useUpdateDeliveryStatus,
 } from "@/hooks/delivery/useUpdateDelivery";
 import { toast } from "sonner";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import { QuickImageUpload } from "@/components/images/QuickImageUpload";
 import {
   Dialog,
@@ -73,6 +66,10 @@ import {
 import AvatarUser from "../utils/AvatarUser";
 import { TablePagination } from "../utils/TablePagination";
 import LoadingSpinner from "../utils/LoadingSpinner";
+import {
+  ProductListPopover,
+  useProductListAdapter,
+} from "../utils/ProductListPopover";
 
 interface DeliveryTableProps {
   deliveries: DeliverReceip[];
@@ -89,6 +86,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
   onDelete,
   onCapture,
 }) => {
+  const { adaptDeliveredProducts } = useProductListAdapter();
   const [dialogState, setDialogState] = useState<{
     type: "delete" | null;
     delivery: DeliverReceip | null;
@@ -237,19 +235,6 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
     }
   };
 
-  // Helper para obtener la URL de imagen del producto con tolerancia a tipos
-  const getProductImageUrl = (
-    product:
-      | { product_pictures?: unknown; image_url?: string }
-      | null
-      | undefined,
-  ): string | undefined => {
-    if (!product) return undefined;
-    const pic = product.product_pictures as unknown;
-    if (typeof pic === "string" && pic) return pic;
-    return product.image_url;
-  };
-
   if (isLoading) {
     return (
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
@@ -349,86 +334,12 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                   />
                 </TableCell>
                 <TableCell>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="cursor-pointer hover:bg-blue-50 hover:border-blue-300"
-                      >
-                        <Package className=" h-4 w-4" />
-                        {delivery.delivered_products?.length || 0}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-80 max-h-96 overflow-y-auto"
-                      align="start"
-                    >
-                      <div className="space-y-2">
-                        <h4 className="font-semibold text-sm border-b pb-2">
-                          Productos Entregados (
-                          {delivery.delivered_products?.length || 0})
-                        </h4>
-                        {delivery.delivered_products &&
-                        delivery.delivered_products.length > 0 ? (
-                          <ul className="space-y-2">
-                            {delivery.delivered_products.map((product) => (
-                              <li
-                                key={product.id}
-                                className="flex flex-row items-start gap-2 justify-between p-2 rounded-md hover:bg-gray-50 border border-gray-100"
-                              >
-                                <div className="flex items-center gap-3 ">
-                                  {getProductImageUrl(
-                                    product.original_product,
-                                  ) ? (
-                                    <div
-                                      className="rounded-md overflow-hidden w-14 h-14 bg-muted border border-muted-foreground/10"
-                                      title="Imagen del producto"
-                                    >
-                                      <img
-                                        src={
-                                          getProductImageUrl(
-                                            product.original_product,
-                                          ) || ""
-                                        }
-                                        alt={product.original_product.name}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="rounded-md w-14 h-14 bg-gray-50 border border-gray-100 flex items-center justify-center text-xs text-gray-400">
-                                      <ImageOff className="h-6 w-6" />
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex-1 flex flex-col justify-center items-start gap-1 pl-2">
-                                  <p className="text-sm font-medium text-gray-900">
-                                    {product.original_product.name}
-                                  </p>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Cantidad: {product.amount_delivered}
-                                  </p>
-                                </div>
-                                <Badge
-                                  variant="secondary"
-                                  className="ml-2 shrink-0"
-                                >
-                                  x{product.amount_delivered}
-                                </Badge>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <div className="text-center py-4 text-gray-500">
-                            <Package className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                            <p className="text-sm">
-                              No hay productos entregados
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  <ProductListPopover
+                    products={adaptDeliveredProducts(
+                      delivery.delivered_products || [],
+                    )}
+                    title="Productos Entregados"
+                  />
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-row gap-2">
@@ -436,7 +347,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                       <HoverCard>
                         <HoverCardTrigger asChild>
                           <div className="flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer">
-                            <Image className="h-5 w-5 text-gray-500" />
+                            <ImageIcon className="h-5 w-5 text-gray-500" />
                           </div>
                         </HoverCardTrigger>
                         <HoverCardContent className="w-32 h-32 flex items-center justify-center">

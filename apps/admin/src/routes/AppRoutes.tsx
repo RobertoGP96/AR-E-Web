@@ -28,6 +28,8 @@ import RemoveProductsFromDeliveryPage from "@/components/delivery/RemoveProducts
 import AddMultipleProductsToOrderPage from "@/components/orders/AddMultipleProductsToOrderPage";
 import PurchaseProductsManagement from "@/pages/PurchaseProductsManagement";
 import PackageProductsManagement from "@/pages/PackageProductsManagement";
+import NewPackagePage from "@/pages/packages/NewPackagePage";
+import EditPackagePage from "@/pages/packages/EditPackagePage";
 import DeliveryProductsManagement from "@/pages/DeliveryProductsManagement";
 
 import Analytics from "@/pages/Analytics";
@@ -69,7 +71,9 @@ const AppRoutes = () => {
         />
 
         <Route path="packages" element={<Packages />} />
+        <Route path="packages/new" element={<NewPackagePage />} />
         <Route path="packages/:id" element={<PackageDetails />} />
+        <Route path="packages/:id/edit" element={<EditPackagePage />} />
         <Route
           path="packages/:id/manage-products"
           element={<PackageProductsManagement />}

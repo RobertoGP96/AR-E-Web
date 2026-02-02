@@ -1,6 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { useShoppingReceipt } from "@/hooks/shopping-receipts/useShoppingReceipt";
 import { PurchaseForm } from "@/components/purshases/purshase-form";
 import LoadingSpinner from "@/components/utils/LoadingSpinner";

@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "../ui/button";
 import {
-  Box,
   Edit2,
   Trash2,
   ShoppingBag,
@@ -48,6 +47,10 @@ import { Link } from "react-router-dom";
 import type { ShoppingReceip } from "@/types";
 import { formatDayMonth } from "@/lib/format-date";
 import { TablePagination } from "../utils/TablePagination";
+import {
+  ProductListPopover,
+  useProductListAdapter,
+} from "../utils/ProductListPopover";
 
 interface PurshasesTableProps {
   onDelete?: (receipt: ShoppingReceip) => void;
@@ -60,6 +63,7 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({
   itemsPerPage: initialItemsPerPage = 10,
   filters,
 }) => {
+  const { adaptBuyedProducts } = useProductListAdapter();
   const { shoppingReceipts, isLoading, error } = useShoppingReceipts(filters);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [selectedReceipt, setSelectedReceipt] = useState<ShoppingReceip | null>(
@@ -197,14 +201,13 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({
                     <p>{purchase.shopping_account_name + ""}</p>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-row text-gray-600 gap-1">
-                      <Box className="h-5 w-5" />
-                      <span className="">
-                        {purchase.buyed_products
-                          ? purchase.buyed_products.length
-                          : 0}
-                      </span>
-                    </div>
+                    <ProductListPopover
+                      products={adaptBuyedProducts(
+                        purchase.buyed_products || [],
+                      )}
+                      title="Productos Comprados"
+                      showPrice
+                    />
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={purchase.status_of_shopping} />

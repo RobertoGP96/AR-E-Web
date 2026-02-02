@@ -52,6 +52,10 @@ import { toast } from "sonner";
 import { formatDayMonth } from "@/lib/format-date";
 import { ConfirmPaymentDialog } from "./ConfirmPaymentDialog";
 import { TablePagination } from "../utils/TablePagination";
+import {
+  ProductListPopover,
+  useProductListAdapter,
+} from "../utils/ProductListPopover";
 
 interface OrderTableProps {
   orders: Order[];
@@ -76,6 +80,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
   onAddProducts,
   itemsPerPage: initialItemsPerPage = 10,
 }) => {
+  const { adaptOrderProducts } = useProductListAdapter();
   const [dialogState, setDialogState] = useState<{
     type: "delete" | null;
     order: Order | null;
@@ -238,10 +243,11 @@ const OrderTable: React.FC<OrderTableProps> = ({
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-row items-center gap-0.5 text-gray-600">
-                      <ShoppingCart className="h-4 w-4" />
-                      <span>{order.products?.length || 0}</span>
-                    </div>
+                    <ProductListPopover
+                      products={adaptOrderProducts(order.products || [])}
+                      title="Productos del Pedido"
+                      showPrice
+                    />
                   </TableCell>
                   <TableCell>
                     <OrderStatusBadge status={order.status as OrderStatus} />

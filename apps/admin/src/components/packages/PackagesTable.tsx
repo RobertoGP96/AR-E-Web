@@ -1,5 +1,4 @@
 import PackageStatusBadge from "./PackageStatusBadge";
-import EditPackageDialog from "./EditPackageDialog";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -24,7 +23,7 @@ import {
   Image,
 } from "lucide-react";
 import { formatDate } from "@/lib/format-date";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,12 +41,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import { QuickImageUpload } from "@/components/images/QuickImageUpload";
 import {
   Dialog,
@@ -66,11 +59,14 @@ import { useUpdatePackage, useUpdatePackageStatus } from "@/hooks/package";
 import { toast } from "sonner";
 import { TablePagination } from "../utils/TablePagination";
 import LoadingSpinner from "../utils/LoadingSpinner";
+import {
+  ProductListPopover,
+  useProductListAdapter,
+} from "../utils/ProductListPopover";
 
 interface PackagesTableProps {
   packages: PackageType[];
   isLoading?: boolean;
-  onEdit?: (pkg: PackageType) => void;
   onDelete?: (pkg: PackageType) => void;
   onCapture?: (pkg: PackageType) => void;
 }
@@ -78,18 +74,16 @@ interface PackagesTableProps {
 const PackagesTable: React.FC<PackagesTableProps> = ({
   packages,
   isLoading = false,
-  onEdit,
   onDelete,
   onCapture,
 }) => {
+  const navigate = useNavigate();
+  const { adaptReceivedProducts } = useProductListAdapter();
+
   const [dialogState, setDialogState] = useState<{
     type: "delete" | null;
     pkg: PackageType | null;
   }>({ type: null, pkg: null });
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(
-    null,
-  );
 
   const [showImageDialog, setShowImageDialog] = useState(false);
   const [imageDialogPackage, setImageDialogPackage] =
@@ -117,10 +111,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     setCurrentPage(1);
   }, [packages.length, itemsPerPage]);
 
-  // Hook para actualizar producto (imagenes)
   const updatePackageMutation = useUpdatePackage();
 
-  // Helper para validar si la imagen es válida (no vacía)
   const isValidImage = (image: unknown): boolean => {
     if (!image) return false;
     if (typeof image === "string") return image.trim().length > 0;
@@ -135,7 +127,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
   const handleImageUploaded = async (pkg: PackageType, url: string) => {
     try {
-      // API expects a single URL string for product_pictures
       await updatePackageMutation.mutateAsync({
         id: pkg.id,
         data: { package_picture: url },
@@ -171,9 +162,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
   const handleDeleteCancel = () => setDialogState({ type: null, pkg: null });
 
-  // Función para obtener el siguiente estado del paquete
   const getNextStatus = (currentStatus: string): string | null => {
-    // Normalizar el estado actual
     const normalized =
       currentStatus.charAt(0).toUpperCase() +
       currentStatus.slice(1).toLowerCase();
@@ -183,14 +172,12 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     return null;
   };
 
-  // Función para obtener el ícono del siguiente estado
   const getNextStatusIcon = (nextStatus: string) => {
     if (nextStatus === "Recibido") return Package;
     if (nextStatus === "Procesado") return CheckCircle2;
     return Package;
   };
 
-  // Función para obtener el color del siguiente estado
   const getNextStatusColor = (nextStatus: string) => {
     if (nextStatus === "Recibido")
       return "hover:bg-yellow-50 hover:text-yellow-600";
@@ -199,7 +186,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     return "hover:bg-purple-50 hover:text-purple-600";
   };
 
-  // Función para obtener el label del siguiente estado
   const getNextStatusLabel = (nextStatus: string) => {
     const labels: Record<string, string> = {
       Recibido: "Recibir Paquete",
@@ -220,7 +206,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     try {
       await updateStatusMutation.mutateAsync({ id: pkg.id, status: newStatus });
 
-      // Mensaje personalizado según el nuevo estado
       const messages: Record<string, string> = {
         Recibido: `Paquete #${pkg.agency_name} marcado como Recibido`,
         Procesado: `Paquete #${pkg.agency_name} marcado como Procesado`,
@@ -257,7 +242,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
             No hay paquetes
           </h3>
           <p className="text-sm text-gray-500">
-            Comienza creando un nuevo paquete usando el botón "Agregar Paquete"
+            Comienza creando un nuevo paquete usando el botón "Nuevo Paquete"
           </p>
         </div>
       </div>
@@ -304,104 +289,12 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                   <PackageStatusBadge status={pkg.status_of_processing} />
                 </TableCell>
                 <TableCell>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="cursor-pointer hover:bg-blue-50 hover:border-blue-300"
-                      >
-                        <Package className=" h-4 w-4" />
-                        {pkg.contained_products?.length || 0}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-80 max-h-96 overflow-y-auto"
-                      align="start"
-                    >
-                      <div className="space-y-2">
-                        <h4 className="font-semibold text-sm border-b pb-2">
-                          Productos Recibidos (
-                          {pkg.contained_products?.length || 0})
-                        </h4>
-                        {pkg.contained_products &&
-                        pkg.contained_products.length > 0 ? (
-                          <ul className="space-y-2">
-                            {pkg.contained_products.map((product) => (
-                              <li
-                                key={product.id}
-                                className="flex items-start justify-between p-2 rounded-md hover:bg-gray-50 border border-gray-100"
-                              >
-                                <div className="flex-1">
-                                  {/* Thumbnail / botón para subir imagen */}
-                                  <div className="flex items-center gap-3 mb-2">
-                                    {product.original_product
-                                      .product_pictures ? (
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setImageDialogPackage(pkg);
-                                          setShowImageDialog(true);
-                                        }}
-                                        className="rounded-md overflow-hidden w-14 h-14 bg-muted border border-muted-foreground/10"
-                                        title="Ver imágenes"
-                                      >
-                                        <img
-                                          src={
-                                            product.original_product
-                                              .product_pictures
-                                          }
-                                          alt={product.original_product.name}
-                                          className="w-full h-full object-cover"
-                                        />
-                                      </button>
-                                    ) : (
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          setImageDialogPackage(pkg);
-                                          setShowImageDialog(true);
-                                        }}
-                                      >
-                                        <Camera className="h-4 w-4 mr-2" />
-                                        Agregar imagen
-                                      </Button>
-                                    )}
-                                  </div>
-
-                                  <p className="text-sm font-medium text-gray-900">
-                                    {product.original_product.name}
-                                  </p>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Cantidad: {product.amount_received}
-                                  </p>
-                                  {product.observation && (
-                                    <p className="text-xs text-gray-400 mt-1 italic">
-                                      {product.observation}
-                                    </p>
-                                  )}
-                                </div>
-                                <Badge
-                                  variant="secondary"
-                                  className="ml-2 shrink-0"
-                                >
-                                  x{product.amount_received}
-                                </Badge>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <div className="text-center py-4 text-gray-500">
-                            <Package className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                            <p className="text-sm">
-                              No hay productos recibidos
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  <ProductListPopover
+                    products={adaptReceivedProducts(
+                      pkg.contained_products || [],
+                    )}
+                    title="Productos Recibidos"
+                  />
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-row gap-2">
@@ -466,11 +359,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedPackage(pkg);
-                            setEditDialogOpen(true);
-                            if (onEdit) {
-                              onEdit(pkg);
-                            }
+                            navigate(`/packages/${pkg.id}/edit`);
                           }}
                           className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
                         >
@@ -489,100 +378,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                           Capturar
                         </DropdownMenuItem>
 
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                        >
-                          <Link
-                            to={`/packages/${pkg.id}/add-products`}
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                            }}
-                            className="inline-flex items-center gap-2"
-                            title={`Agregar productos al paquete ${pkg.agency_name}`}
-                          >
-                            <Package className="h-4 w-4" />
-                            Agregar Productos
-                          </Link>
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
-                        >
-                          <Link
-                            to={`/packages/${pkg.id}/manage-products`}
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                            }}
-                            className="inline-flex items-center gap-2"
-                            title={`Gestionar productos del paquete ${pkg.agency_name}`}
-                          >
-                            <Box className="h-4 w-4" />
-                            Gestionar Productos
-                          </Link>
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                        >
-                          <Link
-                            to={`/packages/${pkg.id}/remove-products`}
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                            }}
-                            className="inline-flex items-center gap-2"
-                            title={`Eliminar productos del paquete ${pkg.agency_name}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Eliminar Productos
-                          </Link>
-                        </DropdownMenuItem>
-
-                        {/* Cambio de estado en dropdown */}
-                        {getNextStatus(pkg.status_of_processing) && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleStatusChange(pkg);
-                              }}
-                              disabled={updatingStatusId === pkg.id}
-                              className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(getNextStatus(pkg.status_of_processing)!)}`}
-                            >
-                              {updatingStatusId === pkg.id ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  <span>Actualizando...</span>
-                                </>
-                              ) : (
-                                (() => {
-                                  const nextStatus = getNextStatus(
-                                    pkg.status_of_processing,
-                                  )!;
-                                  const IconComponent =
-                                    getNextStatusIcon(nextStatus);
-                                  const label = getNextStatusLabel(nextStatus);
-                                  return (
-                                    <>
-                                      <IconComponent className="h-4 w-4" />
-                                      <span>{label}</span>
-                                    </>
-                                  );
-                                })()
-                              )}
-                            </DropdownMenuItem>
-                          </>
-                        )}
-
                         <DropdownMenuSeparator />
 
                         <DropdownMenuItem
@@ -596,8 +391,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                             onClick={(e: React.MouseEvent) => {
                               e.stopPropagation();
                             }}
-                            className="inline-flex items-center gap-2"
-                            title={`Ver detalles del paquete ${pkg.id}`}
+                            className="inline-flex items-center gap-2 w-full"
                           >
                             <ExternalLink className="h-4 w-4" />
                             Ver detalles
@@ -607,15 +401,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
-
-                            if (!pkg || !pkg.id) {
-                              console.error(
-                                "Error: Paquete sin ID válido",
-                                pkg,
-                              );
-                              return;
-                            }
-
                             setDialogState({ type: "delete", pkg });
                           }}
                           className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
@@ -633,7 +418,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
         </Table>
       </div>
 
-      {/* Componente de paginación */}
       <TablePagination
         currentPage={currentPage}
         totalPages={Math.ceil(packages.length / itemsPerPage)}
@@ -643,13 +427,10 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
         totalItems={packages.length}
       />
 
-      {/* Diálogo de confirmación para eliminar paquete */}
       <AlertDialog
         open={dialogState.type === "delete" || isDeleting}
         onOpenChange={(open) => {
-          // Prevent closing while deleting
-          if (!open && isDeleting) return;
-          if (!open) handleDeleteCancel();
+          if (!open && !isDeleting) handleDeleteCancel();
         }}
       >
         <AlertDialogContent>
@@ -686,13 +467,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Diálogo para editar paquete */}
-      <EditPackageDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        package={selectedPackage}
-      />
-      {/* Diálogo para ver/subir imágenes del producto */}
       <Dialog
         open={showImageDialog}
         onOpenChange={(open) => {
