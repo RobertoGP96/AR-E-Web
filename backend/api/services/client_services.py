@@ -136,7 +136,6 @@ def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
         computed_order_cost=Subquery(order_costs, output_field=models.FloatField()),
         computed_order_received=Subquery(order_received, output_field=models.FloatField()),
         computed_deliver_cost=Subquery(delivery_costs, output_field=models.FloatField()),
-        agent_name=F('assigned_agent__full_name')
     ).order_by('name', 'last_name')
 
     report = []

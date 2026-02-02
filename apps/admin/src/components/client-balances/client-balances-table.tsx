@@ -49,9 +49,9 @@ function formatCurrency(value: number): string {
 
 function StatusBadge({ status }: { status: ClientBalanceEntry['status'] }) {
   const variants = {
-    'DEUDA': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800',
-    'SALDO A FAVOR': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
-    'AL DÍA': 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200 dark:border-sky-800',
+    'DEUDA': 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-400/10 dark:text-red-400 ring-red-400/20',
+    'SALDO A FAVOR': 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 ring-green-400/20',
+    'AL DÍA': 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-400/10 dark:text-blue-400 ring-blue-400/20',
   }
 
   return (
@@ -294,7 +294,7 @@ export function ClientBalancesTable() {
                         Balance
                       </div>
                     </TableHead>
-                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-center">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -351,7 +351,7 @@ export function ClientBalancesTable() {
                             {formatCurrency(client.total_balance)}
                           </span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-center px-2">
                           <StatusBadge status={client.status} />
                         </TableCell>
                       </TableRow>
