@@ -308,10 +308,10 @@ class ProductReceived(models.Model):
             )
             self.original_product.amount_received = total_received
 
-            # Si la cantidad recibida es igual a la COMPRADA, cambiar estado a RECIBIDO
-            if total_received == self.original_product.amount_purchased and self.original_product.amount_purchased > 0:
-                # Solo cambiar a RECIBIDO si está en COMPRADO
-                if self.original_product.status == ProductStatusEnum.COMPRADO.value:
+            # Si la cantidad recibida es igual a la SOLICITADA (amount_requested), cambiar estado a RECIBIDO
+            if total_received == self.original_product.amount_requested and self.original_product.amount_requested > 0:
+                # Solo cambiar a RECIBIDO si está en COMPRADO o ENCARGADO
+                if self.original_product.status in [ProductStatusEnum.COMPRADO.value, ProductStatusEnum.ENCARGADO.value]:
                     self.original_product.status = ProductStatusEnum.RECIBIDO.value
 
             self.original_product.save(update_fields=['amount_received', 'status', 'updated_at'])

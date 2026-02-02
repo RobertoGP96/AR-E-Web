@@ -4,7 +4,7 @@ Provides detailed analysis of customer accounts, including outstanding balances 
 """
 from typing import Dict, Any, List
 from django.db import models
-from django.db.models import Sum, Q, Subquery, OuterRef
+from django.db.models import Sum, Q, Subquery, OuterRef, F
 from api.models import Order, DeliverReceip, CustomUser
 from decimal import Decimal
 
@@ -80,7 +80,8 @@ def get_client_balance_report(client_id: int) -> Dict[str, Any]:
             "id": client.id,
             "name": client.full_name,
             "phone": client.phone_number,
-            "email": client.email
+            "email": client.email,
+            "agent_name": client.assigned_agent.full_name if client.assigned_agent else None
         },
         "orders": {
             "list": orders_list,
@@ -134,7 +135,8 @@ def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
     clients = CustomUser.objects.filter(role='client').annotate(
         computed_order_cost=Subquery(order_costs, output_field=models.FloatField()),
         computed_order_received=Subquery(order_received, output_field=models.FloatField()),
-        computed_deliver_cost=Subquery(delivery_costs, output_field=models.FloatField())
+        computed_deliver_cost=Subquery(delivery_costs, output_field=models.FloatField()),
+        agent_name=F('assigned_agent__full_name')
     ).order_by('name', 'last_name')
 
     report = []
@@ -159,6 +161,7 @@ def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
             "name": client.full_name,
             "phone": client.phone_number,
             "email": client.email,
+            "agent_name": client.agent_name,
             "total_order_cost": round(order_cost, 2),
             "total_order_received": round(order_received, 2),
             "total_deliver_cost": round(deliver_cost, 2),

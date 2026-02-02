@@ -38,5 +38,5 @@ class ImageUploadSerializer(serializers.Serializer):
     """
     Serializador para subir imágenes.
     """
-    image = serializers.ImageField(required=False)
+    image = serializers.ImageField(required=True)
     public_id = serializers.CharField(required=False)
