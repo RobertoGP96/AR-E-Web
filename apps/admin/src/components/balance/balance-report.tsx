@@ -404,7 +404,7 @@ export default function BalanceReport() {
               <div className="flex flex-row gap-4 items-center">
                 <ShoppingCart className="h-6 w-6 text-blue-500 mb-1" />
                 <div>
-                  <CardTitle className="text-lg">Órdenes - Resumen</CardTitle>
+                  <CardTitle className="text-lg">Órdenes</CardTitle>
                   <CardDescription className="text-xs mt-1">
                     Análisis de órdenes en el rango seleccionado
                   </CardDescription>
@@ -463,7 +463,7 @@ export default function BalanceReport() {
               <div className="flex flex-row gap-4 items-center">
                 <ShoppingBag className="h-6 w-6 text-purple-500" />
                 <div>
-                  <CardTitle className="text-lg">Compras - Resumen</CardTitle>
+                  <CardTitle className="text-lg">Compras</CardTitle>
                   <CardDescription className="text-xs mt-1">
                     Análisis de compras realizadas y reembolsos
                   </CardDescription>
@@ -502,20 +502,26 @@ export default function BalanceReport() {
                   <MetricCard
                     label="Costos Registrados"
                     value={formatUSD(
-                      purchasesAnalysis?.totals.total_real_cost_paid || 0,
+                      purchasesAnalysis?.totals.total_purchase_amount || 0,
                     )}
+                    variant="warning"
                   />
                   <MetricCard
                     label="Pagado"
                     value={formatUSD(
-                      purchasesAnalysis?.totals.total_purchase_amount || 0,
+                      purchasesAnalysis?.totals.total_real_cost_paid || 0,
                     )}
-                    highlight
                   />
 
                   <MetricCard
                     label="Ganacia"
-                    value={purchasesAnalysis.totals.total_profit || 0}
+                    value={
+                      formatUSD(
+                        purchasesAnalysis.totals.total_purchase_amount -
+                          purchasesAnalysis.totals.total_real_cost_paid,
+                      ) || 0
+                    }
+                    variant="success"
                   />
                 </div>
 
@@ -661,7 +667,7 @@ export default function BalanceReport() {
               <div className="flex flex-row gap-4 items-center">
                 <Truck className="h-6 w-6 text-green-500 mb-1" />
                 <div>
-                  <CardTitle className="text-lg">Entregas - Resumen</CardTitle>
+                  <CardTitle className="text-lg">Entregas</CardTitle>
                   <CardDescription className="text-xs mt-1">
                     Estado y rentabilidad de entregas
                   </CardDescription>
@@ -697,25 +703,28 @@ export default function BalanceReport() {
                     value={formatUSD(
                       deliveryAnalysis?.total_delivery_revenue || 0,
                     )}
+                    variant="info"
                   />
                   <MetricCard
                     label="Gastos"
                     value={formatUSD(
                       deliveryAnalysis?.total_delivery_expenses || 0,
                     )}
+                    variant="danger"
                   />
                   <MetricCard
                     label="Agentes"
                     value={formatUSD(
                       deliveryAnalysis?.total_manager_profit || 0,
                     )}
+                    variant="warning"
                   />
                   <MetricCard
                     label="Ganancia"
                     value={formatUSD(
                       deliveryAnalysis?.total_system_profit || 0,
                     )}
-                    highlight
+                    variant="success"
                   />
                 </div>
 
@@ -800,9 +809,7 @@ export default function BalanceReport() {
               <div className="flex flex-row gap-4 items-center">
                 <BaggageClaim className="h-6 w-6 text-orange-500" />
                 <div>
-                  <CardTitle className="text-lg">
-                    Costos de envío - Resumen
-                  </CardTitle>
+                  <CardTitle className="text-lg">Costos de envío</CardTitle>
                   <CardDescription className="text-xs mt-1">
                     Resumen agregado de tags y costos de envío
                   </CardDescription>
@@ -852,7 +859,7 @@ export default function BalanceReport() {
               <div className="flex flex-row gap-4 items-center">
                 <ReceiptText className="h-6 w-6 text-red-500" />
                 <div>
-                  <CardTitle className="text-lg">Gastos - Resumen</CardTitle>
+                  <CardTitle className="text-lg">Gastos</CardTitle>
                   <CardDescription className="text-xs mt-1">
                     Desglose y tendencia de gastos
                   </CardDescription>
@@ -1172,10 +1179,12 @@ function ExecutiveSummary({
               <MetricCard
                 label="Órdenes"
                 value={formatUSD(summary.totalOrderRevenue)}
+                variant="info"
               />
               <MetricCard
                 label="Entregas"
                 value={formatUSD(summary.totalDeliveryRevenue)}
+                variant="info"
               />
             </div>
             <div className="mt-4 p-3 rounded-lg border border-gray-200">
@@ -1200,14 +1209,17 @@ function ExecutiveSummary({
               <MetricCard
                 label="Compras"
                 value={formatUSD(summary.purchaseCosts)}
+                variant="warning"
               />
               <MetricCard
                 label="Facturas"
                 value={formatUSD(summary.invoiceCosts)}
+                variant="danger"
               />
               <MetricCard
                 label="Gastos"
                 value={formatUSD(summary.totalExpenses)}
+                variant="danger"
               />
             </div>
             <div className="mt-4 p-3 rounded-lg  border border-red-200">
@@ -1331,18 +1343,49 @@ function MetricCard({
   label,
   value,
   highlight,
+  variant = "default",
 }: {
   label: string;
   value: string | number;
   highlight?: boolean;
+  variant?:
+    | "default"
+    | "primary"
+    | "success"
+    | "warning"
+    | "danger"
+    | "info"
+    | "purple";
 }) {
+  const variantStyles = {
+    default: "bg-muted/30 border-muted-foreground/20 hover:bg-muted/50",
+    primary: "bg-primary/10 border-primary/30 text-primary hover:bg-primary/15",
+    success: "bg-green-50 border-green-200 text-green-700 hover:bg-green-100",
+    warning:
+      "bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100",
+    danger: "bg-red-50 border-red-200 text-red-700 hover:bg-red-100",
+    info: "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100",
+    purple:
+      "bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100",
+  };
+
+  const textStyles = {
+    default: "text-foreground",
+    primary: "text-primary",
+    success: "text-green-700",
+    warning: "text-orange-700",
+    danger: "text-red-700",
+    info: "text-blue-700",
+    purple: "text-purple-700",
+  };
+
   return (
     <div
       className={cn(
         "p-3 rounded-lg border transition-all",
-        highlight
+        highlight && variant === "default"
           ? "bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 shadow-sm"
-          : "bg-muted/30 border-muted-foreground/20 hover:bg-muted/50",
+          : variantStyles[variant],
       )}
     >
       <div className="text-xs font-medium text-muted-foreground mb-1">
@@ -1351,7 +1394,12 @@ function MetricCard({
       <div
         className={cn(
           "font-bold",
-          highlight ? "text-lg text-primary" : "text-base text-foreground",
+          highlight || variant !== "default" ? "text-lg" : "text-base",
+          variant !== "default"
+            ? textStyles[variant]
+            : highlight
+              ? "text-primary"
+              : "text-foreground",
         )}
       >
         {value}
