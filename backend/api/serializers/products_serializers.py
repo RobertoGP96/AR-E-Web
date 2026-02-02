@@ -267,15 +267,29 @@ class ProductBuyedSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         # Solo validar amount_buyed si está presente en los datos
         if "amount_buyed" in attrs:
-            if attrs["amount_buyed"] <= 0:
+            amount_buyed = attrs["amount_buyed"]
+            if amount_buyed <= 0:
                 raise serializers.ValidationError(
                     "La cantidad comprada debe ser un número positivo."
                 )
+            
             if "original_product" in attrs:
-                if (
-                    attrs["amount_buyed"] + attrs["original_product"].amount_purchased
-                    > attrs["original_product"].amount_requested
-                ):
+                product = attrs["original_product"]
+                current_total_purchased = product.amount_purchased
+                
+                # Si estamos en una actualización de recibo de compra, 
+                # debemos restar lo que ya existe en este recibo para este producto
+                view = self.context.get('view')
+                if view and view.kwargs.get('pk'):
+                    from django.db.models import Sum
+                    receipt_id = view.kwargs.get('pk')
+                    already_in_receipt = product.buys.filter(
+                        shoping_receip_id=receipt_id
+                    ).aggregate(Sum('amount_buyed'))['amount_buyed__sum'] or 0
+                    
+                    current_total_purchased -= already_in_receipt
+                
+                if amount_buyed + current_total_purchased > product.amount_requested:
                     raise serializers.ValidationError(
                         "La cantidad comprada no puede ser mayor a la solicitada."
                     )
