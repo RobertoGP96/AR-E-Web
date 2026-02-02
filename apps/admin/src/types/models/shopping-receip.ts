@@ -3,13 +3,13 @@
  */
 
 import type { ID, DateTime, ShoppingStatus } from './base';
-import type { ProductBuyed, CreateProductBuyedData } from './product-buyed';
+import type { ProductBuyed, CreateProductBuyedData, UpdateProductBuyedData } from './product-buyed';
 
 
 // Modelo principal
 export interface ShoppingReceip {
   id: ID;
-  shopping_account: string;
+  shopping_account: ID | string;
   shopping_account_name?: string;
   shop_of_buy: string;
   card_id: string;
@@ -33,8 +33,8 @@ export interface ShoppingReceip {
 
 // Tipos para crear/editar recibo de compra
 export interface CreateShoppingReceipData {
-  shopping_account_id: ID;
-  shop_of_buy_id: ID;
+  shopping_account: ID;
+  shop_of_buy: string;
   card_id: string;
   status_of_shopping?: ShoppingStatus;
   buy_date?: DateTime;
@@ -42,6 +42,13 @@ export interface CreateShoppingReceipData {
   total_cost_of_purchase: number;  // Costo real de la compra
 }
 
-export interface UpdateShoppingReceipData extends Partial<CreateShoppingReceipData> {
-  id: ID;
+export interface UpdateShoppingReceipData {
+  shopping_account?: ID;
+  shop_of_buy?: string;
+  card_id?: string;
+  status_of_shopping?: ShoppingStatus;
+  buy_date?: DateTime;
+  buyed_products?: UpdateProductBuyedData[];
+  total_cost_of_purchase?: number;
+  total_cost_of_shopping?: number;
 }

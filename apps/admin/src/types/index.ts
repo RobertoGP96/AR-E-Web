@@ -153,6 +153,11 @@ export type {
   ReportData
 } from './api';
 
+export type {
+  ClientBalanceEntry,
+  ClientBalancesReportResponse
+} from './services/client-report';
+
 // Exportar utilidades y constantes
 export {
   // Mapas de etiquetas

@@ -24,6 +24,8 @@ import type {
   BuyingAccount,
   CommonInformation,
   ShoppingReceip,
+  CreateShoppingReceipData,
+  UpdateShoppingReceipData,
   ProductBuyed,
   ProductReceived,
   Package,
@@ -267,14 +269,14 @@ export const shoppingReceipService = {
   /**
    * Crear recibo de compra
    */
-  createShoppingReceipt: async (data: Partial<ShoppingReceip>): Promise<ApiResponse<ShoppingReceip>> => {
+  createShoppingReceipt: async (data: CreateShoppingReceipData): Promise<ApiResponse<ShoppingReceip>> => {
     return apiClient.post('/api_data/shopping_reciep/', data);
   },
 
   /**
    * Actualizar recibo de compra
    */
-  updateShoppingReceipt: async (id: number, data: Partial<ShoppingReceip>): Promise<ApiResponse<ShoppingReceip>> => {
+  updateShoppingReceipt: async (id: number, data: UpdateShoppingReceipData): Promise<ApiResponse<ShoppingReceip>> => {
     return apiClient.patch(`/api_data/shopping_reciep/${id}/`, data);
   },
 

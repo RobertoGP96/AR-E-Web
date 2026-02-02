@@ -32,6 +32,7 @@ export * from './delivery';
 
 // Servicios de analytics y reportes
 export * from './analytics';
+export * from './reports/reports';
 
 // Servicios de métricas esperadas
 export * from './balance';

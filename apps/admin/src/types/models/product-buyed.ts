@@ -24,7 +24,7 @@ export interface ProductBuyed {
   refund_notes?: string | null;
   created_at?: DateTime;
   updated_at?: DateTime;
-  original_product_details: Product;
+  original_product_details?: Product;
 }
 
 // Tipos para crear/editar producto comprado
@@ -34,7 +34,7 @@ export interface CreateProductBuyedData {
 }
 
 export interface UpdateProductBuyedData extends Partial<CreateProductBuyedData> {
-  id: ID;
+  id?: ID;
 }
 
 

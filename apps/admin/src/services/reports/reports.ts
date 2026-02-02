@@ -1,4 +1,5 @@
 import { apiClient, type ApiErrorResponse } from '@/lib/api-client';
+import type { ClientBalanceEntry, ClientBalancesReportResponse } from '@/types';
 
 export interface MonthlyReport {
   month: string;
@@ -99,4 +100,31 @@ export const fetchProfitReports = async (): Promise<ProfitReportsData> => {
   }
 };
 
-export default { fetchProfitReports };
+/**
+ * Obtiene el reporte general de balances de clientes
+ */
+export const fetchClientBalancesReport = async (): Promise<ClientBalanceEntry[]> => {
+  try {
+    const response = await apiClient.get<ClientBalancesReportResponse>('/api_data/reports/clients/balances/');
+    
+    if (response && response.success) {
+      return response.data;
+    }
+    
+    throw new Error(response?.message || 'No se pudo cargar el reporte de saldos de clientes.');
+  } catch (error) {
+    console.error('Error en fetchClientBalancesReport:', error);
+    
+    if (error && typeof error === 'object' && 'status' in (error as Record<string, unknown>)) {
+      const { status, message } = error as ApiErrorResponse;
+      if (status === 403) {
+        throw new Error('No tiene permisos para acceder a este reporte.');
+      }
+      if (message) throw new Error(message);
+    }
+    
+    throw new Error('Error al conectar con el servidor para obtener los saldos de clientes.');
+  }
+};
+
+export default { fetchProfitReports, fetchClientBalancesReport };

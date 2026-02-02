@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -14,10 +14,11 @@ import {
   ReceiptIcon,
   ChartColumn,
   ReceiptText,
-  BaggageClaim
-} from 'lucide-react';
-import { toast } from 'sonner';
-import logoSvg from '@/assets/logo/f-logo.svg';
+  BaggageClaim,
+  CoinsIcon,
+} from "lucide-react";
+import { toast } from "sonner";
+import logoSvg from "@/assets/logo/f-logo.svg";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,10 +26,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '../ui/badge';
-import useAuth from '@/hooks/auth/useAuth';
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "../ui/badge";
+import useAuth from "@/hooks/auth/useAuth";
 import {
   Sidebar,
   SidebarContent,
@@ -40,107 +41,111 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 
 const navigationGroups = [
   {
-    title: 'Dashboard',
+    title: "Dashboard",
     items: [
       {
-        name: 'Dashboard',
-        href: '/',
-        icon: LayoutDashboard
-      }
-    ]
+        name: "Dashboard",
+        href: "/",
+        icon: LayoutDashboard,
+      },
+    ],
   },
   {
-    title: 'Gestión',
+    title: "Gestión",
     items: [
       {
-        name: 'Usuarios',
-        href: '/users',
-        icon: Users
+        name: "Usuarios",
+        href: "/users",
+        icon: Users,
       },
       {
-        name: 'Tiendas',
-        href: '/shops',
-        icon: Store
+        name: "Tiendas",
+        href: "/shops",
+        icon: Store,
       },
       {
-        name: 'Categorías',
-        href: '/categories',
-        icon: Tag
-      }
-    ]
+        name: "Categorías",
+        href: "/categories",
+        icon: Tag,
+      },
+    ],
   },
   {
-    title: 'Órdenes y Productos',
+    title: "Órdenes y Productos",
     items: [
       {
-        name: 'Órdenes',
-        href: '/orders',
-        icon: ShoppingCart
+        name: "Órdenes",
+        href: "/orders",
+        icon: ShoppingCart,
       },
       {
-        name: 'Productos',
-        href: '/products',
-        icon: Package
+        name: "Productos",
+        href: "/products",
+        icon: Package,
       },
-    ]
+    ],
   },
   {
-    title: 'Logística',
+    title: "Logística",
     items: [
       {
-        name: 'Compras',
-        href: '/purchases',
-        icon: ShoppingBag
+        name: "Compras",
+        href: "/purchases",
+        icon: ShoppingBag,
       },
       {
-        name: 'Paquetes',
-        href: '/packages',
-        icon: Package
+        name: "Paquetes",
+        href: "/packages",
+        icon: Package,
       },
       {
-        name: 'Entrega',
-        href: '/delivery',
-        icon: Truck
-      }
-    ]
+        name: "Entrega",
+        href: "/delivery",
+        icon: Truck,
+      },
+    ],
   },
   {
-    title: 'Finanzas',
+    title: "Finanzas",
     items: [
-      
       {
-        name: 'Costos de Envío',
-        href: '/invoices',
-        icon: BaggageClaim
+        name: "Costos de Envío",
+        href: "/invoices",
+        icon: BaggageClaim,
       },
       {
-        name: 'Gastos',
-        href: '/expenses',
-        icon: ReceiptText
+        name: "Gastos",
+        href: "/expenses",
+        icon: ReceiptText,
       },
       {
-        name: 'Balance',
-        href: '/balance',
-        icon: ReceiptIcon
+        name: "Balance",
+        href: "/balance",
+        icon: ReceiptIcon,
       },
       {
-        name: 'Analisis',
-        href: '/analytics',
-        icon: ChartColumn
+        name: "Clientes",
+        href: "/client_report",
+        icon: CoinsIcon,
       },
-    ]
-  }
+      {
+        name: "Analisis",
+        href: "/analytics",
+        icon: ChartColumn,
+      },
+    ],
+  },
 ];
 
 const bottomNavigation = [
   {
-    name: 'Configuración',
-    href: '/settings',
-    icon: Settings
+    name: "Configuración",
+    href: "/settings",
+    icon: Settings,
   },
 ];
 
@@ -151,29 +156,30 @@ export function AsideNav() {
 
   const isActive = (path: string) => {
     // Para la ruta raíz, solo se activa cuando es exactamente '/'
-    if (path === '/') {
-      return location.pathname === '/';
+    if (path === "/") {
+      return location.pathname === "/";
     }
-    
+
     // Para otras rutas, se activa si el pathname comienza con el path
     // y el siguiente carácter es '/' o es el final de la cadena
     // Esto permite que rutas como /products/123 mantengan activo /products
-    return location.pathname === path || 
-           location.pathname.startsWith(path + '/');
+    return (
+      location.pathname === path || location.pathname.startsWith(path + "/")
+    );
   };
 
   const handleLogout = async () => {
     try {
       await logout();
-      toast.success('Sesión cerrada exitosamente');
+      toast.success("Sesión cerrada exitosamente");
     } catch (error) {
-      toast.error('Error al cerrar sesión');
-      console.error('Logout error:', error);
+      toast.error("Error al cerrar sesión");
+      console.error("Logout error:", error);
     }
   };
 
   return (
-    <Sidebar className=''>
+    <Sidebar className="">
       {/* Header */}
       <SidebarHeader className="border-b  border-orange-400 ">
         <div className="w-full flex h-16 items-center justify-center p-4 text-orange-400">
@@ -193,11 +199,11 @@ export function AsideNav() {
                   const Icon = item.icon;
                   const active = isActive(item.href);
                   return (
-                    <SidebarMenuItem key={item.name}  >
-                      <SidebarMenuButton asChild isActive={active} >
-                        <Link to={item.href} >
+                    <SidebarMenuItem key={item.name}>
+                      <SidebarMenuButton asChild isActive={active}>
+                        <Link to={item.href}>
                           <Icon className="h-7 w-7 " />
-                          <span className='text-[15px]'>{item.name}</span>
+                          <span className="text-[15px]">{item.name}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -232,7 +238,7 @@ export function AsideNav() {
       </SidebarContent>
 
       {/* Footer - User Menu */}
-      <SidebarFooter className=' border-t border-orange-400'>
+      <SidebarFooter className=" border-t border-orange-400">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
@@ -244,14 +250,24 @@ export function AsideNav() {
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage src="" alt="Administrador" />
                     <AvatarFallback className="rounded-lg bg-gradient-to-r from-orange-400 to-amber-500 text-gray-900 font-semibold">
-                      {(user?.name?.charAt(0)?.toUpperCase() || '') + (user?.last_name?.charAt(0)?.toUpperCase() || '')}
+                      {(user?.name?.charAt(0)?.toUpperCase() || "") +
+                        (user?.last_name?.charAt(0)?.toUpperCase() || "")}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                    <span className="truncate font-semibold">{user?.name + " " + user?.last_name.charAt(0).toUpperCase()}</span>
-                    <span className="truncate text-xs text-muted-foreground">{user?.phone_number}</span>
+                    <span className="truncate font-semibold">
+                      {user?.name +
+                        " " +
+                        user?.last_name.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {user?.phone_number}
+                    </span>
                   </div>
-                  <Badge variant="secondary" className="group-data-[collapsible=icon]:hidden text-xs">
+                  <Badge
+                    variant="secondary"
+                    className="group-data-[collapsible=icon]:hidden text-xs"
+                  >
                     {user?.role}
                   </Badge>
                 </SidebarMenuButton>
@@ -267,12 +283,19 @@ export function AsideNav() {
                     <Avatar className="h-8 w-8 rounded-lg">
                       <AvatarImage src="" alt="Administrador" />
                       <AvatarFallback className="rounded-lg bg-gradient-to-r from-orange-400 to-amber-500 text-gray-900 font-semibold">
-                        {(user?.name?.charAt(0)?.toUpperCase() || '') + (user?.last_name?.charAt(0)?.toUpperCase() || '')}
+                        {(user?.name?.charAt(0)?.toUpperCase() || "") +
+                          (user?.last_name?.charAt(0)?.toUpperCase() || "")}
                       </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">{user?.name + " " + user?.last_name.charAt(0).toUpperCase()}</span>
-                      <span className="truncate text-xs text-muted-foreground">{user?.phone_number}</span>
+                      <span className="truncate font-semibold">
+                        {user?.name +
+                          " " +
+                          user?.last_name.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {user?.phone_number}
+                      </span>
                     </div>
                     <Badge variant="secondary" className="text-xs">
                       {user?.role}
@@ -289,7 +312,10 @@ export function AsideNav() {
                   Configuración
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-600"
+                >
                   <LogOut className="h-4 w-4" />
                   Cerrar sesión
                 </DropdownMenuItem>

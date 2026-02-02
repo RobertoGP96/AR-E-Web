@@ -419,6 +419,22 @@ export class ApiClient {
     return response.data;
   }
 
+  public async uploadFile<T = unknown>(url: string, file: File, fieldName: string = 'image', additionalData: Record<string, unknown> = {}): Promise<T> {
+    const formData = new FormData();
+    formData.append(fieldName, file);
+    
+    Object.entries(additionalData).forEach(([key, value]) => {
+      formData.append(key, value as string);
+    });
+
+    const response = await this.client.post<T>(url, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+
   public async delete<T = unknown>(url: string, config?: RequestConfig): Promise<T> {
     const response = await this.client.delete<T>(url, config);
     return response.data;

@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -22,44 +23,34 @@ import { toast } from "sonner";
 import {
   CreditCard,
   Loader2,
-  Package,
-  Trash2,
-  ShoppingCart,
   DollarSign,
+  Store,
+  ShoppingBag,
+  Info,
+  ChevronRight,
+  Plus,
 } from "lucide-react";
 import { shoppingReceipService } from "@/services/api";
 import type {
   CreateProductBuyedData,
+  CreateShoppingReceipData,
   ProductBuyed,
   ShoppingReceip,
 } from "@/types/models";
 import { SHOPPING_STATUSES } from "@/types/models/base";
 import { DatePicker } from "@/components/utils/DatePicker";
 import { useShops } from "@/hooks/useShops";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "../ui/input-group";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
-import { ProductSelector } from "./purchase-products/purchase-product-selector";
 import { useProducts } from "@/hooks/product";
-import { Card, CardContent } from "../ui/card";
-import { Badge } from "../ui/badge";
+import { InputGroupInput } from "@/components/ui/input-group";
+import { ProductSelector } from "./purchase-products/purchase-product-selector";
+import { PurchaseProductListEditor } from "./purchase-products/PurchaseProductListEditor";
 
 // Schema de validación
 const createShoppingReceipSchema = z.object({
   shop_of_buy_id: z.number().min(1, "Debes seleccionar una tienda"),
   shopping_account_id: z
     .number()
-    .min(1, "Debes seleccionar una cuenta de compra")
-    .optional(),
+    .min(1, "Debes seleccionar una cuenta de compra"),
   status_of_shopping: z.enum(["No pagado", "Pagado", "Parcial"]).optional(),
   buy_date: z.string().optional(),
   card_id: z.string().optional(),
@@ -77,7 +68,11 @@ interface PurchaseFormProps {
   onCancel?: () => void;
 }
 
-export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
+export function PurchaseForm({
+  purchase,
+  onSuccess,
+  onCancel,
+}: PurchaseFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -108,11 +103,60 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
   const selectedShop = shops.find((shop) => shop.id === selectedShopId);
   const buyingAccounts = selectedShop?.buying_accounts || [];
 
+  // Cargar datos iniciales si estamos en modo edición
+  useEffect(() => {
+    if (purchase && shops.length > 0) {
+      // Encontrar la tienda por nombre para obtener su ID
+      const shop = shops.find((s) => s.name === purchase.shop_of_buy);
+      if (shop) {
+        form.setValue("shop_of_buy_id", shop.id);
+
+        // Encontrar la cuenta por nombre dentro de esa tienda
+        const account = shop.buying_accounts?.find(
+          (a) => a.account_name === purchase.shopping_account,
+        );
+        if (account) {
+          form.setValue("shopping_account_id", account.id);
+        }
+      }
+
+      // Llenar el resto de campos
+      form.setValue(
+        "status_of_shopping",
+        purchase.status_of_shopping as "No pagado" | "Pagado" | "Parcial",
+      );
+      form.setValue(
+        "buy_date",
+        purchase.buy_date
+          ? new Date(purchase.buy_date).toISOString().split("T")[0]
+          : undefined,
+      );
+      form.setValue("card_id", purchase.card_id || "");
+      form.setValue("total_cost_of_purchase", purchase.total_cost_of_purchase);
+
+      // Cargar productos
+      if (purchase.buyed_products) {
+        setSelectedProductsDetails(purchase.buyed_products);
+        setSelectedProducts(
+          purchase.buyed_products.map((p) => ({
+            original_product: (p.product_id ||
+              p.original_product_details?.id) as string,
+            amount_buyed: p.amount_buyed,
+          })),
+        );
+      }
+    }
+  }, [purchase, shops, form]);
+
   // Calcular total automáticamente cuando cambian los productos
   useEffect(() => {
     const total = selectedProductsDetails.reduce((sum, item) => {
-      return sum + item.original_product_details.total_cost * item.amount_buyed;
+      return (
+        sum +
+        (item.original_product_details?.total_cost || 0) * item.amount_buyed
+      );
     }, 0);
+    // Solo actualizar si no estamos en carga inicial o si el valor cambia
     form.setValue("total_cost_of_purchase", total);
   }, [selectedProductsDetails, form]);
 
@@ -130,7 +174,8 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
   // Eliminar un producto del carrito
   const removeProductFromCart = (productId: string) => {
     const newDetails = selectedProductsDetails.filter(
-      (item) => item.product_id !== productId,
+      (item) =>
+        (item.product_id || item.original_product_details?.id) !== productId,
     );
     setSelectedProductsDetails(newDetails);
 
@@ -156,7 +201,8 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
     setSelectedProductsDetails(newDetails);
 
     const newApiData = newDetails.map((item) => ({
-      original_product: item.product_id as string,
+      original_product: (item.product_id ||
+        item.original_product_details?.id) as string,
       amount_buyed: item.amount_buyed,
     }));
     setSelectedProducts(newApiData);
@@ -180,21 +226,27 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
         return;
       }
 
-      const payload = {
-        shopping_account: data.shopping_account_id,
+      const payload: CreateShoppingReceipData = {
+        shopping_account: data.shopping_account_id!,
         shop_of_buy: selectedShop.name,
         status_of_shopping: data.status_of_shopping,
         buy_date: data.buy_date,
-        card_id: data.card_id,
+        card_id: data.card_id || "",
         total_cost_of_purchase: data.total_cost_of_purchase || 0,
-        buyed_products: selectedProducts,
+        buyed_products: selectedProductsDetails.map((item) => ({
+          original_product: (item.product_id ||
+            item.original_product_details?.id) as string,
+          amount_buyed: item.amount_buyed,
+        })),
       };
 
-      await shoppingReceipService.createShoppingReceipt(
-        payload as Partial<unknown>,
-      );
-
-      toast.success("Recibo de compra creado exitosamente");
+      if (purchase?.id) {
+        await shoppingReceipService.updateShoppingReceipt(purchase.id, payload);
+        toast.success("Recibo de compra actualizado exitosamente");
+      } else {
+        await shoppingReceipService.createShoppingReceipt(payload);
+        toast.success("Recibo de compra creado exitosamente");
+      }
       form.reset();
       setSelectedProducts([]);
       setSelectedProductsDetails([]);
@@ -207,260 +259,322 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
     }
   };
 
-  // Calcular resumen
-  const cartSummary = {
-    totalItems: selectedProductsDetails.reduce(
-      (sum, item) => sum + item.amount_buyed,
-      0,
-    ),
-    totalCost: selectedProductsDetails.reduce(
-      (sum, item) =>
-        sum + item.original_product_details.total_cost * item.amount_buyed,
-      0,
-    ),
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          {/* Seleccionar tienda */}
-          <FormField
-            control={form.control}
-            name="shop_of_buy_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tienda</FormLabel>
-                <Select
-                  onValueChange={(value) => {
-                    field.onChange(Number(value));
-                    // Limpiar productos al cambiar de tienda
-                    setSelectedProducts([]);
-                    setSelectedProductsDetails([]);
-                  }}
-                  value={field.value?.toString()}
-                  disabled={isLoadingShops}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      {isLoadingShops ? (
-                        <div className="flex items-center">
-                          <span>Cargando tiendas...</span>
-                          <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                        </div>
-                      ) : (
-                        <SelectValue
-                          className="truncate"
-                          placeholder="Selecciona una tienda"
-                        />
-                      )}
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {shops.map((shop) => (
-                      <SelectItem
-                        key={shop.id}
-                        value={shop.id.toString()}
-                        className="capitalize"
-                      >
-                        {shop.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Seleccionar cuenta de compra */}
-          <FormField
-            control={form.control}
-            name="shopping_account_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cuenta de Compra</FormLabel>
-                <Select
-                  onValueChange={(value) => field.onChange(Number(value))}
-                  value={field.value?.toString()}
-                  disabled={!selectedShopId || buyingAccounts.length === 0}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        className="truncate"
-                        placeholder={
-                          !selectedShopId
-                            ? "Selecciona una tienda primero"
-                            : buyingAccounts.length === 0
-                              ? "No hay cuentas disponibles"
-                              : "Selecciona una cuenta"
-                        }
-                      />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {buyingAccounts.map((account) => (
-                      <SelectItem
-                        key={account.id}
-                        value={account.id.toString()}
-                      >
-                        {account.account_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Estado de compra */}
-          <FormField
-            control={form.control}
-            name="status_of_shopping"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Estado de Pago</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        className="truncate"
-                        placeholder="Selecciona un estado"
-                      />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {Object.values(SHOPPING_STATUSES).map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Tarjeta de Pago */}
-          <FormField
-            control={form.control}
-            name="card_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tarjeta de Pago</FormLabel>
-                <FormControl>
-                  <InputGroup className="w-full">
-                    <InputGroupInput
-                      placeholder="---- ---- ---- ----"
-                      value={field.value}
-                      onChange={(e) => {
-                        field.onChange(e.target.value);
-                      }}
-                      maxLength={19}
-                    />
-                    <InputGroupAddon>
-                      <CreditCard className="inline-start text-muted-foreground" />
-                    </InputGroupAddon>
-                  </InputGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Fecha de compra */}
-          <FormField
-            control={form.control}
-            name="buy_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <DatePicker
-                    label="Fecha de Compra"
-                    placeholder="Selecciona la fecha"
-                    selected={field.value ? new Date(field.value) : undefined}
-                    onDateChange={(date) =>
-                      field.onChange(
-                        date ? date.toISOString().split("T")[0] : undefined,
-                      )
-                    }
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Costo total (calculado automáticamente) */}
-          <FormField
-            control={form.control}
-            name="total_cost_of_purchase"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Costo de la Compra</FormLabel>
-                <FormControl>
-                  <InputGroup className="w-full mt-1">
-                    <InputGroupInput
-                      placeholder="0.00"
-                      type="number"
-                      value={field.value}
-                      onChange={(e) => {
-                        field.onChange(parseFloat(e.target.value));
-                      }}
-                      maxLength={19}
-                    />
-                    <InputGroupAddon>
-                      <DollarSign className="inline-start text-muted-foreground" />
-                    </InputGroupAddon>
-                  </InputGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="w-full space-y-10 pb-20"
+      >
+        {/* Header Section */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
+              <ShoppingBag className="h-5 w-5" />
+            </span>
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                {purchase?.id ? "Editar Registro" : "Nuevo Recibo de Compra"}
+              </h1>
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <span>Gestión de Adquisiciones</span>
+                <ChevronRight className="h-3 w-3" />
+                <span className="font-medium text-orange-600">
+                  {purchase?.id ? `ID: #${purchase.id}` : "Nuevo Ingreso"}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Sección de productos */}
-        <div className="w-full mt-4 space-y-3">
-          <div className="w-full flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold">
-                Productos de la Compra
-              </h2>
-              {selectedProductsDetails.length > 0 && (
-                <Badge variant="default">
-                  {selectedProductsDetails.length}{" "}
-                  {selectedProductsDetails.length === 1
-                    ? "producto"
-                    : "productos"}
-                </Badge>
-              )}
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* Main Content */}
+          <div className="lg:col-span-8 space-y-10">
+            {/* Section: Origin */}
+            <section className="space-y-6">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                <Store className="h-4 w-4 text-slate-400" />
+                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">
+                  Origen de la Compra
+                </h3>
+              </div>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 font-medium">
+                <FormField
+                  control={form.control}
+                  name="shop_of_buy_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-600">
+                        Establecimiento
+                      </FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(Number(value));
+                          setSelectedProducts([]);
+                          setSelectedProductsDetails([]);
+                        }}
+                        value={field.value?.toString()}
+                        disabled={isLoadingShops}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-12 rounded-2xl border-slate-200 bg-white/50 hover:bg-white transition-all shadow-sm">
+                            <SelectValue placeholder="Tienda de compra" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
+                          {shops.map((shop) => (
+                            <SelectItem
+                              key={shop.id}
+                              value={shop.id.toString()}
+                              className="rounded-lg py-3"
+                            >
+                              {shop.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="shopping_account_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-600">
+                        Cuenta Relacionada
+                      </FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(Number(value))}
+                        value={field.value?.toString()}
+                        disabled={
+                          !selectedShopId || buyingAccounts.length === 0
+                        }
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-12 rounded-2xl border-slate-200 bg-white/50 hover:bg-white transition-all shadow-sm">
+                            <SelectValue placeholder="Cuenta de cargo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
+                          {buyingAccounts.map((account) => (
+                            <SelectItem
+                              key={account.id}
+                              value={account.id.toString()}
+                              className="rounded-lg py-3"
+                            >
+                              {account.account_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </section>
+
+            {/* Section: Items */}
+            <section className="space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="h-4 w-4 text-slate-400" />
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">
+                    Artículos Adquiridos
+                  </h3>
+                </div>
                 <Button
                   type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!selectedShopId || isLoading}
-                  className={
-                    !selectedShopId ? "pointer-events-none opacity-50" : ""
-                  }
+                  onClick={() => setIsDialogOpen(true)}
+                  disabled={!selectedShopId}
+                  variant="ghost"
+                  className="h-8 rounded-full px-4 text-xs font-bold text-orange-600 hover:bg-orange-50 hover:text-orange-700 transition-colors"
                 >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  {isLoading ? "Cargando..." : "Seleccionar Productos"}
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  Agregar Item
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="min-w-[70%] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>
-                    Seleccionar Productos para la Compra
-                  </DialogTitle>
-                </DialogHeader>
+              </div>
+
+              <div className="bg-slate-50/30 rounded-3xl p-1 border border-slate-100">
+                <PurchaseProductListEditor
+                  items={selectedProductsDetails}
+                  onUpdateQuantity={updateProductQuantity}
+                  onRemove={removeProductFromCart}
+                  isLoading={isLoading}
+                />
+              </div>
+            </section>
+          </div>
+
+          {/* Sidebar / Secondary Info */}
+          <div className="lg:col-span-4 space-y-8">
+            <div className="bg-white rounded-[32px] border border-slate-100 p-8 shadow-sm space-y-8 sticky top-6">
+              <div className="space-y-6 font-medium">
+                <div className="flex items-center gap-2 pb-4 border-b border-slate-50">
+                  <Info className="h-4 w-4 text-orange-500" />
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                    Resumen Financiero
+                  </h4>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="status_of_shopping"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-slate-500">
+                        Estado de Pago
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-11 rounded-xl border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all shadow-none">
+                            <SelectValue placeholder="Seleccionar..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                          {Object.values(SHOPPING_STATUSES).map((status) => (
+                            <SelectItem
+                              key={status}
+                              value={status}
+                              className="py-2.5"
+                            >
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="buy_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-slate-500">
+                        Fecha de Operación
+                      </FormLabel>
+                      <FormControl>
+                        <DatePicker
+                          placeholder="Fijar fecha"
+                          selected={
+                            field.value ? new Date(field.value) : undefined
+                          }
+                          onDateChange={(date) =>
+                            field.onChange(
+                              date
+                                ? date.toISOString().split("T")[0]
+                                : undefined,
+                            )
+                          }
+                          className="h-11 w-full rounded-xl border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all shadow-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="card_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-slate-500">
+                        Número de Tarjeta / ID
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative group">
+                          <InputGroupInput
+                            className="h-11 rounded-xl border-slate-100 bg-slate-50/50 pr-10 focus-visible:bg-white transition-all shadow-none"
+                            placeholder="**** **** ****"
+                            value={field.value}
+                            onChange={(e) => field.onChange(e.target.value)}
+                          />
+                          <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-orange-400" />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="total_cost_of_purchase"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-slate-500">
+                        Total Liquidado
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative group">
+                          <InputGroupInput
+                            className="h-14 rounded-2xl border-orange-100 bg-orange-50/30 text-xl font-black text-slate-900 pr-10 hover:bg-orange-50 focus-visible:bg-white focus-visible:border-orange-200 transition-all shadow-none"
+                            type="number"
+                            value={field.value}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value))
+                            }
+                          />
+                          <DollarSign className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-orange-500" />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="space-y-3 pt-4">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || selectedProducts.length === 0}
+                  className="w-full h-14 rounded-2xl bg-slate-900 hover:bg-black text-white font-bold text-base shadow-xl shadow-slate-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  ) : purchase?.id ? (
+                    "Guardar Cambios"
+                  ) : (
+                    "Completar Compra"
+                  )}
+                </Button>
+                {onCancel && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={onCancel}
+                    className="w-full h-12 rounded-xl text-slate-400 font-semibold hover:text-slate-600"
+                  >
+                    Descartar
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="w-[95vw] sm:max-w-[90vw] lg:max-w-6xl max-h-[95vh] sm:max-h-[90vh] rounded-[24px] sm:rounded-[40px] border-none shadow-2xl p-0 overflow-y-auto">
+            <div className="flex flex-col h-full bg-slate-50">
+              <div className="p-5 sm:p-8 pb-4">
+                <DialogTitle className="text-2xl font-black text-slate-900">
+                  Catálogo de Productos
+                </DialogTitle>
+                <p className="text-slate-500 text-sm mt-1">
+                  Selecciona los productos solicitados por los clientes.
+                </p>
+              </div>
+              <div className="flex-1 overflow-y-auto px-4 pb-4">
                 <ProductSelector
                   shopFilter={selectedShop?.name}
                   statusFilter="Encargado"
@@ -470,175 +584,27 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                   showSummary={true}
                   maxHeight="500px"
                 />
-                <div className="flex justify-end gap-2 pt-4 border-t">
-                  <Button
-                    type="button"
-                    variant="default"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    Cerrar
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* Lista de productos seleccionados */}
-          <Card>
-            <CardContent className="p-4">
-              {selectedProductsDetails.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                  <Package className="h-12 w-12 mb-3 opacity-50" />
-                  <p className="font-medium">No hay productos seleccionados</p>
-                  <p className="text-sm">
-                    Haz clic en "Seleccionar Productos" para agregar
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {selectedProductsDetails.map((item) => (
-                    <div
-                      key={item.product_id}
-                      className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center shrink-0">
-                        <Package className="h-5 w-5 text-muted-foreground" />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {item.original_product_details.name}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-                          <span className="font-mono">
-                            {item.original_product_details.sku}
-                          </span>
-                          {item.original_product_details.category && (
-                            <>
-                              <span>•</span>
-                              <Badge variant="secondary" className="text-xs">
-                                {item.original_product_details.category}
-                              </Badge>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-right">
-                          <p className="text-sm font-semibold">
-                            $
-                            {(
-                              item.original_product_details.total_cost *
-                              item.amount_buyed
-                            ).toFixed(2)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            $
-                            {item.original_product_details.total_cost.toFixed(
-                              2,
-                            )}{" "}
-                            × {item.amount_buyed}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-1 border rounded-md p-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() =>
-                              updateProductQuantity(
-                                item.product_id as string,
-                                -1,
-                              )
-                            }
-                          >
-                            -
-                          </Button>
-                          <span className="w-8 text-center text-sm font-medium">
-                            {item.amount_buyed}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            disabled={
-                              item.amount_buyed ===
-                              item.original_product_details.amount_buyed +
-                                item.amount_buyed
-                            }
-                            onClick={() =>
-                              updateProductQuantity(
-                                item.product_id as string,
-                                1,
-                              )
-                            }
-                          >
-                            +
-                          </Button>
-                        </div>
-
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() =>
-                            removeProductFromCart(item.product_id as string)
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Resumen del carrito */}
-                  <div className="border-t pt-3 mt-3">
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-muted-foreground">
-                        Total: {cartSummary.totalItems} unidades
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground">
-                          Total estimado
-                        </p>
-                        <p className="text-lg font-bold">
-                          ${cartSummary.totalCost.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Botones */}
-        <div className="mt-6 flex justify-end space-x-3 pt-4 border-t">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancelar
-            </Button>
-          )}
-          <Button
-            type="submit"
-            disabled={isSubmitting || selectedProducts.length === 0}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Creando...
-              </>
-            ) : (
-              "Crear Recibo de Compra"
-            )}
-          </Button>
-        </div>
+              </div>
+              <div className="p-5 sm:p-8 pt-4 bg-white border-t border-slate-100 flex flex-col sm:flex-row justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-2xl h-12 px-8 border-slate-200"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setIsDialogOpen(false)}
+                  className="rounded-2xl h-12 px-8 bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-100"
+                >
+                  Guardar Selección
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </form>
     </Form>
   );
