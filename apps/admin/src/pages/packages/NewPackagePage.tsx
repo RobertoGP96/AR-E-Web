@@ -4,9 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { PackageForm } from "@/components/packages/package-form";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { usePackages } from "@/hooks/package";
 
 export default function NewPackagePage() {
   const navigate = useNavigate();
+  const { invalidatePackages } = usePackages();
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-7xl animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -22,6 +24,7 @@ export default function NewPackagePage() {
       </div>
 
       <PackageForm
+        onInvalidate={invalidatePackages}
         onSuccess={() => navigate("/packages")}
         onCancel={() => navigate("/packages")}
       />

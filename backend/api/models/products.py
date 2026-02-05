@@ -96,9 +96,14 @@ class Product(models.Model):
         return self.amount_requested - self.amount_purchased
 
     @property
+    def pending_received(self):
+        """Cantidad pendiente de recibir"""
+        return self.amount_purchased - self.amount_received
+
+    @property
     def pending_delivery(self):
         """Cantidad pendiente de entregar"""
-        return self.amount_purchased - self.amount_delivered
+        return self.amount_received - self.amount_delivered
 
     @property
     def is_fully_purchased(self):
@@ -106,17 +111,24 @@ class Product(models.Model):
         return self.amount_purchased >= self.amount_requested
 
     @property
+    def is_fully_received(self):
+        """Verifica si se ha recibido toda la cantidad comprada"""
+        return self.amount_received >= self.amount_purchased
+
+    @property
     def is_fully_delivered(self):
-        """Verifica si se ha entregado toda la cantidad comprada"""
-        return self.amount_delivered >= self.amount_purchased
+        """Verifica si se ha entregado toda la cantidad recibida"""
+        return self.amount_delivered >= self.amount_received
 
     @property
     def total_received(self):
-        return sum(pr.amount_received for pr in self.receiveds.all())
+        """Total de productos recibidos (redundante, usa amount_received)"""
+        return self.amount_received
 
     @property
     def total_delivered(self):
-        return sum(pr.amount_delivered for pr in self.delivers.all())
+        """Total de productos entregados (redundante, usa amount_delivered)"""
+        return self.amount_delivered
 
     @property
     def system_expenses(self):

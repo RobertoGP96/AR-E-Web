@@ -5,12 +5,14 @@ import { PackageForm } from "@/components/packages/package-form";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { usePackage } from "@/hooks/package/usePackage";
+import { usePackages } from "@/hooks/package";
 import LoadingSpinner from "@/components/utils/LoadingSpinner";
 
 export default function EditPackagePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { package: packageData, isLoading, error } = usePackage(Number(id));
+  const { invalidatePackages } = usePackages();
 
   if (isLoading) {
     return (
@@ -63,6 +65,7 @@ export default function EditPackagePage() {
 
       <PackageForm
         packageData={packageData}
+        onInvalidate={invalidatePackages}
         onSuccess={() => navigate(`/packages/${id}`)}
         onCancel={() => navigate(`/packages/${id}`)}
       />

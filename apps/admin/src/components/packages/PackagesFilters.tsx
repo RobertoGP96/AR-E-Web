@@ -25,6 +25,7 @@ export default function PackagesFilters({
   const { isFetching, refetch } = usePackages(); // Placeholder for actual hook
   const navigate = useNavigate();
 
+
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-4">

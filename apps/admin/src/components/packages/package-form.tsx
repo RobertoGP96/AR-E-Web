@@ -60,12 +60,14 @@ interface PackageFormProps {
   packageData?: PackageType;
   onSuccess?: () => void;
   onCancel?: () => void;
+  onInvalidate?: () => void;
 }
 
 export function PackageForm({
   packageData,
   onSuccess,
   onCancel,
+  onInvalidate,
 }: PackageFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -187,6 +189,7 @@ export function PackageForm({
         );
 
         toast.success("Paquete actualizado exitosamente");
+        onInvalidate?.();
       } else {
         resultPackage = await createPackage(data as PackageFormData);
 
@@ -201,6 +204,7 @@ export function PackageForm({
         }
 
         toast.success("Paquete creado exitosamente");
+        onInvalidate?.();
       }
 
       form.reset();
