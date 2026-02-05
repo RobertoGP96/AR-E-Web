@@ -1,10 +1,16 @@
-import { Package, Trash2, ShoppingCart, Plus, Minus } from "lucide-react";
+import { Package, Trash2, Plus, Minus, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { ProductBuyed } from "@/types/models";
+import type { Product } from "@/types/models";
 
-interface PurchaseProductListEditorProps {
-  items: ProductBuyed[];
+// Define locally to match structure
+export interface DeliveryProductItem {
+  product: Product;
+  amount: number;
+}
+
+interface DeliveryProductListEditorProps {
+  items: DeliveryProductItem[];
   onUpdateQuantity: (productId: string, delta: number) => void;
   onRemove: (productId: string) => void;
   onAddClick?: () => void;
@@ -12,16 +18,14 @@ interface PurchaseProductListEditorProps {
   isLoading?: boolean;
 }
 
-export function PurchaseProductListEditor({
+export function DeliveryProductListEditor({
   items,
   onUpdateQuantity,
   onRemove,
-}: PurchaseProductListEditorProps) {
-  const totalItems = items.reduce((sum, item) => sum + item.amount_buyed, 0);
-  const totalCost = items.reduce(
-    (sum, item) =>
-      sum +
-      (item.original_product_details?.total_cost || 0) * item.amount_buyed,
+}: DeliveryProductListEditorProps) {
+  const totalItems = items.reduce((sum, item) => sum + item.amount, 0);
+  const totalValue = items.reduce(
+    (sum, item) => sum + (item.product.total_cost || 0) * item.amount,
     0,
   );
 
@@ -33,18 +37,18 @@ export function PurchaseProductListEditor({
             <div className="p-4 bg-white rounded-full shadow-sm mb-4">
               <Package className="h-8 w-8 text-slate-300" />
             </div>
-            <p className="font-semibold text-slate-600">No hay productos aún</p>
+            <p className="font-semibold text-slate-600">
+              No hay productos seleccionados
+            </p>
             <p className="text-sm text-slate-400 max-w-[200px] text-center mt-1 font-medium">
-              Agrega artículos para verlos aquí y completar la compra
+              Agrega artículos del inventario para crear la entrega
             </p>
           </div>
         ) : (
           <div className="flex flex-col divide-y divide-slate-100 bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
             {items.map((item) => {
-              const product = item.original_product_details;
-              if (!product) return null;
-
-              const productId = (item.product_id || product.id) as string;
+              const { product, amount } = item;
+              const productId = product.id;
 
               return (
                 <div
@@ -93,20 +97,23 @@ export function PurchaseProductListEditor({
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 rounded-lg hover:bg-white hover:text-orange-600 shadow-none"
-                        disabled={item.amount_buyed <= 1}
+                        disabled={amount <= 1}
                         onClick={() => onUpdateQuantity(productId, -1)}
                       >
                         <Minus className="h-3 w-3" />
                       </Button>
                       <span className="w-5 text-center text-xs font-black text-slate-900">
-                        {item.amount_buyed}
+                        {amount}
                       </span>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 rounded-lg hover:bg-white hover:text-orange-600 shadow-none border-none"
+                        className="h-7 w-7 rounded-lg hover:bg-white hover:text-blue-600 shadow-none border-none"
                         onClick={() => onUpdateQuantity(productId, 1)}
+                        disabled={
+                          (item.product.amount_purchased || 0) <= amount
+                        }
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
@@ -114,13 +121,10 @@ export function PurchaseProductListEditor({
 
                     <div className="text-right min-w-[80px]">
                       <p className="text-sm font-black text-slate-900">
-                        $
-                        {(
-                          (product.total_cost || 0) * item.amount_buyed
-                        ).toFixed(2)}
+                        P.Unit
                       </p>
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
-                        Subtotal
+                        {(product.total_cost || 0).toFixed(2)}
                       </p>
                     </div>
 
@@ -141,25 +145,25 @@ export function PurchaseProductListEditor({
             {/* Summary minimalist */}
             <div className="p-6 bg-slate-900 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-                <ShoppingCart className="h-32 w-32 -mr-12 -mt-12" />
+                <Truck className="h-32 w-32 -mr-12 -mt-12" />
               </div>
               <div className="relative flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="space-y-1 text-center sm:text-left">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-black">
-                    Resumen de Compra
+                    Resumen del Envío
                   </p>
                   <p className="text-xs font-bold text-slate-400">
                     <span className="text-white">{totalItems}</span> unidades
-                    seleccionadas para este recibo.
+                    seleccionadas para este envío.
                   </p>
                 </div>
                 <div className="text-center sm:text-right">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-black mb-1">
-                    Valor Total Neto
+                    Valor Mercancía
                   </p>
-                  <p className="text-3xl font-black text-white tabular-nums">
+                  <p className="text-2xl font-black text-white tabular-nums">
                     <span className="text-orange-400 mr-1">$</span>
-                    {totalCost.toFixed(2)}
+                    {totalValue.toFixed(2)}
                   </p>
                 </div>
               </div>

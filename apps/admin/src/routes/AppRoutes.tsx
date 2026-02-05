@@ -31,6 +31,8 @@ import PackageProductsManagement from "@/pages/PackageProductsManagement";
 import NewPackagePage from "@/pages/packages/NewPackagePage";
 import EditPackagePage from "@/pages/packages/EditPackagePage";
 import DeliveryProductsManagement from "@/pages/DeliveryProductsManagement";
+import NewDeliveryPage from "@/pages/delivery/NewDeliveryPage";
+import EditDeliveryPage from "@/pages/delivery/EditDeliveryPage";
 
 import Analytics from "@/pages/Analytics";
 import Invoices from "@/pages/Invoices";
@@ -89,6 +91,8 @@ const AppRoutes = () => {
         />
 
         <Route path="delivery" element={<Delivery />} />
+        <Route path="delivery/new" element={<NewDeliveryPage />} />
+        <Route path="delivery/:id/edit" element={<EditDeliveryPage />} />
         <Route path="delivery/:id" element={<DeliveryDetail />} />
         <Route
           path="delivery/:id/manage-products"
@@ -115,7 +119,10 @@ const AppRoutes = () => {
 
         <Route path="balance" element={<BalancePage />} />
         <Route path="balance/new-balance" element={<BalanceReport />} />
-        <Route path="balance/client-balances" element={<ClientBalancesTable />} />
+        <Route
+          path="balance/client-balances"
+          element={<ClientBalancesTable />}
+        />
 
         <Route path="analytics" element={<Analytics />} />
 

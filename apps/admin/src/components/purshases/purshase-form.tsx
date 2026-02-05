@@ -564,16 +564,17 @@ export function PurchaseForm({
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="w-[95vw] sm:max-w-[90vw] lg:max-w-6xl max-h-[95vh] sm:max-h-[90vh] rounded-[24px] sm:rounded-[40px] border-none shadow-2xl p-0 overflow-y-auto">
-            <div className="flex flex-col h-full bg-slate-50">
-              <div className="p-5 sm:p-8 pb-4">
-                <DialogTitle className="text-2xl font-black text-slate-900">
-                  Catálogo de Productos
-                </DialogTitle>
-                <p className="text-slate-500 text-sm mt-1">
-                  Selecciona los productos solicitados por los clientes.
-                </p>
-              </div>
+          <DialogContent className="w-[95vw] sm:max-w-[90vw] lg:max-w-6xl h-[90vh] max-h-[95vh] rounded-[24px] sm:rounded-[40px] border-none shadow-2xl p-0 overflow-hidden flex flex-col">
+            <div className="p-5 sm:p-8 pb-4 shrink-0 bg-slate-50">
+              <DialogTitle className="text-2xl font-black text-slate-900">
+                Catálogo de Productos
+              </DialogTitle>
+              <p className="text-slate-500 text-sm mt-1">
+                Selecciona los productos solicitados por los clientes.
+              </p>
+            </div>
+
+            <div className="flex flex-col flex-1 min-h-0 bg-slate-50">
               <div className="flex-1 overflow-y-auto px-4 pb-4">
                 <ProductSelector
                   shopFilter={selectedShop?.name}
@@ -582,10 +583,10 @@ export function PurchaseForm({
                   initialCart={selectedProductsDetails}
                   onCartChange={handleCartChange}
                   showSummary={true}
-                  maxHeight="500px"
+                  maxHeight="auto"
                 />
               </div>
-              <div className="p-5 sm:p-8 pt-4 bg-white border-t border-slate-100 flex flex-col sm:flex-row justify-end gap-3">
+              <div className="p-5 sm:p-8 pt-4 bg-white border-t border-slate-100 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
                 <Button
                   type="button"
                   variant="outline"

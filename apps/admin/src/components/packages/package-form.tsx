@@ -176,7 +176,7 @@ export function PackageForm({
         resultPackage = await updatePackage(packageData.id, {
           ...data,
           // contained_products: selectedProducts // Intentamos enviarlos por si acaso
-        } as any);
+        } as PackageFormData);
 
         // Sincronizar productos
         await apiClient.post(
@@ -188,7 +188,7 @@ export function PackageForm({
 
         toast.success("Paquete actualizado exitosamente");
       } else {
-        resultPackage = await createPackage(data as any);
+        resultPackage = await createPackage(data as PackageFormData);
 
         // Agregar productos al nuevo paquete
         if (selectedProducts.length > 0) {
@@ -466,18 +466,18 @@ export function PackageForm({
 
         {/* Dialogo de Selector de Productos */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="w-[95vw] sm:max-w-[90vw] lg:max-w-6xl max-h-[95vh] sm:max-h-[90vh] rounded-[32px] sm:rounded-[48px] border-none shadow-2xl p-0 overflow-hidden bg-slate-50">
-            <div className="flex flex-col h-full">
-              <div className="p-8 sm:p-10 pb-6 bg-white border-b border-slate-100">
-                <DialogTitle className="text-3xl font-black text-slate-900 tracking-tight">
-                  Inventario de Productos
-                </DialogTitle>
-                <p className="text-slate-500 font-medium mt-1">
-                  Selecciona los productos comprados que han llegado en este
-                  paquete.
-                </p>
-              </div>
+          <DialogContent className="w-[95vw] sm:max-w-[90vw] lg:max-w-6xl h-[90vh] max-h-[95vh] rounded-[32px] sm:rounded-[48px] border-none shadow-2xl p-0 overflow-hidden bg-slate-50 flex flex-col">
+            <div className="p-8 sm:p-10 pb-6 bg-white border-b border-slate-100 shrink-0">
+              <DialogTitle className="text-3xl font-black text-slate-900 tracking-tight">
+                Inventario de Productos
+              </DialogTitle>
+              <p className="text-slate-500 font-medium mt-1">
+                Selecciona los productos comprados que han llegado en este
+                paquete.
+              </p>
+            </div>
 
+            <div className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 overflow-y-auto px-8 py-6">
                 {isLoadingProducts ? (
                   <div className="flex flex-col items-center justify-center h-64">
@@ -493,12 +493,12 @@ export function PackageForm({
                     initialCart={selectedProductsDetails}
                     onCartChange={handleCartChange}
                     showSummary={true}
-                    maxHeight="50vh"
+                    maxHeight="auto"
                   />
                 )}
               </div>
 
-              <div className="p-8 sm:p-10 pt-6 bg-white border-t border-slate-100 flex flex-col sm:flex-row justify-end gap-4">
+              <div className="p-8 sm:p-10 pt-6 bg-white border-t border-slate-100 flex flex-col sm:flex-row justify-end gap-4 shrink-0">
                 <Button
                   type="button"
                   variant="outline"

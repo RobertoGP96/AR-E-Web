@@ -1,10 +1,13 @@
-import { useState } from 'react';
-import { Plus, RefreshCw, Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import DeliveryFiltersComponent, { type DeliveryFilterState } from '@/components/filters/delivery-filters';
-import { Button } from '../ui/button';
-import CreateDeliveryDialog from './CreateDeliveryDialog';
-import { useDeliveries } from '@/hooks/delivery';
+import { useState } from "react";
+import { Plus, RefreshCw, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import DeliveryFiltersComponent, {
+  type DeliveryFilterState,
+} from "@/components/filters/delivery-filters";
+import { Button } from "../ui/button";
+import CreateDeliveryDialog from "./CreateDeliveryDialog";
+import { useDeliveries } from "@/hooks/delivery";
+import { useNavigate } from "react-router-dom";
 
 interface DeliveryFiltersProps {
   searchTerm?: string;
@@ -20,11 +23,12 @@ interface DeliveryFiltersProps {
 export default function DeliveryFilters({
   searchTerm,
   onSearchChange,
-  filters = { search: '', status: 'all' },
+  filters = { search: "", status: "all" },
   onFiltersChange = () => {},
 }: DeliveryFiltersProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { isFetching, refetch } = useDeliveries();
+  const navigate = useNavigate();
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-4">
@@ -52,9 +56,13 @@ export default function DeliveryFilters({
             />
           </div>
         </div>
-        <DeliveryFiltersComponent filters={filters} onFiltersChange={(newFilters) => onFiltersChange(newFilters)} resultCount={undefined} />
+        <DeliveryFiltersComponent
+          filters={filters}
+          onFiltersChange={(newFilters) => onFiltersChange(newFilters)}
+          resultCount={undefined}
+        />
         <Button
-          onClick={() => setCreateDialogOpen(true)}
+          onClick={() => navigate("/delivery/new")}
           className="flex items-center gap-2"
         >
           <Plus className="h-5 w-5" />
