@@ -11,7 +11,7 @@ export type Date = string; // ISO date format
 // Union types para estados (Alineados con el backend en español)
 export type OrderStatus = "Encargado" | "Procesando" | "Completado" | "Cancelado";
 export type PayStatus = "No pagado" | "Pagado" | "Parcial";
-export type ProductStatus = "Encargado" | "Procesando" | "Comprado" | "Entregado" | "Cancelado"; // Usa los mismos estados que Order
+export type ProductStatus = "Encargado" | "Recivido" | "Comprado" | "Entregado" | "Cancelado"; // Usa los mismos estados que Order
 export type ShoppingStatus = "No pagado" | "Pagado" | "Parcial"; // Usa los mismos estados que Payment
 export type DeliveryStatus = "Pendiente" | "En transito" | "Entregado" | "Fallida";
 export type PackageStatus = "Enviado" | "Recibido" | "Procesado";

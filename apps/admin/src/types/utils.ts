@@ -37,15 +37,15 @@ export const PAY_STATUS_COLORS: Record<PayStatus, string> = {
 // Mapas de etiquetas para ProductStatus
 export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
   "Encargado": "Encargado",
-  "Procesando": "Procesando",
   "Comprado": "Comprado",
+  "Recivido": "Recivido",
   "Entregado": "Entregado",
   "Cancelado": "Cancelado"
 };
 
 export const PRODUCT_STATUS_COLORS: Record<ProductStatus, string> = {
   "Encargado": "blue",
-  "Procesando": "orange",
+  "Recivido": "orange",
   "Comprado": "green",
   "Cancelado": "red",
   "Entregado": "cyan"
