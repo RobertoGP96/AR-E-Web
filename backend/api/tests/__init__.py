@@ -11,8 +11,7 @@ from api.models import (
     BuyingAccounts, 
     CommonInformation, 
     Order, 
-    Product,
-    EvidenceImages
+    Product
 )
 
 User = get_user_model()

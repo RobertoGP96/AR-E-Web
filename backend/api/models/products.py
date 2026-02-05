@@ -191,75 +191,19 @@ class ProductBuyed(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Al guardar un ProductBuyed, actualiza el amount_purchased y el estado del producto original.
-        También maneja la lógica de reembolso actualizando las cantidades y estados correspondientes.
+        Guarda el ProductBuyed. La lógica de actualización del product original
+        (amount_purchased y estado) se maneja automáticamente a través de signals
+        (pre_save para detectar cambios y post_save para actualizar el producto).
         """
-        is_new = self.pk is None
-        
-        # Si es una actualización, obtener el estado anterior
-        old_instance = None
-        if not is_new:
-            old_instance = ProductBuyed.objects.get(pk=self.pk)
-        
         super().save(*args, **kwargs)
-
-        if self.original_product:
-            # Si se está realizando un reembolso
-            if not is_new and old_instance and self.is_refunded != old_instance.is_refunded and self.is_refunded:
-                # Restar la cantidad reembolsada del total comprado
-                self.original_product.amount_purchased = max(0, self.original_product.amount_purchased - self.quantity_refuned)
-                
-                # Si la cantidad comprada es menor a la solicitada, volver a estado ENCARGADO
-                if self.original_product.amount_purchased < self.original_product.amount_requested:
-                    self.original_product.status = ProductStatusEnum.ENCARGADO.value
-                
-                # Guardar los cambios
-                self.original_product.save(update_fields=['amount_purchased', 'status', 'updated_at'])
-                return
-                
-            # Recalcular el total comprado del producto
-            total_purchased = sum(
-                pb.amount_buyed
-                for pb in self.original_product.buys.all()
-            )
-            self.original_product.amount_purchased = total_purchased
-
-            # Actualizar estado según la cantidad comprada
-            if total_purchased >= self.original_product.amount_requested:
-                if self.original_product.status == ProductStatusEnum.ENCARGADO.value:
-                    self.original_product.status = ProductStatusEnum.COMPRADO.value
-            else:
-                self.original_product.status = ProductStatusEnum.ENCARGADO.value
-                
-            self.original_product.save(update_fields=['amount_purchased', 'status', 'updated_at'])
 
     def delete(self, *args, **kwargs):
         """
-        Al eliminar un ProductBuyed, descuenta la cantidad comprada del producto original
-        y actualiza el estado a ENCARGADO si la cantidad encargada y comprada son diferentes
+        Elimina el ProductBuyed. La lógica de actualización del producto original
+        (descuento del amount_purchased y ajuste de estado) se maneja automáticamente
+        a través de signals (post_delete).
         """
-        product = self.original_product
-        
-        # Guardar la cantidad comprada que se va a eliminar
-        amount_to_remove = self.amount_buyed
-
-        # Llamar al delete original
         super().delete(*args, **kwargs)
-
-        if product:
-            # Restar la cantidad comprada del total
-            product.amount_purchased -= amount_to_remove
-            
-            # Asegurarse de que no tengamos valores negativos
-            if product.amount_purchased < 0:
-                product.amount_purchased = 0
-            
-            # Si la cantidad comprada es menor que la solicitada, cambiar el estado a ENCARGADO
-            if product.amount_purchased < product.amount_requested:
-                product.status = ProductStatusEnum.ENCARGADO.value
-            
-            # Guardar los cambios
-            product.save(update_fields=['amount_purchased', 'status', 'updated_at'])
 
     def __str__(self):
         return f"{self.original_product.name} - Comprado: {self.amount_buyed}"
@@ -296,52 +240,18 @@ class ProductReceived(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Al guardar un ProductReceived, actualiza el amount_received y el estado del producto original
+        Guarda el ProductReceived. La lógica de actualización del producto original
+        (amount_received y estado) se maneja automáticamente a través de signals (post_save).
         """
         super().save(*args, **kwargs)
 
-        # Actualizar el amount_received del producto original
-        if self.original_product:
-            total_received = sum(
-                pr.amount_received
-                for pr in self.original_product.receiveds.all()
-            )
-            self.original_product.amount_received = total_received
-
-            # Si la cantidad recibida es igual (o mayor) a la ENCARGADA (amount_requested), cambiar estado a RECIBIDO
-            if total_received >= self.original_product.amount_requested and self.original_product.amount_requested > 0:
-                # Solo cambiar a RECIBIDO si está en COMPRADO o ENCARGADO
-                if self.original_product.status in [ProductStatusEnum.COMPRADO.value, ProductStatusEnum.ENCARGADO.value]:
-                    self.original_product.status = ProductStatusEnum.RECIBIDO.value
-
-            self.original_product.save(update_fields=['amount_received', 'status', 'updated_at'])
-
     def delete(self, *args, **kwargs):
         """
-        Al eliminar un ProductReceived, recalcula el amount_received y el estado del producto original
+        Elimina el ProductReceived. La lógica de actualización del producto original
+        (recálculo del amount_received y ajuste de estado) se maneja automáticamente
+        a través de signals (post_delete).
         """
-        product = self.original_product
-
         super().delete(*args, **kwargs)
-
-        # Recalcular el total recibido del producto
-        if product:
-            total_received = sum(
-                pr.amount_received
-                for pr in product.receiveds.all()
-            )
-            product.amount_received = total_received
-
-            # Si después de eliminar ya no está completamente recibido (comparado con amount_requested)
-            if total_received < product.amount_requested:
-                if product.status == ProductStatusEnum.RECIBIDO.value:
-                    # Volver a COMPRADO si tiene productos comprados, si no a ENCARGADO
-                    if product.amount_purchased > 0:
-                        product.status = ProductStatusEnum.COMPRADO.value
-                    else:
-                        product.status = ProductStatusEnum.ENCARGADO.value
-
-            product.save(update_fields=['amount_received', 'status', 'updated_at'])
 
     @property
     def total_received(self):
@@ -381,84 +291,25 @@ class ProductDelivery(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Al guardar un ProductDelivery, actualiza el amount_delivered y estado del producto original
+        Guarda el ProductDelivery. La lógica de actualización del producto original
+        (amount_delivered, estado) y la orden se maneja automáticamente a través
+        de signals (post_save).
         """
         super().save(*args, **kwargs)
 
-        # Actualizar el amount_delivered del producto original
-        if self.original_product:
-            total_delivered = sum(
-                pd.amount_delivered
-                for pd in self.original_product.delivers.all()
-            )
-            self.original_product.amount_delivered = total_delivered
-
-            # Si la cantidad entregada es igual a la RECIBIDA Y COMPRADA, cambiar estado a ENTREGADO
-            if (total_delivered == self.original_product.amount_received and 
-                total_delivered == self.original_product.amount_purchased and
-                self.original_product.amount_purchased > 0):
-                # Solo cambiar a ENTREGADO si está en RECIBIDO o COMPRADO
-                if self.original_product.status in [ProductStatusEnum.RECIBIDO.value, ProductStatusEnum.COMPRADO.value]:
-                    self.original_product.status = ProductStatusEnum.ENTREGADO.value
-
-            self.original_product.save(update_fields=['amount_delivered', 'status', 'updated_at'])
-
-        # Verificar si la orden debe cambiar a COMPLETADO
-        if self.original_product.order:
-            self.original_product.order.update_status_based_on_delivery()
-
     def delete(self, *args, **kwargs):
         """
-        Al eliminar un ProductDelivery, actualiza el amount_delivered y estado del producto original
+        Elimina el ProductDelivery. La lógica de actualización del producto original
+        (amount_delivered, estado) y la orden se maneja automáticamente a través
+        de signals (post_delete).
         """
-        product = self.original_product
-        order = product.order if product else None
-
         super().delete(*args, **kwargs)
-
-        # Actualizar el amount_delivered del producto
-        if product:
-            total_delivered = sum(
-                pd.amount_delivered
-                for pd in product.delivers.all()
-            )
-            product.amount_delivered = total_delivered
-
-            # Si después de eliminar ya no está completamente entregado
-            if total_delivered < product.amount_received:
-                if product.status == ProductStatusEnum.ENTREGADO.value:
-                    # Volver a RECIBIDO si la cantidad entregada es menor a la recibida
-                    product.status = ProductStatusEnum.RECIBIDO.value
-                    product.save(update_fields=['amount_delivered', 'status', 'updated_at'])
-                else:
-                    product.save(update_fields=['amount_delivered', 'updated_at'])
-            else:
-                product.save(update_fields=['amount_delivered', 'updated_at'])
-
-            # La orden podría volver a estar disponible para delivery
-            if order:
-                # Si ya no está completamente entregada, cambiar de COMPLETADO a PROCESANDO
-                if not order.is_fully_delivered and order.status == OrderStatusEnum.COMPLETADO.value:
-                    order.status = OrderStatusEnum.PROCESANDO.value
-                    order.save(update_fields=['status', 'updated_at'])
-
-    def update_product_delivered_amount(self):
-        """
-        Recalcula y actualiza el amount_delivered del producto original
-        basado en todos sus ProductDelivery
-        """
-        if self.original_product:
-            total = sum(
-                pd.amount_delivered
-                for pd in self.original_product.delivers.all()
-            )
-            self.original_product.amount_delivered = total
-            self.original_product.save(update_fields=['amount_delivered'])
 
     @property
     def total_delivered(self):
         """Total amount delivered across all ProductDelivery instances for this product"""
         return sum(pd.amount_delivered for pd in self.original_product.delivers.all())
+
 
     class Meta:
         ordering = ['-created_at']
