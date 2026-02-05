@@ -142,10 +142,10 @@ class Package(models.Model):
                 # Si ya no está completamente recibido, volver a COMPRADO (si tiene productos comprados)
                 if product.amount_received < product.amount_purchased:
                     if product.status == ProductStatusEnum.RECIBIDO.value:
-                        # Si tiene productos comprados, volver a COMPRADO
-                        if product.amount_purchased > 0:
+                        # Si tiene productos comprados, verificar si está completamente comprado
+                        if product.amount_purchased >= product.amount_requested:
                             product.status = ProductStatusEnum.COMPRADO.value
-                        # Si no tiene productos comprados, volver a ENCARGADO
+                        # Si no está completamente comprado (parcial o nada), volver a ENCARGADO
                         else:
                             product.status = ProductStatusEnum.ENCARGADO.value
                 
