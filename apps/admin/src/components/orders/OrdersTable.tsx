@@ -56,6 +56,7 @@ import {
   ProductListPopover,
   useProductListAdapter,
 } from "../utils/ProductListPopover";
+import LoadingSpinner from "../utils/LoadingSpinner";
 
 interface OrderTableProps {
   orders: Order[];
@@ -171,7 +172,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
     return (
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
+          <LoadingSpinner size="lg" text="Cargando Órdenes..." /  >
         </div>
       </div>
     );

@@ -19,11 +19,11 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { 
-  TrendingDown, 
-  TrendingUp, 
-  CheckCircle, 
-  Users, 
+import {
+  TrendingDown,
+  TrendingUp,
+  CheckCircle,
+  Users,
   UserCircle,
   Phone,
   DollarSign,
@@ -61,6 +61,39 @@ function StatusBadge({ status }: { status: ClientBalanceEntry['status'] }) {
   )
 }
 
+interface CardSummaryProps {
+  label: string
+  value: string | number
+  icon: React.ReactNode
+  subtitle?: string
+  textColor?: string
+}
+
+function CardSummary({ label, value, icon, subtitle, textColor = 'text-slate-800' }: CardSummaryProps) {
+  return (
+    <Card className=" relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-orange-200 border group cursor-pointer bg-white">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-xs md:text-sm font-bold text-muted-foreground uppercase tracking-wide">
+          {label}
+        </CardTitle>
+        <div className="text-orange-500 group-hover:text-orange-600 transition-colors duration-300 p-2.5 rounded-lg bg-orange-50  flex-shrink-0 ">
+          {icon}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: textColor === 'text-slate-800' ? '#1e293b' : undefined }}>
+          {value}
+        </div>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {subtitle}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
 function SummaryCards({ data }: { data: ClientBalanceEntry[] }) {
   const summary = useMemo(() => {
     const totalClients = data.length
@@ -82,68 +115,54 @@ function SummaryCards({ data }: { data: ClientBalanceEntry[] }) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Total Clientes
-          </CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="text-2xl font-bold">{summary.totalClients}</div>
-        </CardContent>
-      </Card>
+      <CardSummary
+        label="Total Clientes"
+        value={summary.totalClients}
+        icon={<Users className="h-5 w-5" />}
+      />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Con Deuda
-          </CardTitle>
-          <TrendingDown className="h-4 w-4 text-red-500" />
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {summary.clientsWithDebt}
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            {formatCurrency(summary.totalPendingToPay)} pendiente
-          </p>
-        </CardContent>
-      </Card>
+      <CardSummary
+        label="Con Deuda"
+        value={summary.clientsWithDebt}
+        icon={<TrendingDown className="h-5 w-5" />}
+        subtitle={`${formatCurrency(summary.totalPendingToPay)} pendiente`}
+        textColor="text-red-600 dark:text-red-400"
+      />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Saldo a Favor
-          </CardTitle>
-          <TrendingUp className="h-4 w-4 text-emerald-500" />
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-            {summary.clientsWithSurplus}
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            {formatCurrency(summary.totalSurplus)} total
-          </p>
-        </CardContent>
-      </Card>
+      <CardSummary
+        label="Saldo a Favor"
+        value={summary.clientsWithSurplus}
+        icon={<TrendingUp className="h-5 w-5" />}
+        subtitle={`${formatCurrency(summary.totalSurplus)} total`}
+        textColor="text-emerald-600 dark:text-emerald-400"
+      />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Al Día
-          </CardTitle>
-          <CheckCircle className="h-4 w-4 text-sky-500" />
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="text-2xl font-bold text-sky-600 dark:text-sky-400">
-            {summary.clientsUpToDate}
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            {((summary.clientsUpToDate / summary.totalClients) * 100 || 0).toFixed(1)}% del total
-          </p>
-        </CardContent>
-      </Card>
+      <CardSummary
+        label="Al Día"
+        value={summary.clientsUpToDate}
+        icon={<CheckCircle className="h-5 w-5 " />}
+        subtitle={`${((summary.clientsUpToDate / summary.totalClients) * 100 || 0).toFixed(1)}% del total`}
+        textColor="text-sky-600 dark:text-sky-400"
+      />
+    </div>
+  )
+}
+
+function CardsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <Card key={i} className="relative overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-4 bg-muted animate-pulse rounded" />
+          </CardHeader>
+          <CardContent className="pt-0 space-y-2">
+            <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+            <div className="h-3 w-32 bg-muted animate-pulse rounded" />
+          </CardContent>
+        </Card>
+      ))}
     </div>
   )
 }
@@ -166,7 +185,7 @@ export function ClientBalancesTable() {
     queryFn: fetchClientBalancesReport,
   })
 
-  const data = clientBalances || []
+  const data = useMemo(() => clientBalances ?? [], [clientBalances])
 
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -233,7 +252,7 @@ export function ClientBalancesTable() {
 
   return (
     <div className="space-y-6">
-      <SummaryCards data={data} />
+      {isLoading ? <CardsSkeleton /> : <SummaryCards data={data} />}
 
       <Card>
         <CardHeader>
@@ -278,16 +297,17 @@ export function ClientBalancesTable() {
                     </TableHead>
                     <TableHead className="text-right hidden lg:table-cell">
                       <div className="flex items-center justify-end gap-2">
-                        <DollarSign className="h-4 w-4" />
-                        Recibido
-                      </div>
-                    </TableHead>
-                    <TableHead className="text-right hidden lg:table-cell">
-                      <div className="flex items-center justify-end gap-2">
                         <Truck className="h-4 w-4" />
                         Envio
                       </div>
                     </TableHead>
+                    <TableHead className="text-right hidden lg:table-cell">
+                      <div className="flex items-center justify-end gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        Recibido
+                      </div>
+                    </TableHead>
+
                     <TableHead className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Wallet className="h-4 w-4" />
@@ -333,19 +353,20 @@ export function ClientBalancesTable() {
                           {formatCurrency(client.total_order_cost)}
                         </TableCell>
                         <TableCell className="text-right hidden lg:table-cell">
-                          {formatCurrency(client.total_order_received)}
-                        </TableCell>
-                        <TableCell className="text-right hidden lg:table-cell">
                           {formatCurrency(client.total_deliver_cost)}
                         </TableCell>
+                        <TableCell className="text-right hidden lg:table-cell">
+                          {formatCurrency(client.total_order_received)}
+                        </TableCell>
+                        
                         <TableCell className="text-right font-medium">
                           <span
                             className={
                               client.total_balance < 0
                                 ? 'text-red-600 dark:text-red-400'
                                 : client.total_balance > 0
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : ''
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : ''
                             }
                           >
                             {formatCurrency(client.total_balance)}
@@ -381,7 +402,7 @@ export function ClientBalancesTable() {
                 </Select>
                 <span>por pagina</span>
               </div>
-              
+
               <div className="text-sm text-muted-foreground">
                 Mostrando {startIndex + 1}-{Math.min(endIndex, filteredData.length)} de {filteredData.length} clientes
               </div>

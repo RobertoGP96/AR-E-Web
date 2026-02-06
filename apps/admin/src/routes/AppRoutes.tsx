@@ -120,7 +120,7 @@ const AppRoutes = () => {
         <Route path="balance" element={<BalancePage />} />
         <Route path="balance/new-balance" element={<BalanceReport />} />
         <Route
-          path="balance/client-balances"
+          path="client-balances"
           element={<ClientBalancesTable />}
         />
 

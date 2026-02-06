@@ -72,7 +72,7 @@ export default function InvoicesTable({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner size="lg" text='Cargando Costos de Envio...'/>
       </div>
     );
   }
@@ -90,10 +90,15 @@ export default function InvoicesTable({
 
   if (invoices.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 rounded-lg border border-muted bg-background shadow">
-        <div className="text-center">
-          <BaggageClaim className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">No hay costos registrados</p>
+      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+        <div className="flex flex-col items-center justify-center h-64 text-center p-4">
+          <BaggageClaim className="h-16 w-16 text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            No hay Costos de Envio
+          </h3>
+          <p className="text-sm text-gray-500">
+            Comienza creando una nueva factura usando el botón "Agregar Costo"
+          </p>
         </div>
       </div>
     );

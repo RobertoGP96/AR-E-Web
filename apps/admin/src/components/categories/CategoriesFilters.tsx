@@ -31,7 +31,7 @@ export default function CategoriesFilters({
 
       <Button className="flex items-center gap-2" onClick={onAdd}>
         <Plus className="h-5 w-5" />
-        Nueva Categoría
+        Agregar Categoría
       </Button>
     </div>
   );

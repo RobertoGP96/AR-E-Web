@@ -15,7 +15,8 @@ import {
   ChartColumn,
   BaggageClaim,
   Tags,
-  ShoppingBag
+  ShoppingBag,
+  Coins
 } from 'lucide-react';
 
 // Mapeo de rutas a iconos
@@ -34,6 +35,8 @@ const routeIcons: Record<string, LucideIcon> = {
   '/expenses': FileText,
   '/analitics': ChartColumn,
   '/balance': Receipt,
+  '/client-balances': Coins,
+
 };
 
 // Mapeo de rutas a nombres legibles
@@ -53,6 +56,7 @@ const routeNames: Record<string, string> = {
   '/expenses': 'Gastos',
   '/analitics': 'Análisis',
   '/balance': 'Balance',
+  '/client-balances': 'Balance de Clientes',
 };
 
 // Mapeo para rutas con detalles

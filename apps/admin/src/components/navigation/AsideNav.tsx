@@ -129,7 +129,7 @@ const navigationGroups = [
       },
       {
         name: "Clientes",
-        href: "/balance/client-balances",
+        href: "/client-balances",
         icon: CoinsIcon,
       },
       {

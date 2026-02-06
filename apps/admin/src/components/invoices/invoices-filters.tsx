@@ -40,7 +40,7 @@ export default function InvoicesFilters({
         trigger={
           <Button className="h-10">
             <Plus className="h-4 w-4 mr-2" />
-            Agregar
+            Agregar Costo
           </Button>
         }
       />

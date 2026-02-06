@@ -1,6 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Users, Package, ShoppingCart, DollarSign, TrendingUp, TrendingDown, ShoppingBag, Truck, PackageCheck, AlertCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Users, Package, ShoppingCart, DollarSign, ShoppingBag, Truck, PackageCheck, AlertCircle, UserCheck2, HardHatIcon, User2Icon, Boxes, CheckCircleIcon, Calendar } from 'lucide-react';
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
 import { cn } from '@/lib/utils';
 
@@ -9,11 +8,6 @@ interface MetricData {
   value: string | number;
   icon: typeof Users;
   color: string;
-  iconBg: string;
-  borderColor: string;
-  hoverColor: string;
-  bgGradient: string;
-  badgeColor: string;
   change?: string;
   changeType?: 'increase' | 'decrease';
 }
@@ -28,8 +22,8 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="border-2">
-            <CardContent className="p-4">
+          <Card key={i} className="border-2 py-0">
+            <CardContent className="py-0">
               <div className=" h-16 bg-gradient-to-r from-gray-100 to-gray-50 rounded-lg animate-pulse" />
             </CardContent>
           </Card>
@@ -50,51 +44,31 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Total Usuarios', 
             value: metrics.users.total, 
             icon: Users, 
-            color: 'text-blue-600',
-            iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
-            borderColor: 'border-blue-100',
-            hoverColor: 'hover:border-blue-200 hover:shadow-blue-100/50',
-            bgGradient: 'bg-gradient-to-br from-blue-50 via-blue-50/80 to-blue-100/50',
-            badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+            color: 'text-gray-900',
             change: '+12%',
             changeType: 'increase' as const
           },
           { 
             label: 'Activos', 
             value: metrics.users.active, 
-            icon: Users, 
-            color: 'text-emerald-600',
-            iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-            borderColor: 'border-emerald-100',
-            hoverColor: 'hover:border-emerald-200 hover:shadow-emerald-100/50',
-            bgGradient: 'bg-gradient-to-br from-emerald-50 via-emerald-50/80 to-emerald-100/50',
-            badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            icon: UserCheck2, 
+            color: 'text-gray-900',
             change: '+8%',
             changeType: 'increase' as const
           },
           { 
             label: 'Clientes', 
             value: metrics.users.clients, 
-            icon: Users, 
-            color: 'text-purple-600',
-            iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
-            borderColor: 'border-purple-100',
-            hoverColor: 'hover:border-purple-200 hover:shadow-purple-100/50',
-            bgGradient: 'bg-gradient-to-br from-purple-50 via-purple-50/80 to-purple-100/50',
-            badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
+            icon: User2Icon, 
+            color: 'text-gray-900',
             change: '+5%',
             changeType: 'increase' as const
           },
           { 
             label: 'Agentes', 
             value: metrics.users.agents, 
-            icon: Users, 
-            color: 'text-orange-600',
-            iconBg: 'bg-gradient-to-br from-orange-500 to-orange-600',
-            borderColor: 'border-orange-100',
-            hoverColor: 'hover:border-orange-200 hover:shadow-orange-100/50',
-            bgGradient: 'bg-gradient-to-br from-orange-50 via-orange-50/80 to-orange-100/50',
-            badgeColor: 'bg-orange-50 text-orange-700 border-orange-200',
+            icon: HardHatIcon, 
+            color: 'text-gray-900',
             change: '+3%',
             changeType: 'increase' as const
           }
@@ -105,13 +79,8 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
           { 
             label: 'Total Productos', 
             value: metrics.products.total, 
-            icon: Package, 
-            color: 'text-blue-600',
-            iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
-            borderColor: 'border-blue-100',
-            hoverColor: 'hover:border-blue-200 hover:shadow-blue-100/50',
-            bgGradient: 'bg-gradient-to-br from-blue-50 via-blue-50/80 to-blue-100/50',
-            badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+            icon: Boxes, 
+            color: 'text-gray-900',
             change: '+7%',
             changeType: 'increase' as const
           },
@@ -119,23 +88,13 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Encargados', 
             value: metrics.products.ordered, 
             icon: ShoppingCart, 
-            color: 'text-amber-600',
-            iconBg: 'bg-gradient-to-br from-amber-500 to-amber-600',
-            borderColor: 'border-amber-100',
-            hoverColor: 'hover:border-amber-200 hover:shadow-amber-100/50',
-            bgGradient: 'bg-gradient-to-br from-amber-50 via-amber-50/80 to-amber-100/50',
-            badgeColor: 'bg-amber-50 text-amber-700 border-amber-200'
+            color: 'text-gray-900'
           },
           { 
             label: 'Comprados', 
             value: metrics.products.purchased, 
             icon: ShoppingBag, 
-            color: 'text-sky-600',
-            iconBg: 'bg-gradient-to-br from-sky-500 to-sky-600',
-            borderColor: 'border-sky-100',
-            hoverColor: 'hover:border-sky-200 hover:shadow-sky-100/50',
-            bgGradient: 'bg-gradient-to-br from-sky-50 via-sky-50/80 to-sky-100/50',
-            badgeColor: 'bg-sky-50 text-sky-700 border-sky-200',
+            color: 'text-gray-900',
             change: '+5%',
             changeType: 'increase' as const
           },
@@ -143,23 +102,13 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Recibidos', 
             value: metrics.products.received, 
             icon: PackageCheck, 
-            color: 'text-purple-600',
-            iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
-            borderColor: 'border-purple-100',
-            hoverColor: 'hover:border-purple-200 hover:shadow-purple-100/50',
-            bgGradient: 'bg-gradient-to-br from-purple-50 via-purple-50/80 to-purple-100/50',
-            badgeColor: 'bg-purple-50 text-purple-700 border-purple-200'
+            color: 'text-gray-900'
           },
           { 
             label: 'Entregados', 
             value: metrics.products.delivered, 
             icon: Truck, 
-            color: 'text-emerald-600',
-            iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-            borderColor: 'border-emerald-100',
-            hoverColor: 'hover:border-emerald-200 hover:shadow-emerald-100/50',
-            bgGradient: 'bg-gradient-to-br from-emerald-50 via-emerald-50/80 to-emerald-100/50',
-            badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            color: 'text-gray-900',
             change: '+10%',
             changeType: 'increase' as const
           }
@@ -171,12 +120,7 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Total Órdenes', 
             value: metrics.orders.total, 
             icon: ShoppingCart, 
-            color: 'text-blue-600',
-            iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
-            borderColor: 'border-blue-100',
-            hoverColor: 'hover:border-blue-200 hover:shadow-blue-100/50',
-            bgGradient: 'bg-gradient-to-br from-blue-50 via-blue-50/80 to-blue-100/50',
-            badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+            color: 'text-gray-900',
             change: '+15%',
             changeType: 'increase' as const
           },
@@ -184,36 +128,21 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Pendientes', 
             value: metrics.orders.pending, 
             icon: ShoppingCart, 
-            color: 'text-amber-600',
-            iconBg: 'bg-gradient-to-br from-amber-500 to-amber-600',
-            borderColor: 'border-amber-100',
-            hoverColor: 'hover:border-amber-200 hover:shadow-amber-100/50',
-            bgGradient: 'bg-gradient-to-br from-amber-50 via-amber-50/80 to-amber-100/50',
-            badgeColor: 'bg-amber-50 text-amber-700 border-amber-200'
+            color: 'text-gray-900'
           },
           { 
             label: 'Completadas', 
             value: metrics.orders.completed, 
-            icon: ShoppingCart, 
-            color: 'text-emerald-600',
-            iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-            borderColor: 'border-emerald-100',
-            hoverColor: 'hover:border-emerald-200 hover:shadow-emerald-100/50',
-            bgGradient: 'bg-gradient-to-br from-emerald-50 via-emerald-50/80 to-emerald-100/50',
-            badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            icon: CheckCircleIcon, 
+            color: 'text-gray-900',
             change: '+20%',
             changeType: 'increase' as const
           },
           { 
             label: 'Hoy', 
             value: metrics.orders.today, 
-            icon: ShoppingCart, 
-            color: 'text-purple-600',
-            iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
-            borderColor: 'border-purple-100',
-            hoverColor: 'hover:border-purple-200 hover:shadow-purple-100/50',
-            bgGradient: 'bg-gradient-to-br from-purple-50 via-purple-50/80 to-purple-100/50',
-            badgeColor: 'bg-purple-50 text-purple-700 border-purple-200'
+            icon: Calendar, 
+            color: 'text-gray-900'
           }
         ];
       case 'revenue':
@@ -223,51 +152,31 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Total Ingresos', 
             value: `$${metrics.revenue.total.toLocaleString()}`, 
             icon: DollarSign, 
-            color: 'text-emerald-600',
-            iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-            borderColor: 'border-emerald-100',
-            hoverColor: 'hover:border-emerald-200 hover:shadow-emerald-100/50',
-            bgGradient: 'bg-gradient-to-br from-emerald-50 via-emerald-50/80 to-emerald-100/50',
-            badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            color: 'text-gray-900',
             change: '+25%',
             changeType: 'increase' as const
           },
           { 
             label: 'Este Mes', 
             value: `$${metrics.revenue.this_month.toLocaleString()}`, 
-            icon: DollarSign, 
-            color: 'text-blue-600',
-            iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
-            borderColor: 'border-blue-100',
-            hoverColor: 'hover:border-blue-200 hover:shadow-blue-100/50',
-            bgGradient: 'bg-gradient-to-br from-blue-50 via-blue-50/80 to-blue-100/50',
-            badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+            icon: Calendar, 
+            color: 'text-gray-900',
             change: '+18%',
             changeType: 'increase' as const
           },
           { 
             label: 'Esta Semana', 
             value: `$${metrics.revenue.this_week.toLocaleString()}`, 
-            icon: DollarSign, 
-            color: 'text-purple-600',
-            iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
-            borderColor: 'border-purple-100',
-            hoverColor: 'hover:border-purple-200 hover:shadow-purple-100/50',
-            bgGradient: 'bg-gradient-to-br from-purple-50 via-purple-50/80 to-purple-100/50',
-            badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
+            icon: Calendar, 
+            color: 'text-gray-900',
             change: '+12%',
             changeType: 'increase' as const
           },
           { 
             label: 'Hoy', 
             value: `$${metrics.revenue.today.toLocaleString()}`, 
-            icon: DollarSign, 
-            color: 'text-orange-600',
-            iconBg: 'bg-gradient-to-br from-orange-500 to-orange-600',
-            borderColor: 'border-orange-100',
-            hoverColor: 'hover:border-orange-200 hover:shadow-orange-100/50',
-            bgGradient: 'bg-gradient-to-br from-orange-50 via-orange-50/80 to-orange-100/50',
-            badgeColor: 'bg-orange-50 text-orange-700 border-orange-200'
+            icon: Calendar, 
+            color: 'text-gray-900'
           }
         ];
       case 'purchases':
@@ -277,12 +186,7 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Total Compras', 
             value: metrics.purchases.total, 
             icon: ShoppingBag, 
-            color: 'text-blue-600',
-            iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
-            borderColor: 'border-blue-100',
-            hoverColor: 'hover:border-blue-200 hover:shadow-blue-100/50',
-            bgGradient: 'bg-gradient-to-br from-blue-50 via-blue-50/80 to-blue-100/50',
-            badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+            color: 'text-gray-900',
             change: '+10%',
             changeType: 'increase' as const
           },
@@ -290,12 +194,7 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Este Mes', 
             value: metrics.purchases.this_month, 
             icon: ShoppingBag, 
-            color: 'text-emerald-600',
-            iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-            borderColor: 'border-emerald-100',
-            hoverColor: 'hover:border-emerald-200 hover:shadow-emerald-100/50',
-            bgGradient: 'bg-gradient-to-br from-emerald-50 via-emerald-50/80 to-emerald-100/50',
-            badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            color: 'text-gray-900',
             change: '+8%',
             changeType: 'increase' as const
           },
@@ -303,12 +202,7 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Esta Semana', 
             value: metrics.purchases.this_week, 
             icon: ShoppingBag, 
-            color: 'text-purple-600',
-            iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
-            borderColor: 'border-purple-100',
-            hoverColor: 'hover:border-purple-200 hover:shadow-purple-100/50',
-            bgGradient: 'bg-gradient-to-br from-purple-50 via-purple-50/80 to-purple-100/50',
-            badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
+            color: 'text-gray-900',
             change: '+6%',
             changeType: 'increase' as const
           },
@@ -316,12 +210,7 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Hoy', 
             value: metrics.purchases.today, 
             icon: ShoppingBag, 
-            color: 'text-orange-600',
-            iconBg: 'bg-gradient-to-br from-orange-500 to-orange-600',
-            borderColor: 'border-orange-100',
-            hoverColor: 'hover:border-orange-200 hover:shadow-orange-100/50',
-            bgGradient: 'bg-gradient-to-br from-orange-50 via-orange-50/80 to-orange-100/50',
-            badgeColor: 'bg-orange-50 text-orange-700 border-orange-200'
+            color: 'text-gray-900'
           }
         ];
       case 'packages':
@@ -334,12 +223,7 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Total Paquetes', 
             value: metrics.packages.total, 
             icon: Package, 
-            color: 'text-blue-600',
-            iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
-            borderColor: 'border-blue-100',
-            hoverColor: 'hover:border-blue-200 hover:shadow-blue-100/50',
-            bgGradient: 'bg-gradient-to-br from-blue-50 via-blue-50/80 to-blue-100/50',
-            badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+            color: 'text-gray-900',
             change: '+5%',
             changeType: 'increase' as const
           },
@@ -347,34 +231,19 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Enviados', 
             value: metrics.packages.sent, 
             icon: Package, 
-            color: 'text-sky-600',
-            iconBg: 'bg-gradient-to-br from-sky-500 to-sky-600',
-            borderColor: 'border-sky-100',
-            hoverColor: 'hover:border-sky-200 hover:shadow-sky-100/50',
-            bgGradient: 'bg-gradient-to-br from-sky-50 via-sky-50/80 to-sky-100/50',
-            badgeColor: 'bg-sky-50 text-sky-700 border-sky-200'
+            color: 'text-gray-900'
           },
           { 
             label: 'Recibidos', 
             value: metrics.packages.in_transit, 
             icon: PackageCheck, 
-            color: 'text-amber-600',
-            iconBg: 'bg-gradient-to-br from-amber-500 to-amber-600',
-            borderColor: 'border-amber-100',
-            hoverColor: 'hover:border-amber-200 hover:shadow-amber-100/50',
-            bgGradient: 'bg-gradient-to-br from-amber-50 via-amber-50/80 to-amber-100/50',
-            badgeColor: 'bg-amber-50 text-amber-700 border-amber-200'
+            color: 'text-gray-900'
           },
           { 
             label: 'Procesados', 
             value: metrics.packages.delivered, 
             icon: PackageCheck, 
-            color: 'text-emerald-600',
-            iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-            borderColor: 'border-emerald-100',
-            hoverColor: 'hover:border-emerald-200 hover:shadow-emerald-100/50',
-            bgGradient: 'bg-gradient-to-br from-emerald-50 via-emerald-50/80 to-emerald-100/50',
-            badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            color: 'text-gray-900',
             change: '+15%',
             changeType: 'increase' as const
           }
@@ -387,12 +256,7 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Total Entregas', 
             value: metrics.deliveries.total, 
             icon: Truck, 
-            color: 'text-blue-600',
-            iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
-            borderColor: 'border-blue-100',
-            hoverColor: 'hover:border-blue-200 hover:shadow-blue-100/50',
-            bgGradient: 'bg-gradient-to-br from-blue-50 via-blue-50/80 to-blue-100/50',
-            badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+            color: 'text-gray-900',
             change: '+20%',
             changeType: 'increase' as const
           },
@@ -400,34 +264,19 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
             label: 'Pendientes', 
             value: metrics.deliveries.pending, 
             icon: Truck, 
-            color: 'text-amber-600',
-            iconBg: 'bg-gradient-to-br from-amber-500 to-amber-600',
-            borderColor: 'border-amber-100',
-            hoverColor: 'hover:border-amber-200 hover:shadow-amber-100/50',
-            bgGradient: 'bg-gradient-to-br from-amber-50 via-amber-50/80 to-amber-100/50',
-            badgeColor: 'bg-amber-50 text-amber-700 border-amber-200'
+            color: 'text-gray-900'
           },
           { 
             label: 'En Tránsito', 
             value: metrics.deliveries.in_transit, 
             icon: Truck, 
-            color: 'text-indigo-600',
-            iconBg: 'bg-gradient-to-br from-indigo-500 to-indigo-600',
-            borderColor: 'border-indigo-100',
-            hoverColor: 'hover:border-indigo-200 hover:shadow-indigo-100/50',
-            bgGradient: 'bg-gradient-to-br from-indigo-50 via-indigo-50/80 to-indigo-100/50',
-            badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200'
+            color: 'text-gray-900'
           },
           { 
             label: 'Entregadas', 
             value: metrics.deliveries.delivered, 
             icon: PackageCheck, 
-            color: 'text-emerald-600',
-            iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-            borderColor: 'border-emerald-100',
-            hoverColor: 'hover:border-emerald-200 hover:shadow-emerald-100/50',
-            bgGradient: 'bg-gradient-to-br from-emerald-50 via-emerald-50/80 to-emerald-100/50',
-            badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            color: 'text-gray-900',
             change: '+15%',
             changeType: 'increase' as const
           },
@@ -491,60 +340,23 @@ export const CompactMetricsSummary = ({ type }: { type: 'users' | 'products' | '
           <Card 
             key={metric.label} 
             className={cn(
-              "relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 group cursor-pointer",
-              metric.bgGradient,
-              metric.borderColor,
-              metric.hoverColor
+              " py-0 relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-orange-200 border group cursor-pointer bg-white "
             )}
           >
-            {/* Efecto de brillo en hover */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
-            {/* Decorative corner accent */}
-            <div className={cn(
-              "absolute top-0 right-0 w-24 h-24 opacity-10 transform translate-x-8 -translate-y-8 rounded-full blur-2xl transition-all duration-300 group-hover:scale-150",
-              metric.iconBg
-            )} />
-            
-            <CardContent className="p-3 md:p-4 relative z-10">
-              <div className="flex items-start justify-between mb-2">
+            <CardContent className="py-0 p-4 md:p-6 relative z-10">
+              <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1 truncate">
+                  <p className="text-xs md:text-sm font-medium text-slate-800 uppercase tracking-wide mb-2">
                     {metric.label}
                   </p>
-                  <p className="text-xl md:text-2xl font-bold tracking-tight text-foreground truncate">
+                  <p className="text-2xl md:text-3xl font-bold tracking-tight text-slate-800 ">
                     {metric.value}
                   </p>
                 </div>
-                <div className={cn(
-                  "p-2 md:p-2.5 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 flex-shrink-0",
-                  metric.iconBg
-                )}>
-                  <Icon className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                <div className="p-2.5 rounded-lg bg-orange-50  transition-all duration-300 flex-shrink-0">
+                  <Icon className="w-5 h-5 md:w-6 md:h-6 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
-              
-              {metric.change && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge
-                    variant="secondary"
-                    className={cn(
-                      "text-xs font-semibold border flex items-center gap-1 shadow-sm",
-                      metric.badgeColor
-                    )}
-                  >
-                    {metric.changeType === 'increase' ? (
-                      <TrendingUp className="w-3 h-3" />
-                    ) : (
-                      <TrendingDown className="w-3 h-3" />
-                    )}
-                    {metric.change}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">vs mes anterior</span>
-                </div>
-              )}
-
-              
             </CardContent>
           </Card>
         );

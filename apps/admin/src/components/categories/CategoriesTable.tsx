@@ -9,9 +9,10 @@ import {
   TableHead,
 } from '@/components/ui/table';
 import { Button } from '../ui/button';
-import { Edit2, Trash2, MoreHorizontal, Clock } from 'lucide-react';
+import { Edit2, Trash2, MoreHorizontal, Clock, Tag } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { formatDate } from '@/lib/format-date';
+import LoadingSpinner from '../utils/LoadingSpinner';
 
 interface CategoriesTableProps {
   categories: Category[];
@@ -25,7 +26,7 @@ const CategoriesTable: React.FC<CategoriesTableProps> = ({ categories, isLoading
     return (
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
+          <LoadingSpinner size="lg" text='Cargando Categorias...'/>
         </div>
       </div>
     );
@@ -33,8 +34,16 @@ const CategoriesTable: React.FC<CategoriesTableProps> = ({ categories, isLoading
 
   if (!categories || categories.length === 0) {
     return (
-      <div className="rounded-lg border border-muted bg-background p-8 text-center shadow">
-        <p className="text-muted-foreground">No hay categorías disponibles</p>
+      <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
+        <div className="flex flex-col items-center justify-center h-64 text-center p-4">
+          <Tag className="h-16 w-16 text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            No hay categorías
+          </h3>
+          <p className="text-sm text-gray-500">
+            Comienza creando una nueva categoría usando el botón "Agregar Categoría"
+          </p>
+        </div>
       </div>
     );
   }
