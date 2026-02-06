@@ -53,7 +53,6 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
     delivered_products = ProductDeliverySerializer(
         many=True,
         required=False,
-        source='delivered_products' # Asegúrate de que esto coincide con el related_name en el modelo ProductDelivery
     )
 
     # Nuevos campos calculados
