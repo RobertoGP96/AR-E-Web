@@ -5,10 +5,17 @@ import { Button } from "../ui/button"
 import { Badge } from "../ui/badge"
 import { OrderStatusLabel, PaymentStatusLabel } from "./order-status"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
+import { useNavigate } from "react-router-dom"
 
 
 
 const OrderRow = ({ order }: { order: Order }) => {
+    const navigate = useNavigate()
+
+    const handleViewDetails = () => {
+        navigate(`/orders/${order.id}`)
+    }
+
     return (
         <div className='grid grid-cols-[1fr_auto] md:grid-cols-[auto_1fr_auto] gap-2 md:gap-4 ring ring-white/10 p-3 md:p-4 rounded-md bg-white/2.5 hover:bg-white/5 w-full items-center'>
             {/* Primera columna - Información principal */}
@@ -67,7 +74,7 @@ const OrderRow = ({ order }: { order: Order }) => {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem className="cursor-pointer">
+                        <DropdownMenuItem className="cursor-pointer" onClick={handleViewDetails}>
                             <Clipboard className="h-4 w-4 mr-2" />
                             <span>Ver detalles</span>
                         </DropdownMenuItem>
