@@ -6,7 +6,7 @@ import django.utils.timezone
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0022_add_arrival_date_to_package'),
+        ('api', '0021_alter_order_sales_manager'),
     ]
 
     operations = [
