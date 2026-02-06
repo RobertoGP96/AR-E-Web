@@ -17,6 +17,8 @@ export function useCreateDelivery() {
     onSuccess: () => {
       // Invalidar el cache de la lista de deliveries
       queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+      // Invalidar queries de productos para refrescar estados
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
 }

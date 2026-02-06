@@ -8,6 +8,9 @@ export function useDeletePackage() {
     mutationFn: (packageId: number) => deletePackage(packageId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packages'] });
+      // Invalidar queries de productos para refrescar estados
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product-received'] });
     }
   });
 }

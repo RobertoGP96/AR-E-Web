@@ -8,6 +8,8 @@ export function useDeleteDelivery() {
     mutationFn: (deliveryId: number) => deleteDelivery(deliveryId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+      // Invalidar queries de productos para refrescar estados
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     }
   });
 }

@@ -25,6 +25,9 @@ export function useAddProductsToPackage() {
     onSuccess: () => {
       // Invalidar el cache de paquetes para refrescar la lista
       queryClient.invalidateQueries({ queryKey: ['packages'] });
+      // Invalidar queries de productos para refrescar estados
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product-received'] });
     },
   });
 }

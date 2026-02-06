@@ -11,6 +11,8 @@ import Stores from '@/pages/stores';
 import UserOrders from '@/pages/user-orders';
 import UserDeliveries from '@/pages/user-deliveries';
 import { ProductList } from '@/components/product';
+import OrderDetailPage from '@/pages/order-detail';
+import NotFound from '@/pages/not-found';
 
 
 const AppRoutes = () => {
@@ -32,7 +34,11 @@ const AppRoutes = () => {
                 <Route path="user_orders" element={<UserOrders/>} />
                 <Route path="user_deliveries" element={<UserDeliveries/>} />
                 <Route path="product-list" element={<ProductList/>} />
+                <Route path="orders/:id" element={<OrderDetailPage />} />
             </Route>
+
+            {/* Ruta 404 - Debe ir al final */}
+            <Route path="*" element={<NotFound />} />
         </Routes>
     );
 };
