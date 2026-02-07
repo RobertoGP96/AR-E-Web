@@ -73,6 +73,7 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
             "delivered_products",
             "weight",
             "status",
+            "payment_status",
             "weight_cost",
             "manager_profit",
             # Nuevos campos calculados
@@ -100,6 +101,7 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
         instance.category = validated_data.get('category', instance.category)
         instance.weight = validated_data.get('weight', instance.weight)
         instance.status = validated_data.get('status', instance.status)
+        instance.payment_status = validated_data.get('payment_status', instance.payment_status)
         instance.deliver_date = validated_data.get('deliver_date', instance.deliver_date)
         instance.deliver_picture = validated_data.get('deliver_picture', instance.deliver_picture)
         instance.weight_cost = validated_data.get('weight_cost', instance.weight_cost)

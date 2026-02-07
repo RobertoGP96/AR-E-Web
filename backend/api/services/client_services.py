@@ -60,6 +60,7 @@ def get_client_balance_report(client_id: int) -> Dict[str, Any]:
             "weight": float(delivery.weight or 0.0),
             "shipping_cost": float(delivery.weight_cost or 0.0),
             "status": delivery.status,
+            "payment_status": "Pagado" if delivery.payment_status else "No pagado",
             "category": delivery.category.name if delivery.category else "Sin categoría"
         })
 

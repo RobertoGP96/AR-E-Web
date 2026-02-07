@@ -110,6 +110,8 @@ class DashboardMetricsView(APIView):
             'pending': DeliverReceip.objects.filter(status='Pendiente').count(),
             'in_transit': DeliverReceip.objects.filter(status='En transito').count(),
             'delivered': DeliverReceip.objects.filter(status='Entregado').count(),
+            'paid': DeliverReceip.objects.filter(payment_status=True).count(),
+            'unpaid': DeliverReceip.objects.filter(payment_status=False).count(),
             # weight sums
             'total_weight': DeliverReceip.objects.aggregate(total_weight=Sum('weight'))['total_weight'] or 0.0,
             'today_weight': DeliverReceip.objects.filter(created_at__gte=today_start).aggregate(total_weight=Sum('weight'))['total_weight'] or 0.0,

@@ -27,6 +27,10 @@ class DeliverReceip(models.Model):
         choices=[(tag.value, tag.value) for tag in DeliveryStatusEnum],
         default=DeliveryStatusEnum.PENDIENTE.value
     )
+    payment_status = models.BooleanField(
+        default=False,
+        help_text='True si la entrega está pagada, False si no'
+    )
     deliver_date = models.DateTimeField(default=timezone.now)
     deliver_picture = models.TextField(blank=True, null=True, help_text='image URLs')
     weight_cost = models.FloatField(default=0)

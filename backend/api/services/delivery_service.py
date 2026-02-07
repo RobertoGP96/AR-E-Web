@@ -11,13 +11,14 @@ from django.db.models import Count, F, Sum
 from api.models import DeliverReceip, CustomUser
 
 
-def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[str, Any]:
+def analyze_deliveries(start_date=None, end_date=None, months_back=12, include_unpaid=True) -> Dict[str, Any]:
     """Return aggregated analysis for deliveries.
 
     Args:
         start_date (datetime, optional): Start of the range
         end_date (datetime, optional): End of the range
         months_back (int): When start_date/end_date is not provided, compute monthly trend for last `months_back` months
+        include_unpaid (bool): If False, exclude unpaid deliveries from totals (useful for financial reporting)
 
     Returns:
         dict: contains totals, breakdown by status, monthly trend, and agent breakdown
@@ -30,6 +31,8 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
                 - total_expenses: Gastos totales
                 - agent_commission: Comisión total del agente
                 - total_profit: Ganancia neta (ingresos - gastos - comisión)
+                - paid_count: Entregas pagadas
+                - unpaid_count: Entregas no pagadas
     """
     qs = DeliverReceip.objects.select_related('client__assigned_agent').all()
     if start_date:
@@ -44,17 +47,27 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
     total_system_profit = 0.0
     total_weight = 0.0
     count = qs.count()
+    
+    # Payment status tracking
+    paid_count = 0
+    unpaid_count = 0
+    paid_revenue = 0.0
+    unpaid_revenue = 0.0
 
     # Initialize agent breakdown
     agent_profits: DefaultDict[str, Dict[str, Any]] = defaultdict(lambda: {
         'agent_id': None,
         'agent_name': 'Sin Agente',
         'delivery_count': 0,
+        'paid_count': 0,
+        'unpaid_count': 0,
         'total_weight': 0.0,
         'total_revenue': 0.0,
         'total_expenses': 0.0,
         'total_profit': 0.0,
-        'agent_commission': 0.0
+        'agent_commission': 0.0,
+        'paid_revenue': 0.0,
+        'unpaid_revenue': 0.0,
     })
 
     for d in qs:
@@ -93,6 +106,14 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
         except Exception:
             weight = 0.0
             total_weight += 0.0
+        
+        # Track payment status
+        if d.payment_status:
+            paid_count += 1
+            paid_revenue += weight_cost
+        else:
+            unpaid_count += 1
+            unpaid_revenue += weight_cost
             
         # Process agent information
         agent = d.client.assigned_agent if hasattr(d, 'client') and hasattr(d.client, 'assigned_agent') else None
@@ -104,15 +125,28 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
                 'agent_id': agent.id,
                 'agent_name': agent.full_name,
                 'delivery_count': 0,
+                'paid_count': 0,
+                'unpaid_count': 0,
                 'total_weight': 0.0,
                 'total_revenue': 0.0,
                 'total_expenses': 0.0,
                 'total_profit': 0.0,
-                'agent_commission': 0.0
+                'agent_commission': 0.0,
+                'paid_revenue': 0.0,
+                'unpaid_revenue': 0.0,
             }
         
         # Update agent stats
         agent_profits[agent_key]['delivery_count'] += 1
+        
+        # Track payment status at agent level
+        if d.payment_status:
+            agent_profits[agent_key]['paid_count'] += 1
+            agent_profits[agent_key]['paid_revenue'] += weight_cost
+        else:
+            agent_profits[agent_key]['unpaid_count'] += 1
+            agent_profits[agent_key]['unpaid_revenue'] += weight_cost
+        
         agent_profits[agent_key]['total_weight'] += weight
         agent_profits[agent_key]['total_revenue'] += weight_cost
         agent_profits[agent_key]['total_expenses'] += delivery_expenses
@@ -129,6 +163,12 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
     # By status
     status_qs = qs.values('status').annotate(count=Count('id')).order_by('-count')
     deliveries_by_status = {row['status']: int(row['count']) for row in status_qs}
+    
+    # By payment status
+    deliveries_by_payment_status = {
+        'Pagado': paid_count,
+        'No pagado': unpaid_count
+    }
 
     # By category: compute aggregated values per category name
     deliveries_by_category = {}
@@ -214,8 +254,130 @@ def analyze_deliveries(start_date=None, end_date=None, months_back=12) -> Dict[s
         'average_weight': float(avg_weight),
         'average_delivery_cost': float(avg_delivery_cost),
         'count': int(count),
+        'paid_count': paid_count,
+        'unpaid_count': unpaid_count,
+        'paid_revenue': float(paid_revenue),
+        'unpaid_revenue': float(unpaid_revenue),
+        'payment_collection_rate': float((paid_count / count * 100) if count > 0 else 0),
         'deliveries_by_status': deliveries_by_status,
+        'deliveries_by_payment_status': deliveries_by_payment_status,
         'deliveries_by_category': deliveries_by_category,
         'monthly_trend': monthly_trend,
         'agent_breakdown': agent_breakdown,  # Add agent breakdown to results
+    }
+
+
+def get_paid_deliveries(start_date=None, end_date=None) -> Dict[str, Any]:
+    """
+    Get analysis for only PAID deliveries (payment_status=True).
+    Useful for financial reporting where only paid amounts should be counted.
+    
+    Args:
+        start_date (datetime, optional): Start of the range
+        end_date (datetime, optional): End of the range
+    
+    Returns:
+        dict: Financial metrics based only on paid deliveries
+    """
+    qs = DeliverReceip.objects.filter(payment_status=True).select_related('client__assigned_agent').all()
+    
+    if start_date:
+        qs = qs.filter(deliver_date__gte=start_date)
+    if end_date:
+        qs = qs.filter(deliver_date__lte=end_date)
+    
+    total_revenue = 0.0
+    total_expenses = 0.0
+    total_profit = 0.0
+    total_weight = 0.0
+    count = qs.count()
+    
+    for d in qs:
+        try:
+            total_revenue += float(d.weight_cost or 0.0)
+        except Exception:
+            pass
+        
+        try:
+            total_expenses += float(d.delivery_expenses or 0.0)
+        except Exception:
+            pass
+        
+        try:
+            total_profit += float(d.system_delivery_profit or 0.0)
+        except Exception:
+            pass
+        
+        try:
+            total_weight += float(d.weight or 0.0)
+        except Exception:
+            pass
+    
+    avg_revenue = (total_revenue / count) if count > 0 else 0.0
+    
+    return {
+        'total_paid_deliveries': count,
+        'total_paid_revenue': float(total_revenue),
+        'total_paid_expenses': float(total_expenses),
+        'total_paid_profit': float(total_profit),
+        'total_paid_weight': float(total_weight),
+        'average_paid_revenue': float(avg_revenue),
+    }
+
+
+def get_unpaid_deliveries(start_date=None, end_date=None) -> Dict[str, Any]:
+    """
+    Get analysis for only UNPAID deliveries (payment_status=False).
+    Useful for identifying outstanding balances and collection opportunities.
+    
+    Args:
+        start_date (datetime, optional): Start of the range
+        end_date (datetime, optional): End of the range
+    
+    Returns:
+        dict: Financial metrics based only on unpaid deliveries
+    """
+    qs = DeliverReceip.objects.filter(payment_status=False).select_related('client__assigned_agent').all()
+    
+    if start_date:
+        qs = qs.filter(deliver_date__gte=start_date)
+    if end_date:
+        qs = qs.filter(deliver_date__lte=end_date)
+    
+    total_revenue = 0.0
+    total_expenses = 0.0
+    total_profit = 0.0
+    total_weight = 0.0
+    count = qs.count()
+    
+    for d in qs:
+        try:
+            total_revenue += float(d.weight_cost or 0.0)
+        except Exception:
+            pass
+        
+        try:
+            total_expenses += float(d.delivery_expenses or 0.0)
+        except Exception:
+            pass
+        
+        try:
+            total_profit += float(d.system_delivery_profit or 0.0)
+        except Exception:
+            pass
+        
+        try:
+            total_weight += float(d.weight or 0.0)
+        except Exception:
+            pass
+    
+    avg_revenue = (total_revenue / count) if count > 0 else 0.0
+    
+    return {
+        'total_unpaid_deliveries': count,
+        'total_unpaid_revenue': float(total_revenue),
+        'total_unpaid_expenses': float(total_expenses),
+        'total_unpaid_profit': float(total_profit),
+        'total_unpaid_weight': float(total_weight),
+        'average_unpaid_revenue': float(avg_revenue),
     }

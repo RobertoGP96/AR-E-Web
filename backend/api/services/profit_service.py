@@ -215,6 +215,16 @@ class MetricsService:
         metrics['delivery_status_distribution'] = {
             item['status']: item['count'] for item in delivery_status_counts
         }
+        
+        # Delivery payment status distribution
+        delivery_payment_counts = DeliverReceip.objects.values('payment_status').annotate(
+            count=Count('id')
+        ).order_by('payment_status')
+        
+        metrics['delivery_payment_status_distribution'] = {
+            ('Pagado' if item['payment_status'] else 'No pagado'): item['count'] 
+            for item in delivery_payment_counts
+        }
 
         return metrics
 
