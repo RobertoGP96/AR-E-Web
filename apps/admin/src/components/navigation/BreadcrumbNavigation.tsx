@@ -64,6 +64,7 @@ const detailRoutes: Record<string, string> = {
   '/products': 'Detalles del Producto',
   '/purchases': 'Detalles de Compra',
   '/orders': 'Detalles de Orden',
+  '/new-balance': 'Nuevo Balance',
 };
 
 export function BreadcrumbNavigation() {
