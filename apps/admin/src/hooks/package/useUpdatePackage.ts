@@ -40,6 +40,4 @@ export function useUpdatePackageStatus() {
     },
   });
 }
-    },
-  });
-}
+    

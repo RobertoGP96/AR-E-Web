@@ -24,10 +24,6 @@ export function DeliveryProductListEditor({
   onRemove,
 }: DeliveryProductListEditorProps) {
   const totalItems = items.reduce((sum, item) => sum + item.amount, 0);
-  const totalValue = items.reduce(
-    (sum, item) => sum + (item.product.total_cost || 0) * item.amount,
-    0,
-  );
 
   return (
     <div className="w-full space-y-4">
@@ -163,7 +159,7 @@ export function DeliveryProductListEditor({
                   </p>
                   <p className="text-2xl font-black text-white tabular-nums">
                     <span className="text-orange-400 mr-1">$</span>
-                    {totalValue.toFixed(2)}
+                    {totalItems}
                   </p>
                 </div>
               </div>

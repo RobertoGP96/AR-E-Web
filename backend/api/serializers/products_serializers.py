@@ -103,20 +103,12 @@ class ProductSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(str)
     def get_status(self, obj):
-        count = 0
-        try:
-            for product in self.instance.filter(id=obj.id).first().buys.all():
-                count += product.amount_buyed
-        except AttributeError:
-            if obj is None:
-                return "Encargado"
-            for product in obj.buys.all():
-                count += product.amount_buyed
-        if count == obj.amount_requested:
-            return "Comprado"
-        if count != 0:
-            return "Parcialmente comprado"
-        return "Encargado"
+        """
+        Retorna el estado del producto directamente de la base de datos.
+        El estado se calcula y guarda en los signals cuando cambian las cantidades,
+        pero aquí solo devolvemos el valor almacenado sin recalcular.
+        """
+        return obj.status if obj else "Encargado"
 
     @extend_schema_field(int)
     def get_amount_buyed(self, obj):

@@ -49,6 +49,7 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import QRLink from "./qr-link";
 import { TablePagination } from "../utils/TablePagination";
+import type { ProductStatus } from "@/types";
 
 interface ProductsTableProps {
   products: Product[];
@@ -61,15 +62,16 @@ interface ProductsTableProps {
 }
 
 // Función helper para obtener el color del badge según el estado
-const getStatusBadgeVariant = (status: string) => {
+const getStatusBadgeVariant = (status: ProductStatus) => {
   const statusMap: Record<
     string,
-    "default" | "secondary" | "destructive" | "outline"
+    "default" | "secondary" | "destructive" | "outline" 
   > = {
     Encargado: "default",
     Comprado: "secondary",
-    Completado: "outline",
-    Cancelado: "destructive",
+    Recibido: "outline",
+    Entregado: "default",
+    Cancelado: "outline",
   };
   return statusMap[status] || "default";
 };
