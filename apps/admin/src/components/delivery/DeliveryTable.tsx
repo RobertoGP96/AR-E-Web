@@ -1,6 +1,7 @@
 import DeliveryStatusBadge from "./DeliveryStatusBadge";
 import EditDeliveryDialog from "./EditDeliveryDialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -24,6 +25,7 @@ import {
   Weight,
   Boxes,
   Image as ImageIcon,
+  CreditCard,
 } from "lucide-react";
 import { formatDeliveryDate } from "@/lib/format-date";
 import { Link } from "react-router-dom";
@@ -200,6 +202,26 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
     }
   };
 
+  const handlePaymentStatusToggle = async (delivery: DeliverReceip) => {
+    if (!delivery || !delivery.id) {
+      toast.error("Delivery inválido");
+      return;
+    }
+
+    try {
+      await updateDeliveryMutation.mutateAsync({
+        id: delivery.id,
+        payment_status: !delivery.payment_status,
+      });
+      toast.success(
+        `Pago del delivery #${delivery.id} marcado como ${!delivery.payment_status ? "pagado" : "no pagado"}`,
+      );
+    } catch (err) {
+      console.error("Error al cambiar estado de pago del delivery:", err);
+      toast.error("Error al cambiar el estado de pago del delivery");
+    }
+  };
+
   const updateDeliveryMutation = useUpdateDelivery();
 
   // Helper para validar si la imagen es válida (no vacía)
@@ -275,6 +297,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
               <TableHead>Costo</TableHead>
               <TableHead>Llegada</TableHead>
               <TableHead>Estado</TableHead>
+              <TableHead>Pago</TableHead>
               <TableHead>Productos</TableHead>
               <TableHead>Captura</TableHead>
               <TableHead>Acciones</TableHead>
@@ -332,6 +355,18 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                   <DeliveryStatusBadge
                     status={(delivery.status || "Pendiente") as DeliveryStatus}
                   />
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant={delivery.payment_status ? "default" : "secondary"}
+                    className={
+                      delivery.payment_status
+                        ? "bg-green-100 text-green-800 hover:bg-green-200"
+                        : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                    }
+                  >
+                    {delivery.payment_status ? "Pagado" : "No Pagado"}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   <ProductListPopover
@@ -497,6 +532,34 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                               })()}
                             </DropdownMenuItem>
                           </>
+                        )}
+
+                        <DropdownMenuSeparator />
+
+                        {!delivery.payment_status && (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePaymentStatusToggle(delivery);
+                            }}
+                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                          >
+                            <CreditCard className="h-4 w-4" />
+                            Confirmar Pago
+                          </DropdownMenuItem>
+                        )}
+
+                        {delivery.payment_status && (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePaymentStatusToggle(delivery);
+                            }}
+                            className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
+                          >
+                            <CreditCard className="h-4 w-4" />
+                            Marcar como No Pagado
+                          </DropdownMenuItem>
                         )}
 
                         <DropdownMenuSeparator />

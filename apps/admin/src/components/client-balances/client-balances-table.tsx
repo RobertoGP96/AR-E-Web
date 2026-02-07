@@ -49,13 +49,13 @@ function formatCurrency(value: number): string {
 
 function StatusBadge({ status }: { status: ClientBalanceEntry['status'] }) {
   const variants = {
-    'DEUDA': 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-400/10 dark:text-red-400 ring-red-400/20',
+    'DEUDA': 'bg-red-50 text-red-700 ring-red-600/80 dark:bg-red-400/10 dark:text-red-400 ring-red-400/20',
     'SALDO A FAVOR': 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 ring-green-400/20',
     'AL DÍA': 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-400/10 dark:text-blue-400 ring-blue-400/20',
   }
 
   return (
-    <Badge className={variants[status]} variant="outline">
+    <Badge className={variants[status]} variant="default">
       {status}
     </Badge>
   )

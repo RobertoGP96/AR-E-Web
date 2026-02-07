@@ -73,6 +73,8 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
 
   const handleInvalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['products'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
+
   }
 
   return (

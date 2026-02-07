@@ -72,6 +72,7 @@ const createDeliverySchema = z.object({
   weight_cost: z.number().optional(),
   manager_profit: z.number().optional(),
   deliver_picture: z.string().optional(),
+  payment_status: z.boolean().optional(),
 });
 
 type CreateDeliveryFormData = z.infer<typeof createDeliverySchema>;
@@ -128,6 +129,7 @@ export function DeliveryForm({
       weight: delivery?.weight || 0,
       weight_cost: delivery?.weight_cost || 0,
       manager_profit: delivery?.manager_profit || 0,
+      payment_status: delivery?.payment_status || false,
     },
   });
 
@@ -246,6 +248,7 @@ export function DeliveryForm({
           deliver_date: data.deliver_date ? data.deliver_date : undefined,
           weight_cost: data.weight_cost,
           manager_profit: data.manager_profit,
+          payment_status: data.payment_status,
         };
 
         await updateDeliveryMutation.mutateAsync({
@@ -322,6 +325,7 @@ export function DeliveryForm({
           deliver_date: data.deliver_date ? data.deliver_date : undefined,
           weight_cost: data.weight_cost,
           manager_profit: data.manager_profit,
+          payment_status: data.payment_status,
         };
 
         const newDelivery =
@@ -663,6 +667,33 @@ export function DeliveryForm({
                           className="h-11 w-full rounded-xl border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all shadow-none"
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="payment_status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-slate-500">
+                        Estado de Pago
+                      </FormLabel>
+                      <Select
+                        onValueChange={(val) => field.onChange(val === "true")}
+                        value={field.value ? "true" : "false"}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-11 rounded-xl border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all shadow-none">
+                            <SelectValue placeholder="Seleccionar estado" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                          <SelectItem value="false">No Pagado</SelectItem>
+                          <SelectItem value="true">Pagado</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

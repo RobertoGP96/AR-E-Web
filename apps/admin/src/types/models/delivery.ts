@@ -21,6 +21,7 @@ export interface DeliverReceip {
   // Costos (del backend)
   weight_cost: number;
   manager_profit: number;
+  payment_status: boolean; // Estado de pago (pagado o no)
   
   // Propiedades computadas
 
@@ -45,6 +46,7 @@ export interface CreateDeliverReceipData {
   weight_cost?: number;
   manager_profit?: number;
   deliver_picture?: string; // URLs de las imágenes de evidencia (opcional)
+  payment_status?: boolean; // Estado de pago
 }
 
 export interface UpdateDeliverReceipData extends Partial<CreateDeliverReceipData> {
