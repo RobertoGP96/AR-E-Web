@@ -6,6 +6,7 @@ import { UserFilters, type UserFilterState } from '@/components/filters/user-fil
 import type { CreateUserData, UpdateUserData } from '../../types/models/user';
 
 import { useUsers,  } from '@/hooks/user';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UsersFiltersProps {
   searchTerm?: string;
@@ -27,6 +28,12 @@ export default function UsersFilters({
   resultCount,
 }: UsersFiltersProps) {
   const { isLoading, refetch } = useUsers();
+
+  const queryClient = useQueryClient();
+  const handleRefresh = () => {
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ['users'] });
+  }
   return (
 
     <div className="flex flex-col sm:flex-row gap-4">
@@ -34,7 +41,7 @@ export default function UsersFilters({
       <Button
         variant="outline"
         size="icon"
-        onClick={() => refetch()}
+        onClick={() => handleRefresh()}
         disabled={isLoading}
         title="Actualizar lista"
       >

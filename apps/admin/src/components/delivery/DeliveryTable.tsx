@@ -211,7 +211,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
     try {
       await updateDeliveryMutation.mutateAsync({
         id: delivery.id,
-        payment_status: !delivery.payment_status,
+        data: { id: delivery.id, payment_status: !delivery.payment_status },
       });
       toast.success(
         `Pago del delivery #${delivery.id} marcado como ${!delivery.payment_status ? "pagado" : "no pagado"}`,
