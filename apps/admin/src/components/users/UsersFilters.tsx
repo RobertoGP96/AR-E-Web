@@ -28,7 +28,6 @@ export default function UsersFilters({
   resultCount,
 }: UsersFiltersProps) {
   const { isLoading, refetch } = useUsers();
-
   const queryClient = useQueryClient();
   const handleRefresh = () => {
     refetch();
