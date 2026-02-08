@@ -4,7 +4,7 @@ from django.dispatch import receiver
 from api.models import (
     Product, Order, ProductBuyed, ProductReceived, ProductDelivery
 )
-from api.enums import ProductStatusEnum
+from api.enums import ProductStatusEnum, OrderStatusEnum
 
 logger = logging.getLogger(__name__)
 
@@ -247,8 +247,8 @@ def update_product_on_delivery_delete(sender, instance, **kwargs):
         # Si hay orden asociada, verificar si debe cambiar de estado
         if order:
             # Si ya no está completamente entregada, cambiar de COMPLETADO a PROCESANDO
-            if not order.is_fully_delivered and order.status == ProductStatusEnum.COMPLETADO.value:
-                order.status = ProductStatusEnum.PROCESANDO.value
+            if not order.is_fully_delivered and order.status == OrderStatusEnum.COMPLETADO.value:
+                order.status = OrderStatusEnum.PROCESANDO.value
                 order.save(update_fields=['status', 'updated_at'])
                 logger.info(f"Orden {order.id} revertida a PROCESANDO")
     except Exception as e:
