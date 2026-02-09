@@ -33,6 +33,7 @@ export type {
   ProductReceived,
   ProductDelivery,
   Balance,
+  Category,
   
   // Tipos para crear/editar
   CreateUserData,

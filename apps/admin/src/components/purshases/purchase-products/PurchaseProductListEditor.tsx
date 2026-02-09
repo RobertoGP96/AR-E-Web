@@ -2,6 +2,7 @@ import { Package, Trash2, ShoppingCart, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { ProductBuyed } from "@/types/models";
+import { calculateProductPurchaseCost } from "@/lib/purchase-calculations";
 
 interface PurchaseProductListEditorProps {
   items: ProductBuyed[];
@@ -19,9 +20,7 @@ export function PurchaseProductListEditor({
 }: PurchaseProductListEditorProps) {
   const totalItems = items.reduce((sum, item) => sum + item.amount_buyed, 0);
   const totalCost = items.reduce(
-    (sum, item) =>
-      sum +
-      (item.original_product_details?.total_cost || 0) * item.amount_buyed,
+    (sum, item) => sum + calculateProductPurchaseCost(item),
     0,
   );
 
@@ -114,10 +113,7 @@ export function PurchaseProductListEditor({
 
                     <div className="text-right min-w-[80px]">
                       <p className="text-sm font-black text-slate-900">
-                        $
-                        {(
-                          (product.total_cost || 0) * item.amount_buyed
-                        ).toFixed(2)}
+                        ${calculateProductPurchaseCost(item).toFixed(2)}
                       </p>
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
                         Subtotal

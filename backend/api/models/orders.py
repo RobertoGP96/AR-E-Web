@@ -62,10 +62,71 @@ class Order(models.Model):
     def __str__(self):
         return f"Pedido #{self.pk} - {self.client.full_name}"
 
+    def update_status_based_on_products(self):
+        """
+        Actualiza el estado de la orden basándose en el estado de sus productos.
+        
+        Reglas:
+        - Si la orden está CANCELADA, no se modifica.
+        - Si TODOS los productos están en estado ENTREGADO → orden en COMPLETADO.
+        - Si AL MENOS UN producto está en estado COMPRADO, RECIBIDO o ENTREGADO → orden en PROCESANDO.
+        - Si ningún producto ha sido comprado aún → orden permanece en ENCARGADO.
+        """
+        from api.enums import ProductStatusEnum
+        
+        if self.status == OrderStatusEnum.CANCELADO.value:
+            return  # No cambiar órdenes canceladas
+        
+        products = self.products.all()
+        if not products.exists():
+            return  # No hay productos, no cambiar estado
+        
+        # Obtener los estados de todos los productos
+        product_statuses = list(products.values_list('status', flat=True))
+        
+        # Verificar si TODOS los productos están entregados
+        all_delivered = all(
+            status == ProductStatusEnum.ENTREGADO.value 
+            for status in product_statuses
+        )
+        
+        if all_delivered:
+            # Todos los productos entregados → COMPLETADO
+            if self.status != OrderStatusEnum.COMPLETADO.value:
+                self.status = OrderStatusEnum.COMPLETADO.value
+                self.save(update_fields=['status', 'updated_at'])
+            return
+        
+        # Verificar si AL MENOS UN producto está en Comprado, Recibido o Entregado
+        processing_statuses = {
+            ProductStatusEnum.COMPRADO.value,
+            ProductStatusEnum.RECIBIDO.value,
+            ProductStatusEnum.ENTREGADO.value,
+        }
+        
+        has_processing_product = any(
+            status in processing_statuses
+            for status in product_statuses
+        )
+        
+        if has_processing_product:
+            # Al menos un producto comprado → PROCESANDO
+            if self.status != OrderStatusEnum.PROCESANDO.value:
+                self.status = OrderStatusEnum.PROCESANDO.value
+                self.save(update_fields=['status', 'updated_at'])
+            return
+        
+        # Ningún producto comprado aún, mantener o volver a ENCARGADO
+        if self.status not in [OrderStatusEnum.ENCARGADO.value, OrderStatusEnum.CANCELADO.value]:
+            self.status = OrderStatusEnum.ENCARGADO.value
+            self.save(update_fields=['status', 'updated_at'])
+
     def update_status_based_on_delivery(self):
         """
         Actualiza el estado de la orden a COMPLETADO solo cuando todos los productos
-        hayan sido completamente entregados (amount_delivered == amount_purchased para todos)
+        hayan sido completamente entregados (amount_delivered == amount_purchased para todos).
+        
+        NOTA: Este método está deprecado. Usar update_status_based_on_products() en su lugar.
         """
         if self.status == OrderStatusEnum.CANCELADO.value:
             return  # No cambiar órdenes canceladas

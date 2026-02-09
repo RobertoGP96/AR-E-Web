@@ -13,6 +13,55 @@ from api.models import ShoppingReceip, ProductBuyed
 from api.enums import PaymentStatusEnum
 
 
+def calculate_product_buyed_cost(product_buyed) -> float:
+    """
+    Calcula el costo de un producto comprado según la lógica:
+    - Si amount_buyed == amount_requested: usar total_cost directamente
+    - Si son diferentes: recalcular usando la fórmula del producto
+    """
+    product = product_buyed.original_product
+    if not product:
+        return 0.0
+    
+    amount_buyed = product_buyed.amount_buyed or 0
+    amount_requested = product.amount_requested or 0
+    
+    # Si las cantidades coinciden, usar el total_cost original
+    if amount_buyed == amount_requested:
+        return float(product.total_cost or 0)
+    
+    # Si las cantidades son diferentes, recalcular
+    unit_price = float(product.shop_cost or 0)
+    shipping_cost = float(product.shop_delivery_cost or 0)
+    shop_tax_rate = float(product.shop_taxes or 0)
+    added_taxes = float(product.added_taxes or 0)
+    own_taxes = float(product.own_taxes or 0)
+    charge_iva = product.charge_iva if product.charge_iva is not None else True
+    
+    # Fórmula igual que en el frontend
+    subtotal = unit_price * amount_buyed
+    base = subtotal + shipping_cost
+    base_impuesto = base * 0.07 if charge_iva else 0
+    base_para_tarifa = base + base_impuesto
+    tarifa_tienda = base_para_tarifa * (shop_tax_rate / 100)
+    total = base + base_impuesto + tarifa_tienda + added_taxes + own_taxes
+    
+    return round(total, 2)
+
+
+def get_receipt_expected_cost(purchase) -> float:
+    """
+    Calcula el costo esperado de un recibo de compra, excluyendo productos reembolsados.
+    Usa la lógica de cálculo proporcional.
+    """
+    total = 0.0
+    for product_buyed in purchase.buyed_products.select_related('original_product').filter(
+        Q(is_refunded=False) | Q(is_refunded__isnull=True)
+    ):
+        total += calculate_product_buyed_cost(product_buyed)
+    return round(total, 2)
+
+
 def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[str, Any]:
     """Return aggregated financial analysis for purchases.
 
@@ -31,21 +80,17 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
     if end_date:
         qs = qs.filter(buy_date__lte=end_date)
 
-    # 2. Annotate with Refund Totals and Expected Cost for each receipt
+    # 2. Annotate with Refund Totals and product count
     annotated_qs = qs.annotate(
         receipt_refunded=Coalesce(
             Sum('buyed_products__refund_amount', filter=Q(buyed_products__is_refunded=True)),
             0.0,
             output_field=FloatField()
         ),
-        expected_cost=Coalesce(
-            Sum('buyed_products__original_product__total_cost', 
-                filter=Q(buyed_products__is_refunded=False)),
-            0.0,
-            output_field=FloatField()
-        ),
         products_count=Count('buyed_products')
-    ).select_related('shop_of_buy', 'shopping_account').order_by('buy_date')
+    ).select_related('shop_of_buy', 'shopping_account').prefetch_related(
+        'buyed_products__original_product'
+    ).order_by('buy_date')
 
     # 3. Aggregation in Python to avoid "Sum over Sum" and Join Duplicate errors
     total_count = 0
@@ -61,7 +106,8 @@ def analyze_purchases(start_date=None, end_date=None, months_back=12) -> Dict[st
     trend_map = defaultdict(lambda: {'count': 0, 'expected': 0.0, 'gross': 0.0, 'refunded': 0.0})
 
     for purchase in annotated_qs:
-        expected = float(purchase.expected_cost or 0.0)
+        # Calcular el costo esperado usando la nueva lógica
+        expected = get_receipt_expected_cost(purchase)
         gross = float(purchase.total_cost_of_purchase or 0.0)
         refunded = float(purchase.receipt_refunded or 0.0)
         products = int(purchase.products_count or 0)

@@ -44,6 +44,7 @@ import { useProducts } from "@/hooks/product";
 import { InputGroupInput } from "@/components/ui/input-group";
 import { ProductSelector } from "./purchase-products/purchase-product-selector";
 import { PurchaseProductListEditor } from "./purchase-products/PurchaseProductListEditor";
+import { calculateProductPurchaseCost } from "@/lib/purchase-calculations";
 
 // Schema de validación
 const createShoppingReceipSchema = z.object({
@@ -149,12 +150,10 @@ export function PurchaseForm({
   }, [purchase, shops, form]);
 
   // Calcular total automáticamente cuando cambian los productos
+  // usando la nueva lógica: si cantidades coinciden usar total_cost, sino recalcular
   useEffect(() => {
     const total = selectedProductsDetails.reduce((sum, item) => {
-      return (
-        sum +
-        (item.original_product_details?.total_cost || 0) * item.amount_buyed
-      );
+      return sum + calculateProductPurchaseCost(item);
     }, 0);
     // Solo actualizar si no estamos en carga inicial o si el valor cambia
     form.setValue("total_cost_of_purchase", total);
@@ -172,24 +171,28 @@ export function PurchaseForm({
   };
 
   // Eliminar un producto del carrito
-  const removeProductFromCart = (productId: string) => {
-    const newDetails = selectedProductsDetails.filter(
-      (item) =>
-        (item.product_id || item.original_product_details?.id) !== productId,
-    );
+  const removeProductFromCart = (productId: string | number) => {
+    const newDetails = selectedProductsDetails.filter((item) => {
+      const itemProductId = (item.product_id ||
+        item.original_product_details?.id) as string | number;
+      return itemProductId?.toString() !== productId?.toString();
+    });
     setSelectedProductsDetails(newDetails);
 
     const newApiData = selectedProducts.filter(
-      (item) => item.original_product !== productId,
+      (item) => item.original_product?.toString() !== productId?.toString(),
     );
     setSelectedProducts(newApiData);
   };
 
   // Actualizar cantidad de un producto
-  const updateProductQuantity = (productId: string, delta: number) => {
+  const updateProductQuantity = (productId: string | number, delta: number) => {
     const newDetails = selectedProductsDetails
       .map((item) => {
-        if (item.product_id === productId) {
+        const itemProductId = (item.product_id ||
+          item.original_product_details?.id) as string | number;
+
+        if (itemProductId?.toString() === productId?.toString()) {
           const newQuantity = item.amount_buyed + delta;
           if (newQuantity <= 0) return null;
           return { ...item, amount_buyed: newQuantity };
@@ -201,8 +204,9 @@ export function PurchaseForm({
     setSelectedProductsDetails(newDetails);
 
     const newApiData = newDetails.map((item) => ({
-      original_product: (item.product_id ||
-        item.original_product_details?.id) as string,
+      original_product: (
+        item.product_id || item.original_product_details?.id
+      )?.toString() as string,
       amount_buyed: item.amount_buyed,
     }));
     setSelectedProducts(newApiData);
@@ -394,7 +398,7 @@ export function PurchaseForm({
                   className="h-8 rounded-full px-4 text-xs font-bold text-orange-600 hover:bg-orange-50 hover:text-orange-700 transition-colors"
                 >
                   <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Agregar Item
+                  Agregar Producto
                 </Button>
               </div>
 

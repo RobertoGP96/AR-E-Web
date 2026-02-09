@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Minus, Plus, Trash2, Package } from "lucide-react";
+import { Box, Minus, Plus, Trash2, Package, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -68,7 +68,12 @@ export function PackageProductListEditor({
                 </Badge>
               </div>
               <div className="flex flex-wrap items-center gap-3 text-sm font-medium">
-                <span className="text-orange-600">
+                <span className="text-orange-600 flex items-center gap-1">
+                  <Store className="h-3 w-3" />
+                  {item.original_product.shop}
+                </span>
+                <span className="h-1 w-1 rounded-full bg-slate-300" />
+                <span className="text-slate-500 font-bold">
                   @{item.original_product.client_name}
                 </span>
                 <span className="h-1 w-1 rounded-full bg-slate-300" />
@@ -82,6 +87,7 @@ export function PackageProductListEditor({
           <div className="flex items-center justify-between sm:justify-end gap-6 mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-0 border-slate-50">
             <div className="flex items-center gap-1.5 bg-slate-50 rounded-xl p-1 shrink-0">
               <Button
+                type="button"
                 variant="ghost"
                 size="icon"
                 className="h-9 w-9 rounded-lg hover:bg-white hover:text-orange-600 hover:shadow-sm transition-all"
@@ -95,6 +101,7 @@ export function PackageProductListEditor({
                 </span>
               </div>
               <Button
+                type="button"
                 variant="ghost"
                 size="icon"
                 className="h-9 w-9 rounded-lg hover:bg-white hover:text-orange-600 hover:shadow-sm transition-all"
@@ -110,6 +117,7 @@ export function PackageProductListEditor({
                 className="h-8 hidden sm:block"
               />
               <Button
+                type="button"
                 variant="ghost"
                 size="icon"
                 className="h-10 w-10 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"

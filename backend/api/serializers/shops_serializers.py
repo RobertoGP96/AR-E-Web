@@ -150,22 +150,28 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
         return shopping_receip
 
     def update(self, instance, validated_data):
-        buyed_products_data = validated_data.pop('buyed_products', [])
-        shopping_receip = super().update(instance, validated_data)
+        # Manejar productos comprados solo si se proporcionan en la solicitud
+        if 'buyed_products' in validated_data:
+            buyed_products_data = validated_data.pop('buyed_products')
+            
+            # NOTA: La lógica actual del sistema es reemplazar todos los productos vinculados
+            # al actualizar el recibo. Mantenemos este comportamiento pero SOLO si se 
+            # envían productos en la petición.
+            
+            # Eliminar los ProductBuyed existentes vinculados a este recibo
+            instance.buyed_products.all().delete()
 
-        # Eliminar los ProductBuyed existentes
-        shopping_receip.buyed_products.all().delete()
+            # Crear los nuevos ProductBuyed asociados
+            for product_data in buyed_products_data:
+                # Si no se especifica buy_date, usar la del shopping_receip
+                if 'buy_date' not in product_data or product_data['buy_date'] is None:
+                    product_data['buy_date'] = instance.buy_date
+                
+                # Crear y vincular a la instancia actual
+                product_buyed = ProductBuyed.objects.create(shoping_receip=instance, **product_data)
 
-        # Crear los nuevos ProductBuyed asociados
-        for product_data in buyed_products_data:
-            # Si no se especifica buy_date, usar la del shopping_receip
-            if 'buy_date' not in product_data or product_data['buy_date'] is None:
-                product_data['buy_date'] = shopping_receip.buy_date
-            product_buyed = ProductBuyed.objects.create(**product_data)
-            product_buyed.shoping_receip = shopping_receip
-            product_buyed.save()
-
-        return shopping_receip
+        # Actualizar los campos propios del ShoppingReceip
+        return super().update(instance, validated_data)
 
 
 class ShopCreateSerializer(serializers.ModelSerializer):

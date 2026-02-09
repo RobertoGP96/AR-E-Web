@@ -9,6 +9,7 @@ import {
   Package,
   Search,
   Box,
+  Store,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,13 @@ import type {
   Product,
   ProductReceived,
 } from "@/types/models";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PackageProductSelectorProps {
   products: Product[];
@@ -50,7 +58,17 @@ export function PackageProductSelector({
   maxHeight = "400px",
 }: PackageProductSelectorProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedShop, setSelectedShop] = useState<string>("all");
   const [cart, setCart] = useState<ProductReceived[]>(initialCart);
+
+  // Obtener tiendas únicas de los productos
+  const uniqueShops = useMemo(() => {
+    const shops = products
+      .filter((p) => p.status.toLowerCase() === statusFilter.toLowerCase())
+      .map((p) => p.shop)
+      .filter((shop): shop is string => !!shop);
+    return Array.from(new Set(shops)).sort();
+  }, [products, statusFilter]);
 
   // Filtrado optimizado de productos
   const filteredProducts = useMemo(() => {
@@ -60,20 +78,40 @@ export function PackageProductSelector({
         return false;
       }
 
-      // 2. Filtro por búsqueda de texto (si existe)
+      // 2. Filtro por tienda
+      if (selectedShop !== "all" && product.shop !== selectedShop) {
+        return false;
+      }
+
+      // 3. Filtro por cantidad comprada (al menos 1)
+      if (product.amount_purchased <= 0) {
+        return false;
+      }
+
+      // 4. Evitar mostrar productos que ya han sido recibidos totalmente
+      // (A menos que el producto ya esté en nuestro "carrito" actual)
+      const isInCart = cart.some(
+        (item) => item.original_product.id === product.id,
+      );
+      if (product.amount_received >= product.amount_purchased && !isInCart) {
+        return false;
+      }
+
+      // 5. Filtro por búsqueda de texto (si existe)
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         const matchesSearch =
-          product.name.toLowerCase().includes(searchLower) ||
-          product.sku.toLowerCase().includes(searchLower) ||
-          product.category?.toLowerCase().includes(searchLower);
+          (product.name && product.name.toLowerCase().includes(searchLower)) ||
+          (product.sku && product.sku.toLowerCase().includes(searchLower)) ||
+          (product.category &&
+            product.category.toLowerCase().includes(searchLower));
 
         return matchesSearch;
       }
 
       return true;
     });
-  }, [products, statusFilter, searchTerm]);
+  }, [products, statusFilter, searchTerm, selectedShop, cart]);
 
   // Calcular totales
   const cartSummary = useMemo(() => {
@@ -169,14 +207,36 @@ export function PackageProductSelector({
           <CardDescription>
             {statusFilter && `Mostrando productos con estado: ${statusFilter}`}
           </CardDescription>
-          <div className="relative pt-2">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 translate-y-[-25%] text-slate-400" />
-            <Input
-              placeholder="Buscar por nombre, SKU..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11 rounded-xl border-slate-200 focus-visible:ring-orange-500"
-            />
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 translate-y-[-50%] text-slate-400" />
+              <Input
+                placeholder="Buscar por nombre, SKU..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-11 rounded-xl border-slate-200 focus-visible:ring-orange-500"
+              />
+            </div>
+            <div className="w-full sm:w-[200px]">
+              <Select value={selectedShop} onValueChange={setSelectedShop}>
+                <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-white focus:ring-orange-500">
+                  <div className="flex items-center gap-2">
+                    <Store className="h-4 w-4 text-slate-400" />
+                    <SelectValue placeholder="Todas las tiendas" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                  <SelectItem value="all" className="rounded-lg">
+                    Todas las tiendas
+                  </SelectItem>
+                  {uniqueShops.map((shop) => (
+                    <SelectItem key={shop} value={shop} className="rounded-lg">
+                      {shop}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="px-0">
@@ -218,14 +278,16 @@ export function PackageProductSelector({
                           <span className="h-1 w-1 rounded-full bg-slate-300" />
                           <span>{product.status}</span>
                         </div>
-                        <p className="text-sm font-semibold text-orange-600 mt-1">
-                          @{product.client_name}
+                        <p className="text-sm font-semibold text-orange-600 mt-1 flex items-center gap-1">
+                          <Store className="h-3 w-3" />
+                          {product.shop} • @{product.client_name}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {cartQty > 0 ? (
                           <div className="flex items-center gap-1 bg-white rounded-xl border border-orange-200 p-1">
                             <Button
+                              type="button"
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 rounded-lg hover:bg-orange-100 hover:text-orange-600"
@@ -237,6 +299,7 @@ export function PackageProductSelector({
                               {cartQty}
                             </span>
                             <Button
+                              type="button"
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 rounded-lg hover:bg-orange-100 hover:text-orange-600"
@@ -248,6 +311,7 @@ export function PackageProductSelector({
                           </div>
                         ) : (
                           <Button
+                            type="button"
                             variant="ghost"
                             size="sm"
                             onClick={() => addToCart(product)}
@@ -282,6 +346,7 @@ export function PackageProductSelector({
             </CardTitle>
             {cart.length > 0 && (
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={clearCart}
@@ -330,6 +395,7 @@ export function PackageProductSelector({
                     </div>
                     <div className="flex items-center gap-1 shrink-0 bg-slate-50 rounded-lg p-0.5">
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 hover:bg-white hover:text-orange-600"
@@ -343,6 +409,7 @@ export function PackageProductSelector({
                         {item.amount_received}
                       </span>
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 hover:bg-white hover:text-orange-600"
@@ -359,6 +426,7 @@ export function PackageProductSelector({
                       </Button>
                       <Separator orientation="vertical" className="h-4 mx-1" />
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50"

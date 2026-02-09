@@ -122,6 +122,7 @@ def update_product_on_buyed_save(sender, instance, created, **kwargs):
     """
     Actualiza el amount_purchased y estado del producto original cuando se guarda/crea un ProductBuyed.
     Maneja tanto nuevas compras como reembolsos.
+    También actualiza el estado de la orden basándose en el estado de los productos.
     """
     from api.services.product_status_service import ProductStatusService
     
@@ -132,6 +133,10 @@ def update_product_on_buyed_save(sender, instance, created, **kwargs):
     
     try:
         ProductStatusService.recalculate_product_status(product)
+        
+        # Actualizar estado de la orden basándose en los productos
+        if product.order:
+            product.order.update_status_based_on_products()
     except Exception as e:
         logger.error(f"Error actualizando estado del producto en ProductBuyed.post_save: {e}", exc_info=True)
         raise
@@ -141,6 +146,7 @@ def update_product_on_buyed_save(sender, instance, created, **kwargs):
 def update_product_on_buyed_delete(sender, instance, **kwargs):
     """
     Actualiza el amount_purchased y estado del producto original cuando se elimina un ProductBuyed.
+    También actualiza el estado de la orden basándose en el estado de los productos.
     """
     from api.services.product_status_service import ProductStatusService
     
@@ -151,6 +157,10 @@ def update_product_on_buyed_delete(sender, instance, **kwargs):
     
     try:
         ProductStatusService.recalculate_product_status(product)
+        
+        # Actualizar estado de la orden basándose en los productos
+        if product.order:
+            product.order.update_status_based_on_products()
     except Exception as e:
         logger.error(f"Error actualizando estado del producto en ProductBuyed.post_delete: {e}", exc_info=True)
         raise
@@ -164,6 +174,7 @@ def update_product_on_buyed_delete(sender, instance, **kwargs):
 def update_product_on_received_save(sender, instance, created, **kwargs):
     """
     Actualiza el amount_received y estado del producto original cuando se guarda/crea un ProductReceived.
+    También actualiza el estado de la orden basándose en el estado de los productos.
     """
     from api.services.product_status_service import ProductStatusService
     
@@ -174,6 +185,10 @@ def update_product_on_received_save(sender, instance, created, **kwargs):
     
     try:
         ProductStatusService.recalculate_product_status(product)
+        
+        # Actualizar estado de la orden basándose en los productos
+        if product.order:
+            product.order.update_status_based_on_products()
     except Exception as e:
         logger.error(f"Error actualizando estado del producto en ProductReceived.post_save: {e}", exc_info=True)
         raise
@@ -183,6 +198,7 @@ def update_product_on_received_save(sender, instance, created, **kwargs):
 def update_product_on_received_delete(sender, instance, **kwargs):
     """
     Actualiza el amount_received y estado del producto original cuando se elimina un ProductReceived.
+    También actualiza el estado de la orden basándose en el estado de los productos.
     """
     from api.services.product_status_service import ProductStatusService
     
@@ -193,6 +209,10 @@ def update_product_on_received_delete(sender, instance, **kwargs):
     
     try:
         ProductStatusService.recalculate_product_status(product)
+        
+        # Actualizar estado de la orden basándose en los productos
+        if product.order:
+            product.order.update_status_based_on_products()
     except Exception as e:
         logger.error(f"Error actualizando estado del producto en ProductReceived.post_delete: {e}", exc_info=True)
         raise
@@ -206,7 +226,7 @@ def update_product_on_received_delete(sender, instance, **kwargs):
 def update_product_on_delivery_save(sender, instance, created, **kwargs):
     """
     Actualiza el amount_delivered y estado del producto original cuando se guarda/crea un ProductDelivery.
-    También verifica si la orden debe cambiar a COMPLETADO.
+    También actualiza el estado de la orden basándose en el estado de los productos.
     """
     from api.services.product_status_service import ProductStatusService
     
@@ -218,9 +238,9 @@ def update_product_on_delivery_save(sender, instance, created, **kwargs):
     try:
         ProductStatusService.recalculate_product_status(product)
         
-        # Verificar si la orden debe cambiar a COMPLETADO
+        # Actualizar estado de la orden basándose en los productos
         if product.order:
-            product.order.update_status_based_on_delivery()
+            product.order.update_status_based_on_products()
     except Exception as e:
         logger.error(f"Error actualizando estado del producto en ProductDelivery.post_save: {e}", exc_info=True)
         raise
@@ -230,7 +250,7 @@ def update_product_on_delivery_save(sender, instance, created, **kwargs):
 def update_product_on_delivery_delete(sender, instance, **kwargs):
     """
     Actualiza el amount_delivered y estado del producto original cuando se elimina un ProductDelivery.
-    También maneja la actualización de estado de la orden si es necesario.
+    También actualiza el estado de la orden basándose en el estado de los productos.
     """
     from api.services.product_status_service import ProductStatusService
     
@@ -244,13 +264,9 @@ def update_product_on_delivery_delete(sender, instance, **kwargs):
     try:
         ProductStatusService.recalculate_product_status(product)
         
-        # Si hay orden asociada, verificar si debe cambiar de estado
+        # Actualizar estado de la orden basándose en los productos
         if order:
-            # Si ya no está completamente entregada, cambiar de COMPLETADO a PROCESANDO
-            if not order.is_fully_delivered and order.status == OrderStatusEnum.COMPLETADO.value:
-                order.status = OrderStatusEnum.PROCESANDO.value
-                order.save(update_fields=['status', 'updated_at'])
-                logger.info(f"Orden {order.id} revertida a PROCESANDO")
+            order.update_status_based_on_products()
     except Exception as e:
         logger.error(f"Error actualizando estado del producto en ProductDelivery.post_delete: {e}", exc_info=True)
         raise

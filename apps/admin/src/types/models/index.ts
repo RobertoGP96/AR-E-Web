@@ -56,6 +56,11 @@ export type {
   UpdateShopData
 } from './shop';
 
+// Modelo de Categoría
+export type {
+  Category
+} from './category';
+
 // Modelo de Pedido
 export type {
   Order,
