@@ -3,14 +3,18 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
-from django.db.models import Q, Count, Sum, Avg, F
+from django.db.models import Q, Count, Sum, Avg, F, FloatField
 from django.db.models.functions import Coalesce, TruncMonth
 from django.conf import settings
 import platform
 from django.db import connection
 from django.utils import timezone
 from datetime import timedelta
-from api.models import Order, Product, DeliverReceip, Package, CustomUser, ShoppingReceip, ProductBuyed
+from api.models import Order, Product, DeliverReceip, Package, CustomUser, ShoppingReceip, ProductBuyed, Expense
+from api.services.client_services import get_all_clients_balances_summary
+from api.services.delivery_service import analyze_deliveries, get_unpaid_deliveries
+from api.services.purchases_service import get_purchases_summary
+from api.services.profit_service import ProfitCalculationService
 
 
 class DashboardMetricsView(APIView):
@@ -203,6 +207,112 @@ class DashboardMetricsView(APIView):
             'this_month_weight': float(deliveries_data['this_month_weight'] or 0.0),
         }
 
+        # ===== CLIENT BALANCES METRICS =====
+        clients_balances = get_all_clients_balances_summary()
+        total_debt = sum(c['pending_to_pay'] for c in clients_balances)
+        total_surplus = sum(c['surplus_balance'] for c in clients_balances)
+        clients_with_debt = sum(1 for c in clients_balances if c['status'] == 'DEUDA')
+        clients_with_surplus = sum(1 for c in clients_balances if c['status'] == 'SALDO A FAVOR')
+        clients_on_time = sum(1 for c in clients_balances if c['status'] == 'AL DÍA')
+        
+        client_balances = {
+            'total_clients': len(clients_balances),
+            'with_debt': clients_with_debt,
+            'with_surplus': clients_with_surplus,
+            'on_time': clients_on_time,
+            'total_debt': round(total_debt, 2),
+            'total_surplus': round(total_surplus, 2),
+            'collection_rate': round(
+                ((clients_on_time + clients_with_surplus) / len(clients_balances) * 100) if clients_balances else 0, 
+                2
+            ),
+        }
+
+        # ===== FINANCIAL METRICS =====
+        # Calculate profit metrics using ProfitCalculationService
+        global_metrics = ProfitCalculationService.calculate_global_metrics(period_days=30)
+        
+        # Calculate delivery financial metrics
+        delivery_analysis = analyze_deliveries(months_back=1)
+        unpaid_deliveries = get_unpaid_deliveries()
+        
+        financial = {
+            'total_revenue': round(float(global_metrics['total_revenue']), 2),
+            'total_cost': round(float(global_metrics['total_cost']), 2),
+            'total_profit': round(float(global_metrics['total_profit']), 2),
+            'profit_margin': round(float(global_metrics['profit_margin']), 2),
+            'delivery_revenue': round(delivery_analysis.get('total_delivery_revenue', 0), 2),
+            'delivery_expenses': round(delivery_analysis.get('total_delivery_expenses', 0), 2),
+            'delivery_profit': round(delivery_analysis.get('total_system_profit', 0), 2),
+            'unpaid_deliveries_amount': round(unpaid_deliveries.get('total_unpaid_revenue', 0), 2),
+            'unpaid_deliveries_count': unpaid_deliveries.get('total_unpaid_deliveries', 0),
+            'payment_collection_rate': round(delivery_analysis.get('payment_collection_rate', 0), 2),
+        }
+
+        # ===== PURCHASES METRICS =====
+        purchases_summary = get_purchases_summary()
+        
+        purchases_extended = {
+            **purchases,
+            'total_refunded': round(purchases_summary.get('total_refunded', 0), 2),
+            'net_spent': round(purchases_summary.get('net_spent', 0), 2),
+            'refund_rate': round(purchases_summary.get('refund_rate', 0), 2),
+        }
+
+        # ===== AGENTS METRICS =====
+        agents = CustomUser.objects.filter(role='agent')
+        agents_metrics = []
+        total_agent_profit = 0.0
+        total_agent_clients = 0
+        
+        for agent in agents:
+            agent_deliveries = DeliverReceip.objects.filter(client__assigned_agent=agent)
+            agent_profit = agent_deliveries.aggregate(
+                total=Sum('manager_profit')
+            )['total'] or 0.0
+            agent_clients_count = CustomUser.objects.filter(assigned_agent=agent, role='client').count()
+            agent_orders_count = Order.objects.filter(sales_manager=agent).count()
+            
+            total_agent_profit += float(agent_profit)
+            total_agent_clients += agent_clients_count
+            
+            agents_metrics.append({
+                'agent_id': agent.id,
+                'agent_name': agent.full_name,
+                'total_profit': round(float(agent_profit), 2),
+                'clients_count': agent_clients_count,
+                'orders_count': agent_orders_count,
+            })
+        
+        # Sort agents by profit
+        agents_metrics.sort(key=lambda x: x['total_profit'], reverse=True)
+        
+        agents_summary = {
+            'total_agents': agents.count(),
+            'total_agent_profit': round(total_agent_profit, 2),
+            'total_agent_clients': total_agent_clients,
+            'top_agents': agents_metrics[:5],  # Top 5 agents
+        }
+
+        # ===== EXPENSES METRICS =====
+        expenses_data = Expense.objects.aggregate(
+            total=Sum('amount'),
+            count=Count('id'),
+            this_month=Sum('amount', filter=Q(date__gte=month_start)),
+            this_month_count=Count('id', filter=Q(date__gte=month_start)),
+        )
+        
+        expenses = {
+            'total': float(expenses_data['total'] or 0.0),
+            'count': expenses_data['count'],
+            'this_month': float(expenses_data['this_month'] or 0.0),
+            'this_month_count': expenses_data['this_month_count'],
+            'average': round(
+                (float(expenses_data['total'] or 0.0) / expenses_data['count']) if expenses_data['count'] > 0 else 0.0,
+                2
+            ),
+        }
+
         return Response({
             'success': True,
             'data': {
@@ -210,9 +320,13 @@ class DashboardMetricsView(APIView):
                 'products': products,
                 'users': users,
                 'revenue': revenue,
-                'purchases': purchases,
+                'purchases': purchases_extended,
                 'packages': packages,
                 'deliveries': deliveries,
+                'client_balances': client_balances,
+                'financial': financial,
+                'agents': agents_summary,
+                'expenses': expenses,
             },
             'message': 'Métricas del dashboard obtenidas exitosamente'
         })
@@ -328,7 +442,7 @@ class ProfitReportsView(APIView):
         # For now, let's use a slightly safer loop but with aggregate inside.
         
         agent_reports = []
-        for agent in agents:
+        for agent in agents_data:
             # Reusing original logic but ensuring it's efficient
             # (Keeping simple for now as it's less critical than the 12-month loop)
             agent_deliveries = DeleverReceip_objs = DeliverReceip.objects.filter(client__assigned_agent=agent)
