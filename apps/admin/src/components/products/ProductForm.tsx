@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import type { CreateProductData } from "@/types/models"
+import type { CreateProductData } from "@/types/models/product"
 import { Switch } from "../ui/switch"
 import { Label } from "../ui/label"
 
@@ -187,7 +187,7 @@ const parseDescriptionForTags = (desc?: string) => {
         shop: initialValues?.shop || '',
         description: initialParsed.descPlain || '',
         amount_requested: initialValues?.amount_requested ?? 1,
-        shop_cost: initialValues?.shop_cost ?? undefined,
+        shop_cost: initialValues?.shop_cost ?? 0,
         total_cost: initialValues?.total_cost ?? 0,
         category: initialValues?.category ?? undefined,
         added_taxes: initialValues?.added_taxes ?? 0,
@@ -197,7 +197,7 @@ const parseDescriptionForTags = (desc?: string) => {
         own_taxes: initialValues?.own_taxes ?? 0,
         shop_delivery_cost: initialValues?.shop_delivery_cost ?? 0,
         charge_iva: initialValues?.charge_iva ?? true,
-        order: orderId || 0, // Agregar order obligatorio
+        order: orderId || 0,
     });
     const [tags, setTags] = useState<tag[]>(initialParsed.parsedTags || [])
     const [newtag, setNewTag] = useState<tag>({
@@ -252,7 +252,7 @@ const parseDescriptionForTags = (desc?: string) => {
             if (currentShop !== previousShopRef.current) {
                 setIsShopInDatabase(undefined)
                 setMatchedShopId(undefined)
-                previousShopRef.current = currentShop
+                previousShopRef.current = String(currentShop)
             }
             return
         }
@@ -267,7 +267,7 @@ const parseDescriptionForTags = (desc?: string) => {
         }
 
         // Buscar coincidencia por nombre (case-insensitive) o por link que incluya el hostname
-        const detected = currentShop.toLowerCase()
+        const detected = String(currentShop).toLowerCase()
 
         // Primero buscar por nombre exacto/insensible a mayúsculas
         let matched = availableShops.find(s => s.name && s.name.toLowerCase() === detected)
@@ -305,7 +305,7 @@ const parseDescriptionForTags = (desc?: string) => {
 
             setMatchedShopId(matchedId)
             previousMatchedShopIdRef.current = matchedId
-            previousShopRef.current = matched.name || currentShop
+            previousShopRef.current = String(matched.name || currentShop)
             previousShopTaxesRef.current = matched.tax_rate
         } else if (currentShop) {
             setIsShopInDatabase(false)
@@ -314,13 +314,13 @@ const parseDescriptionForTags = (desc?: string) => {
 
             // Si la tienda no está en BD y no hay shop_taxes definido, usar auto-detectado
             if (currentShopTaxes === undefined || currentShopTaxes === 0) {
-                const autoRate = getShopTaxRate(currentShop)
+                const autoRate = getShopTaxRate(String(currentShop))
                 if (autoRate !== previousShopTaxesRef.current) {
                     setNewProduct(prev => ({ ...prev, shop_taxes: autoRate }))
                     previousShopTaxesRef.current = autoRate
                 }
             }
-            previousShopRef.current = currentShop
+            previousShopRef.current = currentShop as string
         }
     }, [newProduct.shop, newProduct.link, newProduct.shop_taxes, availableShops])
 
@@ -338,7 +338,7 @@ const parseDescriptionForTags = (desc?: string) => {
         }
 
         // Validar que haya una tienda seleccionada
-        if (!newProduct.shop?.trim()) {
+        if (!newProduct.shop?.toString().trim()) {
             alert('Debes seleccionar o detectar una tienda')
             return
         }
@@ -387,80 +387,57 @@ const parseDescriptionForTags = (desc?: string) => {
         const qty = Number(newProduct.amount_requested) || 1
         const unit = Number(newProduct.shop_cost) || 0
         const shippingCost = Number(newProduct.shop_delivery_cost) || 0
-        // Preferir enviar el ID de la tienda (pk) cuando esté disponible.
+        
+        // Mapear tienda
         let shopPayload: number | string | undefined
         if (matchedShopId) {
             shopPayload = matchedShopId
         } else if (newProduct.shop) {
-            // Intentar mapear por nombre a la tienda en BD
-            const found = availableShops.find(s => s.name && s.name.toLowerCase() === (newProduct.shop || '').toLowerCase())
-            if (found) shopPayload = found.id
-            else {
-                // Si no coincide por nombre, intentar extraer del link
-                if (newProduct.link) {
-                    const fromLink = extractShopName(newProduct.link)
-                    const found2 = availableShops.find(s => s.name && s.name.toLowerCase() === fromLink.toLowerCase())
-                    if (found2) shopPayload = found2.id
-                }
-                // Si aún no existe, dejamos undefined y validamos más abajo
+            const found = availableShops.find(s => s.name && s.name.toLowerCase() === String(newProduct.shop).toLowerCase())
+            if (found) {
+                shopPayload = found.id
+            } else {
+                shopPayload = String(newProduct.shop)
             }
         }
-        const quantity = Number(newProduct.amount_requested) || 1
+
         const shopTaxRate = newProduct.shop_taxes
         const addedTaxes = Number(newProduct.added_taxes) || 0
         const ownTaxes = Number(newProduct.own_taxes) || 0
         const chargeIva = newProduct.charge_iva ?? true
 
         // Calcular el total usando la función correcta
-        // Decidir nombre de tienda para mostrar en el cálculo
-        let shopDisplayName = ''
-        if (typeof shopPayload === 'number') {
-            shopDisplayName = availableShops.find(s => s.id === shopPayload)?.name || ''
-        } else {
-            shopDisplayName = (newProduct.shop || (newProduct.link ? extractShopName(newProduct.link) : '')) || 'Unknown'
-        }
+        const shopDisplayName = String(newProduct.shop || (newProduct.link ? extractShopName(newProduct.link) : '') || 'Unknown')
 
-        const calculation = calculateTotalCost(unit, quantity, shippingCost, shopDisplayName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
+        const calculation = calculateTotalCost(unit, qty, shippingCost, shopDisplayName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
         const computedTotal = calculation.total
 
-        // category: backend espera PK; soportamos que el form guarde nombre -> mapear a id
-        const matchedCategory = categories.find(c => c.name && c.name.toLowerCase() === (newProduct.category || '').toLowerCase())
-        const categoryPayload = matchedCategory ? matchedCategory.id : (Number(newProduct.category) ? Number(newProduct.category) : undefined)
-
-        // Validación final: la API espera un PK para la tienda (shop). Si no está
-        // registrado (no conseguimos shopPayload), forzar al usuario a seleccionar
-        // la tienda manualmente o registrarla en el panel de tiendas.
-        if (typeof shopPayload === 'undefined' || shopPayload === null) {
-            alert('Debes seleccionar una tienda registrada o usar el selector manual.');
-            return
+        // Mapear categoría
+        let categoryPayload: number | string | undefined = undefined
+        if (newProduct.category) {
+            const matchedCategory = categories.find(c => c.name && c.name.toLowerCase() === String(newProduct.category).toLowerCase())
+            categoryPayload = matchedCategory ? matchedCategory.id : (Number(newProduct.category) || undefined)
         }
 
-        const productToSubmit = {
-            // Asegurar que se envía el nombre del producto
+        const productToSubmit: CreateProductData = {
             name: newProduct.name,
-            // Enviar shop como nombre (lo que espera la API según el serializer que usa slug_field="name")
-            // Enviar shop por id (PK) si está disponible. El backend espera un PK numérico.
-            shop: shopPayload ?? undefined,
-            order: orderId,
+            shop: shopPayload,
+            order: orderId || 0,
             description: finalDescription,
             amount_requested: qty,
             link: newProduct.link,
             shop_cost: unit,
             total_cost: computedTotal,
-            // category: enviar el nombre de la categoría (la API espera nombre)
-            // category: enviar id si existe, si no envíe undefined (no se incluye)
-            category: typeof categoryPayload !== 'undefined' ? categoryPayload : undefined,
-            // Guardar los valores en campos apropiados
-            shop_delivery_cost: shippingCost, // Costo de envío
-            shop_taxes: shopTaxRate ?? getShopTaxRate(shopDisplayName), // Porcentaje de impuesto de tienda
-            charge_iva: chargeIva, // Si se cobra IVA o no
-            base_tax: calculation.baseImpuesto, // IVA 7% calculado
-            shop_tax_amount: calculation.tarifaTienda, // Impuesto adicional calculado (3% o 5%)
-            added_taxes: addedTaxes, // Impuestos adicionales nominales
-            own_taxes: ownTaxes, // Impuestos propios nominales
-            // Product images: enviar como single string URL (service expects single URL string)
+            category: categoryPayload,
+            shop_delivery_cost: shippingCost,
+            shop_taxes: shopTaxRate ?? getShopTaxRate(shopDisplayName),
+            charge_iva: chargeIva,
+            base_tax: calculation.baseImpuesto,
+            shop_tax_amount: calculation.tarifaTienda,
+            added_taxes: addedTaxes,
+            own_taxes: ownTaxes,
             product_pictures: ''
-        } as unknown as CreateProductData
+        }
 
         onSubmit(productToSubmit)
 
@@ -583,7 +560,7 @@ const parseDescriptionForTags = (desc?: string) => {
                                 </div>
                                 Tienda *
                             </label>
-                            {!newProduct.link?.trim() && (
+                            {!newProduct.link?.toString().trim() && (
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -596,11 +573,11 @@ const parseDescriptionForTags = (desc?: string) => {
                             )}
                         </div>
 
-                        {showManualShopSelect && !newProduct.link?.trim() ? (
+                        {showManualShopSelect && !newProduct.link?.toString().trim() ? (
                             // Selector manual de tienda
                             <>
                                 <Select
-                                    value={newProduct.shop || ''}
+                                    value={String(newProduct.shop || '')}
                                     onValueChange={(val) => setNewProduct(prev => ({ ...prev, shop: val }))}
                                 >
                                     <SelectTrigger id="shop">
@@ -629,8 +606,8 @@ const parseDescriptionForTags = (desc?: string) => {
                                 <div className="relative">
                                     <Input
                                         id="shop"
-                                        placeholder={newProduct.link?.trim() ? "Esperando detección automática..." : "Sin tienda (usa selector manual)"}
-                                        value={newProduct.shop}
+                                        placeholder={newProduct.link?.toString().trim() ? "Esperando detección automática..." : "Sin tienda (usa selector manual)"}
+                                        value={String(newProduct.shop || '')}
                                         readOnly
                                         className="bg-muted/30 border-muted-foreground/20 text-muted-foreground cursor-not-allowed pr-10"
                                     />
@@ -693,7 +670,7 @@ const parseDescriptionForTags = (desc?: string) => {
                             Categoría
                         </label>
                         <Select
-                            value={newProduct.category ? newProduct.category : '0'}
+                            value={newProduct.category ? String(newProduct.category) : '0'}
                             onValueChange={(val) => setNewProduct(prev => ({ ...prev, category: val !== '0' ? val : '' }))}
                         >
                             <SelectTrigger id="category">
@@ -856,7 +833,7 @@ const parseDescriptionForTags = (desc?: string) => {
                                     {(() => {
                                         const price = Number(newProduct.shop_cost) || 0
                                         const shippingCost = Number(newProduct.shop_delivery_cost) || 0
-                                        const shopTaxRate = newProduct.shop_taxes ?? getShopTaxRate(newProduct.shop || '')
+                                        const shopTaxRate = Number(newProduct.shop_taxes) || getShopTaxRate(String(newProduct.shop || ''))
                                         const chargeIva = newProduct.charge_iva ?? true
 
                                         // Calcular el valor del impuesto de tienda en dólares
@@ -924,7 +901,7 @@ const parseDescriptionForTags = (desc?: string) => {
                         const ownTaxes = Number(newProduct.own_taxes) || 0
                         const chargeIva = newProduct.charge_iva ?? true
 
-                        const calculation = calculateTotalCost(price, quantity, shippingCost, shopName, shopTaxRate, addedTaxes, ownTaxes, chargeIva)
+                        const calculation = calculateTotalCost(price, quantity, shippingCost, String(shopName), shopTaxRate, addedTaxes, ownTaxes, chargeIva)
 
                         return (
                             <div className="space-y-4">
@@ -996,7 +973,7 @@ const parseDescriptionForTags = (desc?: string) => {
                                                             <div className="space-y-1">
                                                                 <div className="flex justify-between text-sm">
                                                                     <span className="text-muted-foreground">
-                                                                        Tarifa tienda ({shopTaxRate ?? getShopTaxRate(shopName)}%):
+                                                                        Tarifa tienda ({Number(shopTaxRate) || getShopTaxRate(String(shopName))}%):
                                                                     </span>
                                                                     <span className="font-medium text-blue-600">+${formatCurrency(calculation.tarifaTienda)}</span>
                                                                 </div>
@@ -1066,7 +1043,7 @@ const parseDescriptionForTags = (desc?: string) => {
                         <Button
                             type="submit"
                             className="w-full sm:w-auto"
-                            disabled={!newProduct.name.trim() || !newProduct.shop?.trim()}
+                            disabled={!newProduct.name.trim() || !newProduct.shop?.toString().trim()}
                         >
                             <Save className="h-4 w-4 mr-2" />
                             {isEditing ? 'Guardar cambios' : 'Añadir producto'}
