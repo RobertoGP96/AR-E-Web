@@ -125,7 +125,7 @@ class ProfitCalculationService:
             agent_metrics = ProfitCalculationService.calculate_agent_profit(agent, period_days)
             agent_profits.append({
                 'agent_id': agent.id,
-                'agent_name': f"{agent.first_name} {agent.last_name}",
+                'agent_name': f"{agent.name} {agent.last_name}",
                 'profit': agent_metrics['total_profit'],
                 'orders': agent_metrics['total_orders'],
             })
