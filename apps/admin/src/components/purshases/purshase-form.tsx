@@ -330,7 +330,7 @@ export function PurchaseForm({
                             <SelectItem
                               key={shop.id}
                               value={shop.id.toString()}
-                              className="rounded-lg py-3"
+                              className="rounded-lg py-3 capitalize"
                             >
                               {shop.name}
                             </SelectItem>
@@ -468,6 +468,7 @@ export function PurchaseForm({
                       </FormLabel>
                       <FormControl>
                         <DatePicker
+                          label=" "
                           placeholder="Fijar fecha"
                           selected={
                             field.value ? new Date(field.value) : undefined
