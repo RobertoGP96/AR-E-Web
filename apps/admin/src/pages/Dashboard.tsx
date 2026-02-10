@@ -43,38 +43,35 @@ const Dashboard = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-orange-400 flex items-center gap-3">
+                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-3">
                     {greeting}
-
                   </h1>
-                  <p className="text-orange-400 mt-1 text-sm md:text-base">
+                  <p className="text-gray-500 mt-1 text-sm md:text-base">
                     Panel de Administración · Resumen General
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-row gap-2">
+            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4">
               {/* Exchange Rate Card */}
               <ExchangeRateCard />
               
               {/* Calendar-style Card */}
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20 shadow-lg w-35 overflow-hidden relative py-0 gap-0">
+              <Card className="bg-white border-2 border-orange-200 shadow-sm w-full md:w-35 overflow-hidden relative py-0 gap-0">
                 <CardHeader className='p-0 gap-0'>
-                  <div className="bg-orange-400 text-white px-3 py-1 text-[16px] font-semibold uppercase flex items-center gap-0 justify-center">
+                  <div className="bg-orange-400 text-white px-3 py-1 text-[14px] font-bold uppercase flex items-center gap-0 justify-center tracking-wider">
                     <span className="truncate">{currentShortMonthYear}</span>
                   </div>
                 </CardHeader>
                 <CardContent className="p-0 bg-white">
-                  <div className="p-2 text-white text-center">
-                    <div className="mt-1 text-md font-medium capitalize text-orange-400">{currentWeekday}</div>
-                    <div className="text-5xl text-orange-400 font-extrabold leading-none">{currentDayNumber}</div>
-                    <div className="text-[16px] mt-1 text-orange-400">{currentTime}</div>
+                  <div className="p-3 text-white text-center">
+                    <div className="text-[12px] font-bold uppercase tracking-tight text-orange-400/80">{currentWeekday}</div>
+                    <div className="text-4xl text-orange-400 font-extrabold leading-none my-1">{currentDayNumber}</div>
+                    <div className="text-[12px] font-semibold text-gray-400">{currentTime}</div>
                   </div>
-                  
                 </CardContent>
               </Card>
-
             </div>
           </div>
         </div>

@@ -43,10 +43,10 @@ export const MetricsSummaryCards = () => {
       value: metrics.users.total,
       icon: Users,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-gray-50 to-orange-100/50",
-      borderColor: "border-orange-100",
-      hoverColor: "hover:border-orange-200 hover:shadow-orange-100/50",
-      iconBg: "bg-gradient-to-br from-orange-500 to-orange-600",
+      bgGradient: "bg-white",
+      borderColor: "border-gray-200",
+      hoverColor: "hover:border-orange-300 hover:shadow-orange-50",
+      iconBg: "bg-orange-500",
       badgeColor: "bg-orange-50 text-orange-700 border-orange-200",
     },
     {
@@ -54,10 +54,10 @@ export const MetricsSummaryCards = () => {
       value: metrics.products.total,
       icon: Package,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-gray-50 to-orange-100/50",
-      borderColor: "border-orange-100",
-      hoverColor: "hover:border-orange-200 hover:shadow-orange-100/50",
-      iconBg: "bg-gradient-to-br from-orange-500 to-orange-600",
+      bgGradient: "bg-white",
+      borderColor: "border-gray-200",
+      hoverColor: "hover:border-orange-300 hover:shadow-orange-50",
+      iconBg: "bg-orange-500",
       badgeColor: "bg-orange-50 text-orange-700 border-orange-200",
     },
     {
@@ -65,10 +65,10 @@ export const MetricsSummaryCards = () => {
       value: metrics.orders.this_month,
       icon: ShoppingCart,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-gray-50 to-orange-100/50",
-      borderColor: "border-orange-100",
-      hoverColor: "hover:border-orange-200 hover:shadow-orange-100/50",
-      iconBg: "bg-gradient-to-br from-orange-500 to-orange-600",
+      bgGradient: "bg-white",
+      borderColor: "border-gray-200",
+      hoverColor: "hover:border-orange-300 hover:shadow-orange-50",
+      iconBg: "bg-orange-500",
       badgeColor: "bg-orange-50 text-orange-700 border-orange-200",
     },
     {
@@ -76,10 +76,10 @@ export const MetricsSummaryCards = () => {
       value: `$${metrics.revenue.this_month.toLocaleString()}`,
       icon: DollarSign,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-gray-50 to-orange-100/50",
-      borderColor: "border-orange-100",
-      hoverColor: "hover:border-orange-200 hover:shadow-orange-100/50",
-      iconBg: "bg-gradient-to-br from-orange-500 to-orange-600",
+      bgGradient: "bg-white",
+      borderColor: "border-gray-200",
+      hoverColor: "hover:border-orange-300 hover:shadow-orange-50",
+      iconBg: "bg-orange-500",
       badgeColor: "bg-orange-50 text-orange-700 border-orange-200",
     },
     // Financial Metrics
@@ -88,10 +88,10 @@ export const MetricsSummaryCards = () => {
       value: `$${metrics.financial.total_profit.toLocaleString()}`,
       icon: TrendingUp,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-green-50 to-emerald-100/50",
+      bgGradient: "bg-white",
       borderColor: "border-emerald-200",
-      hoverColor: "hover:border-emerald-300 hover:shadow-emerald-100/50",
-      iconBg: "bg-gradient-to-br from-emerald-500 to-green-600",
+      hoverColor: "hover:border-emerald-400 hover:shadow-emerald-50",
+      iconBg: "bg-emerald-500",
       badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
     }] : []),
     ...(metrics.financial ? [{
@@ -99,10 +99,10 @@ export const MetricsSummaryCards = () => {
       value: `${metrics.financial.profit_margin.toFixed(1)}%`,
       icon: TrendingUp,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-blue-50 to-cyan-100/50",
+      bgGradient: "bg-white",
       borderColor: "border-cyan-200",
-      hoverColor: "hover:border-cyan-300 hover:shadow-cyan-100/50",
-      iconBg: "bg-gradient-to-br from-cyan-500 to-blue-600",
+      hoverColor: "hover:border-cyan-400 hover:shadow-cyan-50",
+      iconBg: "bg-cyan-500",
       badgeColor: "bg-cyan-50 text-cyan-700 border-cyan-200",
     }] : []),
     // Client Balances
@@ -111,10 +111,10 @@ export const MetricsSummaryCards = () => {
       value: `$${metrics.client_balances.total_debt.toLocaleString()}`,
       icon: AlertCircle,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-red-50 to-rose-100/50",
+      bgGradient: "bg-white",
       borderColor: "border-rose-200",
-      hoverColor: "hover:border-rose-300 hover:shadow-rose-100/50",
-      iconBg: "bg-gradient-to-br from-rose-500 to-red-600",
+      hoverColor: "hover:border-rose-400 hover:shadow-rose-50",
+      iconBg: "bg-rose-500",
       badgeColor: "bg-rose-50 text-rose-700 border-rose-200",
       subtitle: `${metrics.client_balances.with_debt} clientes`,
     }] : []),
@@ -123,10 +123,10 @@ export const MetricsSummaryCards = () => {
       value: `$${metrics.client_balances.total_surplus.toLocaleString()}`,
       icon: Wallet,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-purple-50 to-violet-100/50",
+      bgGradient: "bg-white",
       borderColor: "border-violet-200",
-      hoverColor: "hover:border-violet-300 hover:shadow-violet-100/50",
-      iconBg: "bg-gradient-to-br from-violet-500 to-purple-600",
+      hoverColor: "hover:border-violet-400 hover:shadow-violet-50",
+      iconBg: "bg-violet-500",
       badgeColor: "bg-violet-50 text-violet-700 border-violet-200",
       subtitle: `${metrics.client_balances.with_surplus} clientes`,
     }] : []),
@@ -136,10 +136,10 @@ export const MetricsSummaryCards = () => {
       value: `${(metrics.deliveries.total_weight || 0).toFixed(1)} lbs`,
       icon: Truck,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-amber-50 to-yellow-100/50",
+      bgGradient: "bg-white",
       borderColor: "border-yellow-200",
-      hoverColor: "hover:border-yellow-300 hover:shadow-yellow-100/50",
-      iconBg: "bg-gradient-to-br from-yellow-500 to-amber-600",
+      hoverColor: "hover:border-yellow-400 hover:shadow-yellow-50",
+      iconBg: "bg-yellow-500",
       badgeColor: "bg-yellow-50 text-yellow-700 border-yellow-200",
     }] : []),
     ...(metrics.financial ? [{
@@ -147,10 +147,10 @@ export const MetricsSummaryCards = () => {
       value: `$${metrics.financial.unpaid_deliveries_amount.toLocaleString()}`,
       icon: CreditCard,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-orange-50 to-amber-100/50",
+      bgGradient: "bg-white",
       borderColor: "border-amber-200",
-      hoverColor: "hover:border-amber-300 hover:shadow-amber-100/50",
-      iconBg: "bg-gradient-to-br from-amber-500 to-orange-600",
+      hoverColor: "hover:border-amber-400 hover:shadow-amber-50",
+      iconBg: "bg-amber-500",
       badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
       subtitle: `${metrics.financial.unpaid_deliveries_count} entregas`,
     }] : []),
@@ -160,10 +160,10 @@ export const MetricsSummaryCards = () => {
       value: `$${(metrics.purchases.total_refunded || 0).toLocaleString()}`,
       icon: Receipt,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-pink-50 to-rose-100/50",
+      bgGradient: "bg-white",
       borderColor: "border-rose-200",
-      hoverColor: "hover:border-rose-300 hover:shadow-rose-100/50",
-      iconBg: "bg-gradient-to-br from-rose-500 to-pink-600",
+      hoverColor: "hover:border-rose-400 hover:shadow-rose-50",
+      iconBg: "bg-rose-500",
       badgeColor: "bg-rose-50 text-rose-700 border-rose-200",
     }] : []),
     // Agents Metrics
@@ -172,10 +172,10 @@ export const MetricsSummaryCards = () => {
       value: `$${metrics.agents.total_agent_profit.toLocaleString()}`,
       icon: UserCheck,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-indigo-50 to-blue-100/50",
+      bgGradient: "bg-white",
       borderColor: "border-blue-200",
-      hoverColor: "hover:border-blue-300 hover:shadow-blue-100/50",
-      iconBg: "bg-gradient-to-br from-blue-500 to-indigo-600",
+      hoverColor: "hover:border-blue-400 hover:shadow-blue-50",
+      iconBg: "bg-blue-500",
       badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
       subtitle: `${metrics.agents.total_agents} agentes`,
     }] : []),
@@ -185,10 +185,10 @@ export const MetricsSummaryCards = () => {
       value: `$${metrics.expenses.this_month.toLocaleString()}`,
       icon: TrendingDown,
       color: "text-gray-600",
-      bgGradient: "bg-gradient-to-br from-gray-50 to-slate-100/50",
+      bgGradient: "bg-white",
       borderColor: "border-slate-200",
-      hoverColor: "hover:border-slate-300 hover:shadow-slate-100/50",
-      iconBg: "bg-gradient-to-br from-slate-500 to-gray-600",
+      hoverColor: "hover:border-slate-400 hover:shadow-slate-50",
+      iconBg: "bg-slate-500",
       badgeColor: "bg-slate-50 text-slate-700 border-slate-200",
     }] : []),
   ];
@@ -203,45 +203,43 @@ export const MetricsSummaryCards = () => {
             <Card
               key={card.title}
               className={cn(
-                "py-0 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 group cursor-pointer",
+                "py-0 relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 border-2 group cursor-pointer",
                 card.bgGradient,
                 card.borderColor,
                 card.hoverColor,
               )}
             >
-              {/* Efecto de brillo en hover */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-              {/* Decorative corner accent */}
+              {/* Decorative corner accent - Minimalist */}
               <div
                 className={cn(
-                  "absolute top-0 right-0 w-24 h-24 opacity-10 transform translate-x-8 -translate-y-8 rounded-full blur-2xl transition-all duration-300 group-hover:scale-150",
+                  "absolute top-0 right-0 w-16 h-16 opacity-5 transform translate-x-4 -translate-y-4 rounded-full transition-all duration-300 group-hover:scale-125",
                   card.iconBg,
                 )}
               />
 
-              <CardContent className="py-0 md:p-4 relative z-10">
-                <div className="flex items-start justify-between mb-2">
+              <CardContent className="py-4 px-5 relative z-10">
+                <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1 truncate">
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1 truncate">
                       {card.title}
                     </p>
-                    <p className="text-xl md:text-2xl font-bold tracking-tight text-foreground truncate">
+                    <p className="text-2xl font-extrabold tracking-tight text-gray-900 truncate">
                       {card.value}
                     </p>
                     {card.subtitle && (
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-[10px] font-medium text-gray-500 mt-1 flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-gray-300" />
                         {card.subtitle}
                       </p>
                     )}
                   </div>
                   <div
                     className={cn(
-                      "p-2 md:p-2.5 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 flex-shrink-0",
+                      "p-2 rounded-lg shadow-sm transform group-hover:scale-105 transition-all duration-300 flex-shrink-0",
                       card.iconBg,
                     )}
                   >
-                    <Icon className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                    <Icon className="w-5 h-5 text-white" />
                   </div>
                 </div>
               </CardContent>
@@ -259,45 +257,43 @@ export const MetricsSummaryCards = () => {
               <Card
                 key={card.title}
                 className={cn(
-                  "py-0 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 group cursor-pointer",
+                  "py-0 relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 border-2 group cursor-pointer",
                   card.bgGradient,
                   card.borderColor,
                   card.hoverColor,
                 )}
               >
-                {/* Efecto de brillo en hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                {/* Decorative corner accent */}
+                {/* Decorative corner accent - Minimalist */}
                 <div
                   className={cn(
-                    "absolute top-0 right-0 w-24 h-24 opacity-10 transform translate-x-8 -translate-y-8 rounded-full blur-2xl transition-all duration-300 group-hover:scale-150",
+                    "absolute top-0 right-0 w-16 h-16 opacity-5 transform translate-x-4 -translate-y-4 rounded-full transition-all duration-300 group-hover:scale-125",
                     card.iconBg,
                   )}
                 />
 
-                <CardContent className="py-0 md:p-4 relative z-10">
-                  <div className="flex items-start justify-between mb-2">
+                <CardContent className="py-4 px-5 relative z-10">
+                  <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1 truncate">
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1 truncate">
                         {card.title}
                       </p>
-                      <p className="text-xl md:text-2xl font-bold tracking-tight text-foreground truncate">
+                      <p className="text-2xl font-extrabold tracking-tight text-gray-900 truncate">
                         {card.value}
                       </p>
                       {card.subtitle && (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-[10px] font-medium text-gray-500 mt-1 flex items-center gap-1">
+                          <span className="w-1 h-1 rounded-full bg-gray-300" />
                           {card.subtitle}
                         </p>
                       )}
                     </div>
                     <div
                       className={cn(
-                        "p-2 md:p-2.5 rounded-xl shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 flex-shrink-0",
+                        "p-2 rounded-lg shadow-sm transform group-hover:scale-105 transition-all duration-300 flex-shrink-0",
                         card.iconBg,
                       )}
                     >
-                      <Icon className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                      <Icon className="w-5 h-5 text-white" />
                     </div>
                   </div>
                 </CardContent>
