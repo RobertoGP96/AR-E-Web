@@ -275,6 +275,39 @@ export interface DashboardMetrics {
     this_month_count: number;
     average: number;
   };
+  product_metrics?: {
+    pending_purchase: number;
+    in_transit: number;
+    total_ordered: number;
+    total_delivered: number;
+    delivery_rate: number;
+    top_refunded_products: Array<{
+      name: string;
+      refund_count: number;
+      total_refund_amount: number;
+    }>;
+    total_refunded_amount: number;
+    refund_percentage: number;
+  };
+  alerts?: {
+    orders_pending_30_days: number;
+    deliveries_unpaid_60_days: {
+      count: number;
+      total_amount: number;
+    };
+    clients_with_high_debt: {
+      count: number;
+      total_debt: number;
+      clients: Array<{
+        id: number;
+        name: string;
+        debt: number;
+      }>;
+    };
+    products_low_stock: number;
+    total_alerts: number;
+  };
+  exchange_rate?: number;
 }
 
 export interface ChartData {

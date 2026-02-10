@@ -3,4 +3,7 @@ export { UserMetricsCards } from './UserMetricsCards';
 export { OrderMetricsCards } from './OrderMetricsCards';
 export { RevenueMetricsCards } from './RevenueMetricsCards';
 export { MetricsSummaryCards } from './MetricsSummaryCards';
+export { ProductMetrics } from './ProductMetrics';
+export { AlertsMetrics } from './AlertsMetrics';
+export { ExchangeRateCard } from './ExchangeRateCard';
 export { CompactMetricsSummary } from './CompactMetricsSummary';

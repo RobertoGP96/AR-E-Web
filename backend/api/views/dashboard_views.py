@@ -10,11 +10,12 @@ import platform
 from django.db import connection
 from django.utils import timezone
 from datetime import timedelta
-from api.models import Order, Product, DeliverReceip, Package, CustomUser, ShoppingReceip, ProductBuyed, Expense
+from api.models import Order, Product, DeliverReceip, Package, CustomUser, ShoppingReceip, ProductBuyed, Expense, CommonInformation
 from api.services.client_services import get_all_clients_balances_summary
 from api.services.delivery_service import analyze_deliveries, get_unpaid_deliveries
-from api.services.purchases_service import get_purchases_summary
+from api.services.purchases_service import get_purchases_summary, analyze_product_buys
 from api.services.profit_service import ProfitCalculationService
+from api.enums import ProductStatusEnum
 
 
 class DashboardMetricsView(APIView):
@@ -313,6 +314,110 @@ class DashboardMetricsView(APIView):
             ),
         }
 
+        # ===== PRODUCT METRICS (Métrica 4) =====
+        # Productos pendientes de compra (ENCARGADO)
+        products_pending_purchase = Product.objects.filter(status=ProductStatusEnum.ENCARGADO.value).count()
+        
+        # Productos en tránsito (COMPRADO y RECIBIDO pero no ENTREGADO)
+        products_in_transit = Product.objects.filter(
+            status__in=[ProductStatusEnum.COMPRADO.value, ProductStatusEnum.RECIBIDO.value]
+        ).count()
+        
+        # Tasa de productos entregados vs ordenados
+        total_ordered = Product.objects.count()
+        total_delivered = Product.objects.filter(status=ProductStatusEnum.ENTREGADO.value).count()
+        delivery_rate = round((total_delivered / total_ordered * 100) if total_ordered > 0 else 0.0, 2)
+        
+        # Productos más reembolsados
+        product_buys_analysis = analyze_product_buys()
+        top_refunded_products = product_buys_analysis.get('top_refunded_products', {})
+        # Convertir a lista ordenada por monto de reembolso
+        top_refunded_list = sorted(
+            [
+                {'name': name, 'refund_count': data['refund_count'], 'total_refund_amount': data['total_refund_amount']}
+                for name, data in top_refunded_products.items()
+            ],
+            key=lambda x: x['total_refund_amount'],
+            reverse=True
+        )[:10]  # Top 10
+        
+        product_metrics = {
+            'pending_purchase': products_pending_purchase,
+            'in_transit': products_in_transit,
+            'total_ordered': total_ordered,
+            'total_delivered': total_delivered,
+            'delivery_rate': delivery_rate,
+            'top_refunded_products': top_refunded_list,
+            'total_refunded_amount': round(product_buys_analysis.get('total_refund_amount', 0), 2),
+            'refund_percentage': round(product_buys_analysis.get('refund_percentage', 0), 2),
+        }
+
+        # ===== ALERTS METRICS (Métrica 5) =====
+        # Órdenes pendientes > 30 días
+        thirty_days_ago = now - timedelta(days=30)
+        orders_pending_30_days = Order.objects.filter(
+            status__in=['pending', 'processing'],
+            created_at__lt=thirty_days_ago
+        ).count()
+        
+        # Entregas sin pagar > 60 días
+        sixty_days_ago = now - timedelta(days=60)
+        deliveries_unpaid_60_days = DeliverReceip.objects.filter(
+            payment_status=False,
+            deliver_date__lt=sixty_days_ago
+        ).aggregate(
+            count=Count('id'),
+            total_amount=Sum('weight_cost')
+        )
+        
+        # Clientes con deuda > umbral (usando $100 como umbral)
+        debt_threshold = 100.0
+        clients_with_high_debt = [
+            c for c in clients_balances 
+            if c['status'] == 'DEUDA' and c['pending_to_pay'] > debt_threshold
+        ]
+        
+        # Productos con stock bajo (productos encargados pero no comprados por más de 7 días)
+        seven_days_ago = now - timedelta(days=7)
+        products_low_stock = Product.objects.filter(
+            status=ProductStatusEnum.ENCARGADO.value,
+            order__created_at__lt=seven_days_ago
+        ).count()
+        
+        alerts = {
+            'orders_pending_30_days': orders_pending_30_days,
+            'deliveries_unpaid_60_days': {
+                'count': deliveries_unpaid_60_days['count'] or 0,
+                'total_amount': round(float(deliveries_unpaid_60_days['total_amount'] or 0.0), 2),
+            },
+            'clients_with_high_debt': {
+                'count': len(clients_with_high_debt),
+                'total_debt': round(sum(c['pending_to_pay'] for c in clients_with_high_debt), 2),
+                'clients': [
+                    {
+                        'id': c['id'],
+                        'name': c['name'],
+                        'debt': c['pending_to_pay']
+                    }
+                    for c in sorted(clients_with_high_debt, key=lambda x: x['pending_to_pay'], reverse=True)[:10]
+                ]
+            },
+            'products_low_stock': products_low_stock,
+            'total_alerts': (
+                orders_pending_30_days + 
+                (deliveries_unpaid_60_days['count'] or 0) + 
+                len(clients_with_high_debt) + 
+                products_low_stock
+            ),
+        }
+
+        # ===== EXCHANGE RATE =====
+        try:
+            common_info = CommonInformation.get_instance()
+            exchange_rate = common_info.change_rate
+        except Exception:
+            exchange_rate = 0.0
+
         return Response({
             'success': True,
             'data': {
@@ -327,6 +432,9 @@ class DashboardMetricsView(APIView):
                 'financial': financial,
                 'agents': agents_summary,
                 'expenses': expenses,
+                'product_metrics': product_metrics,
+                'alerts': alerts,
+                'exchange_rate': exchange_rate,
             },
             'message': 'Métricas del dashboard obtenidas exitosamente'
         })
