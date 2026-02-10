@@ -55,16 +55,16 @@ class ProfitCalculationService:
             created_at__gte=start_date
         )
 
-        total_revenue = orders.aggregate(
+        total_revenue = Decimal(str(orders.aggregate(
             total=Sum('received_value_of_client')
-        )['total'] or Decimal('0.00')
+        )['total'] or '0.00'))
 
         total_orders = orders.count()
 
         # Calculate total cost using total_costs field
-        total_cost = orders.aggregate(
+        total_cost = Decimal(str(orders.aggregate(
             total=Sum('total_costs')
-        )['total'] or Decimal('0.00')
+        )['total'] or '0.00'))
 
         # Calculate profit
         total_profit = total_revenue - total_cost
@@ -99,16 +99,16 @@ class ProfitCalculationService:
         # Orders in period
         orders = Order.objects.filter(created_at__gte=start_date)
 
-        total_revenue = orders.aggregate(
+        total_revenue = Decimal(str(orders.aggregate(
             total=Sum('received_value_of_client')
-        )['total'] or Decimal('0.00')
+        )['total'] or '0.00'))
 
         total_orders = orders.count()
 
         # Calculate total cost using total_costs field
-        total_cost = orders.aggregate(
+        total_cost = Decimal(str(orders.aggregate(
             total=Sum('total_costs')
-        )['total'] or Decimal('0.00')
+        )['total'] or '0.00'))
 
         # Calculate profit
         total_profit = total_revenue - total_cost
@@ -173,11 +173,13 @@ class MetricsService:
 
         # Recent activity (last 30 days)
         recent_orders = Order.objects.filter(created_at__gte=thirty_days_ago)
+        recent_revenue_val = recent_orders.aggregate(
+            total=Sum('received_value_of_client')
+        )['total']
+        
         metrics.update({
             'recent_orders': recent_orders.count(),
-            'recent_revenue': recent_orders.aggregate(
-                total=Sum('received_value_of_client')
-            )['total'] or Decimal('0.00'),
+            'recent_revenue': Decimal(str(recent_revenue_val or '0.00')),
         })
 
         # User role distribution
