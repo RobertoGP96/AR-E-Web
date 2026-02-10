@@ -8,6 +8,8 @@ import { Button } from "../ui/button";
 import CreateDeliveryDialog from "./CreateDeliveryDialog";
 import { useDeliveries } from "@/hooks/delivery";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface DeliveryFiltersProps {
   searchTerm?: string;
@@ -27,22 +29,29 @@ export default function DeliveryFilters({
   onFiltersChange = () => {},
 }: DeliveryFiltersProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const { isFetching, refetch } = useDeliveries();
+  const { isFetching } = useDeliveries();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["deliveries"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+    toast.info("Actualizando entregas...");
+  };
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-4">
         <Button
           variant="outline"
           size="icon"
-          onClick={() => {
-            refetch();
-          }}
+          onClick={handleRefresh}
           disabled={isFetching}
           title="Actualizar lista"
           className="border-gray-200 hover:bg-gray-50 cursor-pointer"
         >
-          <RefreshCw className={isFetching ? "animate-spin" : "" + "h-4 w-4"} />
+          <RefreshCw
+            className={`${isFetching ? "animate-spin" : ""} h-4 w-4`}
+          />
         </Button>
         <div className="flex-1">
           <div className="relative">

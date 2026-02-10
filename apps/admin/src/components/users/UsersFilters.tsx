@@ -1,12 +1,16 @@
-import { Plus, RefreshCw, Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '../ui/button';
-import { UserForm } from './UserForm';
-import { UserFilters, type UserFilterState } from '@/components/filters/user-filters';
-import type { CreateUserData, UpdateUserData } from '../../types/models/user';
+import { Plus, RefreshCw, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "../ui/button";
+import { UserForm } from "./UserForm";
+import {
+  UserFilters,
+  type UserFilterState,
+} from "@/components/filters/user-filters";
+import type { CreateUserData, UpdateUserData } from "../../types/models/user";
 
-import { useUsers,  } from '@/hooks/user';
-import { useQueryClient } from '@tanstack/react-query';
+import { useUsers } from "@/hooks/user";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface UsersFiltersProps {
   searchTerm?: string;
@@ -27,16 +31,15 @@ export default function UsersFilters({
   isCreatingUser = false,
   resultCount,
 }: UsersFiltersProps) {
-  const { isLoading, refetch } = useUsers();
+  const { isLoading } = useUsers();
   const queryClient = useQueryClient();
   const handleRefresh = () => {
-    refetch();
-    queryClient.invalidateQueries({ queryKey: ['users'] });
-  }
+    queryClient.invalidateQueries({ queryKey: ["users"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+    toast.info("Actualizando usuarios...");
+  };
   return (
-
     <div className="flex flex-col sm:flex-row gap-4">
-
       <Button
         variant="outline"
         size="icon"
@@ -44,7 +47,7 @@ export default function UsersFilters({
         disabled={isLoading}
         title="Actualizar lista"
       >
-        <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
       </Button>
 
       <div className="flex-1">

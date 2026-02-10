@@ -6,6 +6,8 @@ import PurchaseFilters, {
 } from "@/components/filters/purchase-filters";
 import { useShoppingReceipts } from "@/hooks/shopping-receipts";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface PurshasesFiltersProps {
   searchValue?: string;
@@ -21,10 +23,17 @@ export default function PurshasesFilters({
   filters = { search: "", status_of_shopping: "all" },
   onFiltersChange = () => {},
 }: PurshasesFiltersProps & { onRefresh?: () => void }) {
-  const { isFetching, refetch } = useShoppingReceipts();
+  const { isFetching } = useShoppingReceipts();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const handleNewPurchase = () => {
     navigate("/purchases/new");
+  };
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["shopping-receipts"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+    toast.info("Actualizando compras...");
   };
 
   return (
@@ -33,14 +42,14 @@ export default function PurshasesFilters({
         <Button
           variant="outline"
           size="icon"
-          onClick={() => {
-            refetch();
-          }}
+          onClick={handleRefresh}
           disabled={isFetching}
           title="Actualizar lista"
           className="border-gray-200 hover:bg-gray-50 cursor-pointer"
         >
-          <RefreshCw className={isFetching ? "animate-spin" : "" + "h-4 w-4"} />
+          <RefreshCw
+            className={`${isFetching ? "animate-spin" : ""} h-4 w-4`}
+          />
         </Button>
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -52,7 +61,6 @@ export default function PurshasesFilters({
             onChange={(e) => onSearchChange?.(e.target.value)}
           />
         </div>
-        
       </div>
       <PurchaseFilters
         filters={filters}
@@ -60,7 +68,8 @@ export default function PurshasesFilters({
         resultCount={undefined}
       />
 
-      <Button className="flex items-center gap-2 border-0"
+      <Button
+        className="flex items-center gap-2 border-0"
         onClick={handleNewPurchase}
       >
         <Plus className="h-5 w-5" />

@@ -1,9 +1,13 @@
-import { Plus, RefreshCw, Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '../ui/button';
-import PackageFilters, { type PackageFilterState } from '@/components/filters/package-filters';
-import { usePackages } from '@/hooks/package';
-import { useNavigate } from 'react-router-dom';
+import { Plus, RefreshCw, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "../ui/button";
+import PackageFilters, {
+  type PackageFilterState,
+} from "@/components/filters/package-filters";
+import { usePackages } from "@/hooks/package";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface PackagesFiltersProps {
   searchTerm?: string;
@@ -19,12 +23,18 @@ interface PackagesFiltersProps {
 export default function PackagesFilters({
   searchTerm,
   onSearchChange,
-  filters = { search: '', status_of_processing: 'all' },
+  filters = { search: "", status_of_processing: "all" },
   onFiltersChange = () => {},
 }: PackagesFiltersProps) {
-  const { isFetching, refetch } = usePackages(); // Placeholder for actual hook
+  const { isFetching } = usePackages();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["packages"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+    toast.info("Actualizando paquetes...");
+  };
 
   return (
     <>
@@ -32,14 +42,14 @@ export default function PackagesFilters({
         <Button
           variant="outline"
           size="icon"
-          onClick={() => {
-            refetch();
-          }}
+          onClick={handleRefresh}
           disabled={isFetching}
           title="Actualizar lista"
           className="border-gray-200 hover:bg-gray-50 cursor-pointer"
         >
-          <RefreshCw className={isFetching ? "animate-spin" : "" + "h-4 w-4"} />
+          <RefreshCw
+            className={`${isFetching ? "animate-spin" : ""} h-4 w-4`}
+          />
         </Button>
         <div className="flex-1">
           <div className="relative">
@@ -53,7 +63,11 @@ export default function PackagesFilters({
             />
           </div>
         </div>
-        <PackageFilters filters={filters} onFiltersChange={(newFilters) => onFiltersChange(newFilters)} resultCount={undefined} />
+        <PackageFilters
+          filters={filters}
+          onFiltersChange={(newFilters) => onFiltersChange(newFilters)}
+          resultCount={undefined}
+        />
         <Button
           onClick={() => navigate("/packages/new")}
           className="flex items-center gap-2"
@@ -62,8 +76,6 @@ export default function PackagesFilters({
           Agregar Paquete
         </Button>
       </div>
-
-      
     </>
   );
 }

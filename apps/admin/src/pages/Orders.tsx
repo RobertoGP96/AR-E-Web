@@ -1,29 +1,41 @@
-import { useState, useMemo } from 'react';
-import { useOrders } from '../hooks/order/useOrders';
-import { OrdersHeader, OrdersFilters, OrdersTable, AddProductsDialog, EditOrderDialog } from '@/components/orders';
-import type { OrderFilterState } from '@/components/filters/order-filters';
-import type { CreateProductData, Order } from '@/types';
-import { toast } from 'sonner';
-import { useDeleteOrder } from '@/hooks/order/useDeleteOrder';
-import { useAddProductsToOrder } from '@/hooks/order/useAddProductsToOrder';
-import { CompactMetricsSummary } from '@/components/metrics';
+import { useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useOrders } from "../hooks/order/useOrders";
+import {
+  OrdersHeader,
+  OrdersFilters,
+  OrdersTable,
+  AddProductsDialog,
+  EditOrderDialog,
+} from "@/components/orders";
+import type { OrderFilterState } from "@/components/filters/order-filters";
+import type { CreateProductData, Order } from "@/types";
+import { toast } from "sonner";
+import { useDeleteOrder } from "@/hooks/order/useDeleteOrder";
+import { useAddProductsToOrder } from "@/hooks/order/useAddProductsToOrder";
+import { CompactMetricsSummary } from "@/components/metrics";
 
 const Orders = () => {
   const [filters, setFilters] = useState<OrderFilterState>({
-    search: '',
+    search: "",
     status: undefined, // Cambiar de 'all' a undefined para no enviar el parámetro
     pay_status: undefined, // Cambiar de 'all' a undefined para no enviar el parámetro
     sales_manager: undefined,
-    date_from: '',
-    date_to: ''
+    date_from: "",
+    date_to: "",
   });
 
   // Obtener órdenes de la API
-  const { orders, isLoading, error, refetch, isFetching } = useOrders(filters);
-  
+  const { orders, isLoading, error, isFetching } = useOrders(filters);
+
+  const queryClient = useQueryClient();
+
   // Función para manejar la actualización manual
   const handleRefresh = () => {
-    refetch();
+    // Invalidar todas las consultas relacionadas con órdenes y métricas
+    queryClient.invalidateQueries({ queryKey: ["orders"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+    toast.info("Actualizando datos...");
   };
 
   // Filtrar órdenes basado en la búsqueda
@@ -35,32 +47,38 @@ const Orders = () => {
     // Filtrar por término de búsqueda
     if (filters.search?.trim()) {
       const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(order => 
-        order.id.toString().includes(searchLower) ||
-        order.client?.full_name?.toLowerCase().includes(searchLower) ||
-        order.client?.email?.toLowerCase().includes(searchLower) ||
-        order.sales_manager?.full_name?.toLowerCase().includes(searchLower)
+      filtered = filtered.filter(
+        (order) =>
+          order.id.toString().includes(searchLower) ||
+          order.client?.full_name?.toLowerCase().includes(searchLower) ||
+          order.client?.email?.toLowerCase().includes(searchLower) ||
+          order.sales_manager?.full_name?.toLowerCase().includes(searchLower),
       );
     }
 
     // Filtrar por estado
-    if (filters.status && filters.status !== 'all') {
-      filtered = filtered.filter(order => order.status === filters.status);
+    if (filters.status && filters.status !== "all") {
+      filtered = filtered.filter((order) => order.status === filters.status);
     }
 
     // Filtrar por estado de pago
-    if (filters.pay_status && filters.pay_status !== 'all') {
-      filtered = filtered.filter(order => order.pay_status === filters.pay_status);
+    if (filters.pay_status && filters.pay_status !== "all") {
+      filtered = filtered.filter(
+        (order) => order.pay_status === filters.pay_status,
+      );
     }
 
     // Filtro por fecha de creación (igualar día)
     if (filters.date_from || filters.date_to) {
-      filtered = filtered.filter(order => {
+      filtered = filtered.filter((order) => {
         try {
           const created = new Date(order.created_at);
-          const createdDateStr = created.toISOString().split('T')[0];
+          const createdDateStr = created.toISOString().split("T")[0];
           if (filters.date_from && filters.date_to) {
-            return createdDateStr >= filters.date_from && createdDateStr <= filters.date_to;
+            return (
+              createdDateStr >= filters.date_from &&
+              createdDateStr <= filters.date_to
+            );
           }
           if (filters.date_from) return createdDateStr >= filters.date_from;
           if (filters.date_to) return createdDateStr <= filters.date_to;
@@ -76,7 +94,6 @@ const Orders = () => {
 
   // Manejar edición de orden
 
-
   // Hook para eliminar orden
   const deleteOrderMutation = useDeleteOrder();
 
@@ -86,8 +103,8 @@ const Orders = () => {
       await deleteOrderMutation.mutateAsync(order.id);
       toast.success(`Pedido #${order.id} eliminado`);
     } catch (err) {
-      console.error('Error eliminando orden:', err);
-      toast.error('Error al eliminar el pedido');
+      console.error("Error eliminando orden:", err);
+      toast.error("Error al eliminar el pedido");
     }
   };
 
@@ -110,13 +127,18 @@ const Orders = () => {
     setEditingOrder(order);
   };
 
-  const handleAddProductsConfirm = async (order: Order, products: CreateProductData[]) => {
+  const handleAddProductsConfirm = async (
+    order: Order,
+    products: CreateProductData[],
+  ) => {
     try {
       await addProductsMutation.mutateAsync({ orderId: order.id, products });
-      toast.success(`Se añadió ${products.length} producto(s) al pedido #${order.id}`);
+      toast.success(
+        `Se añadió ${products.length} producto(s) al pedido #${order.id}`,
+      );
     } catch (err) {
-      console.error('Error añadiendo productos:', err);
-      toast.error('Error al añadir productos');
+      console.error("Error añadiendo productos:", err);
+      toast.error("Error al añadir productos");
     } finally {
       setAddProductsOrder(null);
     }
@@ -124,30 +146,31 @@ const Orders = () => {
 
   // Mostrar error si existe
   if (error) {
-    toast.error('Error al cargar órdenes', {
-      description: error.message || 'No se pudieron cargar los órdenes'
+    toast.error("Error al cargar órdenes", {
+      description: error.message || "No se pudieron cargar los órdenes",
     });
   }
 
   return (
-    <div className='space-y-6'>
+    <div className="space-y-6">
       <OrdersHeader />
-      
+
       {/* Métricas compactas de órdenes */}
       <CompactMetricsSummary type="orders" />
 
-
       <OrdersFilters
-        searchTerm={filters.search ?? ''}
+        searchTerm={filters.search ?? ""}
         filters={filters}
-        onSearchChange={(value) => setFilters(prev => ({ ...prev, search: value }))}
+        onSearchChange={(value) =>
+          setFilters((prev) => ({ ...prev, search: value }))
+        }
         onFiltersChange={(newFilters) => setFilters(newFilters)}
         onRefresh={handleRefresh}
         isRefreshing={isFetching}
         resultCount={filteredOrders.length}
       />
 
-      <OrdersTable 
+      <OrdersTable
         orders={filteredOrders}
         isLoading={isLoading}
         onEdit={handleEdit}
