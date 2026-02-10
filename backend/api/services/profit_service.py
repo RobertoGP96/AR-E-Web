@@ -26,17 +26,12 @@ class ProfitCalculationService:
         Returns:
             Profit amount as Decimal
         """
-        if not order.total_amount:
-            return Decimal('0.00')
-
-        # Calculate total cost of products in order
-        total_cost = Decimal('0.00')
-        for product in order.products.all():
-            if product.cost_price:
-                total_cost += product.cost_price
+        # Use received_value_of_client as revenue and total_costs as cost
+        revenue = Decimal(str(order.received_value_of_client or 0.0))
+        total_cost = Decimal(str(order.total_costs or 0.0))
 
         # Calculate profit (revenue - cost)
-        profit = order.total_amount - total_cost
+        profit = revenue - total_cost
 
         return profit.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
@@ -56,22 +51,20 @@ class ProfitCalculationService:
 
         # Get agent's orders in period
         orders = Order.objects.filter(
-            agent=agent,
+            sales_manager=agent,
             created_at__gte=start_date
         )
 
         total_revenue = orders.aggregate(
-            total=Sum('total_amount')
+            total=Sum('received_value_of_client')
         )['total'] or Decimal('0.00')
 
         total_orders = orders.count()
 
-        # Calculate total cost
-        total_cost = Decimal('0.00')
-        for order in orders:
-            for product in order.products.all():
-                if product.cost_price:
-                    total_cost += product.cost_price
+        # Calculate total cost using total_costs field
+        total_cost = orders.aggregate(
+            total=Sum('total_costs')
+        )['total'] or Decimal('0.00')
 
         # Calculate profit
         total_profit = total_revenue - total_cost
@@ -107,17 +100,15 @@ class ProfitCalculationService:
         orders = Order.objects.filter(created_at__gte=start_date)
 
         total_revenue = orders.aggregate(
-            total=Sum('total_amount')
+            total=Sum('received_value_of_client')
         )['total'] or Decimal('0.00')
 
         total_orders = orders.count()
 
-        # Calculate total cost
-        total_cost = Decimal('0.00')
-        for order in orders:
-            for product in order.products.all():
-                if product.cost_price:
-                    total_cost += product.cost_price
+        # Calculate total cost using total_costs field
+        total_cost = orders.aggregate(
+            total=Sum('total_costs')
+        )['total'] or Decimal('0.00')
 
         # Calculate profit
         total_profit = total_revenue - total_cost
@@ -185,7 +176,7 @@ class MetricsService:
         metrics.update({
             'recent_orders': recent_orders.count(),
             'recent_revenue': recent_orders.aggregate(
-                total=Sum('total_amount')
+                total=Sum('received_value_of_client')
             )['total'] or Decimal('0.00'),
         })
 
