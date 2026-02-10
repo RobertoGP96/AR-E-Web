@@ -130,15 +130,6 @@ class DashboardMetricsView(APIView):
             'last_month': orders_data['last_month_revenue'] or 0,
         }
 
-        # Revenue
-        revenue = {
-            'total': Order.objects.aggregate(Sum('received_value_of_client'))['received_value_of_client__sum'] or 0,
-            'today': Order.objects.filter(created_at__gte=today_start).aggregate(Sum('received_value_of_client'))['received_value_of_client__sum'] or 0,
-            'this_week': Order.objects.filter(created_at__gte=week_start).aggregate(Sum('received_value_of_client'))['received_value_of_client__sum'] or 0,
-            'this_month': Order.objects.filter(created_at__gte=month_start).aggregate(Sum('received_value_of_client'))['received_value_of_client__sum'] or 0,
-            'last_month': Order.objects.filter(created_at__gte=last_month_start, created_at__lte=last_month_end).aggregate(Sum('received_value_of_client'))['received_value_of_client__sum'] or 0,
-        }
-
         # Purchases Metrics - Optimized aggregation
         purchases_data = ShoppingReceip.objects.aggregate(
             total=Count('id'),
@@ -163,13 +154,20 @@ class DashboardMetricsView(APIView):
             'products_count': Product.objects.filter(status__in=['Comprado', 'Recibido', 'Entregado']).count(),
         }
 
-        # Packages
+        # Packages Metrics - Optimized aggregation
+        packages_data = Package.objects.aggregate(
+            total=Count('id'),
+            sent=Count('id', filter=Q(status_of_processing='Enviado')),
+            in_transit=Count('id', filter=Q(status_of_processing='Recibido')),
+            delivered=Count('id', filter=Q(status_of_processing='Procesado'))
+        )
+        
         packages = {
-            'total': Package.objects.count(),
-            'sent': Package.objects.filter(status_of_processing='Enviado').count(),
-            'in_transit': Package.objects.filter(status_of_processing='Recibido').count(),
-            'delivered': Package.objects.filter(status_of_processing='Procesado').count(),
-            'delayed': 0,  # No hay estado 'delayed' en el modelo
+            'total': packages_data['total'],
+            'sent': packages_data['sent'],
+            'in_transit': packages_data['in_transit'],
+            'delivered': packages_data['delivered'],
+            'delayed': 0,
         }
 
         # Deliveries Metrics - Single Query aggregation
@@ -185,8 +183,8 @@ class DashboardMetricsView(APIView):
             unpaid=Count('id', filter=Q(payment_status=False)),
             total_weight=Sum('weight'),
             today_weight=Sum('weight', filter=Q(created_at__gte=today_start)),
-            week_weight=Sum('weight', filter=Q(created_at__gte=week_start)),
-            month_weight=Sum('weight', filter=Q(created_at__gte=month_start)),
+            this_week_weight=Sum('weight', filter=Q(created_at__gte=week_start)),
+            this_month_weight=Sum('weight', filter=Q(created_at__gte=month_start)),
         )
         
         deliveries = {
@@ -413,34 +411,46 @@ class SystemInfoView(APIView):
                 'errors': [{'message': 'Solo administradores pueden ver información del sistema'}]
             }, status=status.HTTP_403_FORBIDDEN)
 
-        # Información del sistema
-        system_info = {
-            'total_users': CustomUser.objects.count(),
-            'active_users': CustomUser.objects.filter(is_active=True).count(),
-            'inactive_users': CustomUser.objects.filter(is_active=False).count(),
-            'admin_users': CustomUser.objects.filter(role='admin').count(),
-            'agent_users': CustomUser.objects.filter(role='agent').count(),
-            'buyer_users': CustomUser.objects.filter(role='buyer').count(),
-            'logistical_users': CustomUser.objects.filter(role='logistical').count(),
-            'client_users': CustomUser.objects.filter(role='client').count(),
-            'total_orders': Order.objects.count(),
-            'pending_orders': Order.objects.filter(status='pending').count(),
-            'processing_orders': Order.objects.filter(status='processing').count(),
-            'completed_orders': Order.objects.filter(status='completed').count(),
-            'cancelled_orders': Order.objects.filter(status='cancelled').count(),
-            'total_products': Product.objects.count(),
-            'total_deliveries': DeliverReceip.objects.count(),
-            'pending_deliveries': DeliverReceip.objects.filter(status='pending').count(),
-            'in_transit_deliveries': DeliverReceip.objects.filter(status='in_transit').count(),
-            'delivered_deliveries': DeliverReceip.objects.filter(status='delivered').count(),
-        }
+        from django.db.models import Count, Sum, Avg, Q
+        from django.conf import settings
+        from django.db import connection
+        import platform
 
-        # Estadísticas financieras
-        financial_stats = Order.objects.aggregate(
+        # Información del sistema optimizada
+        system_stats = CustomUser.objects.aggregate(
+            total_users=Count('id'),
+            active_users=Count('id', filter=Q(is_active=True)),
+            inactive_users=Count('id', filter=Q(is_active=False)),
+            admin_users=Count('id', filter=Q(role='admin')),
+            agent_users=Count('id', filter=Q(role='agent')),
+            buyer_users=Count('id', filter=Q(role='buyer')),
+            logistical_users=Count('id', filter=Q(role='logistical')),
+            client_users=Count('id', filter=Q(role='client'))
+        )
+
+        order_stats = Order.objects.aggregate(
+            total_orders=Count('id'),
+            pending_orders=Count('id', filter=Q(status='pending')),
+            processing_orders=Count('id', filter=Q(status='processing')),
+            completed_orders=Count('id', filter=Q(status='completed')),
+            cancelled_orders=Count('id', filter=Q(status='cancelled')),
             total_revenue=Sum('received_value_of_client'),
             avg_order_value=Avg('received_value_of_client')
         )
-        system_info.update(financial_stats)
+
+        delivery_stats = DeliverReceip.objects.aggregate(
+            total_deliveries=Count('id'),
+            pending_deliveries=Count('id', filter=Q(status='pending')),
+            in_transit_deliveries=Count('id', filter=Q(status='in_transit')),
+            delivered_deliveries=Count('id', filter=Q(status='delivered'))
+        )
+
+        system_info = {
+            **system_stats,
+            **order_stats,
+            'total_products': Product.objects.count(),
+            **delivery_stats
+        }
 
         # Add application metadata (from Django settings) if available
         application_meta = {
