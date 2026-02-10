@@ -206,6 +206,14 @@ export interface DashboardMetrics {
     today: number;
     this_week: number;
     this_month: number;
+    total_refunded?: number;
+    net_spent?: number;
+    refund_rate?: number;
+    total_spent?: number;
+    today_spent?: number;
+    this_week_spent?: number;
+    this_month_spent?: number;
+    products_count?: number;
   };
   packages: {
     total: number;
@@ -226,6 +234,46 @@ export interface DashboardMetrics {
     today_weight?: number;
     this_week_weight?: number;
     this_month_weight?: number;
+  };
+  client_balances?: {
+    total_clients: number;
+    with_debt: number;
+    with_surplus: number;
+    on_time: number;
+    total_debt: number;
+    total_surplus: number;
+    collection_rate: number;
+  };
+  financial?: {
+    total_revenue: number;
+    total_cost: number;
+    total_profit: number;
+    profit_margin: number;
+    delivery_revenue: number;
+    delivery_expenses: number;
+    delivery_profit: number;
+    unpaid_deliveries_amount: number;
+    unpaid_deliveries_count: number;
+    payment_collection_rate: number;
+  };
+  agents?: {
+    total_agents: number;
+    total_agent_profit: number;
+    total_agent_clients: number;
+    top_agents: Array<{
+      agent_id: number;
+      agent_name: string;
+      total_profit: number;
+      clients_count: number;
+      orders_count: number;
+    }>;
+  };
+  expenses?: {
+    total: number;
+    count: number;
+    this_month: number;
+    this_month_count: number;
+    average: number;
   };
 }
 

@@ -31,7 +31,7 @@ export default function UsersFilters({
   isCreatingUser = false,
   resultCount,
 }: UsersFiltersProps) {
-  const { isLoading } = useUsers();
+  const { isFetching } = useUsers();
   const queryClient = useQueryClient();
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["users"] });
@@ -44,10 +44,10 @@ export default function UsersFilters({
         variant="outline"
         size="icon"
         onClick={() => handleRefresh()}
-        disabled={isLoading}
+        disabled={isFetching}
         title="Actualizar lista"
       >
-        <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+        <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
       </Button>
 
       <div className="flex-1">
