@@ -9,7 +9,7 @@ import platform
 from django.db import connection
 from django.utils import timezone
 from datetime import timedelta
-from api.models import Order, Product, DeliverReceip, Package, CustomUser
+from api.models import Order, Product, DeliverReceip, Package, CustomUser, ShoppingReceip, ProductBuyed
 
 
 class DashboardMetricsView(APIView):
@@ -84,12 +84,18 @@ class DashboardMetricsView(APIView):
             'last_month': Order.objects.filter(created_at__gte=last_month_start, created_at__lte=last_month_end).aggregate(Sum('received_value_of_client'))['received_value_of_client__sum'] or 0,
         }
 
-        # Purchases (productos comprados)
+        # Purchases (basado en recibos de compra reales)
+        purchases_qs = ShoppingReceip.objects.all()
         purchases = {
-            'total': Product.objects.filter(status='Comprado').count(),
-            'today': Product.objects.filter(created_at__gte=today_start, status='Comprado').count(),
-            'this_week': Product.objects.filter(created_at__gte=week_start, status='Comprado').count(),
-            'this_month': Product.objects.filter(created_at__gte=month_start, status='Comprado').count(),
+            'total': purchases_qs.count(),
+            'total_spent': purchases_qs.aggregate(Sum('total_cost_of_purchase'))['total_cost_of_purchase__sum'] or 0,
+            'today': purchases_qs.filter(buy_date__gte=today_start).count(),
+            'today_spent': purchases_qs.filter(buy_date__gte=today_start).aggregate(Sum('total_cost_of_purchase'))['total_cost_of_purchase__sum'] or 0,
+            'this_week': purchases_qs.filter(buy_date__gte=week_start).count(),
+            'this_week_spent': purchases_qs.filter(buy_date__gte=week_start).aggregate(Sum('total_cost_of_purchase'))['total_cost_of_purchase__sum'] or 0,
+            'this_month': purchases_qs.filter(buy_date__gte=month_start).count(),
+            'this_month_spent': purchases_qs.filter(buy_date__gte=month_start).aggregate(Sum('total_cost_of_purchase'))['total_cost_of_purchase__sum'] or 0,
+            'products_count': Product.objects.filter(status='Comprado' | 'Recibido' | 'Entregado').count(),
         }
 
         # Packages
