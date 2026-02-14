@@ -227,14 +227,10 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
     paymentDate: Date | undefined
   ) => {
     try {
-      // Obtener el delivery actual para sumar el monto existente
-      const currentDelivery = deliveries.find(d => d.id === deliveryId);
-      const currentAmount = currentDelivery?.payment_amount || 0;
-      const totalAmount = currentAmount + amountReceived;
-      
+      // Reemplazar directamente el monto de pago
       await markDeliveryAsPaidMutation.mutateAsync({
         deliveryId,
-        amountReceived: totalAmount,
+        amountReceived,
         paymentDate,
       });
       toast.success(`Pago confirmado para la entrega #${deliveryId}`);
