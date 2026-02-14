@@ -1,5 +1,6 @@
 import DeliveryStatusBadge from "./DeliveryStatusBadge";
 import EditDeliveryDialog from "./EditDeliveryDialog";
+import { ConfirmPaymentDialog } from "./ConfirmPaymentDialog";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -51,6 +52,7 @@ import {
   useUpdateDelivery,
   useUpdateDeliveryStatus,
 } from "@/hooks/delivery/useUpdateDelivery";
+import { useMarkDeliveryAsPaid } from "@/hooks/delivery/useMarkDeliveryAsPaid";
 import { toast } from "sonner";
 import { QuickImageUpload } from "@/components/images/QuickImageUpload";
 import {
@@ -110,10 +112,17 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
     null,
   );
 
+  // States for payment confirmation dialog
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentDelivery, setPaymentDelivery] = useState<DeliverReceip | null>(
+    null,
+  );
+
   const deleteDeliveryMutation = useDeleteDelivery();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const updateStatusMutation = useUpdateDeliveryStatus();
+  const markDeliveryAsPaidMutation = useMarkDeliveryAsPaid();
 
   // Estado de paginación
   const [currentPage, setCurrentPage] = useState(1);
@@ -209,39 +218,32 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
     }
   };
 
-  const handlePaymentStatusToggle = async (delivery: DeliverReceip) => {
-    if (!delivery || !delivery.id) {
-      toast.error("Delivery inválido");
-      return;
-    }
-
-    try {
-      // Ciclo entre estados: No pagado -> Pagado -> Parcial -> No pagado
-      const currentStatus = delivery.payment_status || "No pagado";
-      let newStatus: "No pagado" | "Pagado" | "Parcial";
-      
-      if (currentStatus === "No pagado") {
-        newStatus = "Pagado";
-      } else if (currentStatus === "Pagado") {
-        newStatus = "Parcial";
-      } else {
-        newStatus = "No pagado";
-      }
-      
-      await updateDeliveryMutation.mutateAsync({
-        id: delivery.id,
-        data: { id: delivery.id, payment_status: newStatus },
-      });
-      toast.success(
-        `Pago del delivery #${delivery.id} marcado como ${newStatus}`,
-      );
-    } catch (err) {
-      console.error("Error al cambiar estado de pago del delivery:", err);
-      toast.error("Error al cambiar el estado de pago del delivery");
-    }
-  };
 
   const updateDeliveryMutation = useUpdateDelivery();
+
+  const handlePaymentConfirm = async (
+    deliveryId: number,
+    amountReceived: number,
+    paymentDate: Date | undefined
+  ) => {
+    try {
+      // Obtener el delivery actual para sumar el monto existente
+      const currentDelivery = deliveries.find(d => d.id === deliveryId);
+      const currentAmount = currentDelivery?.payment_amount || 0;
+      const totalAmount = currentAmount + amountReceived;
+      
+      await markDeliveryAsPaidMutation.mutateAsync({
+        deliveryId,
+        amountReceived: totalAmount,
+        paymentDate,
+      });
+      toast.success(`Pago confirmado para la entrega #${deliveryId}`);
+    } catch (err) {
+      console.error("Error al confirmar el pago:", err);
+      toast.error("Error al confirmar el pago");
+      throw err;
+    }
+  };
 
   // Helper para validar si la imagen es válida (no vacía)
   const isValidImage = (image: unknown): boolean => {
@@ -379,7 +381,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="flex flex-col gap-1">
+                        <div className="flex">
                           <PayStatusBadge status={(delivery.payment_status || "No pagado") as PayStatus} />
                           {delivery.payment_status === "Pagado" && delivery.payment_amount > 0 && (
                             <span className="text-xs text-green-600 font-medium">
@@ -582,14 +584,15 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
-                            handlePaymentStatusToggle(delivery);
+                            setPaymentDelivery(delivery);
+                            setShowPaymentDialog(true);
                           }}
-                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                          disabled={delivery.payment_status === "Pagado"}
+                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
                         >
                           <CreditCard className="h-4 w-4" />
-                          Cambiar Estado de Pago
-                          </DropdownMenuItem>
-
+                          Confirmar Pago
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
 
                         <DropdownMenuItem
@@ -742,6 +745,17 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Diálogo de confirmación de pago */}
+      <ConfirmPaymentDialog
+        delivery={paymentDelivery}
+        open={showPaymentDialog}
+        onClose={() => {
+          setShowPaymentDialog(false);
+          setPaymentDelivery(null);
+        }}
+        onConfirm={handlePaymentConfirm}
+      />
     </>
   );
 };

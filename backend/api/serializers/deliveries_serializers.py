@@ -128,6 +128,14 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
                 if existing_id not in incoming_product_delivery_ids:
                     ProductDelivery.objects.filter(id=existing_id, deliver_receip=instance).delete()
 
+        # Manejar payment_amount de forma acumulativa (similar a órdenes)
+        if 'payment_amount' in validated_data:
+            amount_to_add = validated_data.pop('payment_amount')
+            try:
+                instance.add_payment_amount(amount_to_add)
+            except Exception as e:
+                print(f"[DeliverReceipSerializer] Error al añadir payment amount: {e}")
+
         # Actualizar campos directos del DeliverReceip
         instance.client = validated_data.get('client', instance.client)
         instance.category = validated_data.get('category', instance.category)
@@ -135,7 +143,6 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
         instance.status = validated_data.get('status', instance.status)
         instance.payment_status = validated_data.get('payment_status', instance.payment_status)
         instance.payment_date = validated_data.get('payment_date', instance.payment_date)
-        instance.payment_amount = validated_data.get('payment_amount', instance.payment_amount)
         instance.deliver_date = validated_data.get('deliver_date', instance.deliver_date)
         instance.deliver_picture = validated_data.get('deliver_picture', instance.deliver_picture)
         instance.weight_cost = validated_data.get('weight_cost', instance.weight_cost)

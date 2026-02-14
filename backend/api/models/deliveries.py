@@ -75,6 +75,53 @@ class DeliverReceip(models.Model):
         """
         return float(self.weight_cost - self.manager_profit - self.delivery_expenses)
 
+    def add_payment_amount(self, amount: float, payment_date=None) -> None:
+        """
+        Añade una cantidad a `payment_amount` y actualiza `payment_status` en base
+        al costo total de la entrega (weight_cost). Guarda la instancia con los campos necesarios.
+        
+        Args:
+            amount: Cantidad a añadir al pago
+            payment_date: Fecha del pago (opcional). Si no se proporciona, se usa la fecha actual.
+        """
+        if amount is None:
+            return
+
+        try:
+            amount_float = float(amount)
+        except (TypeError, ValueError):
+            return
+
+        if amount_float <= 0:
+            return
+
+        self.payment_amount = round(self.payment_amount + amount_float, 2)
+
+        # Calcular el costo total de la entrega
+        total_cost = self.weight_cost
+
+        # Redondear ambos valores para evitar problemas de precisión en punto flotante
+        payment_rounded = round(self.payment_amount, 2)
+        total_rounded = round(total_cost, 2)
+
+        # Actualizar el payment_status
+        if payment_rounded >= total_rounded and total_rounded > 0:
+            self.payment_status = 'Pagado'
+        elif payment_rounded > 0:
+            self.payment_status = 'Parcial'
+        else:
+            self.payment_status = 'No pagado'
+        
+        # Actualizar la fecha de pago si se proporciona
+        if payment_date:
+            self.payment_date = payment_date
+        elif not self.payment_date:
+            # Si no hay fecha previa y no se proporciona, usar la fecha actual
+            self.payment_date = timezone.now()
+
+        # Guardar cambios mínimamente
+        self.save(update_fields=['payment_amount', 'payment_status', 'payment_date', 'updated_at'])
+
     def delete(self, *args, **kwargs):
         """
         Elimina el DeliverReceip. La lógica de descuento de cantidades entregadas
