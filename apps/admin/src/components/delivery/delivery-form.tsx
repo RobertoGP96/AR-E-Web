@@ -72,7 +72,9 @@ const createDeliverySchema = z.object({
   weight_cost: z.number().optional(),
   manager_profit: z.number().optional(),
   deliver_picture: z.string().optional(),
-  payment_status: z.boolean().optional(),
+  payment_status: z.enum(["No pagado", "Pagado", "Parcial"]).optional(),
+  payment_date: z.string().optional(),
+  payment_amount: z.number().optional(),
 });
 
 type CreateDeliveryFormData = z.infer<typeof createDeliverySchema>;
@@ -129,7 +131,11 @@ export function DeliveryForm({
       weight: delivery?.weight || 0,
       weight_cost: delivery?.weight_cost || 0,
       manager_profit: delivery?.manager_profit || 0,
-      payment_status: delivery?.payment_status || false,
+      payment_status: delivery?.payment_status || "No pagado",
+      payment_date: delivery?.payment_date
+        ? new Date(delivery.payment_date).toISOString().split("T")[0]
+        : undefined,
+      payment_amount: delivery?.payment_amount || 0,
     },
   });
 
@@ -249,6 +255,8 @@ export function DeliveryForm({
           weight_cost: data.weight_cost,
           manager_profit: data.manager_profit,
           payment_status: data.payment_status,
+          payment_date: data.payment_date,
+          payment_amount: data.payment_amount,
         };
 
         await updateDeliveryMutation.mutateAsync({
@@ -326,6 +334,8 @@ export function DeliveryForm({
           weight_cost: data.weight_cost,
           manager_profit: data.manager_profit,
           payment_status: data.payment_status,
+          payment_date: data.payment_date,
+          payment_amount: data.payment_amount,
         };
 
         const newDelivery =
@@ -681,8 +691,8 @@ export function DeliveryForm({
                         Estado de Pago
                       </FormLabel>
                       <Select
-                        onValueChange={(val) => field.onChange(val === "true")}
-                        value={field.value ? "true" : "false"}
+                        onValueChange={field.onChange}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger className="h-11 rounded-xl border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all shadow-none">
@@ -690,10 +700,65 @@ export function DeliveryForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                          <SelectItem value="false">No Pagado</SelectItem>
-                          <SelectItem value="true">Pagado</SelectItem>
+                          <SelectItem value="No pagado">No Pagado</SelectItem>
+                          <SelectItem value="Pagado">Pagado</SelectItem>
+                          <SelectItem value="Parcial">Parcial</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="payment_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-slate-500">
+                        Fecha de Pago
+                      </FormLabel>
+                      <FormControl>
+                        <DatePicker
+                          placeholder="Fijar fecha de pago"
+                          selected={
+                            field.value ? new Date(field.value) : undefined
+                          }
+                          onDateChange={(date) =>
+                            field.onChange(
+                              date
+                                ? date.toISOString().split("T")[0]
+                                : undefined,
+                            )
+                          }
+                          className="h-11 w-full rounded-xl border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all shadow-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="payment_amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-slate-500">
+                        Monto Pagado ($)
+                      </FormLabel>
+                      <FormControl>
+                        <InputGroupInput
+                          className="h-11 rounded-xl border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all shadow-none"
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          onChange={(e) =>
+                            field.onChange(parseFloat(e.target.value))
+                          }
+                          value={field.value}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

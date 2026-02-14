@@ -2,7 +2,7 @@
 
 from django.utils import timezone
 from django.db import models
-from api.enums import DeliveryStatusEnum, PackageStatusEnum
+from api.enums import DeliveryStatusEnum, PackageStatusEnum, PaymentStatusEnum
 
 
 class DeliverReceip(models.Model):
@@ -27,9 +27,20 @@ class DeliverReceip(models.Model):
         choices=[(tag.value, tag.value) for tag in DeliveryStatusEnum],
         default=DeliveryStatusEnum.PENDIENTE.value
     )
-    payment_status = models.BooleanField(
-        default=False,
-        help_text='True si la entrega está pagada, False si no'
+    payment_status = models.CharField(
+        max_length=100,
+        choices=[(tag.value, tag.value) for tag in PaymentStatusEnum],
+        default=PaymentStatusEnum.NO_PAGADO.value,
+        help_text='Estado de pago de la entrega'
+    )
+    payment_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Fecha en que se realizó el pago'
+    )
+    payment_amount = models.FloatField(
+        default=0,
+        help_text='Monto recibido del pago'
     )
     deliver_date = models.DateTimeField(default=timezone.now)
     deliver_picture = models.TextField(blank=True, null=True, help_text='image URLs')

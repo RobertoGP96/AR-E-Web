@@ -2,7 +2,7 @@
  * Tipos para el modelo DeliverReceip
  */
 
-import type { ID, DateTime, DeliveryStatus } from './base';
+import type { ID, DateTime, DeliveryStatus, PayStatus } from './base';
 import type { CustomUser } from './user';
 import type { ProductDelivery } from './product-delivery';
 import type { Category } from './category';
@@ -21,7 +21,11 @@ export interface DeliverReceip {
   // Costos (del backend)
   weight_cost: number;
   manager_profit: number;
-  payment_status: boolean; // Estado de pago (pagado o no)
+  
+  // Campos de pago
+  payment_status: PayStatus; // Estado de pago: "No pagado", "Pagado", "Parcial"
+  payment_date?: DateTime; // Fecha en que se realizó el pago
+  payment_amount: number; // Monto recibido del pago
   
   // Propiedades computadas
 
@@ -46,7 +50,9 @@ export interface CreateDeliverReceipData {
   weight_cost?: number;
   manager_profit?: number;
   deliver_picture?: string; // URLs de las imágenes de evidencia (opcional)
-  payment_status?: boolean; // Estado de pago
+  payment_status?: PayStatus; // Estado de pago: "No pagado", "Pagado", "Parcial"
+  payment_date?: DateTime; // Fecha en que se realizó el pago
+  payment_amount?: number; // Monto recibido del pago
 }
 
 export interface UpdateDeliverReceipData extends Partial<CreateDeliverReceipData> {

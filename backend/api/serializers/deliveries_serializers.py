@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import DeliverReceip, Package, CustomUser, Category, ProductReceived
+from api.models import DeliverReceip, Package, CustomUser, Category, ProductReceived, ProductDelivery
 import json
 from .users_serializers import UserSerializer
 from .products_serializers import CategorySerializer, ProductReceivedSerializer
@@ -74,6 +74,8 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
             "weight",
             "status",
             "payment_status",
+            "payment_date",
+            "payment_amount",
             "weight_cost",
             "manager_profit",
             # Nuevos campos calculados
@@ -132,6 +134,8 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
         instance.weight = validated_data.get('weight', instance.weight)
         instance.status = validated_data.get('status', instance.status)
         instance.payment_status = validated_data.get('payment_status', instance.payment_status)
+        instance.payment_date = validated_data.get('payment_date', instance.payment_date)
+        instance.payment_amount = validated_data.get('payment_amount', instance.payment_amount)
         instance.deliver_date = validated_data.get('deliver_date', instance.deliver_date)
         instance.deliver_picture = validated_data.get('deliver_picture', instance.deliver_picture)
         instance.weight_cost = validated_data.get('weight_cost', instance.weight_cost)

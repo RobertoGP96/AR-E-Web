@@ -1,7 +1,6 @@
 import DeliveryStatusBadge from "./DeliveryStatusBadge";
 import EditDeliveryDialog from "./EditDeliveryDialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -10,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import type { DeliverReceip, DeliveryStatus } from "@/types";
+import type { DeliverReceip, DeliveryStatus, PayStatus } from "@/types";
 import {
   Camera,
   Clock,
@@ -65,7 +64,15 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "../ui/hover-card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import AvatarUser from "../utils/AvatarUser";
+import PayStatusBadge from "../utils/PayStatusBadge";
+import { formatCurrency } from "@/types";
 import { TablePagination } from "../utils/TablePagination";
 import LoadingSpinner from "../utils/LoadingSpinner";
 import {
@@ -209,12 +216,24 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
     }
 
     try {
+      // Ciclo entre estados: No pagado -> Pagado -> Parcial -> No pagado
+      const currentStatus = delivery.payment_status || "No pagado";
+      let newStatus: "No pagado" | "Pagado" | "Parcial";
+      
+      if (currentStatus === "No pagado") {
+        newStatus = "Pagado";
+      } else if (currentStatus === "Pagado") {
+        newStatus = "Parcial";
+      } else {
+        newStatus = "No pagado";
+      }
+      
       await updateDeliveryMutation.mutateAsync({
         id: delivery.id,
-        data: { id: delivery.id, payment_status: !delivery.payment_status },
+        data: { id: delivery.id, payment_status: newStatus },
       });
       toast.success(
-        `Pago del delivery #${delivery.id} marcado como ${!delivery.payment_status ? "pagado" : "no pagado"}`,
+        `Pago del delivery #${delivery.id} marcado como ${newStatus}`,
       );
     } catch (err) {
       console.error("Error al cambiar estado de pago del delivery:", err);
@@ -357,16 +376,40 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                   />
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    variant={delivery.payment_status ? "default" : "secondary"}
-                    className={
-                      delivery.payment_status
-                        ? "bg-green-100 text-green-800 hover:bg-green-200"
-                        : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                    }
-                  >
-                    {delivery.payment_status ? "Pagado" : "No Pagado"}
-                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex flex-col gap-1">
+                          <PayStatusBadge status={(delivery.payment_status || "No pagado") as PayStatus} />
+                          {delivery.payment_status === "Pagado" && delivery.payment_amount > 0 && (
+                            <span className="text-xs text-green-600 font-medium">
+                              {formatCurrency(delivery.payment_amount)}
+                            </span>
+                          )}
+                          {delivery.payment_status === "Parcial" && delivery.payment_amount > 0 && (
+                            <span className="text-xs text-orange-600 font-medium">
+                              {formatCurrency(delivery.payment_amount)}
+                            </span>
+                          )}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <div className="space-y-1">
+                          <p className="font-semibold">Información de Pago</p>
+                          <p className="text-sm">Estado: {delivery.payment_status || "No pagado"}</p>
+                          {delivery.payment_amount > 0 && (
+                            <p className="text-sm">Monto: {formatCurrency(delivery.payment_amount)}</p>
+                          )}
+                          {delivery.payment_date && (
+                            <p className="text-sm">Fecha: {formatDeliveryDate(delivery.payment_date)}</p>
+                          )}
+                          {!delivery.payment_date && delivery.payment_status !== "No pagado" && (
+                            <p className="text-xs text-yellow-500">Sin fecha de pago registrada</p>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </TableCell>
                 <TableCell>
                   <ProductListPopover
@@ -536,31 +579,16 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
 
                         <DropdownMenuSeparator />
 
-                        {!delivery.payment_status && (
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePaymentStatusToggle(delivery);
-                            }}
-                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                          >
-                            <CreditCard className="h-4 w-4" />
-                            Confirmar Pago
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePaymentStatusToggle(delivery);
+                          }}
+                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                        >
+                          <CreditCard className="h-4 w-4" />
+                          Cambiar Estado de Pago
                           </DropdownMenuItem>
-                        )}
-
-                        {delivery.payment_status && (
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePaymentStatusToggle(delivery);
-                            }}
-                            className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
-                          >
-                            <CreditCard className="h-4 w-4" />
-                            Marcar como No Pagado
-                          </DropdownMenuItem>
-                        )}
 
                         <DropdownMenuSeparator />
 
