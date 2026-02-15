@@ -34,6 +34,8 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { AdvancedFilters, type FilterState } from "./advanced-filters";
 import { useQuery } from "@tanstack/react-query";
@@ -227,6 +229,11 @@ export function ClientBalancesTable() {
     balanceRange: [balanceMin, balanceMax],
   });
 
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  }>({ key: "balance", direction: "asc" });
+
   // Obtener lista única de agentes
   const agents = useMemo(() => {
     const uniqueAgents = [...new Set(data.map((client) => client.agent_name))];
@@ -234,27 +241,60 @@ export function ClientBalancesTable() {
   }, [data]);
 
   const filteredData = useMemo(() => {
-    return data.filter((client) => {
-      const matchesSearch =
-        client.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        client.email.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        client.phone.includes(filters.searchTerm);
+    return data
+      .filter((client) => {
+        const matchesSearch =
+          (client.name || "")
+            .toLowerCase()
+            .includes(filters.searchTerm.toLowerCase()) ||
+          (client.email || "")
+            .toLowerCase()
+            .includes(filters.searchTerm.toLowerCase()) ||
+          (client.phone || "").includes(filters.searchTerm);
 
-      const matchesStatus =
-        filters.statusFilter === "all" ||
-        client.status === filters.statusFilter;
+        const matchesStatus =
+          filters.statusFilter === "all" ||
+          client.status === filters.statusFilter;
 
-      const matchesAgent =
-        filters.agentFilter === "all" ||
-        client.agent_name === filters.agentFilter;
+        const matchesAgent =
+          filters.agentFilter === "all" ||
+          client.agent_name === filters.agentFilter;
 
-      const matchesBalance =
-        client.total_balance >= filters.balanceRange[0] &&
-        client.total_balance <= filters.balanceRange[1];
+        const matchesBalance =
+          client.total_balance >= filters.balanceRange[0] &&
+          client.total_balance <= filters.balanceRange[1];
 
-      return matchesSearch && matchesStatus && matchesAgent && matchesBalance;
-    });
-  }, [data, filters]);
+        return matchesSearch && matchesStatus && matchesAgent && matchesBalance;
+      })
+      .sort((a, b) => {
+        const { key, direction } = sortConfig;
+        const modifier = direction === "asc" ? 1 : -1;
+
+        switch (key) {
+          case "name":
+            return (a.name || "").localeCompare(b.name || "") * modifier;
+          case "agent_name":
+            return (
+              (a.agent_name || "").localeCompare(b.agent_name || "") * modifier
+            );
+          case "total_order_cost":
+            return (a.total_order_cost - b.total_order_cost) * modifier;
+          case "total_deliver_cost":
+            return (a.total_deliver_cost - b.total_deliver_cost) * modifier;
+          case "total_received": {
+            const receivedA = a.total_order_received + a.total_deliver_received;
+            const receivedB = b.total_order_received + b.total_deliver_received;
+            return (receivedA - receivedB) * modifier;
+          }
+          case "status":
+            return (a.status || "").localeCompare(b.status || "") * modifier;
+          case "balance":
+            return (a.total_balance - b.total_balance) * modifier;
+          default:
+            return 0;
+        }
+      });
+  }, [data, filters, sortConfig]);
 
   // Calcular paginacion
   const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -270,6 +310,14 @@ export function ClientBalancesTable() {
   const handlePageSizeChange = (value: string) => {
     setPageSize(Number(value));
     setCurrentPage(1);
+  };
+
+  const handleSort = (key: string) => {
+    setSortConfig((current) => ({
+      key,
+      direction:
+        current.key === key && current.direction === "asc" ? "desc" : "asc",
+    }));
   };
 
   return (
@@ -298,45 +346,98 @@ export function ClientBalancesTable() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("name")}
+                    >
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
                         Cliente
+                        {sortConfig.key === "name" &&
+                          (sortConfig.direction === "asc" ? (
+                            <ChevronUp className="h-3 w-3" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3" />
+                          ))}
                       </div>
                     </TableHead>
-                    <TableHead className="hidden sm:table-cell">
+                    <TableHead
+                      className="hidden sm:table-cell cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("agent_name")}
+                    >
                       <div className="flex items-center gap-2">
                         <UserCircle className="h-4 w-4" />
                         Agente
+                        {sortConfig.key === "agent_name" &&
+                          (sortConfig.direction === "asc" ? (
+                            <ChevronUp className="h-3 w-3" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3" />
+                          ))}
                       </div>
                     </TableHead>
-                    <TableHead className="text-right">
+                    <TableHead
+                      className="text-right cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("total_order_cost")}
+                    >
                       <div className="flex items-center justify-end gap-2">
                         <Receipt className="h-4 w-4" />
                         <span className="hidden xl:inline">Costo Pedidos</span>
                         <span className="xl:hidden">Pedidos</span>
+                        {sortConfig.key === "total_order_cost" &&
+                          (sortConfig.direction === "asc" ? (
+                            <ChevronUp className="h-3 w-3" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3" />
+                          ))}
                       </div>
                     </TableHead>
-                    <TableHead className="text-right hidden lg:table-cell">
+                    <TableHead
+                      className="text-right hidden lg:table-cell cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("total_deliver_cost")}
+                    >
                       <div className="flex items-center justify-end gap-2">
                         <Truck className="h-4 w-4" />
                         Envio
+                        {sortConfig.key === "total_deliver_cost" &&
+                          (sortConfig.direction === "asc" ? (
+                            <ChevronUp className="h-3 w-3" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3" />
+                          ))}
                       </div>
                     </TableHead>
-                    <TableHead className="text-right hidden lg:table-cell">
+                    <TableHead
+                      className="text-right hidden lg:table-cell cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("total_received")}
+                    >
                       <div className="flex items-center justify-end gap-2">
                         <DollarSign className="h-4 w-4" />
                         Total Recibido
+                        {sortConfig.key === "total_received" &&
+                          (sortConfig.direction === "asc" ? (
+                            <ChevronUp className="h-3 w-3" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3" />
+                          ))}
                       </div>
                     </TableHead>
 
-                    <TableHead className="text-right">
+                    <TableHead
+                      className="text-right cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("balance")}
+                    >
                       <div className="flex items-center justify-end gap-2">
                         <Wallet className="h-4 w-4" />
                         Balance
+                        {sortConfig.key === "balance" &&
+                          (sortConfig.direction === "asc" ? (
+                            <ChevronUp className="h-3 w-3" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3" />
+                          ))}
                       </div>
                     </TableHead>
-                    <TableHead className="text-center">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
