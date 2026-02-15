@@ -66,12 +66,9 @@ export const hasUserRole = (user: CustomUser, role: UserRole): boolean => {
 
 // Etiquetas para roles
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
-  user: "Usuario",
   agent: "Agente",
   accountant: "Contador",
-  buyer: "Comprador",
   logistical: "Logística",
-  community_manager: "Community Manager",
   admin: "Administrador",
   client: "Cliente"
 };
