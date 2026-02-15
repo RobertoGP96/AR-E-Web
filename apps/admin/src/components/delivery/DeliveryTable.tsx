@@ -1,5 +1,4 @@
 import DeliveryStatusBadge from "./DeliveryStatusBadge";
-import EditDeliveryDialog from "./EditDeliveryDialog";
 import { ConfirmPaymentDialog } from "./ConfirmPaymentDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +27,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { formatDeliveryDate } from "@/lib/format-date";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,7 +84,6 @@ import {
 interface DeliveryTableProps {
   deliveries: DeliverReceip[];
   isLoading?: boolean;
-  onEdit?: (delivery: DeliverReceip) => void;
   onDelete?: (delivery: DeliverReceip) => void;
   onCapture?: (delivery: DeliverReceip) => void;
 }
@@ -93,18 +91,15 @@ interface DeliveryTableProps {
 const DeliveryTable: React.FC<DeliveryTableProps> = ({
   deliveries,
   isLoading = false,
-  onEdit,
   onDelete,
   onCapture,
 }) => {
+  const navigate = useNavigate();
   const { adaptDeliveredProducts } = useProductListAdapter();
   const [dialogState, setDialogState] = useState<{
     type: "delete" | null;
     delivery: DeliverReceip | null;
   }>({ type: null, delivery: null });
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedDelivery, setSelectedDelivery] =
-    useState<DeliverReceip | null>(null);
 
   // States for capture image dialog
   const [showCaptureDialog, setShowCaptureDialog] = useState(false);
@@ -218,13 +213,12 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
     }
   };
 
-
   const updateDeliveryMutation = useUpdateDelivery();
 
   const handlePaymentConfirm = async (
     deliveryId: number,
     amountReceived: number,
-    paymentDate: Date | undefined
+    paymentDate: Date | undefined,
   ) => {
     try {
       // Reemplazar directamente el monto de pago
@@ -378,22 +372,36 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="flex">
-                          <PayStatusBadge status={(delivery.payment_status || "No pagado") as PayStatus} />
+                          <PayStatusBadge
+                            status={
+                              (delivery.payment_status ||
+                                "No pagado") as PayStatus
+                            }
+                          />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent side="top" className="max-w-xs">
                         <div className="space-y-1">
                           <p className="font-semibold">Información de Pago</p>
-                          <p className="text-sm">Estado: {delivery.payment_status || "No pagado"}</p>
+                          <p className="text-sm">
+                            Estado: {delivery.payment_status || "No pagado"}
+                          </p>
                           {delivery.payment_amount > 0 && (
-                            <p className="text-sm">Monto: {formatCurrency(delivery.payment_amount)}</p>
+                            <p className="text-sm">
+                              Monto: {formatCurrency(delivery.payment_amount)}
+                            </p>
                           )}
                           {delivery.payment_date && (
-                            <p className="text-sm">Fecha: {formatDeliveryDate(delivery.payment_date)}</p>
+                            <p className="text-sm">
+                              Fecha: {formatDeliveryDate(delivery.payment_date)}
+                            </p>
                           )}
-                          {!delivery.payment_date && delivery.payment_status !== "No pagado" && (
-                            <p className="text-xs text-yellow-500">Sin fecha de pago registrada</p>
-                          )}
+                          {!delivery.payment_date &&
+                            delivery.payment_status !== "No pagado" && (
+                              <p className="text-xs text-yellow-500">
+                                Sin fecha de pago registrada
+                              </p>
+                            )}
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -458,11 +466,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedDelivery(delivery);
-                            setEditDialogOpen(true);
-                            if (onEdit) {
-                              onEdit(delivery);
-                            }
+                            navigate(`/delivery/${delivery.id}/edit`);
                           }}
                           className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
                         >
@@ -681,13 +685,6 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Diálogo para editar delivery */}
-      <EditDeliveryDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        delivery={selectedDelivery}
-      />
 
       {/* Diálogo para ver/subir imagen de la entrega (captura) */}
       <Dialog

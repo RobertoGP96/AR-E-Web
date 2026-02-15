@@ -1,14 +1,27 @@
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useProducts } from '@/hooks/product';
-import { useAddProductToDelivery } from '@/hooks/delivery';
-import { toast } from 'sonner';
-import { Loader2, Search, Package } from 'lucide-react';
-import type { ID, UUID, Product } from '@/types';
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useProducts } from "@/hooks/product";
+import { useAddProductToDelivery } from "@/hooks/delivery";
+import { toast } from "sonner";
+import { Loader2, Search, Package } from "lucide-react";
+import type { ID, UUID, Product } from "@/types";
 
 interface AddProductToDeliveryDialogProps {
   open: boolean;
@@ -23,29 +36,30 @@ export function AddProductToDeliveryDialog({
   deliveryId,
   clientId,
 }: AddProductToDeliveryDialogProps) {
-  const [selectedProductId, setSelectedProductId] = useState<UUID | ''>('');
+  const [selectedProductId, setSelectedProductId] = useState<UUID | "">("");
   const [amount, setAmount] = useState<number>(1);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Obtener productos del cliente o todos los productos
   const { products, isLoading: loadingProducts } = useProducts(
-    clientId ? { client: clientId } : undefined
+    clientId ? { client_id: clientId as number } : undefined,
   );
 
   const addProductMutation = useAddProductToDelivery();
 
   // Filtrar productos por término de búsqueda
-  const filteredProducts = products.filter((product: Product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = products.filter(
+    (product: Product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.sku.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Resetear el formulario cuando se cierra el diálogo
   useEffect(() => {
     if (!open) {
-      setSelectedProductId('');
+      setSelectedProductId("");
       setAmount(1);
-      setSearchTerm('');
+      setSearchTerm("");
     }
   }, [open]);
 
@@ -53,12 +67,12 @@ export function AddProductToDeliveryDialog({
     e.preventDefault();
 
     if (!selectedProductId) {
-      toast.error('Por favor selecciona un producto');
+      toast.error("Por favor selecciona un producto");
       return;
     }
 
     if (amount <= 0) {
-      toast.error('La cantidad debe ser mayor a 0');
+      toast.error("La cantidad debe ser mayor a 0");
       return;
     }
 
@@ -68,15 +82,17 @@ export function AddProductToDeliveryDialog({
         productId: selectedProductId,
         amount,
       });
-      toast.success('Producto agregado al delivery');
+      toast.success("Producto agregado al delivery");
       onOpenChange(false);
     } catch (error) {
-      console.error('Error al agregar producto:', error);
-      toast.error('Error al agregar el producto al delivery');
+      console.error("Error al agregar producto:", error);
+      toast.error("Error al agregar el producto al delivery");
     }
   };
 
-  const selectedProduct = products.find((p: Product) => p.id === selectedProductId);
+  const selectedProduct = products.find(
+    (p: Product) => p.id === selectedProductId,
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -85,8 +101,8 @@ export function AddProductToDeliveryDialog({
           <DialogTitle>Agregar Producto al Delivery</DialogTitle>
           <DialogDescription>
             {clientId
-              ? 'Selecciona un producto del cliente para agregarlo a este delivery'
-              : 'Selecciona cualquier producto para agregarlo a este delivery'}
+              ? "Selecciona un producto del cliente para agregarlo a este delivery"
+              : "Selecciona cualquier producto para agregarlo a este delivery"}
           </DialogDescription>
         </DialogHeader>
 
@@ -116,11 +132,16 @@ export function AddProductToDeliveryDialog({
               <div className="flex flex-col items-center justify-center py-8 text-center border rounded-lg bg-gray-50">
                 <Package className="h-12 w-12 text-gray-300 mb-2" />
                 <p className="text-sm text-gray-500">
-                  {searchTerm ? 'No se encontraron productos' : 'No hay productos disponibles'}
+                  {searchTerm
+                    ? "No se encontraron productos"
+                    : "No hay productos disponibles"}
                 </p>
               </div>
             ) : (
-              <Select value={selectedProductId} onValueChange={(value) => setSelectedProductId(value as UUID)}>
+              <Select
+                value={selectedProductId}
+                onValueChange={(value) => setSelectedProductId(value as UUID)}
+              >
                 <SelectTrigger id="product">
                   <SelectValue placeholder="Selecciona un producto" />
                 </SelectTrigger>
@@ -137,7 +158,9 @@ export function AddProductToDeliveryDialog({
                         )}
                         <div className="flex flex-col">
                           <span className="font-medium">{product.name}</span>
-                          <span className="text-xs text-gray-500">SKU: {product.sku}</span>
+                          <span className="text-xs text-gray-500">
+                            SKU: {product.sku}
+                          </span>
                         </div>
                       </div>
                     </SelectItem>
@@ -150,23 +173,33 @@ export function AddProductToDeliveryDialog({
           {/* Información del producto seleccionado */}
           {selectedProduct && (
             <div className="p-4 rounded-lg bg-blue-50 border border-blue-200 space-y-2">
-              <h4 className="font-medium text-blue-900">Información del Producto</h4>
+              <h4 className="font-medium text-blue-900">
+                Información del Producto
+              </h4>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <span className="text-gray-600">Disponible:</span>
-                  <span className="ml-2 font-medium">{selectedProduct.amount_delivered} unidades</span>
+                  <span className="ml-2 font-medium">
+                    {selectedProduct.amount_delivered} unidades
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Tienda:</span>
-                  <span className="ml-2 font-medium">{selectedProduct.shop}</span>
+                  <span className="ml-2 font-medium">
+                    {selectedProduct.shop}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Costo:</span>
-                  <span className="ml-2 font-medium">${selectedProduct.cost_per_product.toFixed(2)}</span>
+                  <span className="ml-2 font-medium">
+                    ${selectedProduct.cost_per_product.toFixed(2)}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Estado:</span>
-                  <span className="ml-2 font-medium">{selectedProduct.status}</span>
+                  <span className="ml-2 font-medium">
+                    {selectedProduct.status}
+                  </span>
                 </div>
               </div>
             </div>
@@ -186,7 +219,8 @@ export function AddProductToDeliveryDialog({
             />
             {selectedProduct && amount > selectedProduct.amount_delivered && (
               <p className="text-sm text-red-600">
-                La cantidad no puede exceder las unidades disponibles ({selectedProduct.amount_delivered})
+                La cantidad no puede exceder las unidades disponibles (
+                {selectedProduct.amount_delivered})
               </p>
             )}
           </div>
@@ -206,7 +240,9 @@ export function AddProductToDeliveryDialog({
                 !selectedProductId ||
                 amount <= 0 ||
                 addProductMutation.isPending ||
-                (selectedProduct ? amount > selectedProduct.amount_delivered : false)
+                (selectedProduct
+                  ? amount > selectedProduct.amount_delivered
+                  : false)
               }
               className="bg-orange-400 hover:bg-orange-500"
             >
@@ -216,7 +252,7 @@ export function AddProductToDeliveryDialog({
                   Agregando...
                 </>
               ) : (
-                'Agregar Producto'
+                "Agregar Producto"
               )}
             </Button>
           </DialogFooter>

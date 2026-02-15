@@ -107,17 +107,31 @@ export function PurchaseForm({
   // Cargar datos iniciales si estamos en modo edición
   useEffect(() => {
     if (purchase && shops.length > 0) {
-      // Encontrar la tienda por nombre para obtener su ID
-      const shop = shops.find((s) => s.name === purchase.shop_of_buy);
+      // Encontrar la tienda por nombre o ID para obtener su ID
+      const shop = shops.find(
+        (s) =>
+          s.name.trim().toLowerCase() ===
+          purchase.shop_of_buy?.trim().toLowerCase(),
+      );
+
       if (shop) {
         form.setValue("shop_of_buy_id", shop.id);
 
-        // Encontrar la cuenta por nombre dentro de esa tienda
+        // Encontrar la cuenta por ID dentro de esa tienda (asegurando el tipo)
+        const accountId = Number(purchase.shopping_account);
         const account = shop.buying_accounts?.find(
-          (a) => a.id === purchase.shopping_account,
+          (a) => Number(a.id) === accountId,
         );
+
         if (account) {
-          form.setValue("shopping_account_id", account.id);
+          form.setValue("shopping_account_id", Number(account.id));
+        } else if (purchase.shopping_account) {
+          // Si no la encuentra en la tienda pero tenemos un ID, lo seteamos igual
+          // por si la relación en el backend existe aunque no esté en el catálogo actual
+          form.setValue(
+            "shopping_account_id",
+            Number(purchase.shopping_account),
+          );
         }
       }
 

@@ -55,10 +55,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         if status_filter:
             queryset = queryset.filter(status=status_filter)
             
-        # Filtrar por tienda si se proporciona el parámetro shop
-        shop_id = self.request.query_params.get('shop')
-        if shop_id:
-            queryset = queryset.filter(shop_id=shop_id)
+        # Filtrar por cliente si se proporciona el parámetro client_id
+        client_id = self.request.query_params.get('client_id')
+        if client_id:
+            queryset = queryset.filter(order__client_id=client_id)
 
         return queryset
 

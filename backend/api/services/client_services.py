@@ -45,30 +45,33 @@ def get_client_balance_report(client_id: int) -> Dict[str, Any]:
         })
 
     # 2. Deliveries (Shipping) Analysis
-    # We assume weight_cost is a separate charge unless otherwise specified in later business logic
     deliveries = DeliverReceip.objects.filter(client=client).order_by('-deliver_date')
     
     deliveries_list = []
     total_shipping_cost = 0.0
+    total_shipping_received = 0.0
     
     for delivery in deliveries:
         total_shipping_cost += float(delivery.weight_cost or 0.0)
+        total_shipping_received += float(delivery.payment_amount or 0.0)
         
         deliveries_list.append({
             "id": delivery.id,
             "date": delivery.deliver_date.strftime('%Y-%m-%d'),
             "weight": float(delivery.weight or 0.0),
             "shipping_cost": float(delivery.weight_cost or 0.0),
+            "received": float(delivery.payment_amount or 0.0),
             "status": delivery.status,
-            "payment_status": "Pagado" if delivery.payment_status else "No pagado",
+            "payment_status": delivery.payment_status,
             "category": delivery.category.name if delivery.category else "Sin categoría"
         })
 
     # 3. Overall Summary
     order_balance = total_orders_received - total_orders_cost
-    # Total balance considers both order balances and shipping costs
-    # Shipping cost is treated as a debt (negative in balance calculation)
-    total_balance = order_balance - total_shipping_cost
+    shipping_balance = total_shipping_received - total_shipping_cost
+    
+    # Total balance considers both order balances and shipping balances
+    total_balance = order_balance + shipping_balance
     
     status = "AL DÍA"
     if total_balance < -0.01: # Use a small epsilon for float precision
@@ -95,7 +98,9 @@ def get_client_balance_report(client_id: int) -> Dict[str, Any]:
         "deliveries": {
             "list": deliveries_list,
             "summary": {
-                "total_shipping_cost": round(total_shipping_cost, 2)
+                "total_shipping_cost": round(total_shipping_cost, 2),
+                "total_shipping_received": round(total_shipping_received, 2),
+                "balance": round(shipping_balance, 2)
             }
         },
         "report_summary": {
@@ -105,6 +110,7 @@ def get_client_balance_report(client_id: int) -> Dict[str, Any]:
             "surplus_balance": round(total_balance if total_balance > 0 else 0.0, 2)
         }
     }
+
 
 def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
     """
@@ -132,11 +138,18 @@ def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
         total=Sum('weight_cost')
     ).values('total')
 
+    delivery_received = DeliverReceip.objects.filter(
+        client=OuterRef('pk')
+    ).values('client').annotate(
+        total=Sum('payment_amount')
+    ).values('total')
+
     # Query all clients and annotate with calculated sums
     clients = CustomUser.objects.filter(role='client').annotate(
         computed_order_cost=Subquery(order_costs, output_field=models.FloatField()),
         computed_order_received=Subquery(order_received, output_field=models.FloatField()),
         computed_deliver_cost=Subquery(delivery_costs, output_field=models.FloatField()),
+        computed_deliver_received=Subquery(delivery_received, output_field=models.FloatField()),
     ).order_by('name', 'last_name')
 
     report = []
@@ -144,9 +157,10 @@ def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
         order_cost = float(client.computed_order_cost or 0.0)
         order_received = float(client.computed_order_received or 0.0)
         deliver_cost = float(client.computed_deliver_cost or 0.0)
+        deliver_received = float(client.computed_deliver_received or 0.0)
         
-        # Balance formula: Received - (Order Costs + Delivery Costs)
-        total_balance = order_received - (order_cost + deliver_cost)
+        # Balance formula: (Order Received + Delivery Received) - (Order Cost + Delivery Cost)
+        total_balance = (order_received + deliver_received) - (order_cost + deliver_cost)
         
         # Determine status
         if total_balance < -0.01:
@@ -165,6 +179,7 @@ def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
             "total_order_cost": round(order_cost, 2),
             "total_order_received": round(order_received, 2),
             "total_deliver_cost": round(deliver_cost, 2),
+            "total_deliver_received": round(deliver_received, 2),
             "total_balance": round(total_balance, 2),
             "status": status,
             "pending_to_pay": round(abs(total_balance) if total_balance < 0 else 0.0, 2),
@@ -172,3 +187,4 @@ def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
         })
     
     return report
+
