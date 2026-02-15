@@ -4,10 +4,8 @@ import {
   MoreHorizontal,
   Shield,
   User,
-  ShoppingCart,
   Truck,
   Calculator,
-  Megaphone,
   Clock,
   Phone,
   Handshake,
@@ -76,12 +74,9 @@ interface UsersTableProps {
 
 // Iconos para los roles
 const roleIcons: Record<UserRole, React.ElementType> = {
-  user: User,
   agent: Handshake,
   accountant: Calculator,
-  buyer: ShoppingCart,
   logistical: Truck,
-  community_manager: Megaphone,
   admin: Shield,
   client: User,
 };

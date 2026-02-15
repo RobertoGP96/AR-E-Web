@@ -12,10 +12,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  ShoppingCart,
   Truck,
   Calculator,
-  Megaphone,
   Handshake
 } from 'lucide-react';
 import type { CustomUser, UserRole } from '@/types/models/user';
@@ -30,12 +28,9 @@ interface UserDetailsDialogProps {
 
 // Iconos para los roles
 const roleIcons: Record<UserRole, React.ElementType> = {
-  user: User,
   agent: Handshake,
   accountant: Calculator,
-  buyer: ShoppingCart,
   logistical: Truck,
-  community_manager: Megaphone,
   admin: Shield,
   client: User,
 };

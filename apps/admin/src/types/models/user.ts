@@ -6,12 +6,9 @@ import type { ID, DateTime } from './base';
 
 // Roles disponibles para usuarios
 export type UserRole = 
-  | 'user'
   | 'agent'
   | 'accountant'
-  | 'buyer'
   | 'logistical'
-  | 'community_manager'
   | 'admin'
   | 'client';
 
@@ -103,35 +100,23 @@ export const userRoleUtils = {
     return user.role === 'accountant';
   },
   
-  isBuyer: (user: CustomUser): boolean => {
-    return user.role === 'buyer';
-  },
   
   isLogistical: (user: CustomUser): boolean => {
     return user.role === 'logistical';
   },
   
-  isCommunityManager: (user: CustomUser): boolean => {
-    return user.role === 'community_manager';
-  },
   
   isAdmin: (user: CustomUser): boolean => {
     return user.role === 'admin' || user.is_staff;
   },
   
-  isUser: (user: CustomUser): boolean => {
-    return user.role === 'user';
-  }
 };
 
 // Etiquetas para mostrar en la UI
 export const roleLabels: Record<UserRole, string> = {
-  user: 'Usuario',
   client: 'Cliente',
   agent: 'Agente',
   accountant: 'Contador',
-  buyer: 'Comprador',
   logistical: 'Logístico',
-  community_manager: 'Community Manager',
   admin: 'Administrador',
 };

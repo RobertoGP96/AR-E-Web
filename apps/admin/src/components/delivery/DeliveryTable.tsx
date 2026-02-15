@@ -379,16 +379,6 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                       <TooltipTrigger asChild>
                         <div className="flex">
                           <PayStatusBadge status={(delivery.payment_status || "No pagado") as PayStatus} />
-                          {delivery.payment_status === "Pagado" && delivery.payment_amount > 0 && (
-                            <span className="text-xs text-green-600 font-medium">
-                              {formatCurrency(delivery.payment_amount)}
-                            </span>
-                          )}
-                          {delivery.payment_status === "Parcial" && delivery.payment_amount > 0 && (
-                            <span className="text-xs text-orange-600 font-medium">
-                              {formatCurrency(delivery.payment_amount)}
-                            </span>
-                          )}
                         </div>
                       </TooltipTrigger>
                       <TooltipContent side="top" className="max-w-xs">
