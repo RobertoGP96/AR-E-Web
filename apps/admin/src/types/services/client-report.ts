@@ -11,6 +11,7 @@ export interface ClientBalanceEntry {
   total_order_cost: number;
   total_order_received: number;
   total_deliver_cost: number;
+  total_deliver_received: number;
   total_balance: number;
   status: 'DEUDA' | 'SALDO A FAVOR' | 'AL DÍA';
   pending_to_pay: number;

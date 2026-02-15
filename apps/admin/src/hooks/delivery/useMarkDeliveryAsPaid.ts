@@ -21,6 +21,8 @@ export function useMarkDeliveryAsPaid() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+      queryClient.invalidateQueries({ queryKey: ['clientBalances'] });
+      queryClient.invalidateQueries({ queryKey: ['deliveryReportsAnalysis'] });
     },
     onError: (error) => {
       console.error('[useMarkDeliveryAsPaid] Error en la mutación:', error);

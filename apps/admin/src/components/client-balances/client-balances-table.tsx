@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -8,17 +8,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   TrendingDown,
   TrendingUp,
@@ -33,43 +33,52 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
-} from 'lucide-react'
-import { AdvancedFilters, type FilterState } from './advanced-filters'
-import { useQuery } from '@tanstack/react-query'
-import { fetchClientBalancesReport } from '@/services/reports/reports'
-import type { ClientBalanceEntry } from '@/types'
+  ChevronsRight,
+} from "lucide-react";
+import { AdvancedFilters, type FilterState } from "./advanced-filters";
+import { useQuery } from "@tanstack/react-query";
+import { fetchClientBalancesReport } from "@/services/reports/reports";
+import type { ClientBalanceEntry } from "@/types";
 
 function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-  }).format(value)
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+  }).format(value);
 }
 
-function StatusBadge({ status }: { status: ClientBalanceEntry['status'] }) {
+function StatusBadge({ status }: { status: ClientBalanceEntry["status"] }) {
   const variants = {
-    'DEUDA': 'bg-red-50 text-red-700 ring-red-600/80 dark:bg-red-400/10 dark:text-red-400 ring-red-400/20',
-    'SALDO A FAVOR': 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 ring-green-400/20',
-    'AL DÍA': 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-400/10 dark:text-blue-400 ring-blue-400/20',
-  }
+    DEUDA:
+      "bg-red-50 text-red-700 ring-red-600/80 dark:bg-red-400/10 dark:text-red-400 ring-red-400/20",
+    "SALDO A FAVOR":
+      "bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 ring-green-400/20",
+    "AL DÍA":
+      "bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-400/10 dark:text-blue-400 ring-blue-400/20",
+  };
 
   return (
     <Badge className={variants[status]} variant="default">
       {status}
     </Badge>
-  )
+  );
 }
 
 interface CardSummaryProps {
-  label: string
-  value: string | number
-  icon: React.ReactNode
-  subtitle?: string
-  textColor?: string
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  subtitle?: string;
+  textColor?: string;
 }
 
-function CardSummary({ label, value, icon, subtitle, textColor = 'text-slate-800' }: CardSummaryProps) {
+function CardSummary({
+  label,
+  value,
+  icon,
+  subtitle,
+  textColor = "text-slate-800",
+}: CardSummaryProps) {
   return (
     <Card className=" relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-orange-200 border group cursor-pointer bg-white">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -81,27 +90,35 @@ function CardSummary({ label, value, icon, subtitle, textColor = 'text-slate-800
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: textColor === 'text-slate-800' ? '#1e293b' : undefined }}>
+        <div
+          className="text-2xl md:text-3xl font-bold tracking-tight"
+          style={{
+            color: textColor === "text-slate-800" ? "#1e293b" : undefined,
+          }}
+        >
           {value}
         </div>
         {subtitle && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {subtitle}
-          </p>
+          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function SummaryCards({ data }: { data: ClientBalanceEntry[] }) {
   const summary = useMemo(() => {
-    const totalClients = data.length
-    const clientsWithDebt = data.filter(c => c.status === 'DEUDA').length
-    const clientsWithSurplus = data.filter(c => c.status === 'SALDO A FAVOR').length
-    const clientsUpToDate = data.filter(c => c.status === 'AL DÍA').length
-    const totalPendingToPay = data.reduce((sum, c) => sum + c.pending_to_pay, 0)
-    const totalSurplus = data.reduce((sum, c) => sum + c.surplus_balance, 0)
+    const totalClients = data.length;
+    const clientsWithDebt = data.filter((c) => c.status === "DEUDA").length;
+    const clientsWithSurplus = data.filter(
+      (c) => c.status === "SALDO A FAVOR",
+    ).length;
+    const clientsUpToDate = data.filter((c) => c.status === "AL DÍA").length;
+    const totalPendingToPay = data.reduce(
+      (sum, c) => sum + c.pending_to_pay,
+      0,
+    );
+    const totalSurplus = data.reduce((sum, c) => sum + c.surplus_balance, 0);
 
     return {
       totalClients,
@@ -110,8 +127,8 @@ function SummaryCards({ data }: { data: ClientBalanceEntry[] }) {
       clientsUpToDate,
       totalPendingToPay,
       totalSurplus,
-    }
-  }, [data])
+    };
+  }, [data]);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -145,7 +162,7 @@ function SummaryCards({ data }: { data: ClientBalanceEntry[] }) {
         textColor="text-sky-600 dark:text-sky-400"
       />
     </div>
-  )
+  );
 }
 
 function CardsSkeleton() {
@@ -164,7 +181,7 @@ function CardsSkeleton() {
         </Card>
       ))}
     </div>
-  )
+  );
 }
 
 function TableSkeleton() {
@@ -174,81 +191,86 @@ function TableSkeleton() {
         <div key={i} className="h-12 bg-muted animate-pulse rounded-md" />
       ))}
     </div>
-  )
+  );
 }
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 export function ClientBalancesTable() {
-  const { data: clientBalances, isLoading } = useQuery<ClientBalanceEntry[], Error>({
-    queryKey: ['clientBalances'],
+  const { data: clientBalances, isLoading } = useQuery<
+    ClientBalanceEntry[],
+    Error
+  >({
+    queryKey: ["clientBalances"],
     queryFn: fetchClientBalancesReport,
-  })
+  });
 
-  const data = useMemo(() => clientBalances ?? [], [clientBalances])
+  const data = useMemo(() => clientBalances ?? [], [clientBalances]);
 
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Calcular min/max de balance para el slider
   const { balanceMin, balanceMax } = useMemo(() => {
-    if (data.length === 0) return { balanceMin: -10000, balanceMax: 10000 }
-    const balances = data.map(c => c.total_balance)
+    if (data.length === 0) return { balanceMin: -10000, balanceMax: 10000 };
+    const balances = data.map((c) => c.total_balance);
     return {
       balanceMin: Math.floor(Math.min(...balances) / 100) * 100,
       balanceMax: Math.ceil(Math.max(...balances) / 100) * 100,
-    }
-  }, [data])
+    };
+  }, [data]);
 
   const [filters, setFilters] = useState<FilterState>({
-    searchTerm: '',
-    statusFilter: 'all',
-    agentFilter: 'all',
+    searchTerm: "",
+    statusFilter: "all",
+    agentFilter: "all",
     balanceRange: [balanceMin, balanceMax],
-  })
+  });
 
   // Obtener lista única de agentes
   const agents = useMemo(() => {
-    const uniqueAgents = [...new Set(data.map(client => client.agent_name))]
-    return uniqueAgents.sort()
-  }, [data])
+    const uniqueAgents = [...new Set(data.map((client) => client.agent_name))];
+    return uniqueAgents.sort();
+  }, [data]);
 
   const filteredData = useMemo(() => {
     return data.filter((client) => {
       const matchesSearch =
         client.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         client.email.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        client.phone.includes(filters.searchTerm)
+        client.phone.includes(filters.searchTerm);
 
       const matchesStatus =
-        filters.statusFilter === 'all' || client.status === filters.statusFilter
+        filters.statusFilter === "all" ||
+        client.status === filters.statusFilter;
 
       const matchesAgent =
-        filters.agentFilter === 'all' || client.agent_name === filters.agentFilter
+        filters.agentFilter === "all" ||
+        client.agent_name === filters.agentFilter;
 
       const matchesBalance =
         client.total_balance >= filters.balanceRange[0] &&
-        client.total_balance <= filters.balanceRange[1]
+        client.total_balance <= filters.balanceRange[1];
 
-      return matchesSearch && matchesStatus && matchesAgent && matchesBalance
-    })
-  }, [data, filters])
+      return matchesSearch && matchesStatus && matchesAgent && matchesBalance;
+    });
+  }, [data, filters]);
 
   // Calcular paginacion
-  const totalPages = Math.ceil(filteredData.length / pageSize)
-  const startIndex = (currentPage - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedData = filteredData.slice(startIndex, endIndex)
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = filteredData.slice(startIndex, endIndex);
 
   const handleFiltersChange = (newFilters: FilterState) => {
-    setFilters(newFilters)
-    setCurrentPage(1)
-  }
+    setFilters(newFilters);
+    setCurrentPage(1);
+  };
 
   const handlePageSizeChange = (value: string) => {
-    setPageSize(Number(value))
-    setCurrentPage(1)
-  }
+    setPageSize(Number(value));
+    setCurrentPage(1);
+  };
 
   return (
     <div className="space-y-6">
@@ -304,7 +326,7 @@ export function ClientBalancesTable() {
                     <TableHead className="text-right hidden lg:table-cell">
                       <div className="flex items-center justify-end gap-2">
                         <DollarSign className="h-4 w-4" />
-                        Recibido
+                        Total Recibido
                       </div>
                     </TableHead>
 
@@ -320,7 +342,10 @@ export function ClientBalancesTable() {
                 <TableBody>
                   {paginatedData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      <TableCell
+                        colSpan={7}
+                        className="text-center py-8 text-muted-foreground"
+                      >
                         <div className="flex flex-col items-center gap-2">
                           <Users className="h-8 w-8 opacity-50" />
                           No se encontraron clientes
@@ -356,17 +381,20 @@ export function ClientBalancesTable() {
                           {formatCurrency(client.total_deliver_cost)}
                         </TableCell>
                         <TableCell className="text-right hidden lg:table-cell">
-                          {formatCurrency(client.total_order_received)}
+                          {formatCurrency(
+                            client.total_order_received +
+                              client.total_deliver_received,
+                          )}
                         </TableCell>
-                        
+
                         <TableCell className="text-right font-medium">
                           <span
                             className={
                               client.total_balance < 0
-                                ? 'text-red-600 dark:text-red-400'
+                                ? "text-red-600 dark:text-red-400"
                                 : client.total_balance > 0
-                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                  : ''
+                                  ? "text-emerald-600 dark:text-emerald-400"
+                                  : ""
                             }
                           >
                             {formatCurrency(client.total_balance)}
@@ -388,7 +416,10 @@ export function ClientBalancesTable() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Mostrar</span>
-                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={handlePageSizeChange}
+                >
                   <SelectTrigger className="w-[70px] h-8">
                     <SelectValue />
                   </SelectTrigger>
@@ -404,7 +435,9 @@ export function ClientBalancesTable() {
               </div>
 
               <div className="text-sm text-muted-foreground">
-                Mostrando {startIndex + 1}-{Math.min(endIndex, filteredData.length)} de {filteredData.length} clientes
+                Mostrando {startIndex + 1}-
+                {Math.min(endIndex, filteredData.length)} de{" "}
+                {filteredData.length} clientes
               </div>
 
               <div className="flex items-center gap-1">
@@ -459,5 +492,5 @@ export function ClientBalancesTable() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

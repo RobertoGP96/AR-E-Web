@@ -24,6 +24,8 @@ export function useRemoveProductFromDelivery() {
       queryClient.invalidateQueries({ queryKey: ['delivery', variables.deliveryId] });
       queryClient.invalidateQueries({ queryKey: ['deliveries'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['clientBalances'] });
+      queryClient.invalidateQueries({ queryKey: ['deliveryReportsAnalysis'] });
     },
   });
 }

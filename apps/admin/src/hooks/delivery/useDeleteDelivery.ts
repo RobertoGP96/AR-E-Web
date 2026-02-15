@@ -10,6 +10,8 @@ export function useDeleteDelivery() {
       queryClient.invalidateQueries({ queryKey: ['deliveries'] });
       // Invalidar queries de productos para refrescar estados
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['clientBalances'] });
+      queryClient.invalidateQueries({ queryKey: ['deliveryReportsAnalysis'] });
     }
   });
 }
