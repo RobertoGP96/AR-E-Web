@@ -67,6 +67,7 @@ interface OrderTableProps {
     orderId: number,
     amountReceived: number,
     paymentDate: Date | undefined,
+    payStatus?: string,
   ) => void;
   onAddProducts?: (order: Order) => void;
   itemsPerPage?: number;
@@ -137,6 +138,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
     orderId: number,
     amountReceived: number,
     paymentDate: Date | undefined,
+    payStatus?: string,
   ) => {
     if (!orderId || orderId === undefined) {
       console.error(
@@ -150,10 +152,15 @@ const OrderTable: React.FC<OrderTableProps> = ({
     try {
       if (onConfirmPayment && selectedOrderForPayment) {
         // Si se proporciona un callback personalizado, pásale el id, la cantidad recibida y la fecha de pago
-        await onConfirmPayment(orderId, amountReceived, paymentDate);
+        await onConfirmPayment(orderId, amountReceived, paymentDate, payStatus);
       } else {
         // Usar el hook de mutación
-        await markOrderAsPaidMutation.mutateAsync({ orderId, amountReceived });
+        await markOrderAsPaidMutation.mutateAsync({
+          orderId,
+          amountReceived,
+          paymentDate,
+          payStatus,
+        });
         toast.success(`Pago confirmado para el pedido #${orderId}`, {
           description: `Se registró ${formatCurrency(amountReceived)} como cantidad recibida.`,
         });
@@ -172,7 +179,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
     return (
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
         <div className="flex items-center justify-center h-64">
-          <LoadingSpinner size="lg" text="Cargando Órdenes..." /  >
+          <LoadingSpinner size="lg" text="Cargando Órdenes..." />
         </div>
       </div>
     );

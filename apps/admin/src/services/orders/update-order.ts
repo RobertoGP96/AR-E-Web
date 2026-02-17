@@ -11,6 +11,7 @@ export interface UpdateOrderData {
   status?: string;
   client_email?: string;
   received_value_of_client?: number;
+  payment_date?: Date;
 }
 
 /**
@@ -55,25 +56,37 @@ export const assignOrderToAgent = async (orderId: number, agentEmail: string): P
  * - Si 0 < received_value < total_cost => 'Parcial'
  * - Si received_value == 0 => 'No pagado'
  */
-export const markOrderAsPaid = async (id: number, amountReceived?: number, paymentDate?: Date): Promise<Order> => {
+export const markOrderAsPaid = async (id: number, amountReceived?: number, paymentDate?: Date, payStatus?: string): Promise<Order> => {
   // Validar que el ID sea válido
   if (!id || id === undefined || id === null) {
     const error = `[markOrderAsPaid] ERROR: ID inválido recibido: ${id}`;
     console.error(error);
     throw new Error('ID de orden inválido. No se puede actualizar el pago.');
   }
-  // Si se proporciona una cantidad recibida, actualizamos solo ese campo
-  // El backend se encargará de ajustar automáticamente el pay_status
+
+  const patchData: UpdateOrderData = {};
+  
   if (amountReceived !== undefined && amountReceived > 0) {
-    const url = `/api_data/order/${id}/`;
-    return await apiClient.patch<Order>(url, {
-      received_value_of_client: amountReceived,
-      payment_date: paymentDate
-    });
+    patchData.received_value_of_client = amountReceived;
   }
   
-  // Si no se proporciona cantidad, marcamos como Pagado directamente
-  return await updateOrderPaymentStatus(id, 'Pagado');
+  if (paymentDate) {
+    patchData.payment_date = paymentDate;
+  }
+  
+  if (payStatus) {
+    patchData.pay_status = payStatus;
+  } else if (amountReceived === undefined) {
+    // Si no se proporciona cantidad ni estado, marcamos como Pagado por defecto (comportamiento anterior)
+    patchData.pay_status = 'Pagado';
+  }
+
+  if (Object.keys(patchData).length > 0) {
+    const url = `/api_data/order/${id}/`;
+    return await apiClient.patch<Order>(url, patchData);
+  }
+  
+  return await apiClient.get<Order>(`/api_data/order/${id}/`);
 };
 
 /**

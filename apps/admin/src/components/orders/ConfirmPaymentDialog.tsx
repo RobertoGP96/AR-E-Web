@@ -1,66 +1,101 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
-import { formatCurrency, type Order } from '@/types';
-import { calculatePaymentStatus } from '@/lib/payment-status-calculator';
-import { DatePicker } from '../utils/DatePicker';
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import { formatCurrency, type Order } from "@/types";
+import { calculatePaymentStatus } from "@/lib/payment-status-calculator";
+import { DatePicker } from "../utils/DatePicker";
+import { useQuery } from "@tanstack/react-query";
+import { fetchClientBalancesReport } from "@/services/reports/reports";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Info, TrendingUp } from "lucide-react";
 
 interface ConfirmPaymentDialogProps {
   order: Order | null;
   open: boolean;
   onClose: () => void;
-  onConfirm: (orderId: number, amountReceived: number, paymentDate: Date | undefined) => Promise<void>;
+  onConfirm: (
+    orderId: number,
+    amountReceived: number,
+    paymentDate: Date | undefined,
+    payStatus?: string,
+  ) => Promise<void>;
 }
 
-export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: ConfirmPaymentDialogProps) {
-  const [amountReceived, setAmountReceived] = useState<string>('');
+export function ConfirmPaymentDialog({
+  order,
+  open,
+  onClose,
+  onConfirm,
+}: ConfirmPaymentDialogProps) {
+  const [amountReceived, setAmountReceived] = useState<string>("");
   const [paymentDate, setPaymentDate] = useState<Date | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
+  const [markAsPaid, setMarkAsPaid] = useState(false);
+
+  // Fetch client balances to show surplus
+  const { data: clientBalances } = useQuery({
+    queryKey: ["clientBalances"],
+    queryFn: fetchClientBalancesReport,
+    enabled: !!order?.client?.id,
+  });
+
+  const clientInfo = clientBalances?.find((c) => c.id === order?.client?.id);
+  const hasSurplus = (clientInfo?.surplus_balance || 0) > 0;
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setAmountReceived('');
-      setError('');
+      setAmountReceived("");
+      setError("");
+      setMarkAsPaid(false);
       onClose();
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!order) {
-      console.error('[ConfirmPaymentDialog] Error: No hay orden seleccionada');
-      setError('No se pudo identificar el pedido.');
+      console.error("[ConfirmPaymentDialog] Error: No hay orden seleccionada");
+      setError("No se pudo identificar el pedido.");
       return;
     }
 
     if (!order.id) {
-      console.error('[ConfirmPaymentDialog] Error: La orden no tiene ID', order);
-      setError('El pedido no tiene un ID válido.');
+      console.error(
+        "[ConfirmPaymentDialog] Error: La orden no tiene ID",
+        order,
+      );
+      setError("El pedido no tiene un ID válido.");
       return;
     }
 
     // Validar que se ingresó una cantidad
     const amount = parseFloat(amountReceived);
     if (isNaN(amount) || amount <= 0) {
-      setError('Por favor ingresa una cantidad válida mayor a 0');
+      setError("Por favor ingresa una cantidad válida mayor a 0");
       return;
     }
 
-
-
     setIsSubmitting(true);
-    setError('');
+    setError("");
 
     try {
-      await onConfirm(order.id, amount, paymentDate);
+      const payStatus = markAsPaid ? "Pagado" : undefined;
+      await onConfirm(order.id, amount, paymentDate, payStatus);
       handleClose();
     } catch {
-      setError('Error al confirmar el pago. Intenta nuevamente.');
+      setError("Error al confirmar el pago. Intenta nuevamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -70,14 +105,14 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
   // Usa la utilidad que coincide exactamente con la lógica del backend
   const calculateNewStatus = () => {
     if (!order || !amountReceived) return null;
-    
+
     const amount = parseFloat(amountReceived);
     if (isNaN(amount) || amount <= 0) return null;
 
     return calculatePaymentStatus(
       order.received_value_of_client,
       amount,
-      order.total_cost
+      order.total_cost,
     );
   };
 
@@ -91,7 +126,7 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
         <DialogHeader>
           <DialogTitle>Confirmar Pago del Pedido</DialogTitle>
           <DialogDescription>
-            Pedido #{order.id} - {order.client?.email || 'Sin cliente'}
+            Pedido #{order.id} - {order.client?.email || "Sin cliente"}
           </DialogDescription>
         </DialogHeader>
 
@@ -106,7 +141,9 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Cantidad Recibida Actual:</span>
+                <span className="text-sm text-gray-600">
+                  Cantidad Recibida Actual:
+                </span>
                 <span className="font-semibold text-gray-900">
                   {formatCurrency(order.received_value_of_client)}
                 </span>
@@ -114,7 +151,9 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
               <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                 <span className="text-sm text-gray-600">Pendiente:</span>
                 <span className="font-semibold text-orange-600">
-                  {formatCurrency(order.total_cost - order.received_value_of_client)}
+                  {formatCurrency(
+                    order.total_cost - order.received_value_of_client,
+                  )}
                 </span>
               </div>
             </div>
@@ -125,7 +164,9 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
                 Cantidad Recibida <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  $
+                </span>
                 <Input
                   id="amount-received"
                   type="number"
@@ -135,27 +176,105 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
                   value={amountReceived}
                   onChange={(e) => {
                     setAmountReceived(e.target.value);
-                    setError('');
+                    setError("");
                   }}
                   className="pl-7"
                   disabled={isSubmitting}
                   required
                 />
               </div>
-              {error && (
-                <p className="text-sm text-red-500">{error}</p>
-              )}
+              {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
-            {/* Campo para ingresar cantidad recibida */}
+
+            {/* Saldo a Favor del Cliente */}
+            {clientInfo && (
+              <div
+                className={`p-4 rounded-xl border flex items-start gap-3 transition-all ${
+                  hasSurplus
+                    ? "bg-emerald-50 border-emerald-200 shadow-sm"
+                    : "bg-gray-50 border-gray-100"
+                }`}
+              >
+                <div
+                  className={`p-2 rounded-lg ${hasSurplus ? "bg-emerald-100 text-emerald-600" : "bg-gray-100 text-gray-500"}`}
+                >
+                  {hasSurplus ? (
+                    <TrendingUp className="h-4 w-4" />
+                  ) : (
+                    <Info className="h-4 w-4" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm font-medium text-gray-700">
+                      Saldo del Cliente:
+                    </span>
+                    <span
+                      className={`text-sm font-bold ${
+                        clientInfo.status === "DEUDA"
+                          ? "text-red-600"
+                          : clientInfo.status === "SALDO A FAVOR"
+                            ? "text-emerald-600"
+                            : "text-blue-600"
+                      }`}
+                    >
+                      {formatCurrency(clientInfo.total_balance)}
+                    </span>
+                  </div>
+                  {hasSurplus && (
+                    <p className="text-xs text-emerald-700 leading-relaxed font-medium">
+                      Este cliente tiene{" "}
+                      <b>{formatCurrency(clientInfo.surplus_balance)}</b> de
+                      saldo a favor que puedes tomar como pago.
+                    </p>
+                  )}
+                  {clientInfo.status === "DEUDA" && (
+                    <p className="text-xs text-red-600 leading-relaxed">
+                      Este cliente tiene una deuda total de{" "}
+                      {formatCurrency(Math.abs(clientInfo.total_balance))}.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* Establecer como pagado desde el cliente */}
+            <div className="flex items-start space-x-3 p-4 bg-orange-50 border border-orange-200 rounded-xl transition-all hover:shadow-sm">
+              <Checkbox
+                id="mark-as-paid"
+                checked={markAsPaid}
+                onCheckedChange={(checked) => setMarkAsPaid(checked as boolean)}
+                className="mt-1 border-orange-400 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="mark-as-paid"
+                  className="text-sm font-semibold text-orange-800 cursor-pointer select-none"
+                >
+                  Establecer pedido como PAGADO
+                </label>
+                <p className="text-xs text-orange-700/80 leading-relaxed">
+                  Active esta opción si desea marcar el pedido como pagado
+                  manualmente, independientemente de si el monto cubre el total.
+                </p>
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <DatePicker label='Fecha de pago' selected={paymentDate} onDateChange={setPaymentDate} />
+              <DatePicker
+                label="Fecha de pago"
+                selected={paymentDate}
+                onDateChange={setPaymentDate}
+              />
             </div>
 
             {/* Información adicional */}
-            <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded-md">
-              <p className="font-medium text-blue-700 mb-1">📝 Nota:</p>
-              <p>
-                Esta cantidad se sumará al monto ya recibido. El estado de pago se actualizará automáticamente.
+            <div className="text-xs text-gray-500 bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex gap-3">
+              <div className="text-blue-500 shrink-0 mt-0.5">
+                <Info className="h-4 w-4" />
+              </div>
+              <p className="leading-relaxed">
+                Esta cantidad se sumará al monto ya recibido. El sistema
+                registrará la fecha seleccionada para el seguimiento del pago.
               </p>
             </div>
 
@@ -166,7 +285,9 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
                   📊 Vista previa del resultado
                 </p>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-700">Nuevo Total Recibido:</span>
+                  <span className="text-sm text-gray-700">
+                    Nuevo Total Recibido:
+                  </span>
                   <span className="font-bold text-indigo-900">
                     {formatCurrency(newStatusInfo.newTotal)}
                   </span>
@@ -179,7 +300,9 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
                 </div>
                 {newStatusInfo.remaining > 0 ? (
                   <div className="flex justify-between items-center pt-2 border-t border-indigo-200">
-                    <span className="text-sm text-gray-700">Aún Pendiente:</span>
+                    <span className="text-sm text-gray-700">
+                      Aún Pendiente:
+                    </span>
                     <span className="font-semibold text-orange-600">
                       {formatCurrency(newStatusInfo.remaining)}
                     </span>
@@ -187,7 +310,9 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
                 ) : (
                   <div className="flex items-center gap-2 pt-2 border-t border-indigo-200 text-green-700">
                     <span className="text-lg">✅</span>
-                    <span className="text-sm font-semibold">Pedido completamente pagado</span>
+                    <span className="text-sm font-semibold">
+                      Pedido completamente pagado
+                    </span>
                   </div>
                 )}
               </div>
@@ -214,7 +339,7 @@ export function ConfirmPaymentDialog({ order, open, onClose, onConfirm }: Confir
                   Confirmando...
                 </>
               ) : (
-                'Confirmar Pago'
+                "Confirmar Pago"
               )}
             </Button>
           </DialogFooter>

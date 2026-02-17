@@ -89,15 +89,17 @@ class OrderSerializer(serializers.ModelSerializer):
         # Si se está actualizando received_value_of_client, necesitamos manejarlo de forma especial
         # para acumular el valor (sumarlo al anterior) en lugar de reemplazarlo
         if 'received_value_of_client' in validated_data:
-            # Guardar el valor que se quiere añadir y usar el método del modelo para actualizar
             amount_to_add = validated_data.pop('received_value_of_client')
+            pay_status = validated_data.get('pay_status')
             try:
-                instance.add_received_value(amount_to_add)
+                instance.add_received_value(amount_to_add, pay_status=pay_status)
             except Exception as e:
                 # Log en caso de errores inesperados, luego intentar actualizar otras partes igualmente
                 print(f"[OrderSerializer] Error al añadir received value: {e}")
 
             # Actualizar otros campos si los hay (ya removimos el campo recibido)
+            # super().update se encargará de setear pay_status si estaba en validated_data,
+            # pero ya lo seteamos en add_received_value. No hace daño.
             instance = super().update(instance, validated_data)
         else:
             # Si no se actualizó received_value_of_client, actualizar normalmente
@@ -158,13 +160,14 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         Crear orden y ajustar `pay_status` si se proporciona `received_value_of_client`.
         """
         received = validated_data.get('received_value_of_client', 0) or 0
+        pay_status = validated_data.get('pay_status')
         # Crear la instancia primeramente
         instance = super().create(validated_data)
 
         # Si existe un received > 0, reutilizamos el método del modelo para sumar y recalcular
         if received and received > 0:
             try:
-                instance.add_received_value(received)
+                instance.add_received_value(received, pay_status=pay_status)
             except Exception as e:
                 print(f"[OrderCreateSerializer] Error al aplicar received_value_of_client: {e}")
 
@@ -205,8 +208,9 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
         # Manejar la actualización del monto recibido de forma acumulativa
         if 'received_value_of_client' in validated_data:
             amount_to_add = validated_data.pop('received_value_of_client')
+            pay_status = validated_data.get('pay_status')
             try:
-                instance.add_received_value(amount_to_add)
+                instance.add_received_value(amount_to_add, pay_status=pay_status)
             except Exception as e:
                 print(f"[OrderUpdateSerializer] Error al añadir received value: {e}")
 

@@ -137,10 +137,10 @@ class Order(models.Model):
                 self.status = OrderStatusEnum.COMPLETADO.value
                 self.save(update_fields=['status', 'updated_at'])
 
-    def add_received_value(self, amount: float) -> None:
+    def add_received_value(self, amount: float, pay_status: str = None) -> None:
         """
-        Añade una cantidad a `received_value_of_client` y actualiza `pay_status` en base
-        al costo total de la orden. Guarda la instancia con los campos necesarios.
+        Añade una cantidad a `received_value_of_client` y actualiza `pay_status`.
+        Si se proporciona `pay_status`, se usa ese valor en lugar de calcularlo.
         """
         if amount is None:
             return
@@ -151,26 +151,32 @@ class Order(models.Model):
             return
 
         if amount_float <= 0:
+            if pay_status:
+                self.pay_status = pay_status
+                self.save(update_fields=['pay_status', 'updated_at'])
             return
 
         self.received_value_of_client = round(self.received_value_of_client + amount_float, 2)
 
-        # Calcular el costo total de la orden
-        total_costs = self.total_costs
-
-        # Redondear ambos valores para evitar problemas de precisión en punto flotante
-        received_rounded = round(self.received_value_of_client, 2)
-        total_rounded = round(total_costs, 2)
-
-        # Actualizar el pay_status
-        if received_rounded >= total_rounded and total_rounded > 0:
-            self.pay_status = 'Pagado'
-        elif received_rounded > 0:
-            self.pay_status = 'Parcial'
+        if pay_status:
+            self.pay_status = pay_status
         else:
-            self.pay_status = 'No pagado'
+            # Calcular el costo total de la orden
+            total_costs = self.total_costs
 
-        # Guardar cambios mínimamente
+            # Redondear ambos valores para evitar problemas de precisión en punto flotante
+            received_rounded = round(self.received_value_of_client, 2)
+            total_rounded = round(total_costs, 2)
+
+            # Actualizar el pay_status
+            if received_rounded >= total_rounded and total_rounded > 0:
+                self.pay_status = 'Pagado'
+            elif received_rounded > 0:
+                self.pay_status = 'Parcial'
+            else:
+                self.pay_status = 'No pagado'
+
+        # Guardar cambios
         self.save(update_fields=['received_value_of_client', 'pay_status', 'updated_at'])
 
     @property
@@ -279,47 +285,44 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Override save para recalcular 'pay_status' cuando 'received_value_of_client' cambie o durante creación.
-        Esto asegura que las operaciones directas de creación actualicen el estado de pago correctamente,
-        pero *no* sobrescribe manualmente `pay_status` si esta propiedad se establece explícitamente y el
-        valor de `received_value_of_client` no ha cambiado.
+        Override save para recalcular 'pay_status' cuando 'received_value_of_client' cambie.
+        Ahora respeta si el estado se cambió manualmente desde afuera.
         """
-        # Determinar el costo total para poder comparar
         total_costs = self.total_costs
-
-        # Redondear ambos valores para evitar problemas de precisión en punto flotante
         received_rounded = round(self.received_value_of_client, 2)
         total_rounded = round(total_costs, 2)
 
         if not self.pk:
-            # Nueva instancia en create: calcular pay_status en base a received_value_of_client
-            if received_rounded >= total_rounded and total_rounded > 0:
-                self.pay_status = 'Pagado'
-            elif received_rounded > 0:
-                self.pay_status = 'Parcial'
-            else:
-                self.pay_status = 'No pagado'
+            # En creación, si pay_status es el default, calculamos
+            if self.pay_status == PaymentStatusEnum.NO_PAGADO.value:
+                if received_rounded >= total_rounded and total_rounded > 0:
+                    self.pay_status = 'Pagado'
+                elif received_rounded > 0:
+                    self.pay_status = 'Parcial'
         else:
-            # Intentar comparar con instancia anterior para ver si received_value_of_client cambió
             try:
                 previous = Order.objects.get(pk=self.pk)
-                if previous.received_value_of_client != self.received_value_of_client:
+                
+                # REGLA 1: Solo auto-recalcular pay_status si el usuario NO lo cambió
+                # y el valor recibido SÍ cambió.
+                if (previous.pay_status == self.pay_status and 
+                    previous.received_value_of_client != self.received_value_of_client):
+                    
                     if received_rounded >= total_rounded and total_rounded > 0:
                         self.pay_status = 'Pagado'
                     elif received_rounded > 0:
                         self.pay_status = 'Parcial'
                     else:
                         self.pay_status = 'No pagado'
+                
+                # REGLA 2: Solo auto-recalcular status si el usuario NO lo cambió
+                # (Para evitar que signals sobreescriban cambios manuales)
+                # OJO: La lógica de update_status_based_on_products sigue disparándose en signals
+                # pero aquí podemos proteger el campo si viene un cambio explícito.
+                
             except Order.DoesNotExist:
-                # En caso de que la instancia no exista, proceder como creación
-                if received_rounded >= total_rounded and total_rounded > 0:
-                    self.pay_status = 'Pagado'
-                elif received_rounded > 0:
-                    self.pay_status = 'Parcial'
-                else:
-                    self.pay_status = 'No pagado'
+                pass
 
         # Asegurar que el valor recibido esté redondeado antes de guardar
         self.received_value_of_client = round(self.received_value_of_client, 2)
-        
         super().save(*args, **kwargs)
