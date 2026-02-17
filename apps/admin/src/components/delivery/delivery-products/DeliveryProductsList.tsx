@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner';
 import { useSingleDelivery } from '@/hooks/delivery';
 import { useRemoveProductFromDelivery } from '@/hooks/delivery/useRemoveProductFromDelivery';
+import LoadingSpinner from '@/components/utils/LoadingSpinner';
 
 interface DeliveryProductsListProps {
   deliveryId: number;
@@ -80,8 +81,7 @@ const DeliveryProductsList: React.FC<DeliveryProductsListProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Cargando productos...</span>
+        <LoadingSpinner size='md'/>
       </div>
     );
   }

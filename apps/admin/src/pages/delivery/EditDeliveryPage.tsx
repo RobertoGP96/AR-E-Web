@@ -1,8 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { DeliveryForm } from "@/components/delivery/delivery-form";
 import { useSingleDelivery } from "@/hooks/delivery/useSingleDelivery";
+import LoadingSpinner from "@/components/utils/LoadingSpinner";
 
 export default function EditDeliveryPage() {
   const { id } = useParams();
@@ -17,8 +18,7 @@ export default function EditDeliveryPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
-        <p className="text-slate-500 font-medium">Cargando entrega...</p>
+        <LoadingSpinner text="Cargando datos de la Entrega ..." size="lg" />
       </div>
     );
   }

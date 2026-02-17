@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Plus, Trash2, ArrowLeft } from "lucide-react";
 import { ProductSelectorPopover } from "@/components/products/ProductSelectorPopover";
+import LoadingSpinner from "../utils/LoadingSpinner";
 
 interface ProductEntry {
   id: string; // Para identificar cada entrada en la lista
@@ -127,7 +128,7 @@ export default function AddProductsToDeliveryPage() {
   if (deliveryLoading || productsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }

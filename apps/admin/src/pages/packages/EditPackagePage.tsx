@@ -18,7 +18,7 @@ export default function EditPackagePage() {
     return (
       <div className="flex h-[80vh] w-full flex-col items-center justify-center gap-4">
           <LoadingSpinner size="lg" text=" Cargando datos del paquete..."/>
-        <p className="text-slate-500 font-bold animate-pulse">
+        <p className="text-gray-500 font-bold animate-pulse">
           Cargando información del paquete...
         </p>
       </div>

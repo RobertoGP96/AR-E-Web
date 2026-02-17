@@ -59,7 +59,7 @@ import { useState, useMemo, useEffect } from "react";
 import UserDetailsDialog from "./UserDetailsDialog";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
 import { TablePagination } from "../utils/TablePagination";
-import HoneyLoader from "../utils/honey-loader";
+import LoadingSpinner from "../utils/LoadingSpinner";
 
 interface UsersTableProps {
   users?: CustomUser[];
@@ -301,7 +301,7 @@ export default function UsersTable({
   if (isLoading) {
     return (
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
-            <HoneyLoader size="lg"  text="Cargando Usuarios..."/>
+            <LoadingSpinner text="Cargando Usuarios" size="lg" />
       </div>
     );
   }
