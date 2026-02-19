@@ -1,23 +1,30 @@
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import {
+  Loader2,
+  X,
+  CheckCircle2,
+  User,
+  Coins,
+  Info,
+  AlertTriangle,
+  Landmark,
+} from "lucide-react";
 import { formatCurrency, type Order } from "@/types";
-import { calculatePaymentStatus } from "@/lib/payment-status-calculator";
 import { DatePicker } from "../utils/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { fetchClientBalancesReport } from "@/services/reports/reports";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Info, TrendingUp } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ConfirmPaymentDialogProps {
   order: Order | null;
@@ -38,10 +45,11 @@ export function ConfirmPaymentDialog({
   onConfirm,
 }: ConfirmPaymentDialogProps) {
   const [amountReceived, setAmountReceived] = useState<string>("");
-  const [paymentDate, setPaymentDate] = useState<Date | undefined>();
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
   const [markAsPaid, setMarkAsPaid] = useState(false);
+  const [useCredit, setUseCredit] = useState(false);
 
   // Fetch client balances to show surplus
   const { data: clientBalances } = useQuery({
@@ -53,11 +61,25 @@ export function ConfirmPaymentDialog({
   const clientInfo = clientBalances?.find((c) => c.id === order?.client?.id);
   const hasSurplus = (clientInfo?.surplus_balance || 0) > 0;
 
+  // Handle Switch for credit
+  useEffect(() => {
+    if (useCredit && hasSurplus) {
+      setAmountReceived(clientInfo!.surplus_balance.toString());
+      setError("");
+    } else if (
+      !useCredit &&
+      amountReceived === clientInfo?.surplus_balance.toString()
+    ) {
+      setAmountReceived("");
+    }
+  }, [useCredit, hasSurplus, clientInfo, amountReceived]);
+
   const handleClose = () => {
     if (!isSubmitting) {
       setAmountReceived("");
       setError("");
       setMarkAsPaid(false);
+      setUseCredit(false);
       onClose();
     }
   };
@@ -66,23 +88,12 @@ export function ConfirmPaymentDialog({
     e.preventDefault();
 
     if (!order) {
-      console.error("[ConfirmPaymentDialog] Error: No hay orden seleccionada");
       setError("No se pudo identificar el pedido.");
       return;
     }
 
-    if (!order.id) {
-      console.error(
-        "[ConfirmPaymentDialog] Error: La orden no tiene ID",
-        order,
-      );
-      setError("El pedido no tiene un ID válido.");
-      return;
-    }
-
-    // Validar que se ingresó una cantidad
     const amount = parseFloat(amountReceived);
-    if (isNaN(amount) || amount <= 0) {
+    if (isNaN(amount) || (amount <= 0 && !markAsPaid)) {
       setError("Por favor ingresa una cantidad válida mayor a 0");
       return;
     }
@@ -92,7 +103,7 @@ export function ConfirmPaymentDialog({
 
     try {
       const payStatus = markAsPaid ? "Pagado" : undefined;
-      await onConfirm(order.id, amount, paymentDate, payStatus);
+      await onConfirm(order.id!, amount || 0, paymentDate, payStatus);
       handleClose();
     } catch {
       setError("Error al confirmar el pago. Intenta nuevamente.");
@@ -101,249 +112,231 @@ export function ConfirmPaymentDialog({
     }
   };
 
-  // Calcular el nuevo total que se recibirá y el estado de pago resultante
-  // Usa la utilidad que coincide exactamente con la lógica del backend
-  const calculateNewStatus = () => {
-    if (!order || !amountReceived) return null;
-
-    const amount = parseFloat(amountReceived);
-    if (isNaN(amount) || amount <= 0) return null;
-
-    return calculatePaymentStatus(
-      order.received_value_of_client,
-      amount,
-      order.total_cost,
-    );
-  };
-
-  const newStatusInfo = calculateNewStatus();
-
   if (!order) return null;
+
+  const currentPending = order.total_cost - order.received_value_of_client;
+  const amount = parseFloat(amountReceived) || 0;
+  const newBalance = Math.max(0, currentPending - amount);
+  const change = Math.max(0, amount - currentPending);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Confirmar Pago del Pedido</DialogTitle>
-          <DialogDescription>
-            Pedido #{order.id} - {order.client?.email || "Sin cliente"}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-[420px] p-0 overflow-hidden border-none shadow-2xl rounded-2xl bg-white">
+        <DialogTitle className="sr-only">Registrar Pago</DialogTitle>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            {/* Información del pedido */}
-            <div className="rounded-lg bg-gray-50 p-4 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Costo Total:</span>
-                <span className="font-semibold text-gray-900">
-                  {formatCurrency(order.total_cost)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">
-                  Cantidad Recibida Actual:
-                </span>
-                <span className="font-semibold text-gray-900">
-                  {formatCurrency(order.received_value_of_client)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                <span className="text-sm text-gray-600">Pendiente:</span>
-                <span className="font-semibold text-orange-600">
-                  {formatCurrency(
-                    order.total_cost - order.received_value_of_client,
+        {/* Header Custom */}
+        <div className="flex items-center justify-between p-4 border-b border-slate-100">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleClose}
+            className="rounded-full text-slate-500 hover:bg-slate-100"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+          <h2 className="text-slate-900 text-lg font-bold tracking-tight">
+            Registar Pago
+          </h2>
+          <div className="w-10"></div>
+        </div>
+
+        {/* Order Total Section */}
+        <div className="p-6 text-center bg-orange-100/50">
+          <p className="text-orange-400 text-[10px] font-bold uppercase tracking-wider mb-1">
+            Total Pendiente
+          </p>
+          <h1 className="text-orange-400  tracking-tight text-[38px] font-bold leading-none">
+            {formatCurrency(currentPending)}
+          </h1>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col flex-1 overflow-y-auto max-h-[70vh]"
+        >
+          <div className="p-5 space-y-5">
+            {/* Customer Info Card */}
+            <div className="flex items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-sm border border-slate-100">
+              <div className="flex flex-col gap-1 flex-1">
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                  Información del Cliente
+                </p>
+                <p className="text-slate-900 text-base font-bold leading-tight">
+                  {order.client?.name + " " + order.client?.last_name ||
+                    "Sin Nombre"}
+                </p>
+                <div className="flex items-center gap-1.5 mt-1">
+                  {clientInfo && clientInfo.total_balance < 0 ? (
+                    <>
+                      <AlertTriangle className="text-red-500 h-3.5 w-3.5" />
+                      <p className="text-red-500 text-xs font-semibold">
+                        Saldo: {formatCurrency(clientInfo.total_balance)}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Landmark className="text-emerald-500 h-3.5 w-3.5" />
+                      <p className="text-emerald-500 text-xs font-semibold">
+                        Al día
+                      </p>
+                    </>
                   )}
-                </span>
+                </div>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-slate-100  flex items-center justify-center overflow-hidden border border-slate-200">
+                <User className="h-6 w-6 text-slate-400" />
               </div>
             </div>
 
-            {/* Campo para ingresar cantidad recibida */}
+            {/* Credit Toggle */}
+            <div className="flex items-center gap-4 bg-slate-50 px-4 py-3 rounded-xl border border-slate-100 justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-orange-400 flex items-center justify-center rounded-lg bg-orange-50 shrink-0 h-10 w-10">
+                  <Coins className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-slate-700  text-sm font-semibold">
+                    Usar saldo a favor
+                  </p>
+                  {hasSurplus && (
+                    <p className="text-emerald-600 text-[10px] font-medium">
+                      Disponible: {formatCurrency(clientInfo!.surplus_balance)}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <Switch
+                checked={useCredit}
+                onCheckedChange={setUseCredit}
+                disabled={!hasSurplus || isSubmitting}
+              />
+            </div>
+
+            {/* Payment Amount Input */}
             <div className="space-y-2">
-              <Label htmlFor="amount-received">
-                Cantidad Recibida <span className="text-red-500">*</span>
-              </Label>
+              <div className="flex justify-between items-center px-1">
+                <Label className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                  Cantidad a Pagar
+                </Label>
+                {error && (
+                  <span className="text-[10px] text-red-500 font-bold uppercase">
+                    {error}
+                  </span>
+                )}
+              </div>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 text-2xl font-bold">
                   $
                 </span>
+
                 <Input
-                  id="amount-received"
+                  className="w-full bg-white border-2 border-slate-100 rounded-xl py-7 pl-10 pr-4 text-3xl font-bold text-slate-900  focus-visible:border-[#135bec] focus-visible:ring-0 transition-all text-center"
+                  placeholder="0.00"
                   type="number"
                   step="0.01"
-                  min="0.01"
-                  placeholder="0.00"
                   value={amountReceived}
                   onChange={(e) => {
                     setAmountReceived(e.target.value);
                     setError("");
+                    if (useCredit) setUseCredit(false);
                   }}
-                  className="pl-7"
                   disabled={isSubmitting}
-                  required
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
 
-            {/* Saldo a Favor del Cliente */}
-            {clientInfo && (
-              <div
-                className={`p-4 rounded-xl border flex items-start gap-3 transition-all ${
-                  hasSurplus
-                    ? "bg-emerald-50 border-emerald-200 shadow-sm"
-                    : "bg-gray-50 border-gray-100"
-                }`}
-              >
-                <div
-                  className={`p-2 rounded-lg ${hasSurplus ? "bg-emerald-100 text-emerald-600" : "bg-gray-100 text-gray-500"}`}
-                >
-                  {hasSurplus ? (
-                    <TrendingUp className="h-4 w-4" />
-                  ) : (
-                    <Info className="h-4 w-4" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium text-gray-700">
-                      Saldo del Cliente:
-                    </span>
-                    <span
-                      className={`text-sm font-bold ${
-                        clientInfo.status === "DEUDA"
-                          ? "text-red-600"
-                          : clientInfo.status === "SALDO A FAVOR"
-                            ? "text-emerald-600"
-                            : "text-blue-600"
-                      }`}
-                    >
-                      {formatCurrency(clientInfo.total_balance)}
-                    </span>
-                  </div>
-                  {hasSurplus && (
-                    <p className="text-xs text-emerald-700 leading-relaxed font-medium">
-                      Este cliente tiene{" "}
-                      <b>{formatCurrency(clientInfo.surplus_balance)}</b> de
-                      saldo a favor que puedes tomar como pago.
-                    </p>
-                  )}
-                  {clientInfo.status === "DEUDA" && (
-                    <p className="text-xs text-red-600 leading-relaxed">
-                      Este cliente tiene una deuda total de{" "}
-                      {formatCurrency(Math.abs(clientInfo.total_balance))}.
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-            {/* Establecer como pagado desde el cliente */}
-            <div className="flex items-start space-x-3 p-4 bg-orange-50 border border-orange-200 rounded-xl transition-all hover:shadow-sm">
-              <Checkbox
-                id="mark-as-paid"
-                checked={markAsPaid}
-                onCheckedChange={(checked) => setMarkAsPaid(checked as boolean)}
-                className="mt-1 border-orange-400 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
-              />
-              <div className="grid gap-1.5 leading-none">
-                <label
-                  htmlFor="mark-as-paid"
-                  className="text-sm font-semibold text-orange-800 cursor-pointer select-none"
-                >
-                  Establecer pedido como PAGADO
-                </label>
-                <p className="text-xs text-orange-700/80 leading-relaxed">
-                  Active esta opción si desea marcar el pedido como pagado
-                  manualmente, independientemente de si el monto cubre el total.
-                </p>
-              </div>
-            </div>
-
+            {/* Date Picker Section */}
             <div className="space-y-2">
+              <Label className="text-slate-500  text-[10px] font-bold uppercase tracking-widest px-1">
+                Fecha del Pago
+              </Label>
               <DatePicker
-                label="Fecha de pago"
+                label=" "
                 selected={paymentDate}
                 onDateChange={setPaymentDate}
               />
             </div>
 
-            {/* Información adicional */}
-            <div className="text-xs text-gray-500 bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex gap-3">
-              <div className="text-blue-500 shrink-0 mt-0.5">
-                <Info className="h-4 w-4" />
+            {/* Real-time Calculation Area */}
+            <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-4 flex justify-between items-center">
+              <div>
+                <p className="text-slate-500  text-[10px] font-bold uppercase tracking-widest leading-none mb-1">
+                  Saldo Final
+                </p>
+                <p className="text-orange-400 text-lg font-bold leading-tight">
+                  {formatCurrency(newBalance)}
+                </p>
               </div>
-              <p className="leading-relaxed">
-                Esta cantidad se sumará al monto ya recibido. El sistema
-                registrará la fecha seleccionada para el seguimiento del pago.
-              </p>
+              <div className="text-right">
+                <p className="text-slate-500  text-[10px] font-bold uppercase tracking-widest leading-none mb-1">
+                  Vuelto
+                </p>
+                <p className="text-slate-900  text-lg font-bold leading-tight">
+                  {formatCurrency(change)}
+                </p>
+              </div>
             </div>
 
-            {/* Preview del nuevo estado si se ingresó una cantidad */}
-            {newStatusInfo && (
-              <div className="rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 p-4 space-y-2 border border-indigo-200">
-                <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-2">
-                  📊 Vista previa del resultado
-                </p>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-700">
-                    Nuevo Total Recibido:
-                  </span>
-                  <span className="font-bold text-indigo-900">
-                    {formatCurrency(newStatusInfo.newTotal)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-700">Nuevo Estado:</span>
-                  <span className={`font-bold ${newStatusInfo.statusColor}`}>
-                    {newStatusInfo.newStatus}
-                  </span>
-                </div>
-                {newStatusInfo.remaining > 0 ? (
-                  <div className="flex justify-between items-center pt-2 border-t border-indigo-200">
-                    <span className="text-sm text-gray-700">
-                      Aún Pendiente:
-                    </span>
-                    <span className="font-semibold text-orange-600">
-                      {formatCurrency(newStatusInfo.remaining)}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 pt-2 border-t border-indigo-200 text-green-700">
-                    <span className="text-lg">✅</span>
-                    <span className="text-sm font-semibold">
-                      Pedido completamente pagado
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Manual Status Selector */}
+            <div className="space-y-2">
+              <Label className="text-slate-500  text-[10px] font-bold uppercase tracking-widest px-1">
+                Estado del Pago
+              </Label>
+              <Select
+                value={markAsPaid ? "Pagado" : "Pendiente"}
+                onValueChange={(val) => setMarkAsPaid(val === "Pagado")}
+              >
+                <SelectTrigger className="w-full bg-white border-slate-200  rounded-xl h-12 text-slate-700  font-medium">
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Pendiente">Pendiente / Parcial</SelectItem>
+                  <SelectItem value="Pagado">
+                    Completado (Marcado Manual)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Info Message */}
+            <div className="flex items-start gap-2 px-1">
+              <Info className="h-3.5 w-3.5 text-slate-400 mt-0.5" />
+              <p className="text-[10px] text-slate-500 leading-tight">
+                El monto se sumará al total recibido. Si excede el total, el
+                excedente quedará como saldo a favor para el próximo pedido.
+              </p>
+            </div>
           </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
+          {/* Footer Action */}
+          <div className="p-5 mt-auto border-t border-orange-100 bg-white">
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-green-600 hover:bg-green-700"
+              className="w-full bg-orange-400 hover:bg-orange-500 text-white font-bold h-14 rounded-xl shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-base"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Confirmando...
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Procesando...
                 </>
               ) : (
-                "Confirmar Pago"
+                <>
+                  <CheckCircle2 className="h-5 w-5" />
+                  Confirmar Pago
+                </>
               )}
             </Button>
-          </DialogFooter>
+            <p className="text-center text-slate-400 -500 text-[9px] mt-4 uppercase tracking-[0.2em] font-bold">
+              ID PEDIDO: #{order.id}
+            </p>
+          </div>
         </form>
+
+        {/* Bottom Safe Area Notch (Simulated) */}
+        <div className="h-5 w-full flex justify-center items-end pb-2 bg-white ">
+          <div className="h-1 w-20 bg-slate-200  rounded-full"></div>
+        </div>
       </DialogContent>
     </Dialog>
   );

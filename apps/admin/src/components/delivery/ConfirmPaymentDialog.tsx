@@ -1,223 +1,342 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
-import { formatCurrency, type DeliverReceip } from '@/types';
-import { calculatePaymentStatus } from '@/lib/payment-status-calculator';
-import { DatePicker } from '../utils/DatePicker';
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Loader2,
+  X,
+  CheckCircle2,
+  User,
+  Coins,
+  Info,
+  AlertTriangle,
+  Landmark,
+} from "lucide-react";
+import { formatCurrency, type DeliverReceip } from "@/types";
+import { DatePicker } from "../utils/DatePicker";
+import { useQuery } from "@tanstack/react-query";
+import { fetchClientBalancesReport } from "@/services/reports/reports";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ConfirmPaymentDialogProps {
   delivery: DeliverReceip | null;
   open: boolean;
   onClose: () => void;
-  onConfirm: (deliveryId: number, amountReceived: number, paymentDate: Date | undefined) => Promise<void>;
+  onConfirm: (
+    deliveryId: number,
+    amountReceived: number,
+    paymentDate: Date | undefined,
+    paymentStatus?: string,
+  ) => Promise<void>;
 }
 
-export function ConfirmPaymentDialog({ delivery, open, onClose, onConfirm }: ConfirmPaymentDialogProps) {
-  const [amountReceived, setAmountReceived] = useState<string>('');
-  const [paymentDate, setPaymentDate] = useState<Date | undefined>();
+export function ConfirmPaymentDialog({
+  delivery,
+  open,
+  onClose,
+  onConfirm,
+}: ConfirmPaymentDialogProps) {
+  const [amountReceived, setAmountReceived] = useState<string>("");
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
+  const [markAsPaid, setMarkAsPaid] = useState(false);
+  const [useCredit, setUseCredit] = useState(false);
+
+  // Fetch client balances to show surplus
+  const { data: clientBalances } = useQuery({
+    queryKey: ["clientBalances"],
+    queryFn: fetchClientBalancesReport,
+    enabled: !!delivery?.client?.id,
+  });
+
+  const clientInfo = clientBalances?.find((c) => c.id === delivery?.client?.id);
+  const hasSurplus = (clientInfo?.surplus_balance || 0) > 0;
+
+  // Handle Switch for credit
+  useEffect(() => {
+    if (useCredit && hasSurplus) {
+      setAmountReceived(clientInfo!.surplus_balance.toString());
+      setError("");
+    } else if (
+      !useCredit &&
+      amountReceived === clientInfo?.surplus_balance.toString()
+    ) {
+      setAmountReceived("");
+    }
+  }, [useCredit, hasSurplus, clientInfo, amountReceived]);
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setAmountReceived('');
-      setError('');
+      setAmountReceived("");
+      setError("");
+      setMarkAsPaid(false);
+      setUseCredit(false);
       onClose();
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!delivery) {
-      console.error('[ConfirmPaymentDialog] Error: No hay entrega seleccionada');
-      setError('No se pudo identificar la entrega.');
+      setError("No se pudo identificar la entrega.");
       return;
     }
 
-    if (!delivery.id) {
-      console.error('[ConfirmPaymentDialog] Error: La entrega no tiene ID', delivery);
-      setError('La entrega no tiene un ID válido.');
-      return;
-    }
-
-    // Validar que se ingresó una cantidad
     const amount = parseFloat(amountReceived);
-    if (isNaN(amount) || amount <= 0) {
-      setError('Por favor ingresa una cantidad válida mayor a 0');
+    if (isNaN(amount) || (amount <= 0 && !markAsPaid)) {
+      setError("Por favor ingresa una cantidad válida mayor a 0");
       return;
     }
 
     setIsSubmitting(true);
-    setError('');
+    setError("");
 
     try {
-      await onConfirm(delivery.id, amount, paymentDate);
+      const payStatus = markAsPaid ? "Pagado" : undefined;
+      await onConfirm(delivery.id!, amount || 0, paymentDate, payStatus);
       handleClose();
     } catch {
-      setError('Error al confirmar el pago. Intenta nuevamente.');
+      setError("Error al confirmar el pago. Intenta nuevamente.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Calcular el nuevo total que se recibirá y el estado de pago resultante
-  // Usa la utilidad que coincide exactamente con la lógica del backend
-  const calculateNewStatus = () => {
-    if (!delivery || !amountReceived) return null;
-    
-    const amount = parseFloat(amountReceived);
-    if (isNaN(amount) || amount <= 0) return null;
-
-    return calculatePaymentStatus(
-      delivery.payment_amount,
-      amount,
-      delivery.weight_cost
-    );
-  };
-
-  const newStatusInfo = calculateNewStatus();
-
   if (!delivery) return null;
+
+  const currentPending = delivery.weight_cost - delivery.payment_amount;
+  const amount = parseFloat(amountReceived) || 0;
+  const newBalance = Math.max(0, currentPending - amount);
+  const change = Math.max(0, amount - currentPending);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Confirmar Pago de la Entrega</DialogTitle>
-          <DialogDescription>
-            Entrega #{delivery.id} - {delivery.client?.email || 'Sin cliente'}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-[420px] p-0 overflow-hidden border-none shadow-2xl rounded-2xl bg-white">
+        <DialogTitle className="sr-only">Registrar Pago</DialogTitle>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            {/* Información de la entrega */}
-            <div className="rounded-lg bg-gray-50 p-4 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Costo Total del Envío:</span>
-                <span className="font-semibold text-gray-900">
-                  {formatCurrency(delivery.weight_cost)}
-                </span>
+        {/* Header Custom */}
+        <div className="flex items-center justify-between p-4 border-b border-slate-100">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleClose}
+            className="rounded-full text-slate-500 hover:bg-slate-100"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+          <h2 className="text-slate-900 text-lg font-bold tracking-tight">
+            Registar Pago Entrega
+          </h2>
+          <div className="w-10"></div>
+        </div>
+
+        {/* Delivery Total Section */}
+        <div className="p-6 text-center bg-blue-50/50">
+          <p className="text-blue-500 text-[10px] font-bold uppercase tracking-wider mb-1">
+            Total Pendiente Entrega
+          </p>
+          <h1 className="text-blue-600  tracking-tight text-[38px] font-bold leading-none">
+            {formatCurrency(currentPending)}
+          </h1>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col flex-1 overflow-y-auto max-h-[70vh]"
+        >
+          <div className="p-5 space-y-5">
+            {/* Customer Info Card */}
+            <div className="flex items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-sm border border-slate-100">
+              <div className="flex flex-col gap-1 flex-1">
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                  Información del Cliente
+                </p>
+                <p className="text-slate-900 text-base font-bold leading-tight">
+                  {delivery.client?.name + " " + delivery.client?.last_name ||
+                    "Sin Nombre"}
+                </p>
+                <div className="flex items-center gap-1.5 mt-1">
+                  {clientInfo && clientInfo.total_balance < 0 ? (
+                    <>
+                      <AlertTriangle className="text-red-500 h-3.5 w-3.5" />
+                      <p className="text-red-500 text-xs font-semibold">
+                        Saldo: {formatCurrency(clientInfo.total_balance)}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Landmark className="text-emerald-500 h-3.5 w-3.5" />
+                      <p className="text-emerald-500 text-xs font-semibold">
+                        Al día
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Cantidad Recibida Actual:</span>
-                <span className="font-semibold text-gray-900">
-                  {formatCurrency(delivery.payment_amount)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                <span className="text-sm text-gray-600">Pendiente:</span>
-                <span className="font-semibold text-orange-600">
-                  {formatCurrency(delivery.weight_cost - delivery.payment_amount)}
-                </span>
+              <div className="h-12 w-12 rounded-lg bg-slate-100  flex items-center justify-center overflow-hidden border border-slate-200">
+                <User className="h-6 w-6 text-slate-400" />
               </div>
             </div>
 
-            {/* Campo para ingresar cantidad recibida */}
+            {/* Credit Toggle */}
+            <div className="flex items-center gap-4 bg-slate-50 px-4 py-3 rounded-xl border border-slate-100 justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-orange-400 flex items-center justify-center rounded-lg bg-orange-50 shrink-0 h-10 w-10">
+                  <Coins className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-slate-700  text-sm font-semibold">
+                    Usar saldo a favor
+                  </p>
+                  {hasSurplus && (
+                    <p className="text-emerald-600 text-[10px] font-medium">
+                      Disponible: {formatCurrency(clientInfo!.surplus_balance)}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <Switch
+                checked={useCredit}
+                onCheckedChange={setUseCredit}
+                disabled={!hasSurplus || isSubmitting}
+              />
+            </div>
+
+            {/* Payment Amount Input */}
             <div className="space-y-2">
-              <Label htmlFor="amount-received">
-                Cantidad Recibida <span className="text-red-500">*</span>
-              </Label>
+              <div className="flex justify-between items-center px-1">
+                <Label className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                  Cantidad a Pagar
+                </Label>
+                {error && (
+                  <span className="text-[10px] text-red-500 font-bold uppercase">
+                    {error}
+                  </span>
+                )}
+              </div>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 text-2xl font-bold">
+                  $
+                </span>
+
                 <Input
-                  id="amount-received"
+                  className="w-full bg-white border-2 border-slate-100 rounded-xl py-7 pl-10 pr-4 text-3xl font-bold text-slate-900  focus-visible:border-[#135bec] focus-visible:ring-0 transition-all text-center"
+                  placeholder="0.00"
                   type="number"
                   step="0.01"
-                  min="0.01"
-                  placeholder="0.00"
                   value={amountReceived}
                   onChange={(e) => {
                     setAmountReceived(e.target.value);
-                    setError('');
+                    setError("");
+                    if (useCredit) setUseCredit(false);
                   }}
-                  className="pl-7"
                   disabled={isSubmitting}
-                  required
                 />
               </div>
-              {error && (
-                <p className="text-sm text-red-500">{error}</p>
-              )}
-            </div>
-            
-            {/* Campo para fecha de pago */}
-            <div className="space-y-2">
-              <DatePicker label='Fecha de pago' selected={paymentDate} onDateChange={setPaymentDate} />
             </div>
 
-            {/* Información adicional */}
-            <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded-md">
-              <p className="font-medium text-blue-700 mb-1">📝 Nota:</p>
-              <p>
-                Esta cantidad se sumará al monto ya recibido. El estado de pago se actualizará automáticamente.
+            {/* Date Picker Section */}
+            <div className="space-y-2">
+              <Label className="text-slate-500  text-[10px] font-bold uppercase tracking-widest px-1">
+                Fecha del Pago
+              </Label>
+              <DatePicker
+                label=" "
+                selected={paymentDate}
+                onDateChange={setPaymentDate}
+              />
+            </div>
+
+            {/* Real-time Calculation Area */}
+            <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex justify-between items-center">
+              <div>
+                <p className="text-slate-500  text-[10px] font-bold uppercase tracking-widest leading-none mb-1">
+                  Saldo Final
+                </p>
+                <p className="text-blue-500 text-lg font-bold leading-tight">
+                  {formatCurrency(newBalance)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-slate-500  text-[10px] font-bold uppercase tracking-widest leading-none mb-1">
+                  Vuelto
+                </p>
+                <p className="text-slate-900  text-lg font-bold leading-tight">
+                  {formatCurrency(change)}
+                </p>
+              </div>
+            </div>
+
+            {/* Manual Status Selector */}
+            <div className="space-y-2">
+              <Label className="text-slate-500  text-[10px] font-bold uppercase tracking-widest px-1">
+                Estado del Pago
+              </Label>
+              <Select
+                value={markAsPaid ? "Pagado" : "Pendiente"}
+                onValueChange={(val) => setMarkAsPaid(val === "Pagado")}
+              >
+                <SelectTrigger className="w-full bg-white border-slate-200  rounded-xl h-12 text-slate-700  font-medium">
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Pendiente">Pendiente / Parcial</SelectItem>
+                  <SelectItem value="Pagado">
+                    Completado (Marcado Manual)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Info Message */}
+            <div className="flex items-start gap-2 px-1">
+              <Info className="h-3.5 w-3.5 text-slate-400 mt-0.5" />
+              <p className="text-[10px] text-slate-500 leading-tight">
+                El monto se sumará al total recibido de la entrega. El estado se
+                actualizará automáticamente según el monto total.
               </p>
             </div>
-
-            {/* Preview del nuevo estado si se ingresó una cantidad */}
-            {newStatusInfo && (
-              <div className="rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 p-4 space-y-2 border border-indigo-200">
-                <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-2">
-                  📊 Vista previa del resultado
-                </p>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-700">Nuevo Total Recibido:</span>
-                  <span className="font-bold text-indigo-900">
-                    {formatCurrency(newStatusInfo.newTotal)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-700">Nuevo Estado:</span>
-                  <span className={`font-bold ${newStatusInfo.statusColor}`}>
-                    {newStatusInfo.newStatus}
-                  </span>
-                </div>
-                {newStatusInfo.remaining > 0 ? (
-                  <div className="flex justify-between items-center pt-2 border-t border-indigo-200">
-                    <span className="text-sm text-gray-700">Aún Pendiente:</span>
-                    <span className="font-semibold text-orange-600">
-                      {formatCurrency(newStatusInfo.remaining)}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 pt-2 border-t border-indigo-200 text-green-700">
-                    <span className="text-lg">✅</span>
-                    <span className="text-sm font-semibold">Entrega completamente pagada</span>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
+          {/* Footer Action */}
+          <div className="p-5 mt-auto border-t border-blue-100 bg-white">
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-green-600 hover:bg-green-700"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-14 rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-base"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Confirmando...
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Procesando...
                 </>
               ) : (
-                'Confirmar Pago'
+                <>
+                  <CheckCircle2 className="h-5 w-5" />
+                  Confirmar Pago
+                </>
               )}
             </Button>
-          </DialogFooter>
+            <p className="text-center text-slate-400 -500 text-[9px] mt-4 uppercase tracking-[0.2em] font-bold">
+              ID ENTREGA: #{delivery.id}
+            </p>
+          </div>
         </form>
+
+        {/* Bottom Safe Area Notch (Simulated) */}
+        <div className="h-5 w-full flex justify-center items-end pb-2 bg-white ">
+          <div className="h-1 w-20 bg-slate-200  rounded-full"></div>
+        </div>
       </DialogContent>
     </Dialog>
   );

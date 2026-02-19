@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import Sum, Q, Subquery, OuterRef, F
 from api.models import Order, DeliverReceip, CustomUser
 from decimal import Decimal
+from datetime import datetime
 
 def get_client_balance_report(client_id: int) -> Dict[str, Any]:
     """
@@ -187,4 +188,141 @@ def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
         })
     
     return report
+
+
+def get_client_operations_statement(client_id: int) -> Dict[str, Any]:
+    """
+    Genera un estado de cuenta de operaciones del cliente ordenado por fecha.
+    
+    Cada transacción se registra como una operación separada:
+    - Pedido: 2 operaciones (creación del pedido con costo, pago del pedido)
+    - Entrega: 2 operaciones (creación de la entrega con costo, pago de la entrega)
+    
+    Args:
+        client_id: ID del cliente
+        
+    Returns:
+        Dictionary con el estado de cuenta detallado por operaciones
+    """
+    try:
+        client = CustomUser.objects.get(pk=client_id)
+    except CustomUser.DoesNotExist:
+        return {"error": f"Cliente con ID {client_id} no encontrado."}
+
+    operations = []
+    running_balance = 0.0
+
+    # 1. Operaciones de Pedidos - Creación (débito)
+    orders = Order.objects.filter(client=client).order_by('created_at')
+    for order in orders:
+        if order.total_costs and order.total_costs > 0:
+            operation_date = order.created_at
+            operations.append({
+                "id": f"order_{order.id}_creation",
+                "date": operation_date.strftime('%Y-%m-%d %H:%M:%S'),
+                "type": "PEDIDO",
+                "description": f"Pedido #{order.id} - Creación",
+                "debit": float(order.total_costs),
+                "credit": 0.0,
+                "balance": 0.0,  # Se calculará después
+                "reference_id": order.id,
+                "status": order.status,
+                "payment_status": order.pay_status
+            })
+
+    # 2. Operaciones de Pedidos - Pagos (crédito)
+    for order in orders:
+        if order.received_value_of_client and order.received_value_of_client > 0:
+            operation_date = order.payment_date if order.payment_date else order.created_at
+            operations.append({
+                "id": f"order_{order.id}_payment",
+                "date": operation_date.strftime('%Y-%m-%d') + (" 12:00:00" if not order.payment_date else ""),
+                "type": "PAGO PEDIDO",
+                "description": f"Pago Pedido #{order.id}",
+                "debit": 0.0,
+                "credit": float(order.received_value_of_client),
+                "balance": 0.0,  # Se calculará después
+                "reference_id": order.id,
+                "status": order.status,
+                "payment_status": order.pay_status
+            })
+
+    # 3. Operaciones de Entregas - Creación (débito)
+    deliveries = DeliverReceip.objects.filter(client=client).order_by('deliver_date')
+    for delivery in deliveries:
+        if delivery.weight_cost and delivery.weight_cost > 0:
+            operation_date = delivery.deliver_date
+            operations.append({
+                "id": f"delivery_{delivery.id}_creation",
+                "date": operation_date.strftime('%Y-%m-%d %H:%M:%S'),
+                "type": "ENTREGA",
+                "description": f"Entrega #{delivery.id} - Creación",
+                "debit": float(delivery.weight_cost),
+                "credit": 0.0,
+                "balance": 0.0,  # Se calculará después
+                "reference_id": delivery.id,
+                "status": delivery.status,
+                "payment_status": delivery.payment_status
+            })
+
+    # 4. Operaciones de Entregas - Pagos (crédito)
+    for delivery in deliveries:
+        if delivery.payment_amount and delivery.payment_amount > 0:
+            operation_date = delivery.payment_date if delivery.payment_date else delivery.deliver_date
+            operations.append({
+                "id": f"delivery_{delivery.id}_payment",
+                "date": operation_date.strftime('%Y-%m-%d %H:%M:%S') if delivery.payment_date else operation_date.strftime('%Y-%m-%d') + " 13:00:00",
+                "type": "PAGO ENTREGA",
+                "description": f"Pago Entrega #{delivery.id}",
+                "debit": 0.0,
+                "credit": float(delivery.payment_amount),
+                "balance": 0.0,  # Se calculará después
+                "reference_id": delivery.id,
+                "status": delivery.status,
+                "payment_status": delivery.payment_status
+            })
+
+    # Ordenar todas las operaciones por fecha
+    operations.sort(key=lambda x: x['date'])
+
+    # Calcular saldo acumulado
+    for operation in operations:
+        running_balance += operation['credit'] - operation['debit']
+        operation['balance'] = round(running_balance, 2)
+
+    # Calcular totales
+    total_debits = sum(op['debit'] for op in operations)
+    total_credits = sum(op['credit'] for op in operations)
+    final_balance = total_credits - total_debits
+
+    # Determinar estado final
+    if final_balance < -0.01:
+        status = "DEUDA"
+    elif final_balance > 0.01:
+        status = "SALDO A FAVOR"
+    else:
+        status = "AL DÍA"
+
+    return {
+        "client": {
+            "id": client.id,
+            "name": client.full_name,
+            "phone": client.phone_number,
+            "email": client.email,
+            "agent_name": client.assigned_agent.full_name if client.assigned_agent else None
+        },
+        "statement": {
+            "operations": operations,
+            "summary": {
+                "total_operations": len(operations),
+                "total_debits": round(total_debits, 2),
+                "total_credits": round(total_credits, 2),
+                "final_balance": round(final_balance, 2),
+                "status": status,
+                "pending_to_pay": round(abs(final_balance) if final_balance < 0 else 0.0, 2),
+                "surplus_balance": round(final_balance if final_balance > 0 else 0.0, 2)
+            }
+        },
+        "generated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
 

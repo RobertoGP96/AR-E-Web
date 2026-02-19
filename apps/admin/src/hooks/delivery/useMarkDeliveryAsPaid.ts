@@ -5,19 +5,20 @@ interface MarkDeliveryAsPaidVariables {
   deliveryId: number;
   amountReceived?: number;
   paymentDate?: Date;
+  paymentStatus?: string;
 }
 
 export function useMarkDeliveryAsPaid() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ deliveryId, amountReceived, paymentDate }: MarkDeliveryAsPaidVariables) => {
+    mutationFn: ({ deliveryId, amountReceived, paymentDate, paymentStatus }: MarkDeliveryAsPaidVariables) => {
       
       if (!deliveryId || deliveryId === undefined) {
         throw new Error('Delivery ID is undefined');
       }
       
-      return markDeliveryAsPaid(deliveryId, amountReceived, paymentDate);
+      return markDeliveryAsPaid(deliveryId, amountReceived, paymentDate, paymentStatus);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deliveries'] });

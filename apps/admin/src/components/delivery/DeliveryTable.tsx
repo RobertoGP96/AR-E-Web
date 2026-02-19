@@ -219,6 +219,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
     deliveryId: number,
     amountReceived: number,
     paymentDate: Date | undefined,
+    paymentStatus?: string,
   ) => {
     try {
       // Reemplazar directamente el monto de pago
@@ -226,6 +227,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
         deliveryId,
         amountReceived,
         paymentDate,
+        paymentStatus,
       });
       toast.success(`Pago confirmado para la entrega #${deliveryId}`);
     } catch (err) {
@@ -234,7 +236,6 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
       throw err;
     }
   };
-
   // Helper para validar si la imagen es válida (no vacía)
   const isValidImage = (image: unknown): boolean => {
     if (!image) return false;

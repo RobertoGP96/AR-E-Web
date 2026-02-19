@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
-import type { CustomUser, CreateUserData, UpdateUserData } from '../../types/models/user';
-import { roleLabels } from '../../types/models/user';
-import { z } from 'zod';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React, { useState } from "react";
+import type {
+  CustomUser,
+  CreateUserData,
+  UpdateUserData,
+} from "../../types/models/user";
+import { roleLabels } from "../../types/models/user";
+import { z } from "zod";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
   DialogTrigger,
@@ -12,27 +16,57 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Eye, Mail, Phone, MapPin, Shield, Percent, User2, Lock, CheckCircle, XCircle, UserCheck, UserX, UserPlus, Save, Loader2, InfoIcon } from 'lucide-react';
-import { toast } from 'sonner';
-import { useUsersByRole } from '@/hooks/user';
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '../ui/input-group';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import {
+  Eye,
+  Mail,
+  Phone,
+  MapPin,
+  Shield,
+  Percent,
+  User2,
+  Lock,
+  CheckCircle,
+  XCircle,
+  UserCheck,
+  UserX,
+  UserPlus,
+  Save,
+  Loader2,
+  InfoIcon,
+} from "lucide-react";
+import { toast } from "sonner";
+import { useUsersByRole } from "@/hooks/user";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "../ui/input-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 // Schema para crear usuario (contraseña requerida)
 const createUserSchema = z.object({
-  email: z.string().email('Email inválido').optional().or(z.literal('')),
-  name: z.string().min(2, 'Nombre requerido'),
-  last_name: z.string().min(2, 'Apellido requerido'),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  name: z.string().min(2, "Nombre requerido"),
+  last_name: z.string().min(2, "Apellido requerido"),
   home_address: z.string().optional(),
-  phone_number: z.string().min(7, 'Teléfono requerido'),
-  password: z.string().min(6, 'Contraseña requerida (mínimo 6 caracteres)'),
+  phone_number: z.string().min(7, "Teléfono requerido"),
+  password: z.string().min(6, "Contraseña requerida (mínimo 6 caracteres)"),
   role: z.string(),
   agent_profit: z.number().min(0).optional(),
   assigned_agent: z.number().nullable().optional(),
@@ -40,11 +74,11 @@ const createUserSchema = z.object({
 
 // Schema para editar usuario (sin contraseña)
 const editUserSchema = z.object({
-  email: z.string().email('Email inválido').optional().or(z.literal('')),
-  name: z.string().min(2, 'Nombre requerido'),
-  last_name: z.string().min(2, 'Apellido requerido'),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  name: z.string().min(2, "Nombre requerido"),
+  last_name: z.string().min(2, "Apellido requerido"),
   home_address: z.string().optional(),
-  phone_number: z.string().min(7, 'Teléfono requerido'),
+  phone_number: z.string().min(7, "Teléfono requerido"),
   role: z.string(),
   agent_profit: z.number().min(0).optional(),
   assigned_agent: z.number().nullable().optional(),
@@ -59,7 +93,7 @@ interface UserFormProps {
   onSubmit?: (data: CreateUserData | UpdateUserData) => void;
   onActivate?: (userId: number, isActive: boolean) => void;
   onVerify?: (userId: number, isVerified: boolean) => void;
-  mode?: 'create' | 'edit' | 'view';
+  mode?: "create" | "edit" | "view";
   loading?: boolean;
   error?: string;
   trigger?: React.ReactNode;
@@ -72,59 +106,62 @@ export const UserForm: React.FC<UserFormProps> = ({
   onSubmit,
   onActivate,
   onVerify,
-  mode = 'create',
+  mode = "create",
   loading = false,
   error,
   trigger,
   open: controlledOpen,
-  onOpenChange: controlledOnOpenChange
+  onOpenChange: controlledOnOpenChange,
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
-  const setOpen = isControlled ? controlledOnOpenChange || (() => { }) : setInternalOpen;
+  const setOpen = isControlled
+    ? controlledOnOpenChange || (() => {})
+    : setInternalOpen;
 
-  const isEdit = mode === 'edit';
-  const isView = mode === 'view';
-  const isCreate = mode === 'create';
+  const isEdit = mode === "edit";
+  const isView = mode === "view";
+  const isCreate = mode === "create";
 
   const schema = isCreate ? createUserSchema : editUserSchema;
 
   const getDefaultValues = () => {
     if (isCreate) {
       return {
-        email: '',
-        name: '',
-        last_name: '',
-        home_address: '',
-        phone_number: '',
-        password: '',
-        role: 'client',
+        email: "",
+        name: "",
+        last_name: "",
+        home_address: "",
+        phone_number: "",
+        password: "",
+        role: "client",
         agent_profit: 0,
         assigned_agent: null,
       };
     }
     if (user) {
       return {
-        email: user.email || '',
+        email: user.email || "",
         name: user.name,
         last_name: user.last_name,
-        home_address: user.home_address || '',
+        home_address: user.home_address || "",
         phone_number: user.phone_number,
         role: user.role,
         agent_profit: user.agent_profit || 0,
-        assigned_agent: user.assigned_agent !== null && user.assigned_agent !== undefined 
-          ? Number(user.assigned_agent) 
-          : null,
+        assigned_agent:
+          user.assigned_agent !== null && user.assigned_agent !== undefined
+            ? Number(user.assigned_agent)
+            : null,
       };
     }
     return {
-      email: '',
-      name: '',
-      last_name: '',
-      home_address: '',
-      phone_number: '',
-      role: 'client',
+      email: "",
+      name: "",
+      last_name: "",
+      home_address: "",
+      phone_number: "",
+      role: "client",
       agent_profit: 0,
       assigned_agent: null,
     };
@@ -143,24 +180,25 @@ export const UserForm: React.FC<UserFormProps> = ({
   });
 
   // Observar el rol seleccionado para mostrar/ocultar ganancia de agente
-  const selectedRole = watch('role');
+  const selectedRole = watch("role");
 
   // Obtener lista de agentes y administradores para asignar
-  const { data: agentsData, isLoading: isLoadingAgents } = useUsersByRole('agent');
-  const { data: adminsData, isLoading: isLoadingAdmins } = useUsersByRole('admin');
-  
+  const { data: agentsData, isLoading: isLoadingAgents } =
+    useUsersByRole("agent");
+  const { data: adminsData, isLoading: isLoadingAdmins } =
+    useUsersByRole("admin");
+
   // Extraer y combinar las listas de agentes y administradores
   const agentsList: CustomUser[] = agentsData?.results || [];
   const adminsList: CustomUser[] = adminsData?.results || [];
-  
+
   // Filtrar y combinar solo usuarios activos
   const assignableUsers = React.useMemo(() => {
     const allUsers = [...agentsList, ...adminsList];
-    return allUsers.filter(user => user.is_active);
+    return allUsers.filter((user) => user.is_active);
   }, [agentsList, adminsList]);
-  
-  const isLoading = isLoadingAgents || isLoadingAdmins;
 
+  const isLoading = isLoadingAgents || isLoadingAdmins;
 
   // Resetear el formulario cuando cambia el usuario o el modo
   React.useEffect(() => {
@@ -171,8 +209,8 @@ export const UserForm: React.FC<UserFormProps> = ({
 
   // Mostrar toast cuando hay error desde las props
   React.useEffect(() => {
-    if (error && error.trim() !== '') {
-      toast.error('Error al guardar usuario', {
+    if (error && error.trim() !== "") {
+      toast.error("Error al guardar usuario", {
         description: error,
       });
     }
@@ -180,8 +218,9 @@ export const UserForm: React.FC<UserFormProps> = ({
 
   const submitHandler = async (data: UserFormSchema) => {
     if (!onSubmit) {
-      toast.error('Error de configuración', {
-        description: 'No se ha proporcionado una función para guardar el usuario',
+      toast.error("Error de configuración", {
+        description:
+          "No se ha proporcionado una función para guardar el usuario",
       });
       return;
     }
@@ -189,10 +228,11 @@ export const UserForm: React.FC<UserFormProps> = ({
     // Verificar que el usuario asignado existe
     if (data.assigned_agent !== null && data.assigned_agent !== undefined) {
       const agentId = Number(data.assigned_agent);
-      const userExists = assignableUsers.some(user => user.id === agentId);
+      const userExists = assignableUsers.some((user) => user.id === agentId);
       if (!userExists) {
-        toast.error('Error de validación', {
-          description: 'El usuario seleccionado no existe en el sistema o está inactivo',
+        toast.error("Error de validación", {
+          description:
+            "El usuario seleccionado no existe en el sistema o está inactivo",
         });
         return;
       }
@@ -200,38 +240,42 @@ export const UserForm: React.FC<UserFormProps> = ({
 
     // Validar campos requeridos manualmente antes de enviar
     if (!data.name || data.name.trim().length < 2) {
-      toast.error('Error de validación', {
-        description: 'El nombre debe tener al menos 2 caracteres',
+      toast.error("Error de validación", {
+        description: "El nombre debe tener al menos 2 caracteres",
       });
       return;
     }
 
     if (!data.last_name || data.last_name.trim().length < 2) {
-      toast.error('Error de validación', {
-        description: 'El apellido debe tener al menos 2 caracteres',
+      toast.error("Error de validación", {
+        description: "El apellido debe tener al menos 2 caracteres",
       });
       return;
     }
 
     if (!data.phone_number || data.phone_number.trim().length < 7) {
-      toast.error('Error de validación', {
-        description: 'El teléfono debe tener al menos 7 caracteres',
+      toast.error("Error de validación", {
+        description: "El teléfono debe tener al menos 7 caracteres",
       });
       return;
     }
 
-    if (isCreate && (!(data as CreateUserFormSchema).password || (data as CreateUserFormSchema).password.length < 6)) {
-      toast.error('Error de validación', {
-        description: 'La contraseña debe tener al menos 6 caracteres',
+    if (
+      isCreate &&
+      (!(data as CreateUserFormSchema).password ||
+        (data as CreateUserFormSchema).password.length < 6)
+    ) {
+      toast.error("Error de validación", {
+        description: "La contraseña debe tener al menos 6 caracteres",
       });
       return;
     }
 
-    if (data.email && data.email.trim() !== '') {
+    if (data.email && data.email.trim() !== "") {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(data.email)) {
-        toast.error('Error de validación', {
-          description: 'El email no es válido',
+        toast.error("Error de validación", {
+          description: "El email no es válido",
         });
         return;
       }
@@ -255,14 +299,15 @@ export const UserForm: React.FC<UserFormProps> = ({
           updateData.phone_number = data.phone_number;
         }
         if (data.home_address !== user.home_address) {
-          updateData.home_address = data.home_address || '';
+          updateData.home_address = data.home_address || "";
         }
         // Solo incluir email si cambió y no está vacío
         if (data.email && data.email !== user.email) {
           updateData.email = data.email;
         }
         if (data.role !== user.role) {
-          updateData.role = data.role as import('../../types/models/user').UserRole;
+          updateData.role =
+            data.role as import("../../types/models/user").UserRole;
         }
         if (data.agent_profit !== user.agent_profit) {
           updateData.agent_profit = data.agent_profit || 0;
@@ -273,8 +318,8 @@ export const UserForm: React.FC<UserFormProps> = ({
 
         // Verificar que hay al menos un campo para actualizar
         if (Object.keys(updateData).length <= 1) {
-          toast.info('Sin cambios', {
-            description: 'No se detectaron cambios en los datos del usuario',
+          toast.info("Sin cambios", {
+            description: "No se detectaron cambios en los datos del usuario",
           });
           return;
         }
@@ -285,20 +330,20 @@ export const UserForm: React.FC<UserFormProps> = ({
         // Si llegamos aquí, fue exitoso - NO mostrar toast, lo hace el padre
       } else if (isCreate) {
         const createUserData: CreateUserData = {
-          email: data.email || '',
+          email: data.email || "",
           name: data.name,
           last_name: data.last_name,
-          home_address: data.home_address || '',
+          home_address: data.home_address || "",
           phone_number: data.phone_number,
-          password: (data as CreateUserFormSchema).password ?? '',
-          role: data.role as import('../../types/models/user').UserRole,
+          password: (data as CreateUserFormSchema).password ?? "",
+          role: data.role as import("../../types/models/user").UserRole,
           agent_profit: data.agent_profit || 0,
           assigned_agent: data.assigned_agent || null,
         };
 
         await onSubmit(createUserData);
 
-        toast.success('Usuario creado exitosamente', {
+        toast.success("Usuario creado exitosamente", {
           description: `${data.name} ${data.last_name} ha sido registrado como ${roleLabels[data.role as keyof typeof roleLabels]}`,
         });
 
@@ -308,7 +353,7 @@ export const UserForm: React.FC<UserFormProps> = ({
     } catch (err) {
       // El error ya se maneja en el componente padre, no hacer nada aquí
       // Solo loguearlo para debugging
-      console.error('Error en submitHandler:', err);
+      console.error("Error en submitHandler:", err);
     }
   };
 
@@ -325,21 +370,21 @@ export const UserForm: React.FC<UserFormProps> = ({
   };
 
   const getDialogTitle = () => {
-    if (isView) return 'Detalles del usuario';
-    if (isEdit) return 'Editar usuario';
-    return 'Crear nuevo usuario';
+    if (isView) return "Detalles del usuario";
+    if (isEdit) return "Editar usuario";
+    return "Crear nuevo usuario";
   };
 
   const getDialogDescription = () => {
-    if (isView) return 'Información completa del usuario';
-    if (isEdit) return 'Modifica los datos del usuario';
-    return 'Completa los datos para crear un nuevo usuario';
+    if (isView) return "Información completa del usuario";
+    if (isEdit) return "Modifica los datos del usuario";
+    return "Completa los datos para crear un nuevo usuario";
   };
 
   const getButtonText = () => {
-    if (loading) return 'Guardando...';
-    if (isEdit) return 'Actualizar usuario';
-    return 'Crear usuario';
+    if (loading) return "Guardando...";
+    if (isEdit) return "Actualizar usuario";
+    return "Crear usuario";
   };
 
   const getButtonIcon = () => {
@@ -370,8 +415,12 @@ export const UserForm: React.FC<UserFormProps> = ({
                   <Mail className="h-5 w-5 text-blue-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <Label className="text-xs font-medium text-muted-foreground">Email</Label>
-                  <p className="text-sm font-medium truncate mt-1">{user.email}</p>
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Email
+                  </Label>
+                  <p className="text-sm font-medium truncate mt-1">
+                    {user.email}
+                  </p>
                 </div>
               </div>
 
@@ -380,8 +429,12 @@ export const UserForm: React.FC<UserFormProps> = ({
                   <User2 className="h-5 w-5 text-green-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <Label className="text-xs font-medium text-muted-foreground">Nombre completo</Label>
-                  <p className="text-sm font-medium mt-1">{user.name} {user.last_name}</p>
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Nombre completo
+                  </Label>
+                  <p className="text-sm font-medium mt-1">
+                    {user.name} {user.last_name}
+                  </p>
                 </div>
               </div>
 
@@ -390,8 +443,12 @@ export const UserForm: React.FC<UserFormProps> = ({
                   <Phone className="h-5 w-5 text-purple-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <Label className="text-xs font-medium text-muted-foreground">Teléfono</Label>
-                  <p className="text-sm font-medium mt-1">{user.phone_number}</p>
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Teléfono
+                  </Label>
+                  <p className="text-sm font-medium mt-1">
+                    {user.phone_number}
+                  </p>
                 </div>
               </div>
 
@@ -400,8 +457,12 @@ export const UserForm: React.FC<UserFormProps> = ({
                   <MapPin className="h-5 w-5 text-orange-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <Label className="text-xs font-medium text-muted-foreground">Dirección</Label>
-                  <p className="text-sm font-medium mt-1">{user.home_address}</p>
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Dirección
+                  </Label>
+                  <p className="text-sm font-medium mt-1">
+                    {user.home_address}
+                  </p>
                 </div>
               </div>
             </div>
@@ -415,7 +476,9 @@ export const UserForm: React.FC<UserFormProps> = ({
                   <Shield className="h-5 w-5 text-indigo-600" />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-xs font-medium text-muted-foreground">Rol</Label>
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Rol
+                  </Label>
                   <div className="mt-2">
                     <Badge variant="outline" className="text-sm">
                       {roleLabels[user.role]}
@@ -425,26 +488,32 @@ export const UserForm: React.FC<UserFormProps> = ({
               </div>
 
               {/* Solo mostrar ganancia de agente si el rol es 'agent' */}
-              {user.role === 'agent' && (
+              {user.role === "agent" && (
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-amber-50 rounded-lg">
                     <Percent className="h-5 w-5 text-amber-600" />
                   </div>
                   <div className="flex-1">
-                    <Label className="text-xs font-medium text-muted-foreground">Ganancia de agente</Label>
-                    <p className="text-sm font-medium mt-1">{user.agent_profit}%</p>
+                    <Label className="text-xs font-medium text-muted-foreground">
+                      Ganancia de agente
+                    </Label>
+                    <p className="text-sm font-medium mt-1">
+                      {user.agent_profit}%
+                    </p>
                   </div>
                 </div>
               )}
 
               {/* Solo mostrar agente asignado si el rol es 'client' */}
-              {user.role === 'client' && user.assigned_agent && (
+              {user.role === "client" && user.assigned_agent && (
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-blue-50 rounded-lg">
                     <UserCheck className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <Label className="text-xs font-medium text-muted-foreground">Agente asignado</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">
+                      Agente asignado
+                    </Label>
                     <p className="text-sm font-medium mt-1">
                       {/* Aquí necesitarías obtener el nombre del agente, por ahora mostrar ID */}
                       Agente ID: {user.assigned_agent}
@@ -458,15 +527,31 @@ export const UserForm: React.FC<UserFormProps> = ({
 
             {/* Estado del usuario */}
             <div>
-              <Label className="text-xs font-medium text-muted-foreground mb-3 block">Estado del usuario</Label>
+              <Label className="text-xs font-medium text-muted-foreground mb-3 block">
+                Estado del usuario
+              </Label>
               <div className="flex flex-wrap gap-2">
-                <Badge variant={user.is_active ? "default" : "secondary"} className="gap-1">
-                  {user.is_active ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                  {user.is_active ? 'Activo' : 'Inactivo'}
+                <Badge
+                  variant={user.is_active ? "default" : "secondary"}
+                  className="gap-1"
+                >
+                  {user.is_active ? (
+                    <CheckCircle className="h-3 w-3" />
+                  ) : (
+                    <XCircle className="h-3 w-3" />
+                  )}
+                  {user.is_active ? "Activo" : "Inactivo"}
                 </Badge>
-                <Badge variant={user.is_verified ? "default" : "secondary"} className="gap-1">
-                  {user.is_verified ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                  {user.is_verified ? 'Verificado' : 'No verificado'}
+                <Badge
+                  variant={user.is_verified ? "default" : "secondary"}
+                  className="gap-1"
+                >
+                  {user.is_verified ? (
+                    <CheckCircle className="h-3 w-3" />
+                  ) : (
+                    <XCircle className="h-3 w-3" />
+                  )}
+                  {user.is_verified ? "Verificado" : "No verificado"}
                 </Badge>
                 {user.is_staff && (
                   <Badge variant="outline" className="gap-1">
@@ -482,7 +567,9 @@ export const UserForm: React.FC<UserFormProps> = ({
               <>
                 <Separator />
                 <div>
-                  <Label className="text-xs font-medium text-muted-foreground mb-3 block">Acciones rápidas</Label>
+                  <Label className="text-xs font-medium text-muted-foreground mb-3 block">
+                    Acciones rápidas
+                  </Label>
                   <div className="flex flex-wrap gap-2">
                     {onActivate && (
                       <Button
@@ -568,8 +655,6 @@ export const UserForm: React.FC<UserFormProps> = ({
             </h3>
 
             <div className="grid grid-cols-1 gap-4">
-
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="flex items-center gap-2">
@@ -580,7 +665,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                     id="name"
                     type="text"
                     placeholder="Juan"
-                    {...register('name')}
+                    {...register("name")}
                     disabled={loading}
                     className="h-10"
                   />
@@ -593,7 +678,10 @@ export const UserForm: React.FC<UserFormProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="last_name" className="flex items-center gap-2">
+                  <Label
+                    htmlFor="last_name"
+                    className="flex items-center gap-2"
+                  >
                     <User2 className="h-3.5 w-3.5 text-muted-foreground" />
                     Apellido *
                   </Label>
@@ -601,7 +689,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                     id="last_name"
                     type="text"
                     placeholder="Pérez"
-                    {...register('last_name')}
+                    {...register("last_name")}
                     disabled={loading}
                     className="h-10"
                   />
@@ -615,7 +703,10 @@ export const UserForm: React.FC<UserFormProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone_number" className="flex items-center gap-2">
+                <Label
+                  htmlFor="phone_number"
+                  className="flex items-center gap-2"
+                >
                   <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                   Teléfono *
                 </Label>
@@ -623,7 +714,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                   id="phone_number"
                   type="tel"
                   placeholder="+1234567890"
-                  {...register('phone_number')}
+                  {...register("phone_number")}
                   disabled={loading}
                   className="h-10"
                 />
@@ -636,7 +727,10 @@ export const UserForm: React.FC<UserFormProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="home_address" className="flex items-center gap-2">
+                <Label
+                  htmlFor="home_address"
+                  className="flex items-center gap-2"
+                >
                   <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                   Dirección
                 </Label>
@@ -644,7 +738,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                   id="home_address"
                   type="text"
                   placeholder="Calle Principal #123, Ciudad, País (opcional)"
-                  {...register('home_address')}
+                  {...register("home_address")}
                   disabled={loading}
                   className="h-10"
                 />
@@ -665,7 +759,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                   id="email"
                   type="email"
                   placeholder="usuario@ejemplo.com"
-                  {...register('email')}
+                  {...register("email")}
                   disabled={loading}
                   className="h-10"
                 />
@@ -691,7 +785,11 @@ export const UserForm: React.FC<UserFormProps> = ({
                 </h3>
 
                 <InputGroup>
-                  <InputGroupInput placeholder="Crea una contraseña" type="password" {...register('password')} />
+                  <InputGroupInput
+                    placeholder="Crea una contraseña"
+                    type="password"
+                    {...register("password")}
+                  />
                   <InputGroupAddon align="inline-end">
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -759,9 +857,12 @@ export const UserForm: React.FC<UserFormProps> = ({
               </div>
 
               {/* Solo mostrar ganancia de agente si el rol es 'agent' */}
-              {selectedRole === 'agent' && (
+              {selectedRole === "agent" && (
                 <div className="space-y-2">
-                  <Label htmlFor="agent_profit" className="flex items-center gap-2">
+                  <Label
+                    htmlFor="agent_profit"
+                    className="flex items-center gap-2"
+                  >
                     <Percent className="h-3.5 w-3.5 text-muted-foreground" />
                     Ganancia de agente (%)
                   </Label>
@@ -769,7 +870,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                     id="agent_profit"
                     type="number"
                     placeholder="0"
-                    {...register('agent_profit', { valueAsNumber: true })}
+                    {...register("agent_profit", { valueAsNumber: true })}
                     min={0}
                     max={100}
                     step={0.01}
@@ -786,9 +887,12 @@ export const UserForm: React.FC<UserFormProps> = ({
               )}
 
               {/* Solo mostrar agente asignado si el rol es 'client' */}
-              { (
+              {
                 <div className="space-y-2">
-                  <Label htmlFor="assigned_agent" className="flex items-center gap-2">
+                  <Label
+                    htmlFor="assigned_agent"
+                    className="flex items-center gap-2"
+                  >
                     <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
                     Agente asignado
                   </Label>
@@ -797,23 +901,38 @@ export const UserForm: React.FC<UserFormProps> = ({
                     control={control}
                     render={({ field }) => (
                       <Select
-                        value={field.value !== null && field.value !== undefined ? field.value.toString() : 'none'}
+                        value={
+                          field.value !== null && field.value !== undefined
+                            ? field.value.toString()
+                            : "none"
+                        }
                         onValueChange={(value) => {
-                          field.onChange(value === 'none' ? null : Number(value));
+                          field.onChange(
+                            value === "none" ? null : Number(value),
+                          );
                         }}
                         disabled={loading || isLoading}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={isLoading ? 'Cargando usuarios...' : 'Seleccionar usuario'} />
+                          <SelectValue
+                            placeholder={
+                              isLoading
+                                ? "Cargando usuarios..."
+                                : "Seleccionar usuario"
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Ninguno</SelectItem>
                           <SelectGroup>
                             <SelectLabel>Agentes</SelectLabel>
                             {assignableUsers
-                              .filter(user => user.role === 'agent')
+                              .filter((user) => user.role === "agent")
                               .map((user: CustomUser) => (
-                                <SelectItem key={user.id} value={user.id.toString()}>
+                                <SelectItem
+                                  key={user.id}
+                                  value={user.id.toString()}
+                                >
                                   {user.name} {user.last_name}
                                 </SelectItem>
                               ))}
@@ -821,9 +940,12 @@ export const UserForm: React.FC<UserFormProps> = ({
                           <SelectGroup>
                             <SelectLabel>Administradores</SelectLabel>
                             {assignableUsers
-                              .filter(user => user.role === 'admin')
+                              .filter((user) => user.role === "admin")
                               .map((user: CustomUser) => (
-                                <SelectItem key={user.id} value={user.id.toString()}>
+                                <SelectItem
+                                  key={user.id}
+                                  value={user.id.toString()}
+                                >
                                   {user.name} {user.last_name}
                                 </SelectItem>
                               ))}
@@ -839,7 +961,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                     </span>
                   )}
                 </div>
-              )}
+              }
             </div>
           </div>
 
@@ -852,11 +974,7 @@ export const UserForm: React.FC<UserFormProps> = ({
             >
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="gap-2"
-            >
+            <Button type="submit" disabled={loading} className="gap-2">
               {getButtonIcon()}
               {getButtonText()}
             </Button>

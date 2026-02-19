@@ -4,6 +4,7 @@
 
 import { apiClient } from '@/lib/api-client';
 import type { Order } from '@/types';
+import { formatToYYYYMMDD } from '@/lib/format-date';
 
 export interface UpdateOrderData {
   observations?: string;
@@ -11,7 +12,7 @@ export interface UpdateOrderData {
   status?: string;
   client_email?: string;
   received_value_of_client?: number;
-  payment_date?: Date;
+  payment_date?: string;
 }
 
 /**
@@ -71,7 +72,7 @@ export const markOrderAsPaid = async (id: number, amountReceived?: number, payme
   }
   
   if (paymentDate) {
-    patchData.payment_date = paymentDate;
+    patchData.payment_date = formatToYYYYMMDD(paymentDate);
   }
   
   if (payStatus) {

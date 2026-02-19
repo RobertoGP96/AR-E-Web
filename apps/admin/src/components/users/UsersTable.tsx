@@ -301,7 +301,7 @@ export default function UsersTable({
   if (isLoading) {
     return (
       <div className="overflow-x-auto rounded-lg border border-muted bg-background shadow">
-            <LoadingSpinner text="Cargando Usuarios" size="lg" />
+        <LoadingSpinner text="Cargando Usuarios" size="lg" />
       </div>
     );
   }

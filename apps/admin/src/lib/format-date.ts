@@ -90,3 +90,20 @@ export const formatDeliveryDate = (dateString: string | Date | undefined | null)
     return 'Fecha inválida';
   }
 };
+
+/**
+ * Formatea una fecha u objeto Date a string YYYY-MM-DD
+ * Útil para enviar fechas al backend de Django
+ */
+export const formatToYYYYMMDD = (date: Date | string | undefined | null): string | undefined => {
+  if (!date) return undefined;
+  
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return undefined;
+  
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
+};

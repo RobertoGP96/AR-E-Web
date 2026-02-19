@@ -3,8 +3,9 @@
  */
 
 import { apiClient } from '../../lib/api-client';
-import type { DeliverReceip } from '../../types';
+import type { DeliverReceip, PayStatus } from '../../types';
 import type { UpdateDeliverReceipData } from '../../types/models/delivery';
+import { formatToYYYYMMDD } from '@/lib/format-date';
 
 /**
  * Actualiza un delivery existente
@@ -41,7 +42,7 @@ export const updateDeliveryPaymentStatus = async (id: number, paymentStatus: str
  * - Si 0 < payment_amount < weight_cost => 'Parcial'
  * - Si payment_amount == 0 => 'No pagado'
  */
-export const markDeliveryAsPaid = async (id: number, amountReceived?: number, paymentDate?: Date): Promise<DeliverReceip> => {
+export const markDeliveryAsPaid = async (id: number, amountReceived?: number, paymentDate?: Date, paymentStatus?: string): Promise<DeliverReceip> => {
   // Validar que el ID sea válido
   if (!id || id === undefined || id === null) {
     const error = `[markDeliveryAsPaid] ERROR: ID inválido recibido: ${id}`;
@@ -49,16 +50,27 @@ export const markDeliveryAsPaid = async (id: number, amountReceived?: number, pa
     throw new Error('ID de entrega inválido. No se puede actualizar el pago.');
   }
   
-  // Si se proporciona una cantidad recibida, actualizamos solo ese campo
-  // El backend se encargará de ajustar automáticamente el payment_status
+  const patchData: Partial<UpdateDeliverReceipData> = {};
+  
   if (amountReceived !== undefined && amountReceived > 0) {
-    const url = `/api_data/delivery_receips/${id}/`;
-    return await apiClient.patch<DeliverReceip>(url, {
-      payment_amount: amountReceived,
-      payment_date: paymentDate
-    });
+    patchData.payment_amount = amountReceived;
   }
   
-  // Si no se proporciona cantidad, marcamos como Pagado directamente
-  return await updateDeliveryPaymentStatus(id, 'Pagado');
+  if (paymentDate) {
+    patchData.payment_date = formatToYYYYMMDD(paymentDate);
+  }
+  
+  if (paymentStatus) {
+    patchData.payment_status = paymentStatus as PayStatus;
+  } else if (amountReceived === undefined) {
+    // Si no se proporciona cantidad ni estado, marcamos como Pagado por defecto
+    patchData.payment_status = 'Pagado';
+  }
+
+  if (Object.keys(patchData).length > 0) {
+    const url = `/api_data/delivery_receips/${id}/`;
+    return await apiClient.patch<DeliverReceip>(url, patchData);
+  }
+  
+  return await apiClient.get<DeliverReceip>(`/api_data/delivery_receips/${id}/`);
 };

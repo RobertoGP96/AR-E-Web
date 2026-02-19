@@ -10,7 +10,7 @@ from api.services.expense_analysis_service import analyze_expenses
 from api.services.delivery_service import analyze_deliveries
 from api.services.order_service import analyze_orders
 from api.services.purchases_service import analyze_purchases, get_purchases_summary, analyze_product_buys
-from api.services.client_services import get_all_clients_balances_summary
+from api.services.client_services import get_all_clients_balances_summary, get_client_operations_statement
 from api.permissions.permissions import AdminPermission, AccountantPermission
 
 
@@ -255,3 +255,34 @@ class ClientBalancesReportView(APIView):
 
         report = get_all_clients_balances_summary()
         return Response({'success': True, 'data': report, 'message': 'Reporte de saldos de clientes obtenido'}, status=status.HTTP_200_OK)
+
+
+class ClientOperationsStatementView(APIView):
+    """API View para estado de cuenta de operaciones de un cliente específico."""
+    permission_classes = [IsAuthenticated, AdminPermission | AccountantPermission]
+
+    @extend_schema(
+        summary="Estado de cuenta de operaciones del cliente",
+        description="Retorna un estado de cuenta detallado con todas las operaciones del cliente ordenadas por fecha, incluyendo pedidos, entregas y sus pagos respectivos.",
+        tags=["Reportes"]
+    )
+    def get(self, request):
+        user = request.user
+        if not (getattr(user, 'is_staff', False) or getattr(user, 'role', None) in ['admin', 'accountant']):
+            return Response({'success': False, 'message': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
+
+        client_id = request.query_params.get('client_id')
+        if not client_id:
+            return Response({'success': False, 'message': 'El parámetro client_id es requerido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            client_id = int(client_id)
+        except ValueError:
+            return Response({'success': False, 'message': 'El client_id debe ser un número válido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        statement = get_client_operations_statement(client_id)
+        
+        if 'error' in statement:
+            return Response({'success': False, 'message': statement['error']}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response({'success': True, 'data': statement, 'message': 'Estado de cuenta de cliente obtenido'}, status=status.HTTP_200_OK)

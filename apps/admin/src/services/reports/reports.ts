@@ -1,6 +1,48 @@
 import { apiClient, type ApiErrorResponse } from '@/lib/api-client';
 import type { ClientBalanceEntry, ClientBalancesReportResponse } from '@/types';
 
+export interface ClientOperation {
+  id: string;
+  date: string;
+  type: string;
+  description: string;
+  debit: number;
+  credit: number;
+  balance: number;
+  reference_id: number;
+  status: string;
+  payment_status: string;
+}
+
+export interface ClientOperationsStatement {
+  client: {
+    id: number;
+    name: string;
+    phone: string;
+    email: string;
+    agent_name: string | null;
+  };
+  statement: {
+    operations: ClientOperation[];
+    summary: {
+      total_operations: number;
+      total_debits: number;
+      total_credits: number;
+      final_balance: number;
+      status: string;
+      pending_to_pay: number;
+      surplus_balance: number;
+    };
+  };
+  generated_at: string;
+}
+
+export interface ClientOperationsResponse {
+  success: boolean;
+  data: ClientOperationsStatement;
+  message: string;
+}
+
 export interface MonthlyReport {
   month: string;
   month_short: string;
@@ -127,4 +169,34 @@ export const fetchClientBalancesReport = async (): Promise<ClientBalanceEntry[]>
   }
 };
 
-export default { fetchProfitReports, fetchClientBalancesReport };
+/**
+ * Obtiene el estado de cuenta de operaciones de un cliente específico
+ */
+export const fetchClientOperationsStatement = async (clientId: number): Promise<ClientOperationsStatement> => {
+  try {
+    const response = await apiClient.get<ClientOperationsResponse>(`/api_data/reports/clients/operations/?client_id=${clientId}`);
+    
+    if (response && response.success) {
+      return response.data;
+    }
+    
+    throw new Error(response?.message || 'No se pudo cargar el estado de cuenta del cliente.');
+  } catch (error) {
+    console.error('Error en fetchClientOperationsStatement:', error);
+    
+    if (error && typeof error === 'object' && 'status' in (error as Record<string, unknown>)) {
+      const { status, message } = error as ApiErrorResponse;
+      if (status === 403) {
+        throw new Error('No tiene permisos para acceder a este reporte.');
+      }
+      if (status === 404) {
+        throw new Error('Cliente no encontrado.');
+      }
+      if (message) throw new Error(message);
+    }
+    
+    throw new Error('Error al conectar con el servidor para obtener el estado de cuenta del cliente.');
+  }
+};
+
+export default { fetchProfitReports, fetchClientBalancesReport, fetchClientOperationsStatement };

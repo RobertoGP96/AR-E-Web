@@ -36,7 +36,11 @@ import {
   ChevronsRight,
   ChevronUp,
   ChevronDown,
+  Eye,
+  EyeOff,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ClientOperationsStatement } from "@/components/reports/ClientOperationsStatement";
 import { AdvancedFilters, type FilterState } from "./advanced-filters";
 import { useQuery } from "@tanstack/react-query";
 import { fetchClientBalancesReport } from "@/services/reports/reports";
@@ -233,6 +237,8 @@ export function ClientBalancesTable() {
     key: string;
     direction: "asc" | "desc";
   }>({ key: "balance", direction: "asc" });
+
+  const [openPopoverId, setOpenPopoverId] = useState<number | null>(null);
 
   // Obtener lista única de agentes
   const agents = useMemo(() => {
@@ -438,13 +444,19 @@ export function ClientBalancesTable() {
                           ))}
                       </div>
                     </TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Eye className="h-4 w-4" />
+                        Operaciones
+                      </div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedData.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={7}
+                        colSpan={8}
                         className="text-center py-8 text-muted-foreground"
                       >
                         <div className="flex flex-col items-center gap-2">
@@ -503,6 +515,47 @@ export function ClientBalancesTable() {
                         </TableCell>
                         <TableCell className="text-center px-2">
                           <StatusBadge status={client.status} />
+                        </TableCell>
+                        <TableCell className="text-center px-2">
+                          <Popover
+                            open={openPopoverId === client.id}
+                            onOpenChange={(open) => 
+                              setOpenPopoverId(open ? client.id : null)
+                            }
+                          >
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent 
+                              className="w-[90vw] max-w-4xl max-h-[80vh] overflow-y-auto"
+                              align="start"
+                              side="bottom"
+                            >
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                  <h3 className="text-lg font-semibold">
+                                    Estado de Cuenta - {client.name}
+                                  </h3>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setOpenPopoverId(null)}
+                                  >
+                                    <EyeOff className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                {openPopoverId === client.id && (
+                                  <ClientOperationsStatement clientId={client.id} />
+                                )}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         </TableCell>
                       </TableRow>
                     ))
