@@ -17,7 +17,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     full_name = serializers.CharField(read_only=True)
     agent_name = serializers.SerializerMethodField(read_only=True)
-    balance_status = serializers.CharField(source='balance_status', read_only=True)
+    balance_status = serializers.CharField(read_only=True)
 
     class Meta:
         model = CustomUser
@@ -78,7 +78,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     """
     full_name = serializers.CharField(read_only=True)
     agent_name = serializers.SerializerMethodField(read_only=True)
-    balance_status = serializers.CharField(source='balance_status', read_only=True)
+    balance_status = serializers.CharField(read_only=True)
 
     class Meta:
         model = CustomUser
@@ -148,7 +148,7 @@ class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)  # Password es opcional en updates
     full_name = serializers.CharField(read_only=True)
     agent_name = serializers.SerializerMethodField(read_only=True)
-    balance_status = serializers.CharField(source='balance_status', read_only=True)
+    balance_status = serializers.CharField(read_only=True)
 
     class Meta:
         """Class of model"""
@@ -264,7 +264,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(read_only=True)
     agent_name = serializers.SerializerMethodField(read_only=True)
 
-    balance_status = serializers.CharField(source='balance_status', read_only=True)
+    balance_status = serializers.CharField(read_only=True)
 
     class Meta:
         model = CustomUser
