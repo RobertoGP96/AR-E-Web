@@ -141,11 +141,11 @@ export function ConfirmPaymentDialog({
         </div>
 
         {/* Delivery Total Section */}
-        <div className="p-6 text-center bg-blue-50/50">
-          <p className="text-blue-500 text-[10px] font-bold uppercase tracking-wider mb-1">
+        <div className="p-6 text-center bg-orange-50/50">
+          <p className="text-orange-400 text-[10px] font-bold uppercase tracking-wider mb-1">
             Total Pendiente Entrega
           </p>
-          <h1 className="text-blue-600  tracking-tight text-[38px] font-bold leading-none">
+          <h1 className="text-orange-400  tracking-tight text-[38px] font-bold leading-none">
             {formatCurrency(currentPending)}
           </h1>
         </div>
@@ -156,9 +156,9 @@ export function ConfirmPaymentDialog({
         >
           <div className="p-5 space-y-5">
             {/* Customer Info Card */}
-            <div className="flex items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-sm border border-slate-100">
+            <div className="flex items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-sm border border-orange-100">
               <div className="flex flex-col gap-1 flex-1">
-                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                <p className="text-orange-500 text-[10px] font-bold uppercase tracking-widest">
                   Información del Cliente
                 </p>
                 <p className="text-slate-900 text-base font-bold leading-tight">
@@ -225,12 +225,12 @@ export function ConfirmPaymentDialog({
                 )}
               </div>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 text-2xl font-bold">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 text-2xl font-bold">
                   $
                 </span>
 
                 <Input
-                  className="w-full bg-white border-2 border-slate-100 rounded-xl py-7 pl-10 pr-4 text-3xl font-bold text-slate-900  focus-visible:border-[#135bec] focus-visible:ring-0 transition-all text-center"
+                  className="w-full bg-white border-2 border-slate-100 rounded-xl py-7 pl-10 pr-4 text-3xl font-bold text-slate-900  focus-visible:border-orange-400 focus-visible:ring-0 transition-all text-center"
                   placeholder="0.00"
                   type="number"
                   step="0.01"
@@ -263,7 +263,7 @@ export function ConfirmPaymentDialog({
                 <p className="text-slate-500  text-[10px] font-bold uppercase tracking-widest leading-none mb-1">
                   Saldo Final
                 </p>
-                <p className="text-blue-500 text-lg font-bold leading-tight">
+                <p className="text-orange-500 text-lg font-bold leading-tight">
                   {formatCurrency(newBalance)}
                 </p>
               </div>
@@ -286,7 +286,7 @@ export function ConfirmPaymentDialog({
                 value={markAsPaid ? "Pagado" : "Pendiente"}
                 onValueChange={(val) => setMarkAsPaid(val === "Pagado")}
               >
-                <SelectTrigger className="w-full bg-white border-slate-200  rounded-xl h-12 text-slate-700  font-medium">
+                <SelectTrigger className="w-full bg-white border-orange-200  rounded-xl h-12 text-orange-700  font-medium">
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -313,7 +313,7 @@ export function ConfirmPaymentDialog({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-14 rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-base"
+              className="w-full bg-orange-400 hover:bg-orange-500 text-white font-bold h-14 rounded-xl shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-base"
             >
               {isSubmitting ? (
                 <>
@@ -327,7 +327,7 @@ export function ConfirmPaymentDialog({
                 </>
               )}
             </Button>
-            <p className="text-center text-slate-400 -500 text-[9px] mt-4 uppercase tracking-[0.2em] font-bold">
+            <p className="text-center text-orange-400 text-[9px] mt-4 uppercase tracking-[0.2em] font-bold">
               ID ENTREGA: #{delivery.id}
             </p>
           </div>
@@ -335,7 +335,7 @@ export function ConfirmPaymentDialog({
 
         {/* Bottom Safe Area Notch (Simulated) */}
         <div className="h-5 w-full flex justify-center items-end pb-2 bg-white ">
-          <div className="h-1 w-20 bg-slate-200  rounded-full"></div>
+          <div className="h-1 w-20 bg-orange-200  rounded-full"></div>
         </div>
       </DialogContent>
     </Dialog>

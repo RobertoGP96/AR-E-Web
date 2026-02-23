@@ -17,6 +17,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     full_name = serializers.CharField(read_only=True)
     agent_name = serializers.SerializerMethodField(read_only=True)
+    balance_status = serializers.CharField(source='balance_status', read_only=True)
 
     class Meta:
         model = CustomUser
@@ -30,6 +31,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
             "phone_number",
             "role",
             "agent_profit",
+            "balance",
+            "balance_status",
             "assigned_agent",
             "is_staff",
             "is_active",
@@ -39,7 +42,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
             "agent_name",
         ]
         # Permitir que administradores actualicen is_active/is_verified mediante PATCH
-        read_only_fields = ["id", "is_staff", "date_joined"]
+        read_only_fields = ["id", "is_staff", "date_joined", "balance", "balance_status"]
 
     def get_agent_name(self, obj):
         """
@@ -75,6 +78,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     """
     full_name = serializers.CharField(read_only=True)
     agent_name = serializers.SerializerMethodField(read_only=True)
+    balance_status = serializers.CharField(source='balance_status', read_only=True)
 
     class Meta:
         model = CustomUser
@@ -87,6 +91,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "phone_number",
             "role",
             "agent_profit",
+            "balance",
+            "balance_status",
             "assigned_agent",
             "is_staff",
             "is_active",
@@ -95,7 +101,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "full_name",
             "agent_name",
         ]
-        read_only_fields = ["id", "date_joined"]
+        read_only_fields = ["id", "date_joined", "balance", "balance_status"]
 
     def get_agent_name(self, obj):
         """
@@ -142,6 +148,7 @@ class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)  # Password es opcional en updates
     full_name = serializers.CharField(read_only=True)
     agent_name = serializers.SerializerMethodField(read_only=True)
+    balance_status = serializers.CharField(source='balance_status', read_only=True)
 
     class Meta:
         """Class of model"""
@@ -157,6 +164,8 @@ class UserSerializer(serializers.ModelSerializer):
             "phone_number",
             "role",
             "agent_profit",
+            "balance",
+            "balance_status",
             "assigned_agent",
             "is_staff",
             "is_active",
@@ -165,7 +174,7 @@ class UserSerializer(serializers.ModelSerializer):
             "full_name",
             "agent_name",
         ]
-        read_only_fields = ["id"]  # Asegurar que id sea read-only
+        read_only_fields = ["id", "balance", "balance_status"]  # Asegurar que id sea read-only
 
     def validate_phone_number(self, value):
         # Permitir números, espacios, guiones, paréntesis y el símbolo +
@@ -255,6 +264,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(read_only=True)
     agent_name = serializers.SerializerMethodField(read_only=True)
 
+    balance_status = serializers.CharField(source='balance_status', read_only=True)
+
     class Meta:
         model = CustomUser
         fields = [
@@ -266,6 +277,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "phone_number",
             "role",
             "agent_profit",
+            "balance",
+            "balance_status",
             "assigned_agent",
             "agent_name",
             "is_staff",
@@ -278,6 +291,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "id",  # Cambiado de user_id a id
             "role",
             "agent_profit",
+            "balance",
+            "balance_status",
             "is_staff",
             "is_active",
             "is_verified",

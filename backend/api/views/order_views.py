@@ -265,3 +265,115 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.save()
         serializer = self.get_serializer(order)
         return Response(serializer.data)
+
+    @extend_schema(
+        summary="Aplicar saldo a favor como pago de una orden",
+        description=(
+            "Aplica el saldo disponible del cliente (balance positivo) como pago "
+            "parcial o total de la orden. Si no se proporciona `amount`, se aplica "
+            "todo el saldo disponible hasta cubrir la deuda del pedido. "
+            "El balance del cliente se recalcula automáticamente."
+        ),
+        tags=["Órdenes"]
+    )
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated], url_path='apply_balance')
+    def apply_balance(self, request, pk=None):
+        """
+        Aplica el saldo a favor del cliente como pago de la orden.
+
+        Body (todos opcionales):
+            {
+                "amount": 50.00,            // Si no se envía, se usa todo el saldo disponible.
+                "payment_date": "2026-02-23"
+            }
+
+        Reglas:
+          - El cliente debe tener balance > 0.
+          - El monto no puede superar el saldo disponible.
+          - El monto no puede superar la deuda pendiente del pedido.
+          - El balance se recalcula via signal automáticamente.
+        """
+        order = self.get_object()
+        client = order.client
+
+        # 1. Verificar saldo disponible
+        client.refresh_from_db()
+        available_balance = round(float(client.balance), 2)
+
+        if available_balance <= 0:
+            return Response(
+                {
+                    "error": "El cliente no tiene saldo a favor disponible.",
+                    "balance": available_balance,
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 2. Calcular deuda pendiente de la orden
+        pending_in_order = round(float(order.total_costs) - float(order.received_value_of_client), 2)
+
+        if pending_in_order <= 0:
+            return Response(
+                {
+                    "error": "Esta orden ya está completamente pagada.",
+                    "received": float(order.received_value_of_client),
+                    "total_cost": float(order.total_costs),
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 3. Determinar el monto a aplicar
+        requested_amount = request.data.get('amount')
+        if requested_amount is not None:
+            try:
+                requested_amount = round(float(requested_amount), 2)
+            except (TypeError, ValueError):
+                return Response(
+                    {"error": "El campo 'amount' debe ser un número."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if requested_amount <= 0:
+                return Response(
+                    {"error": "El monto a aplicar debe ser mayor a 0."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if requested_amount > available_balance:
+                return Response(
+                    {
+                        "error": f"El monto (${requested_amount}) supera el saldo disponible (${available_balance}).",
+                        "available_balance": available_balance,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            amount_to_apply = min(requested_amount, pending_in_order)
+        else:
+            # Aplicar el mínimo entre saldo disponible y deuda pendiente
+            amount_to_apply = min(available_balance, pending_in_order)
+
+        amount_to_apply = round(amount_to_apply, 2)
+
+        # 4. Registrar el pago en la orden
+        payment_date_raw = request.data.get('payment_date')
+        order.add_received_value(amount_to_apply)
+        if payment_date_raw:
+            from datetime import date as date_type
+            try:
+                order.payment_date = date_type.fromisoformat(str(payment_date_raw))
+                order.save(update_fields=['payment_date', 'updated_at'])
+            except ValueError:
+                pass
+
+        # 5. El signal post_save de Order recalcula el balance automaticamente.
+        client.refresh_from_db()
+
+        serializer = self.get_serializer(order)
+        return Response(
+            {
+                "message": f"Se aplicaron ${amount_to_apply} del saldo a favor al pedido #{order.id}.",
+                "amount_applied": amount_to_apply,
+                "order": serializer.data,
+                "client_balance_after": round(float(client.balance), 2),
+                "client_balance_status": client.balance_status,
+            },
+            status=status.HTTP_200_OK
+        )

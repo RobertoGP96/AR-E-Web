@@ -2,11 +2,30 @@ import logging
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from api.models import (
-    Product, Order, ProductBuyed, ProductReceived, ProductDelivery
+    Product, Order, ProductBuyed, ProductReceived, ProductDelivery, DeliverReceip, CustomUser
 )
 from api.enums import ProductStatusEnum, OrderStatusEnum
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# HELPER: Recalcular balance del cliente
+# ============================================================================
+
+def _update_client_balance(client):
+    """
+    Recalcula y guarda el campo `balance` del cliente.
+    Solo aplica a usuarios con rol 'client'.
+    """
+    if client and hasattr(client, 'recalculate_balance') and client.role == 'client':
+        try:
+            client.recalculate_balance()
+        except Exception as e:
+            logger.error(
+                f"Error recalculando balance del cliente {client.id}: {e}",
+                exc_info=True
+            )
 
 
 # ============================================================================
@@ -270,3 +289,45 @@ def update_product_on_delivery_delete(sender, instance, **kwargs):
     except Exception as e:
         logger.error(f"Error actualizando estado del producto en ProductDelivery.post_delete: {e}", exc_info=True)
         raise
+
+
+# ============================================================================
+# ORDER BALANCE SIGNALS
+# ============================================================================
+
+@receiver(post_save, sender=Order)
+def update_client_balance_on_order_save(sender, instance, **kwargs):
+    """
+    Actualiza el saldo (balance) del cliente cuando se guarda un pedido.
+    Esto cubre tanto la creación como la actualización de pagos en órdenes.
+    """
+    _update_client_balance(instance.client)
+
+
+@receiver(post_delete, sender=Order)
+def update_client_balance_on_order_delete(sender, instance, **kwargs):
+    """
+    Actualiza el saldo (balance) del cliente cuando se elimina un pedido.
+    """
+    _update_client_balance(instance.client)
+
+
+# ============================================================================
+# DELIVERY BALANCE SIGNALS
+# ============================================================================
+
+@receiver(post_save, sender=DeliverReceip)
+def update_client_balance_on_delivery_save(sender, instance, **kwargs):
+    """
+    Actualiza el saldo (balance) del cliente cuando se guarda una entrega.
+    Cubre tanto la creación como la actualización de pagos en entregas.
+    """
+    _update_client_balance(instance.client)
+
+
+@receiver(post_delete, sender=DeliverReceip)
+def update_client_balance_on_delivery_delete(sender, instance, **kwargs):
+    """
+    Actualiza el saldo (balance) del cliente cuando se elimina una entrega.
+    """
+    _update_client_balance(instance.client)

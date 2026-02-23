@@ -20,15 +20,26 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         ('user', 'Usuario'),
         ('agent', 'Agente'),
         ('accountant', 'Contador'),
-        ('buyer', 'Comprador'),
         ('logistical', 'Logístico'),
-        ('community_manager', 'Community Manager'),
         ('admin', 'Administrador'),
         ('client', 'Cliente'),
     ]
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='client')
     agent_profit = models.FloatField(default=0)
+
+    # Saldo acumulado del cliente
+    # Positivo = saldo a favor (pagó de más)
+    # Negativo = deuda pendiente (debe dinero)
+    # Se actualiza automáticamente al registrar pagos en órdenes y entregas
+    balance = models.FloatField(
+        default=0,
+        help_text=(
+            "Saldo acumulado del cliente. "
+            "Positivo = saldo a favor. Negativo = deuda pendiente. "
+            "Se actualiza automáticamente con cada pago de pedido o entrega."
+        )
+    )
     
     assigned_agent = models.ForeignKey(
         'self',
@@ -122,6 +133,64 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def is_admin(self):
         """Check if user is admin"""
         return self.role == 'admin' or self.is_staff
+
+    def recalculate_balance(self) -> float:
+        """
+        Recalcula y guarda el saldo acumulado del cliente basándose en:
+          - Pedidos: total recibido - costo total
+          - Entregas: monto pagado - costo de la entrega (weight_cost)
+
+        Saldo positivo  → el cliente tiene saldo a favor.
+        Saldo negativo  → el cliente tiene una deuda pendiente.
+
+        Returns:
+            float: El nuevo saldo calculado.
+        """
+        from django.db.models import Sum
+        from api.models.orders import Order
+        from api.models.deliveries import DeliverReceip
+
+        # ── Pedidos ──────────────────────────────────────────────────────────
+        order_agg = Order.objects.filter(client=self).aggregate(
+            total_cost=Sum('total_costs'),
+            total_received=Sum('received_value_of_client'),
+        )
+        order_cost = float(order_agg['total_cost'] or 0.0)
+        order_received = float(order_agg['total_received'] or 0.0)
+
+        # ── Entregas ─────────────────────────────────────────────────────────
+        delivery_agg = DeliverReceip.objects.filter(client=self).aggregate(
+            total_cost=Sum('weight_cost'),
+            total_received=Sum('payment_amount'),
+        )
+        delivery_cost = float(delivery_agg['total_cost'] or 0.0)
+        delivery_received = float(delivery_agg['total_received'] or 0.0)
+
+        # ── Balance total ────────────────────────────────────────────────────
+        new_balance = round(
+            (order_received + delivery_received) - (order_cost + delivery_cost),
+            2
+        )
+
+        if self.balance != new_balance:
+            self.balance = new_balance
+            self.save(update_fields=['balance', 'updated_at'])
+
+        return new_balance
+
+    @property
+    def balance_status(self) -> str:
+        """
+        Devuelve el estado del saldo del cliente:
+          - 'DEUDA'         → debe dinero (balance < 0)
+          - 'AL DÍA'        → sin deuda ni saldo a favor
+          - 'SALDO A FAVOR' → tiene crédito disponible (balance > 0)
+        """
+        if self.balance < -0.01:
+            return "DEUDA"
+        elif self.balance > 0.01:
+            return "SALDO A FAVOR"
+        return "AL DÍA"
 
     # Campos para resolver conflictos con el modelo User por defecto
     groups = models.ManyToManyField(

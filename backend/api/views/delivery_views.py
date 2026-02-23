@@ -291,3 +291,115 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
             created.append(ProductDeliverySerializer(created_obj).data)
 
         return Response({"created": created}, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="Aplicar saldo a favor como pago de una entrega",
+        description=(
+            "Aplica el saldo disponible del cliente (balance positivo) como pago "
+            "parcial o total de la entrega. Si no se proporciona `amount`, se aplica "
+            "todo el saldo disponible hasta cubrir el costo de la entrega. "
+            "El balance del cliente se recalcula automáticamente."
+        ),
+        tags=["Recibos de Entrega"]
+    )
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated], url_path='apply_balance')
+    def apply_balance(self, request, pk=None):
+        """
+        Aplica el saldo a favor del cliente como pago de la entrega.
+
+        Body (todos opcionales):
+            {
+                "amount": 30.00,            // Si no se envía, se usa todo el saldo disponible.
+                "payment_date": "2026-02-23"
+            }
+
+        Reglas:
+          - El cliente debe tener balance > 0.
+          - El monto no puede superar el saldo disponible.
+          - El monto no puede superar la deuda pendiente de la entrega.
+          - El balance se recalcula via signal automáticamente.
+        """
+        delivery = self.get_object()
+        client = delivery.client
+
+        # 1. Verificar saldo disponible
+        client.refresh_from_db()
+        available_balance = round(float(client.balance), 2)
+
+        if available_balance <= 0:
+            return Response(
+                {
+                    "error": "El cliente no tiene saldo a favor disponible.",
+                    "balance": available_balance,
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 2. Calcular deuda pendiente de la entrega
+        pending_in_delivery = round(float(delivery.weight_cost) - float(delivery.payment_amount), 2)
+
+        if pending_in_delivery <= 0:
+            return Response(
+                {
+                    "error": "Esta entrega ya está completamente pagada.",
+                    "payment_amount": float(delivery.payment_amount),
+                    "weight_cost": float(delivery.weight_cost),
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 3. Determinar el monto a aplicar
+        requested_amount = request.data.get('amount')
+        if requested_amount is not None:
+            try:
+                requested_amount = round(float(requested_amount), 2)
+            except (TypeError, ValueError):
+                return Response(
+                    {"error": "El campo 'amount' debe ser un número."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if requested_amount <= 0:
+                return Response(
+                    {"error": "El monto a aplicar debe ser mayor a 0."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if requested_amount > available_balance:
+                return Response(
+                    {
+                        "error": f"El monto (${requested_amount}) supera el saldo disponible (${available_balance}).",
+                        "available_balance": available_balance,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            amount_to_apply = min(requested_amount, pending_in_delivery)
+        else:
+            amount_to_apply = min(available_balance, pending_in_delivery)
+
+        amount_to_apply = round(amount_to_apply, 2)
+
+        # 4. Registrar el pago en la entrega
+        payment_date_raw = request.data.get('payment_date')
+        payment_date = None
+        if payment_date_raw:
+            from django.utils.dateparse import parse_datetime, parse_date
+            from django.utils import timezone as tz
+            parsed = parse_datetime(str(payment_date_raw)) or parse_date(str(payment_date_raw))
+            if parsed:
+                payment_date = parsed
+
+        delivery.add_payment_amount(amount_to_apply, payment_date=payment_date)
+
+        # 5. El signal post_save de DeliverReceip recalcula el balance automáticamente.
+        client.refresh_from_db()
+
+        serializer = self.get_serializer(delivery)
+        return Response(
+            {
+                "message": f"Se aplicaron ${amount_to_apply} del saldo a favor a la entrega #{delivery.id}.",
+                "amount_applied": amount_to_apply,
+                "delivery": serializer.data,
+                "client_balance_after": round(float(client.balance), 2),
+                "client_balance_status": client.balance_status,
+            },
+            status=status.HTTP_200_OK
+        )
