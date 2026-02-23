@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { type Order } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { fetchClientBalancesReport } from "@/services/reports/reports";
-import { X } from "lucide-react";
+import { User2Icon } from "lucide-react";
 
 interface ConfirmPaymentDialogProps {
   order: Order | null;
@@ -78,17 +78,14 @@ export function ConfirmPaymentDialog({
     }
   }, [open]);
 
-  if (!order) return null;
-
   const handleClose = () => {
     if (!isSubmitting) onClose();
   };
 
-  const costoPedido = Math.max(
-    0,
-    order.total_cost - order.received_value_of_client,
-  );
-  const nombreCliente = order.client
+  const costoPedido = order
+    ? Math.max(0, order.total_cost - order.received_value_of_client)
+    : 0;
+  const nombreCliente = order?.client
     ? `${order.client.name} ${order.client.last_name || ""}`.trim()
     : "Cliente";
 
@@ -127,6 +124,8 @@ export function ConfirmPaymentDialog({
     if (saldoDeshabilitado && usarSaldo) setUsarSaldo(false);
   }, [monto, usarSaldo, saldoDeshabilitado]);
 
+  if (!order) return null;
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
@@ -157,21 +156,11 @@ export function ConfirmPaymentDialog({
         <div className="w-full bg-white sm:rounded-[2rem] overflow-hidden shadow-xl shadow-orange-100 flex flex-col max-h-[90vh]">
           {/* Header */}
           <div className="shrink-0 bg-gradient-to-b from-orange-50 to-white pt-6 pb-5 px-6 text-center border-b border-orange-50 relative">
-            <button
-              onClick={handleClose}
-              disabled={isSubmitting}
-              className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <div className="inline-flex items-center gap-2 bg-orange-500 text-white px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide mb-3 shadow-md shadow-orange-200">
-              <span>🛒</span> Cobro de Pedido #{order.id}
-            </div>
             <h1 className="text-2xl font-black text-gray-900 tracking-tight">
-              Panel de Pago
+              Registro de pago
             </h1>
             <div className="flex items-center justify-center gap-2 mt-1">
-              <span className="text-gray-400 text-sm">👤</span>
+              <User2Icon className="text-orange-500" size={16} />
               <span className="text-orange-500 font-bold text-base">
                 {nombreCliente}
               </span>
@@ -188,7 +177,7 @@ export function ConfirmPaymentDialog({
                 ${costoPedido.toFixed(2)}
               </p>
               <p className="text-[10px] text-orange-400 mt-0.5 font-semibold">
-                MXN (Restante)
+                USD
               </p>
             </div>
             <div className="p-4 text-center bg-orange-50/50">
@@ -199,7 +188,7 @@ export function ConfirmPaymentDialog({
                 ${saldoCliente.toFixed(2)}
               </p>
               <p className="text-[10px] text-orange-400 mt-0.5 font-semibold">
-                A favor
+                USD
               </p>
             </div>
           </div>
@@ -291,11 +280,9 @@ export function ConfirmPaymentDialog({
             </div>
 
             {/* Resumen */}
-            <div className="rounded-xl bg-[#1A1A1A] text-white overflow-hidden shadow-lg mt-2 relative border border-gray-800">
-              <div className="px-4 py-2.5 bg-[#252525] flex items-center justify-between border-b border-gray-800">
-                <span className="text-[10px] font-bold tracking-widest uppercase text-gray-300">
-                  Resumen de la Op.
-                </span>
+            <div className="rounded-xl text-white overflow-hidden shadow-lg mt-2 relative border border-orange-200">
+              <div className="px-4 py-2.5 bg-orange-400 flex items-center justify-between border-b border-gray-200">
+                <span className="text-sm font-bold text-gray-900">Resumen</span>
                 <span
                   className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${estadoInfo?.color}`}
                 >
@@ -306,12 +293,11 @@ export function ConfirmPaymentDialog({
               {/* Barra de progreso */}
               <div className="px-4 pt-3.5">
                 <div className="flex justify-between text-[10px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">
-                  <span>Progreso del pago</span>
                   <span className="text-orange-400">
                     {Math.round(porcentaje)}%
                   </span>
                 </div>
-                <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-orange-400 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full transition-all duration-500"
                     style={{ width: `${porcentaje}%` }}
@@ -319,7 +305,7 @@ export function ConfirmPaymentDialog({
                 </div>
               </div>
 
-              <div className="px-4 py-3.5 space-y-2.5 text-[13px]">
+              <div className="px-4 py-3.5 space-y-2.5 text-sm ">
                 <Row
                   label="Costo del pedido"
                   value={`$${costoPedido.toFixed(2)}`}
@@ -339,7 +325,7 @@ export function ConfirmPaymentDialog({
                   />
                 )}
 
-                <div className="border-t border-gray-800 pt-2.5 mt-1">
+                <div className="border-t border-orange-400 pt-2.5 mt-1">
                   <Row
                     label="Total cubierto"
                     value={`$${totalCubierto.toFixed(2)}`}
@@ -349,14 +335,14 @@ export function ConfirmPaymentDialog({
 
                 {pendiente > 0 && (
                   <div className="flex justify-between text-red-400 font-bold text-xs pt-1">
-                    <span>⚠ Faltará abonar</span>
+                    <span>Faltará abonar</span>
                     <span>${pendiente.toFixed(2)}</span>
                   </div>
                 )}
 
                 {excedente > 0 && (
                   <div className="flex justify-between text-green-400 font-semibold text-xs pt-1">
-                    <span>💚 Excedente al saldo</span>
+                    <span>Excedente al saldo</span>
                     <span>+${excedente.toFixed(2)}</span>
                   </div>
                 )}
@@ -383,7 +369,7 @@ export function ConfirmPaymentDialog({
               </div>
 
               {totalCubierto >= costoPedido && costoPedido > 0 && (
-                <div className="mx-3 mb-3 mt-1 bg-green-500/10 border border-green-500/20 rounded-lg py-2 text-center text-green-400 font-black text-[11px] uppercase tracking-wider">
+                <div className="mx-3 mb-3 mt-1 bg-green-500/10 border border-orange-500/20 rounded-lg py-2 text-center text-green-400 font-black text-[11px] uppercase tracking-wider">
                   ✅ Pedido completamente pagado
                 </div>
               )}
@@ -434,8 +420,10 @@ function Row({
     <div
       className={`flex justify-between ${bold ? "font-black text-sm" : "font-medium"}`}
     >
-      <span className="text-gray-400">{label}</span>
-      <span className={accent || (highlight ? "text-white" : "text-gray-300")}>
+      <span className="text-gray-800">{label}</span>
+      <span
+        className={accent || (highlight ? "text-orange-400" : "text-gray-800")}
+      >
         {value}
       </span>
     </div>
