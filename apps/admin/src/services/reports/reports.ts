@@ -21,6 +21,7 @@ export interface ClientOperationsStatement {
     phone: string;
     email: string;
     agent_name: string | null;
+    balance: number;
   };
   statement: {
     operations: ClientOperation[];

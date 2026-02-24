@@ -86,7 +86,8 @@ def get_client_balance_report(client_id: int) -> Dict[str, Any]:
             "name": client.full_name,
             "phone": client.phone_number,
             "email": client.email,
-            "agent_name": client.assigned_agent.full_name if client.assigned_agent else None
+            "agent_name": client.assigned_agent.full_name if client.assigned_agent else None,
+            "balance": client.balance,
         },
         "orders": {
             "list": orders_list,
@@ -159,6 +160,7 @@ def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
         order_received = float(client.computed_order_received or 0.0)
         deliver_cost = float(client.computed_deliver_cost or 0.0)
         deliver_received = float(client.computed_deliver_received or 0.0)
+        client_balance = float(client.balance or 0.0)
         
         # Balance formula: (Order Received + Delivery Received) - (Order Cost + Delivery Cost)
         total_balance = (order_received + deliver_received) - (order_cost + deliver_cost)
@@ -177,6 +179,7 @@ def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
             "phone": client.phone_number,
             "email": client.email,
             "agent_name": client.agent_name,
+            "balance": client_balance,
             "total_order_cost": round(order_cost, 2),
             "total_order_received": round(order_received, 2),
             "total_deliver_cost": round(deliver_cost, 2),
@@ -309,7 +312,8 @@ def get_client_operations_statement(client_id: int) -> Dict[str, Any]:
             "name": client.full_name,
             "phone": client.phone_number,
             "email": client.email,
-            "agent_name": client.assigned_agent.full_name if client.assigned_agent else None
+            "agent_name": client.assigned_agent.full_name if client.assigned_agent else None,
+            "balance": float(client.balance or 0.0)
         },
         "statement": {
             "operations": operations,

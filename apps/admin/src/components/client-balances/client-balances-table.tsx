@@ -37,14 +37,15 @@ import {
   ChevronUp,
   ChevronDown,
   Eye,
-  EyeOff,
+  ReceiptText,
 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ClientOperationsStatement } from "@/components/reports/ClientOperationsStatement";
 import { AdvancedFilters, type FilterState } from "./advanced-filters";
 import { useQuery } from "@tanstack/react-query";
 import { fetchClientBalancesReport } from "@/services/reports/reports";
 import type { ClientBalanceEntry } from "@/types";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("es-MX", {
@@ -468,11 +469,22 @@ export function ClientBalancesTable() {
                   ) : (
                     paginatedData.map((client) => (
                       <TableRow key={client.id}>
-                        <TableCell>
-                          <div className="font-medium">{client.name}</div>
-                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
-                            <Phone className="h-3 w-3" />
-                            {client.phone}
+                        <TableCell className="flex flex-row gap-2">
+                          <div className="flex items-center">
+                            <Avatar>
+                              <AvatarFallback>
+                                {client.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                          <div className="flex flex-col gap-0">
+                            <div className="text-sm font-medium">
+                              {client.name}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
+                              <Phone className="h-2 w-2" />
+                              {client.phone}
+                            </div>
                           </div>
                           <div className="text-xs text-muted-foreground sm:hidden mt-1">
                             <span className="inline-flex items-center gap-1">
@@ -517,45 +529,31 @@ export function ClientBalancesTable() {
                           <StatusBadge status={client.status} />
                         </TableCell>
                         <TableCell className="text-center px-2">
-                          <Popover
+                          <Dialog
                             open={openPopoverId === client.id}
-                            onOpenChange={(open) => 
+                            onOpenChange={(open) =>
                               setOpenPopoverId(open ? client.id : null)
                             }
                           >
-                            <PopoverTrigger asChild>
+                            <DialogTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 p-0"
                               >
-                                <Eye className="h-4 w-4" />
+                                <ReceiptText className="h-4 w-4" />
                               </Button>
-                            </PopoverTrigger>
-                            <PopoverContent 
-                              className="w-[90vw] max-w-4xl max-h-[80vh] overflow-y-auto"
-                              align="start"
-                              side="bottom"
-                            >
-                              <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                  <h3 className="text-lg font-semibold">
-                                    Estado de Cuenta - {client.name}
-                                  </h3>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setOpenPopoverId(null)}
-                                  >
-                                    <EyeOff className="h-4 w-4" />
-                                  </Button>
-                                </div>
+                            </DialogTrigger>
+                            <DialogContent className="min-w-250 w-[90vw] h-[95vh] overflow-y-auto p-0 sm:p-2 lg:p-4 bg-slate-50 border-0 rounded-none sm:rounded-2xl custom-scrollbar">
+                              <div className="relative pt-8 sm:pt-4">
                                 {openPopoverId === client.id && (
-                                  <ClientOperationsStatement clientId={client.id} />
+                                  <ClientOperationsStatement
+                                    clientId={client.id}
+                                  />
                                 )}
                               </div>
-                            </PopoverContent>
-                          </Popover>
+                            </DialogContent>
+                          </Dialog>
                         </TableCell>
                       </TableRow>
                     ))
