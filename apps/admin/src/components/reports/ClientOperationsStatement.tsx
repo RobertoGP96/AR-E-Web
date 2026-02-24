@@ -2,9 +2,18 @@ import React from "react";
 import { useClientOperationsStatement } from "@/hooks/useClientOperationsStatement";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import LoadingSpinner from "../utils/LoadingSpinner";
 
 interface ClientOperationsStatementProps {
   clientId: number;
@@ -32,11 +41,12 @@ export const ClientOperationsStatement: React.FC<
   const getOperationTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case "pedido":
-      case "entrega":
-        return "bg-slate-100 text-slate-700 border-none font-semibold hover:bg-slate-100";
-      case "pago pedido":
+        return "bg-red-100 text-red-700 border-none font-semibold hover:bg-red-100";
       case "pago entrega":
-        return "bg-blue-100/50 text-blue-600 border-none font-semibold hover:bg-blue-100/50";
+      case "pago pedido":
+        return "bg-green-100 text-green-600 border-none font-semibold hover:bg-green-100";
+      case "entrega":
+        return "bg-blue-100 text-blue-600 border-none font-semibold hover:bg-blue-100";
       default:
         return "bg-slate-50 text-slate-700 border-none font-semibold";
     }
@@ -45,10 +55,10 @@ export const ClientOperationsStatement: React.FC<
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20 min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-400" />
-        <span className="ml-3 text-slate-600 font-medium">
-          Cargando estado de cuenta...
-        </span>
+        <LoadingSpinner
+          text="Cargando operaciones ..."
+          size="md"
+        ></LoadingSpinner>
       </div>
     );
   }
@@ -94,7 +104,7 @@ export const ClientOperationsStatement: React.FC<
       {/* Header Card */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-xl md:text-2xl font-bold text-orange-400 tracking-tight">
             Estado de Cuenta - {client.name}
           </h2>
           <p className="text-sm text-slate-500 mt-1 font-medium">
@@ -147,9 +157,9 @@ export const ClientOperationsStatement: React.FC<
             value: formatMoney(Math.abs(client.balance)),
             color:
               client.balance > 0
-                ? "text-green-700"
+                ? "text-green-500"
                 : client.balance < 0
-                  ? "text-red-700"
+                  ? "text-red-500"
                   : "text-blue-700",
           },
         ].map((item, i) => (
@@ -177,83 +187,50 @@ export const ClientOperationsStatement: React.FC<
           </h3>
         </div>
         <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-sm text-left whitespace-nowrap min-w-[700px]">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[160px]">
-                  Fecha
-                </th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[140px]">
-                  Tipo
-                </th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  Descripción
-                </th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center w-[120px]">
-                  Débito
-                </th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center w-[120px]">
-                  Crédito
-                </th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center w-[120px]">
-                  Saldo
-                </th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center w-[100px]">
-                  Estado
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {statement.operations.map((op) => (
-                <tr
-                  key={op.id}
-                  className="hover:bg-slate-50/50 transition-colors"
-                >
-                  <td className="px-6 py-4 text-slate-600 font-medium text-[13px]">
-                    {format(new Date(op.date), "dd/MM/yyyy HH:mm")}
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge
-                      className={`px-2.5 py-0.5 text-[10px] tracking-widest uppercase ${getOperationTypeColor(
-                        op.type,
-                      )}`}
-                    >
-                      {op.type}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Descripción</TableHead>
+                <TableHead>Débito</TableHead>
+                <TableHead>Crédito</TableHead>
+                <TableHead>Saldo</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {statement.operations.map((operation) => (
+                <TableRow key={operation.id}>
+                  <TableCell>
+                    <Badge variant="outline"> {operation.date}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getOperationTypeColor(operation.type)}>
+                      {operation.type}
                     </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-slate-900 font-semibold text-[13px]">
-                    {op.description}
-                  </td>
-                  <td className="px-6 py-4 text-center text-[13px] font-semibold">
-                    {op.debit > 0 ? (
-                      <span className="text-blue-400/80">
-                        {formatMoney(op.debit)}
-                      </span>
-                    ) : (
-                      <span className="text-slate-300">—</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-center text-[13px] font-semibold">
-                    {op.credit > 0 ? (
-                      <span className="text-blue-600">
-                        {formatMoney(op.credit)}
-                      </span>
-                    ) : (
-                      <span className="text-slate-300">—</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-center text-[13px] font-bold text-blue-700">
-                    {formatMoney(Math.abs(op.balance))}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-100 border-none px-2.5 py-1 text-[10px] font-semibold shadow-none rounded-md uppercase tracking-wider">
-                      {op.payment_status?.toLowerCase() || "pendiente"}
-                    </Badge>
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell>{operation.description}</TableCell>
+                  <TableCell className="text-red-500 font-bold">
+                    {operation.debit > 0 ? formatMoney(operation.debit) : "-"}
+                  </TableCell>
+                  <TableCell className="text-green-500 font-bold">
+                    {operation.credit > 0 ? formatMoney(operation.credit) : "-"}
+                  </TableCell>
+                  <TableCell
+                    className={
+                      " font-bold " +
+                      (operation.balance > 0
+                        ? "text-green-500"
+                        : "text-red-500")
+                    }
+                  >
+                    {operation.balance}
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
+
           {statement.operations.length === 0 && (
             <div className="p-8 text-center text-slate-500 font-medium">
               No se encontraron operaciones para este cliente.

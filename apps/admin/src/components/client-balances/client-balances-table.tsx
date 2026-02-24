@@ -472,7 +472,7 @@ export function ClientBalancesTable() {
                         <TableCell className="flex flex-row gap-2">
                           <div className="flex items-center">
                             <Avatar>
-                              <AvatarFallback>
+                              <AvatarFallback className="font-bold">
                                 {client.name.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
