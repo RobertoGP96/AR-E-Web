@@ -16,6 +16,7 @@ export function useDeliveries(filters?: BaseFilters) {
   } = useQuery({
     queryKey: ['deliveries', filters],
     queryFn: () => getDeliveries(filters),
+    staleTime: 2 * 60 * 1000,
   });
 
   // Función para invalidar la cache y forzar refetch

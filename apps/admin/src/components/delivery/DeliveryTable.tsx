@@ -87,7 +87,7 @@ interface DeliveryTableProps {
   onCapture?: (delivery: DeliverReceip) => void;
 }
 
-const DeliveryTable: React.FC<DeliveryTableProps> = ({
+const DeliveryTableComponent: React.FC<DeliveryTableProps> = ({
   deliveries,
   isLoading = false,
   onDelete,
@@ -670,18 +670,22 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de confirmación de pago */}
-      <ConfirmPaymentDialog
-        delivery={paymentDelivery}
-        open={showPaymentDialog}
-        onClose={() => {
-          setShowPaymentDialog(false);
-          setPaymentDelivery(null);
-        }}
-        onConfirm={handlePaymentConfirm}
-      />
+      {/* Diálogo de confirmación de pago - solo renderizar cuando está abierto */}
+      {showPaymentDialog && (
+        <ConfirmPaymentDialog
+          delivery={paymentDelivery}
+          open={showPaymentDialog}
+          onClose={() => {
+            setShowPaymentDialog(false);
+            setPaymentDelivery(null);
+          }}
+          onConfirm={handlePaymentConfirm}
+        />
+      )}
     </>
   );
 };
+
+const DeliveryTable = React.memo(DeliveryTableComponent);
 
 export default DeliveryTable;

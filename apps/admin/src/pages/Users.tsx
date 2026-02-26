@@ -7,8 +7,11 @@ import type { CreateUserData, UpdateUserData } from '@/types/models/user';
 import type { UserFilterState } from '@/components/filters/user-filters';
 import { toast } from 'sonner';
 import { CompactMetricsSummary } from '@/components/metrics';
+import { useAuth } from '@/auth';
 
 const Users = () => {
+
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [userFilters, setUserFilters] = useState<UserFilterState>({
     role: 'all',
@@ -148,7 +151,10 @@ const Users = () => {
       <UsersHeader />
       
       {/* Métricas compactas de usuarios */}
-      <CompactMetricsSummary type="users" />
+      {user && user.role === 'admin' && (
+        <CompactMetricsSummary type="users" />
+      )
+      }
       
       <UsersFilters 
         searchTerm={searchTerm}

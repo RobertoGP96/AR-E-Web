@@ -1,5 +1,4 @@
-import { DashboardCharts } from '@/components/charts';
-import { MetricsSummaryCards, ProductMetrics, AlertsMetrics, ExchangeRateCard } from '@/components/metrics';
+import { MetricsSummaryCards, ExchangeRateCard } from '@/components/metrics';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useMemo, useEffect, useState } from 'react';
@@ -93,49 +92,7 @@ const Dashboard = () => {
         <MetricsSummaryCards />
       </section>
 
-      {/* Product Metrics Section */}
-      <section className="space-y-4 animate-in slide-in-from-bottom duration-700 delay-300">
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900">Métricas de Productos</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Estado y rendimiento de productos en el sistema
-            </p>
-          </div>
-        </div>
-        <Separator className="my-4" />
-        <ProductMetrics />
-      </section>
-
-      {/* Alerts Section */}
-      <section className="space-y-4 animate-in slide-in-from-bottom duration-700 delay-400">
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900">Alertas del Sistema</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Situaciones que requieren atención inmediata
-            </p>
-          </div>
-        </div>
-        <Separator className="my-4" />
-        <AlertsMetrics />
-      </section>
-
-      {/* Analytics Section */}
-      <section className="space-y-4 animate-in slide-in-from-bottom duration-700 delay-500">
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900">Análisis y Estadísticas</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Visualiza el rendimiento de tu negocio con gráficos interactivos
-            </p>
-          </div>
-
-        </div>
-        <Separator className="my-4" />
-        <DashboardCharts />
-      </section>
-
+      
     </div>
   );
 };

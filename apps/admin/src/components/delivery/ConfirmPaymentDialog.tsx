@@ -59,11 +59,11 @@ export function ConfirmPaymentDialog({
   const [usarSaldo, setUsarSaldo] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch client balances to show surplus
+  // Fetch client balances to show surplus - solo cuando está abierto
   const { data: clientBalances } = useQuery({
     queryKey: ["clientBalances"],
     queryFn: fetchClientBalancesReport,
-    enabled: !!delivery?.client?.id,
+    enabled: !!delivery?.client?.id && open,
   });
 
   const clientInfo = clientBalances?.find((c) => c.id === delivery?.client?.id);

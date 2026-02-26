@@ -1,307 +1,300 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  Users, 
-  Package, 
-  ShoppingCart, 
-  DollarSign, 
-  TrendingUp, 
+import {
+  Users,
+  Package,
+  ShoppingCart,
+  DollarSign,
+  TrendingUp,
   TrendingDown,
   AlertCircle,
   Wallet,
   CreditCard,
   Truck,
   UserCheck,
-  Receipt
+  Receipt,
 } from "lucide-react";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
 import { cn } from "@/lib/utils";
 
-/**
- * Tarjetas de resumen con métricas clave - Diseño mejorado
- */
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface MetricCard {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon: React.ElementType;
+  iconBg: string;
+  borderColor: string;
+  hoverColor: string;
+}
+
+interface MetricGroup {
+  label: string;
+  accent: string; // border-l color for group header
+  cards: MetricCard[];
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+const SkeletonCard = () => (
+  <Card className="border-2 border-gray-100">
+    <CardContent className="p-5">
+      <div className="space-y-3">
+        <div className="h-3 w-24 bg-gray-100 rounded animate-pulse" />
+        <div className="h-7 w-32 bg-gray-100 rounded animate-pulse" />
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const MetricCardItem = ({ card }: { card: MetricCard }) => {
+  const Icon = card.icon;
+  return (
+    <Card
+      className={cn(
+        "py-0 relative overflow-hidden transition-all duration-300",
+        "hover:shadow-md hover:-translate-y-0.5 border-2 group cursor-pointer bg-white",
+        card.borderColor,
+        card.hoverColor,
+      )}
+    >
+      {/* Decorative background circle */}
+      <div
+        className={cn(
+          "absolute top-0 right-0 w-20 h-20 opacity-[0.06] rounded-full",
+          "transform translate-x-5 -translate-y-5 transition-transform duration-300 group-hover:scale-110",
+          card.iconBg,
+        )}
+      />
+
+      <CardContent className="py-4 px-5 relative z-10">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 truncate">
+              {card.title}
+            </p>
+            <p className="text-2xl font-extrabold tracking-tight text-gray-900 truncate">
+              {card.value}
+            </p>
+            {card.subtitle && (
+              <p className="text-[10px] font-medium text-gray-400 mt-1.5 flex items-center gap-1">
+                <span className="w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />
+                {card.subtitle}
+              </p>
+            )}
+          </div>
+          <div
+            className={cn(
+              "p-2 rounded-lg shadow-sm flex-shrink-0",
+              "transform group-hover:scale-105 transition-all duration-300",
+              card.iconBg,
+            )}
+          >
+            <Icon className="w-5 h-5 text-white" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const GroupSection = ({ group }: { group: MetricGroup }) => (
+  <div className="space-y-3">
+    {/* Section header */}
+    <div className={cn("flex items-center gap-2 border-l-4 pl-3", group.accent)}>
+      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+        {group.label}
+      </span>
+    </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {group.cards.map((card) => (
+        <MetricCardItem key={card.title} card={card} />
+      ))}
+    </div>
+  </div>
+);
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export const MetricsSummaryCards = () => {
   const { data: metrics, isLoading } = useDashboardMetrics();
 
   if (isLoading || !metrics) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="border-2">
-            <CardContent className="p-6">
-              <div className="h-24 bg-gradient-to-r from-gray-100 to-gray-50 rounded-lg animate-pulse" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
       </div>
     );
   }
 
-  // Prepare summary cards with all metrics
-  const summaryCards = [
+  // ─── Build metric groups ──────────────────────────────────────────────────
+
+  const groups: MetricGroup[] = [
     {
-      title: "Total Usuarios",
-      value: metrics.users.total,
-      icon: Users,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
-      borderColor: "border-gray-200",
-      hoverColor: "hover:border-orange-300 hover:shadow-orange-50",
-      iconBg: "bg-orange-500",
-      badgeColor: "bg-orange-50 text-orange-700 border-orange-200",
+      label: "Resumen General",
+      accent: "border-orange-400",
+      cards: [
+        {
+          title: "Total Usuarios",
+          value: metrics.users.total,
+          icon: Users,
+          iconBg: "bg-orange-500",
+          borderColor: "border-gray-200",
+          hoverColor: "hover:border-orange-300 hover:shadow-orange-50",
+        },
+        {
+          title: "Total Productos",
+          value: metrics.products.total,
+          icon: Package,
+          iconBg: "bg-orange-500",
+          borderColor: "border-gray-200",
+          hoverColor: "hover:border-orange-300 hover:shadow-orange-50",
+        },
+        {
+          title: "Órdenes del Mes",
+          value: metrics.orders.this_month,
+          icon: ShoppingCart,
+          iconBg: "bg-orange-500",
+          borderColor: "border-gray-200",
+          hoverColor: "hover:border-orange-300 hover:shadow-orange-50",
+        },
+        {
+          title: "Ingresos del Mes",
+          value: `$${metrics.revenue.this_month.toLocaleString()}`,
+          icon: DollarSign,
+          iconBg: "bg-orange-500",
+          borderColor: "border-gray-200",
+          hoverColor: "hover:border-orange-300 hover:shadow-orange-50",
+        },
+      ],
     },
-    {
-      title: "Total Productos",
-      value: metrics.products.total,
-      icon: Package,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
-      borderColor: "border-gray-200",
-      hoverColor: "hover:border-orange-300 hover:shadow-orange-50",
-      iconBg: "bg-orange-500",
-      badgeColor: "bg-orange-50 text-orange-700 border-orange-200",
-    },
-    {
-      title: "Órdenes del Mes",
-      value: metrics.orders.this_month,
-      icon: ShoppingCart,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
-      borderColor: "border-gray-200",
-      hoverColor: "hover:border-orange-300 hover:shadow-orange-50",
-      iconBg: "bg-orange-500",
-      badgeColor: "bg-orange-50 text-orange-700 border-orange-200",
-    },
-    {
-      title: "Ingresos del Mes",
-      value: `$${metrics.revenue.this_month.toLocaleString()}`,
-      icon: DollarSign,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
-      borderColor: "border-gray-200",
-      hoverColor: "hover:border-orange-300 hover:shadow-orange-50",
-      iconBg: "bg-orange-500",
-      badgeColor: "bg-orange-50 text-orange-700 border-orange-200",
-    },
-    // Financial Metrics
-    ...(metrics.financial ? [{
-      title: "Ganancia Total",
-      value: `$${metrics.financial.total_profit.toLocaleString()}`,
-      icon: TrendingUp,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
-      borderColor: "border-emerald-200",
-      hoverColor: "hover:border-emerald-400 hover:shadow-emerald-50",
-      iconBg: "bg-emerald-500",
-      badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    }] : []),
-    ...(metrics.financial ? [{
-      title: "Margen de Ganancia",
-      value: `${metrics.financial.profit_margin.toFixed(1)}%`,
-      icon: TrendingUp,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
-      borderColor: "border-cyan-200",
-      hoverColor: "hover:border-cyan-400 hover:shadow-cyan-50",
-      iconBg: "bg-cyan-500",
-      badgeColor: "bg-cyan-50 text-cyan-700 border-cyan-200",
-    }] : []),
-    // Client Balances
-    ...(metrics.client_balances ? [{
-      title: "Deudas Pendientes",
-      value: `$${metrics.client_balances.total_debt.toLocaleString()}`,
-      icon: AlertCircle,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
-      borderColor: "border-rose-200",
-      hoverColor: "hover:border-rose-400 hover:shadow-rose-50",
-      iconBg: "bg-rose-500",
-      badgeColor: "bg-rose-50 text-rose-700 border-rose-200",
-      subtitle: `${metrics.client_balances.with_debt} clientes`,
-    }] : []),
-    ...(metrics.client_balances ? [{
-      title: "Saldos a Favor",
-      value: `$${metrics.client_balances.total_surplus.toLocaleString()}`,
-      icon: Wallet,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
-      borderColor: "border-violet-200",
-      hoverColor: "hover:border-violet-400 hover:shadow-violet-50",
-      iconBg: "bg-violet-500",
-      badgeColor: "bg-violet-50 text-violet-700 border-violet-200",
-      subtitle: `${metrics.client_balances.with_surplus} clientes`,
-    }] : []),
-    // Delivery Metrics
-    ...(metrics.deliveries ? [{
-      title: "Peso Total Entregado",
-      value: `${(metrics.deliveries.total_weight || 0).toFixed(1)} lbs`,
-      icon: Truck,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
-      borderColor: "border-yellow-200",
-      hoverColor: "hover:border-yellow-400 hover:shadow-yellow-50",
-      iconBg: "bg-yellow-500",
-      badgeColor: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    }] : []),
-    ...(metrics.financial ? [{
-      title: "Entregas Sin Pagar",
-      value: `$${metrics.financial.unpaid_deliveries_amount.toLocaleString()}`,
-      icon: CreditCard,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
-      borderColor: "border-amber-200",
-      hoverColor: "hover:border-amber-400 hover:shadow-amber-50",
-      iconBg: "bg-amber-500",
-      badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
-      subtitle: `${metrics.financial.unpaid_deliveries_count} entregas`,
-    }] : []),
-    // Purchases Metrics
-    ...(metrics.purchases && 'total_refunded' in metrics.purchases ? [{
-      title: "Reembolsos Totales",
-      value: `$${(metrics.purchases.total_refunded || 0).toLocaleString()}`,
-      icon: Receipt,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
-      borderColor: "border-rose-200",
-      hoverColor: "hover:border-rose-400 hover:shadow-rose-50",
-      iconBg: "bg-rose-500",
-      badgeColor: "bg-rose-50 text-rose-700 border-rose-200",
-    }] : []),
-    // Agents Metrics
-    ...(metrics.agents ? [{
-      title: "Comisiones de Agentes",
-      value: `$${metrics.agents.total_agent_profit.toLocaleString()}`,
-      icon: UserCheck,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
-      borderColor: "border-blue-200",
-      hoverColor: "hover:border-blue-400 hover:shadow-blue-50",
-      iconBg: "bg-blue-500",
-      badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
-      subtitle: `${metrics.agents.total_agents} agentes`,
-    }] : []),
-    // Expenses
-    ...(metrics.expenses ? [{
+  ];
+
+  // Financial group
+  const financialCards: MetricCard[] = [];
+
+  if (metrics.financial) {
+    financialCards.push(
+      {
+        title: "Ganancia Total",
+        value: `$${metrics.financial.total_profit.toLocaleString()}`,
+        icon: TrendingUp,
+        iconBg: "bg-emerald-500",
+        borderColor: "border-emerald-200",
+        hoverColor: "hover:border-emerald-400 hover:shadow-emerald-50",
+      },
+      {
+        title: "Margen de Ganancia",
+        value: `${metrics.financial.profit_margin.toFixed(1)}%`,
+        icon: TrendingUp,
+        iconBg: "bg-cyan-500",
+        borderColor: "border-cyan-200",
+        hoverColor: "hover:border-cyan-400 hover:shadow-cyan-50",
+      },
+      {
+        title: "Entregas Sin Pagar",
+        value: `$${metrics.financial.unpaid_deliveries_amount.toLocaleString()}`,
+        subtitle: `${metrics.financial.unpaid_deliveries_count} entregas`,
+        icon: CreditCard,
+        iconBg: "bg-amber-500",
+        borderColor: "border-amber-200",
+        hoverColor: "hover:border-amber-400 hover:shadow-amber-50",
+      },
+    );
+  }
+
+  if (metrics.expenses) {
+    financialCards.push({
       title: "Gastos del Mes",
       value: `$${metrics.expenses.this_month.toLocaleString()}`,
       icon: TrendingDown,
-      color: "text-gray-600",
-      bgGradient: "bg-white",
+      iconBg: "bg-slate-500",
       borderColor: "border-slate-200",
       hoverColor: "hover:border-slate-400 hover:shadow-slate-50",
-      iconBg: "bg-slate-500",
-      badgeColor: "bg-slate-50 text-slate-700 border-slate-200",
-    }] : []),
-  ];
+    });
+  }
+
+  if (financialCards.length > 0) {
+    groups.push({ label: "Finanzas", accent: "border-emerald-400", cards: financialCards });
+  }
+
+  // Clients & deliveries group
+  const clientCards: MetricCard[] = [];
+
+  if (metrics.client_balances) {
+    clientCards.push(
+      {
+        title: "Deudas Pendientes",
+        value: `$${metrics.client_balances.total_debt.toLocaleString()}`,
+        subtitle: `${metrics.client_balances.with_debt} clientes`,
+        icon: AlertCircle,
+        iconBg: "bg-rose-500",
+        borderColor: "border-rose-200",
+        hoverColor: "hover:border-rose-400 hover:shadow-rose-50",
+      },
+      {
+        title: "Saldos a Favor",
+        value: `$${metrics.client_balances.total_surplus.toLocaleString()}`,
+        subtitle: `${metrics.client_balances.with_surplus} clientes`,
+        icon: Wallet,
+        iconBg: "bg-violet-500",
+        borderColor: "border-violet-200",
+        hoverColor: "hover:border-violet-400 hover:shadow-violet-50",
+      },
+    );
+  }
+
+  if (metrics.deliveries) {
+    clientCards.push({
+      title: "Peso Total Entregado",
+      value: `${(metrics.deliveries.total_weight || 0).toFixed(1)} lbs`,
+      icon: Truck,
+      iconBg: "bg-yellow-500",
+      borderColor: "border-yellow-200",
+      hoverColor: "hover:border-yellow-400 hover:shadow-yellow-50",
+    });
+  }
+
+  if (metrics.agents) {
+    clientCards.push({
+      title: "Comisiones de Agentes",
+      value: `$${metrics.agents.total_agent_profit.toLocaleString()}`,
+      subtitle: `${metrics.agents.total_agents} agentes`,
+      icon: UserCheck,
+      iconBg: "bg-blue-500",
+      borderColor: "border-blue-200",
+      hoverColor: "hover:border-blue-400 hover:shadow-blue-50",
+    });
+  }
+
+  if (metrics.purchases && "total_refunded" in metrics.purchases) {
+    clientCards.push({
+      title: "Reembolsos Totales",
+      value: `$${(metrics.purchases.total_refunded || 0).toLocaleString()}`,
+      icon: Receipt,
+      iconBg: "bg-rose-500",
+      borderColor: "border-rose-200",
+      hoverColor: "hover:border-rose-400 hover:shadow-rose-50",
+    });
+  }
+
+  if (clientCards.length > 0) {
+    groups.push({
+      label: "Clientes & Operaciones",
+      accent: "border-blue-400",
+      cards: clientCards,
+    });
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Primera fila: Métricas principales */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {summaryCards.slice(0, 4).map((card) => {
-          const Icon = card.icon;
-          return (
-            <Card
-              key={card.title}
-              className={cn(
-                "py-0 relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 border-2 group cursor-pointer",
-                card.bgGradient,
-                card.borderColor,
-                card.hoverColor,
-              )}
-            >
-              {/* Decorative corner accent - Minimalist */}
-              <div
-                className={cn(
-                  "absolute top-0 right-0 w-16 h-16 opacity-5 transform translate-x-4 -translate-y-4 rounded-full transition-all duration-300 group-hover:scale-125",
-                  card.iconBg,
-                )}
-              />
-
-              <CardContent className="py-4 px-5 relative z-10">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1 truncate">
-                      {card.title}
-                    </p>
-                    <p className="text-2xl font-extrabold tracking-tight text-gray-900 truncate">
-                      {card.value}
-                    </p>
-                    {card.subtitle && (
-                      <p className="text-[10px] font-medium text-gray-500 mt-1 flex items-center gap-1">
-                        <span className="w-1 h-1 rounded-full bg-gray-300" />
-                        {card.subtitle}
-                      </p>
-                    )}
-                  </div>
-                  <div
-                    className={cn(
-                      "p-2 rounded-lg shadow-sm transform group-hover:scale-105 transition-all duration-300 flex-shrink-0",
-                      card.iconBg,
-                    )}
-                  >
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Segunda fila: Métricas financieras y adicionales */}
-      {summaryCards.length > 4 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {summaryCards.slice(4).map((card) => {
-            const Icon = card.icon;
-            return (
-              <Card
-                key={card.title}
-                className={cn(
-                  "py-0 relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 border-2 group cursor-pointer",
-                  card.bgGradient,
-                  card.borderColor,
-                  card.hoverColor,
-                )}
-              >
-                {/* Decorative corner accent - Minimalist */}
-                <div
-                  className={cn(
-                    "absolute top-0 right-0 w-16 h-16 opacity-5 transform translate-x-4 -translate-y-4 rounded-full transition-all duration-300 group-hover:scale-125",
-                    card.iconBg,
-                  )}
-                />
-
-                <CardContent className="py-4 px-5 relative z-10">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1 truncate">
-                        {card.title}
-                      </p>
-                      <p className="text-2xl font-extrabold tracking-tight text-gray-900 truncate">
-                        {card.value}
-                      </p>
-                      {card.subtitle && (
-                        <p className="text-[10px] font-medium text-gray-500 mt-1 flex items-center gap-1">
-                          <span className="w-1 h-1 rounded-full bg-gray-300" />
-                          {card.subtitle}
-                        </p>
-                      )}
-                    </div>
-                    <div
-                      className={cn(
-                        "p-2 rounded-lg shadow-sm transform group-hover:scale-105 transition-all duration-300 flex-shrink-0",
-                        card.iconBg,
-                      )}
-                    >
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+    <div className="space-y-8">
+      {groups.map((group) => (
+        <GroupSection key={group.label} group={group} />
+      ))}
     </div>
   );
 };

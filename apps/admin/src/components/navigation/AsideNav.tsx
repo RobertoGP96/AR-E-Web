@@ -42,6 +42,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { roleVisibleNavHrefs } from "@/routes/role-config";
+import type { UserRole } from "@/types/models/user";
 
 const navigationGroups = [
   {
@@ -155,14 +157,9 @@ export function AsideNav() {
   const { logout, user } = useAuth();
 
   const isActive = (path: string) => {
-    // Para la ruta raíz, solo se activa cuando es exactamente '/'
     if (path === "/") {
       return location.pathname === "/";
     }
-
-    // Para otras rutas, se activa si el pathname comienza con el path
-    // y el siguiente carácter es '/' o es el final de la cadena
-    // Esto permite que rutas como /products/123 mantengan activo /products
     return (
       location.pathname === path || location.pathname.startsWith(path + "/")
     );
@@ -178,6 +175,21 @@ export function AsideNav() {
     }
   };
 
+  // Filtrar grupos de navegación según el rol del usuario
+  const visibleHrefs =
+    user?.role === "admin"
+      ? null // null = mostrar todo
+      : roleVisibleNavHrefs[user?.role as Exclude<UserRole, "admin">] ?? [];
+
+  const filteredGroups = navigationGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) => visibleHrefs === null || visibleHrefs.includes(item.href)
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
+
   return (
     <Sidebar className="">
       {/* Header */}
@@ -188,7 +200,7 @@ export function AsideNav() {
       </SidebarHeader>
       {/* Navigation */}
       <SidebarContent className="pl-4 ">
-        {navigationGroups.map((group) => (
+        {filteredGroups.map((group) => (
           <SidebarGroup key={group.title}>
             <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-[14px] uppercase text-orange-400/85 font-semibold">
               {group.title}

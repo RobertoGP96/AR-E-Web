@@ -259,7 +259,7 @@ export function PackageForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-slate-600 font-bold">
-                        Agencia Logística
+                        Identificador de Agencia
                       </FormLabel>
                       <FormControl>
                         <div className="relative group">
