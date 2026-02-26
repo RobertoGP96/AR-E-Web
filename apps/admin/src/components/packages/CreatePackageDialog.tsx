@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useCreatePackage } from '@/hooks/package';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useCreatePackage } from "@/hooks/package";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -8,52 +8,59 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, Package, Truck, CheckCircle2 } from 'lucide-react';
-import { DatePicker } from '../utils/DatePicker';
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, Package, Truck, CheckCircle2 } from "lucide-react";
+import DatePicker from "../utils/DatePicker";
 
 interface CreatePackageDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export default function CreatePackageDialog({ open, onOpenChange }: CreatePackageDialogProps) {
+export default function CreatePackageDialog({
+  open,
+  onOpenChange,
+}: CreatePackageDialogProps) {
   const createPackageMutation = useCreatePackage();
 
   // Estado del formulario
   const [formData, setFormData] = useState({
-    agency_name: '',
-    number_of_tracking: '',
-    status_of_processing: 'Enviado',
-    arrival_date: '',
+    agency_name: "",
+    number_of_tracking: "",
+    status_of_processing: "Enviado",
+    arrival_date: "",
   });
 
   // Funciones para obtener estilos según el estado
   const getPackageStatusStyles = (status: string) => {
     const styles = {
-      'Enviado': 'bg-blue-50 border-blue-300 text-blue-800',
-      'Recibido': 'bg-yellow-50 border-yellow-300 text-yellow-800',
-      'Procesado': 'bg-green-50 border-green-300 text-green-800',
+      Enviado: "bg-blue-50 border-blue-300 text-blue-800",
+      Recibido: "bg-yellow-50 border-yellow-300 text-yellow-800",
+      Procesado: "bg-green-50 border-green-300 text-green-800",
     };
-    return styles[status as keyof typeof styles] || '';
+    return styles[status as keyof typeof styles] || "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validación básica - requerir todos los campos
-    if (!formData.agency_name.trim() || !formData.number_of_tracking.trim() || !formData.arrival_date) {
-      toast.error('Por favor completa todos los campos obligatorios');
+    if (
+      !formData.agency_name.trim() ||
+      !formData.number_of_tracking.trim() ||
+      !formData.arrival_date
+    ) {
+      toast.error("Por favor completa todos los campos obligatorios");
       return;
     }
 
@@ -65,19 +72,19 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
         arrival_date: formData.arrival_date,
       });
 
-      toast.success('Paquete creado exitosamente');
+      toast.success("Paquete creado exitosamente");
 
       // Resetear formulario y cerrar diálogo
       setFormData({
-        agency_name: '',
-        number_of_tracking: '',
-        status_of_processing: 'Enviado',
-        arrival_date: '',
+        agency_name: "",
+        number_of_tracking: "",
+        status_of_processing: "Enviado",
+        arrival_date: "",
       });
       onOpenChange(false);
     } catch (error) {
-      console.error('Error creating package:', error);
-      toast.error('No se pudo crear el paquete. Por favor intenta de nuevo.');
+      console.error("Error creating package:", error);
+      toast.error("No se pudo crear el paquete. Por favor intenta de nuevo.");
     }
   };
 
@@ -87,7 +94,8 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
         <DialogHeader>
           <DialogTitle>Crear Nuevo Paquete</DialogTitle>
           <DialogDescription>
-            Complete todos los datos del paquete. Todos los campos son obligatorios.
+            Complete todos los datos del paquete. Todos los campos son
+            obligatorios.
           </DialogDescription>
         </DialogHeader>
 
@@ -103,7 +111,10 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
                 placeholder="Ej: DHL, FedEx, UPS..."
                 value={formData.agency_name}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, agency_name: e.target.value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    agency_name: e.target.value,
+                  }))
                 }
                 className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
               />
@@ -119,7 +130,10 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
                 placeholder="Ej: TRK123456789"
                 value={formData.number_of_tracking}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, number_of_tracking: e.target.value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    number_of_tracking: e.target.value,
+                  }))
                 }
                 className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
               />
@@ -128,14 +142,18 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
             {/* Fecha de Llegada */}
             <div className="grid gap-2">
               <DatePicker
-                  selected={formData.arrival_date ? new Date(formData.arrival_date) : undefined}
-                  onDateChange={(date: Date | undefined) => {
-                    // Backend expects YYYY-MM-DD
-                    const formatted = date ? date.toISOString().slice(0, 10) : '';
-                    setFormData({ ...formData, arrival_date: formatted });
-                  }}
-                />
-
+                label="Fecha de Llegada"
+                value={
+                  formData.arrival_date
+                    ? new Date(formData.arrival_date)
+                    : undefined
+                }
+                onChange={(date: Date | null) => {
+                  // Backend expects YYYY-MM-DD
+                  const formatted = date ? date.toISOString().slice(0, 10) : "";
+                  setFormData({ ...formData, arrival_date: formatted });
+                }}
+              />
             </div>
 
             {/* Estado del Paquete */}
@@ -144,7 +162,10 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
               <Select
                 value={formData.status_of_processing}
                 onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, status_of_processing: value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    status_of_processing: value,
+                  }))
                 }
               >
                 <SelectTrigger
@@ -193,7 +214,7 @@ export default function CreatePackageDialog({ open, onOpenChange }: CreatePackag
                   Creando...
                 </>
               ) : (
-                'Crear Paquete'
+                "Crear Paquete"
               )}
             </Button>
           </DialogFooter>

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useUpdatePackage } from '@/hooks/package';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useUpdatePackage } from "@/hooks/package";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -8,20 +8,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, Package, Truck, CheckCircle2 } from 'lucide-react';
-import type { Package as PackageType } from '@/types';
-import { DatePicker } from '../utils/DatePicker';
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, Package, Truck, CheckCircle2 } from "lucide-react";
+import type { Package as PackageType } from "@/types";
+import DatePicker from "../utils/DatePicker";
 
 interface EditPackageDialogProps {
   open: boolean;
@@ -29,25 +29,29 @@ interface EditPackageDialogProps {
   package: PackageType | null;
 }
 
-export default function EditPackageDialog({ open, onOpenChange, package: pkg }: EditPackageDialogProps) {
+export default function EditPackageDialog({
+  open,
+  onOpenChange,
+  package: pkg,
+}: EditPackageDialogProps) {
   const updatePackageMutation = useUpdatePackage();
 
   // Estado del formulario
   const [formData, setFormData] = useState({
-    agency_name: '',
-    number_of_tracking: '',
-    status_of_processing: 'Enviado',
-    arrival_date: '',
+    agency_name: "",
+    number_of_tracking: "",
+    status_of_processing: "Enviado",
+    arrival_date: "",
   });
 
   // Actualizar el formulario cuando cambie el paquete
   useEffect(() => {
     if (pkg) {
       setFormData({
-        agency_name: pkg.agency_name || '',
-        number_of_tracking: pkg.number_of_tracking || '',
-        status_of_processing: pkg.status_of_processing || 'Enviado',
-        arrival_date: pkg.arrival_date ? pkg.arrival_date.split('T')[0] : '',
+        agency_name: pkg.agency_name || "",
+        number_of_tracking: pkg.number_of_tracking || "",
+        status_of_processing: pkg.status_of_processing || "Enviado",
+        arrival_date: pkg.arrival_date ? pkg.arrival_date.split("T")[0] : "",
       });
     }
   }, [pkg]);
@@ -55,24 +59,28 @@ export default function EditPackageDialog({ open, onOpenChange, package: pkg }: 
   // Funciones para obtener estilos según el estado
   const getPackageStatusStyles = (status: string) => {
     const styles = {
-      'Enviado': 'bg-blue-50 border-blue-300 text-blue-800',
-      'Recibido': 'bg-yellow-50 border-yellow-300 text-yellow-800',
-      'Procesado': 'bg-green-50 border-green-300 text-green-800',
+      Enviado: "bg-blue-50 border-blue-300 text-blue-800",
+      Recibido: "bg-yellow-50 border-yellow-300 text-yellow-800",
+      Procesado: "bg-green-50 border-green-300 text-green-800",
     };
-    return styles[status as keyof typeof styles] || '';
+    return styles[status as keyof typeof styles] || "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!pkg) {
-      toast.error('No se ha seleccionado un paquete');
+      toast.error("No se ha seleccionado un paquete");
       return;
     }
 
     // Validación básica
-    if (!formData.agency_name.trim() || !formData.number_of_tracking.trim() || !formData.arrival_date) {
-      toast.error('Por favor completa todos los campos obligatorios');
+    if (
+      !formData.agency_name.trim() ||
+      !formData.number_of_tracking.trim() ||
+      !formData.arrival_date
+    ) {
+      toast.error("Por favor completa todos los campos obligatorios");
       return;
     }
 
@@ -90,8 +98,10 @@ export default function EditPackageDialog({ open, onOpenChange, package: pkg }: 
       toast.success(`Paquete #${pkg.agency_name} actualizado exitosamente`);
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating package:', error);
-      toast.error('No se pudo actualizar el paquete. Por favor intenta de nuevo.');
+      console.error("Error updating package:", error);
+      toast.error(
+        "No se pudo actualizar el paquete. Por favor intenta de nuevo.",
+      );
     }
   };
 
@@ -117,7 +127,10 @@ export default function EditPackageDialog({ open, onOpenChange, package: pkg }: 
                 placeholder="Ej: DHL, FedEx, UPS..."
                 value={formData.agency_name}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, agency_name: e.target.value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    agency_name: e.target.value,
+                  }))
                 }
                 className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
               />
@@ -133,7 +146,10 @@ export default function EditPackageDialog({ open, onOpenChange, package: pkg }: 
                 placeholder="Ej: TRK123456789"
                 value={formData.number_of_tracking}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, number_of_tracking: e.target.value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    number_of_tracking: e.target.value,
+                  }))
                 }
                 className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
               />
@@ -142,10 +158,19 @@ export default function EditPackageDialog({ open, onOpenChange, package: pkg }: 
             {/* Fecha de Llegada */}
             <div className="grid gap-2">
               <DatePicker
-                selected={formData.arrival_date ? new Date(formData.arrival_date) : undefined}
-                onDateChange={(date: Date | undefined) => setFormData({ ...formData, arrival_date: date?.toISOString() || '' })}
+                label="Fecha de Llegada"
+                value={
+                  formData.arrival_date
+                    ? new Date(formData.arrival_date)
+                    : undefined
+                }
+                onChange={(date: Date | null) =>
+                  setFormData({
+                    ...formData,
+                    arrival_date: date?.toISOString() || "",
+                  })
+                }
               />
-
             </div>
 
             {/* Estado del Paquete */}
@@ -154,7 +179,10 @@ export default function EditPackageDialog({ open, onOpenChange, package: pkg }: 
               <Select
                 value={formData.status_of_processing}
                 onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, status_of_processing: value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    status_of_processing: value,
+                  }))
                 }
               >
                 <SelectTrigger
@@ -203,7 +231,7 @@ export default function EditPackageDialog({ open, onOpenChange, package: pkg }: 
                   Guardando...
                 </>
               ) : (
-                'Guardar Cambios'
+                "Guardar Cambios"
               )}
             </Button>
           </DialogFooter>

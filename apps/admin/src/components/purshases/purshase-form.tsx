@@ -38,7 +38,7 @@ import type {
   ShoppingReceip,
 } from "@/types/models";
 import { SHOPPING_STATUSES } from "@/types/models/base";
-import { DatePicker } from "@/components/utils/DatePicker";
+import DateTimePicker from "@/components/utils/DatePicker"; // ← nuevo import
 import { useShops } from "@/hooks/useShops";
 import { useProducts } from "@/hooks/product";
 import { InputGroupInput } from "@/components/ui/input-group";
@@ -77,7 +77,6 @@ export function PurchaseForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Estados separados: uno para la API y otro para mostrar detalles
   const [selectedProducts, setSelectedProducts] = useState<
     CreateProductBuyedData[]
   >([]);
@@ -104,10 +103,9 @@ export function PurchaseForm({
   const selectedShop = shops.find((shop) => shop.id === selectedShopId);
   const buyingAccounts = selectedShop?.buying_accounts || [];
 
-  // Cargar datos iniciales si estamos en modo edición
+  // Cargar datos iniciales en modo edición
   useEffect(() => {
     if (purchase && shops.length > 0) {
-      // Encontrar la tienda por nombre o ID para obtener su ID
       const shop = shops.find(
         (s) =>
           s.name.trim().toLowerCase() ===
@@ -117,7 +115,6 @@ export function PurchaseForm({
       if (shop) {
         form.setValue("shop_of_buy_id", shop.id);
 
-        // Encontrar la cuenta por ID dentro de esa tienda (asegurando el tipo)
         const accountId = Number(purchase.shopping_account);
         const account = shop.buying_accounts?.find(
           (a) => Number(a.id) === accountId,
@@ -126,8 +123,6 @@ export function PurchaseForm({
         if (account) {
           form.setValue("shopping_account_id", Number(account.id));
         } else if (purchase.shopping_account) {
-          // Si no la encuentra en la tienda pero tenemos un ID, lo seteamos igual
-          // por si la relación en el backend existe aunque no esté en el catálogo actual
           form.setValue(
             "shopping_account_id",
             Number(purchase.shopping_account),
@@ -135,7 +130,6 @@ export function PurchaseForm({
         }
       }
 
-      // Llenar el resto de campos
       form.setValue(
         "status_of_shopping",
         purchase.status_of_shopping as "No pagado" | "Pagado" | "Parcial",
@@ -149,7 +143,6 @@ export function PurchaseForm({
       form.setValue("card_id", purchase.card_id || "");
       form.setValue("total_cost_of_purchase", purchase.total_cost_of_purchase);
 
-      // Cargar productos
       if (purchase.buyed_products) {
         setSelectedProductsDetails(purchase.buyed_products);
         setSelectedProducts(
@@ -164,16 +157,13 @@ export function PurchaseForm({
   }, [purchase, shops, form]);
 
   // Calcular total automáticamente cuando cambian los productos
-  // usando la nueva lógica: si cantidades coinciden usar total_cost, sino recalcular
   useEffect(() => {
     const total = selectedProductsDetails.reduce((sum, item) => {
       return sum + calculateProductPurchaseCost(item);
     }, 0);
-    // Solo actualizar si no estamos en carga inicial o si el valor cambia
     form.setValue("total_cost_of_purchase", total);
   }, [selectedProductsDetails, form]);
 
-  // Manejar cambios en el carrito desde ProductSelector
   const handleCartChange = (
     apiData: CreateProductBuyedData[],
     fullDetails?: ProductBuyed[],
@@ -184,7 +174,6 @@ export function PurchaseForm({
     }
   };
 
-  // Eliminar un producto del carrito
   const removeProductFromCart = (productId: string | number) => {
     const newDetails = selectedProductsDetails.filter((item) => {
       const itemProductId = (item.product_id ||
@@ -199,7 +188,6 @@ export function PurchaseForm({
     setSelectedProducts(newApiData);
   };
 
-  // Actualizar cantidad de un producto
   const updateProductQuantity = (productId: string | number, delta: number) => {
     const newDetails = selectedProductsDetails
       .map((item) => {
@@ -227,7 +215,6 @@ export function PurchaseForm({
   };
 
   const onSubmit = async (data: CreateShoppingReceipFormData) => {
-    // Validación de productos
     if (selectedProducts.length === 0) {
       toast.error("Debes agregar al menos un producto a la compra");
       return;
@@ -276,6 +263,14 @@ export function PurchaseForm({
       setIsSubmitting(false);
     }
   };
+
+  // Derivar el valor Date para el DateTimePicker a partir del string ISO guardado en el form
+  const buyDateValue = (() => {
+    const raw = form.watch("buy_date");
+    if (!raw) return null;
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+  })();
 
   return (
     <Form {...form}>
@@ -427,7 +422,7 @@ export function PurchaseForm({
             </section>
           </div>
 
-          {/* Sidebar / Secondary Info */}
+          {/* Sidebar */}
           <div className="lg:col-span-4 space-y-8">
             <div className="bg-white rounded-[32px] border border-slate-100 p-8 shadow-sm space-y-8 sticky top-6">
               <div className="space-y-6 font-medium">
@@ -472,6 +467,7 @@ export function PurchaseForm({
                   )}
                 />
 
+                {/* ── Fecha con el nuevo DateTimePicker ── */}
                 <FormField
                   control={form.control}
                   name="buy_date"
@@ -481,20 +477,17 @@ export function PurchaseForm({
                         Fecha de Operación
                       </FormLabel>
                       <FormControl>
-                        <DatePicker
-                          label=" "
-                          placeholder="Fijar fecha"
-                          selected={
-                            field.value ? new Date(field.value) : undefined
-                          }
-                          onDateChange={(date) =>
+                        <DateTimePicker
+                          label=""
+                          placeholder="Fijar fecha y hora"
+                          value={buyDateValue}
+                          onChange={(date: Date | null) =>
                             field.onChange(
                               date
                                 ? date.toISOString().split("T")[0]
                                 : undefined,
                             )
                           }
-                          className="h-11 w-full rounded-xl border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all shadow-none"
                         />
                       </FormControl>
                       <FormMessage />

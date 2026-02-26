@@ -1,262 +1,230 @@
-"use client"
-
-import * as React from "react"
-import { CalendarIcon } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { CalendarIcon, Clock } from "lucide-react";
+import { es } from "date-fns/locale";
+import { format, isValid, setHours, setMinutes, setSeconds } from "date-fns";
+import type { Locale } from "date-fns";
 
-function normalizeToNoon(date: Date) {
-  const d = new Date(date);
-  d.setHours(12, 0, 0, 0);
+// Cuban Spanish locale override
+const cubanLocale: Locale = {
+  ...es,
+  localize: {
+    ...es.localize!,
+    month: (n: number) =>
+      (
+        [
+          "Enero",
+          "Febrero",
+          "Marzo",
+          "Abril",
+          "Mayo",
+          "Junio",
+          "Julio",
+          "Agosto",
+          "Septiembre",
+          "Octubre",
+          "Noviembre",
+          "Diciembre",
+        ] as const
+      )[n],
+    day: (n: number) =>
+      (["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"] as const)[n],
+  },
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Convert a 24h Date to a 12h time string "hh:mm:ss" and period "AM"|"PM" */
+function dateTo12h(date: Date): { timeStr: string; period: "AM" | "PM" } {
+  let h = date.getHours();
+  const period: "AM" | "PM" = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  const mm = String(date.getMinutes()).padStart(2, "0");
+  const ss = String(date.getSeconds()).padStart(2, "0");
+  return { timeStr: `${String(h).padStart(2, "0")}:${mm}:${ss}`, period };
+}
+
+/** Apply a 12h time string + period to an existing Date */
+function apply12hTime(base: Date, timeStr: string, period: "AM" | "PM"): Date {
+  // Accept partial input too
+  const parts = timeStr.split(":").map(Number);
+  let h = isNaN(parts[0]) ? 0 : parts[0] % 12;
+  const m = isNaN(parts[1]) ? 0 : parts[1];
+  const s = isNaN(parts[2]) ? 0 : parts[2];
+  if (period === "PM") h += 12;
+  let d = setHours(base, h);
+  d = setMinutes(d, m);
+  d = setSeconds(d, s);
   return d;
 }
 
-function formatDate(date: Date | undefined) {
-  if (!date) {
-    return ""
-  }
-  // Use getDate(), getMonth(), getFullYear() to avoid timezone issues
-  const day = String(date.getDate()).padStart(2, '0')
-  const monthNames = [
-    'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-    'jul', 'ago', 'sep', 'oct', 'nov', 'dic'
-  ]
-  const month = monthNames[date.getMonth()]
-  const year = date.getFullYear()
-  
-  return `${day} ${month} ${year}`
+// ─── DateTimePicker ────────────────────────────────────────────────────────────
+
+export interface DateTimePickerProps {
+  value?: Date | null;
+  onChange?: (date: Date | null) => void;
+  label?: string;
+  placeholder?: string;
+  disabled?: boolean;
 }
 
-function parseDateFromInput(value: string) {
-  if (!value) return undefined
-  const v = value.trim()
+export default function DateTimePicker({
+  value,
+  onChange,
+  label = "Fecha y hora",
+  placeholder = "Seleccionar fecha y hora...",
+  disabled = false,
+}: DateTimePickerProps) {
+  const [date, setDate] = useState<Date | null>(
+    value instanceof Date && isValid(value) ? value : null,
+  );
+  const [open, setOpen] = useState<boolean>(false);
+  const [timeStr, setTimeStr] = useState<string>("");
+  const [period, setPeriod] = useState<"AM" | "PM">("AM");
 
-  // Numeric format: dd/mm/yyyy
-  const numericMatch = v.match(/^(\d{1,2})\s*[/-]\s*(\d{1,2})\s*[/-]\s*(\d{4})$/)
-  if (numericMatch) {
-    const day = Number(numericMatch[1])
-    const month = Number(numericMatch[2]) - 1
-    const year = Number(numericMatch[3])
-    // Use noon to avoid timezone issues
-    const d = new Date(year, month, day, 12, 0, 0, 0)
-    if (!isNaN(d.getTime())) return d
-  }
-
-  // Spanish text formats, a la "01 de junio de 2025" or "01 jun 2025"
-  const textRegex = /^(\d{1,2})\s*(?:de\s+)?([a-záéíóúñ.]+)\s*(?:de\s+)?(\d{4})$/i
-  const m = v.match(textRegex)
-  if (m) {
-    const day = Number(m[1])
-    const monthStr = m[2].toLowerCase().replace(/\./g, "")
-    const year = Number(m[3])
-    const months = [
-      'enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'
-    ]
-    // Allow first 3 letter abbreviations
-    let monthIdx = months.findIndex(mn => mn.startsWith(monthStr))
-    if (monthIdx === -1) {
-      // check 3-letter abbreviations
-      monthIdx = months.findIndex(mn => mn.slice(0,3) === monthStr.slice(0,3))
+  // When popover opens, initialise to current date/time if nothing selected
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
+      const now = date ?? new Date();
+      if (!date) {
+        setDate(now);
+        onChange?.(now);
+      }
+      const { timeStr: ts, period: p } = dateTo12h(now);
+      setTimeStr(ts);
+      setPeriod(p);
     }
-    if (monthIdx >= 0) {
-      // Use noon to avoid timezone issues
-      const d = new Date(year, monthIdx, day, 12, 0, 0, 0)
-      if (!isNaN(d.getTime())) return d
+    setOpen(next);
+  };
+
+  const handleDaySelect = (day: Date | undefined): void => {
+    if (!day) return;
+    const newDate = apply12hTime(day, timeStr, period);
+    setDate(newDate);
+    onChange?.(newDate);
+  };
+
+  const handleTimeInput = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const raw = e.target.value;
+    setTimeStr(raw);
+    if (!date) return;
+    const newDate = apply12hTime(date, raw, period);
+    if (isValid(newDate)) {
+      setDate(newDate);
+      onChange?.(newDate);
     }
-  }
+  };
 
-  // Try native parse as last resort (can have timezone issues)
-  const parsed = new Date(v)
-  if (!isNaN(parsed.getTime())) {
-    // Reset to noon to avoid timezone shifts
-    parsed.setHours(12, 0, 0, 0)
-    return parsed
-  }
-
-  return undefined
-}
-
-function isValidDate(date: Date | undefined) {
-  if (!date) {
-    return false
-  }
-  return !isNaN(date.getTime())
-}
-
-export interface DatePickerProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
-  label?: string
-  /** Controlled date value (Date) */
-  selected?: Date | undefined
-  /** Callback that emits the selected Date (or undefined) */
-  onDateChange?: (date: Date | undefined) => void
-  /** Locale for formatting */
-  locale?: string
-  /** Accept `value` as string (formatted), Date, or other input value shapes */
-  value?: string | number | readonly string[] | Date | undefined
-  /** Accept a flexible onChange handler (native event or date callback) */
-  onChange?: ((date: Date | undefined) => void) | React.ChangeEventHandler<HTMLInputElement>
-}
-
-/**
- * DatePicker component usable as controlled/uncontrolled.
- * - Forwarded ref allows use with React Hook Form's `register()`.
- * - Prefer `Controller` for receiving Date objects directly:
- *   <Controller name="date" control={control} render={({ field }) => (
- *     <DatePicker selected={field.value} onDateChange={(d) => field.onChange(d)} ref={field.ref} />
- *   )} />
- * - If you use `register`, the input value will be the localized (es-ES) string.
- */
-export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
-  (
-    {
-      label,
-      selected,
-      onDateChange,
-      locale = "es-ES",
-      id = "date",
-      placeholder = "-- --- ----",
-      value: controlledValue,
-      onChange: onChangeProp,
-      defaultValue,
-      ...rest
-    },
-    ref
-  ) => {
-    const [open, setOpen] = React.useState(false)
-    const [internalDate, setInternalDate] = React.useState<Date | undefined>(
-      selected ?? (defaultValue ? normalizeToNoon(parseDateFromInput(String(defaultValue)) || new Date()) : undefined)
-    )
-    const [month, setMonth] = React.useState<Date | undefined>(internalDate)
-
-    const controlledValueIsDate = controlledValue instanceof Date
-
-    // value shown in input (string)
-    const [internalValue, setInternalValue] = React.useState<string>(
-      controlledValue !== undefined ? String(controlledValue) : formatDate(internalDate)
-    )
-
-    // Sync when controlled props change
-    React.useEffect(() => {
-      if (selected !== undefined) {
-        setInternalDate(normalizeToNoon(selected))
-        setInternalValue(formatDate(selected))
-        setMonth(normalizeToNoon(selected))
-      }
-    }, [selected, locale])
-
-    React.useEffect(() => {
-      if (controlledValue !== undefined) {
-        if (controlledValueIsDate) {
-          const asDate = normalizeToNoon(controlledValue as unknown as Date)
-          setInternalDate(asDate)
-          setInternalValue(formatDate(asDate))
-          setMonth(asDate)
-        } else {
-          setInternalValue(String(controlledValue))
-        }
-      }
-    }, [controlledValue, controlledValueIsDate, locale])
-
-    type OnChangeAny = (param?: Date | React.ChangeEvent<HTMLInputElement> | undefined) => void
-    function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-      const raw = e.target.value
-      setInternalValue(raw)
-      // If the consumer passed a Date as `value`, then `onChange` likely expects Date
-      if (onChangeProp) {
-        const oc = onChangeProp as unknown as OnChangeAny
-        if (controlledValueIsDate) {
-          // parse and call with date (for backward compatibility)
-          const parsed = parseDateFromInput(raw)
-          oc(parsed ? normalizeToNoon(parsed) : undefined)
-        } else {
-          // Treat as native input onChange (e.g., from react-hook-form register)
-          oc(e)
-        }
-      }
-
-      const parsed = parseDateFromInput(raw)
-      if (isValidDate(parsed)) {
-        const normalizedDate = normalizeToNoon(parsed as Date)
-        setInternalDate(normalizedDate)
-        setMonth(normalizedDate)
-        onDateChange?.(normalizedDate)
-      } else {
-        onDateChange?.(undefined)
-      }
+  const handleTimeBlur = (): void => {
+    // Normalise on blur
+    if (date && isValid(date)) {
+      const { timeStr: ts } = dateTo12h(date);
+      setTimeStr(ts);
     }
+  };
 
-    return (
-      <div className="flex flex-col gap-3">
-        <Label htmlFor={id} className="px-1">
-          {label || "Fecha:"}
-        </Label>
-        <div className="relative flex gap-2">
-          <Input
-            id={id}
-            name={rest.name}
-            value={internalValue}
-            placeholder={placeholder}
-            className="bg-background pr-10"
-            onChange={handleInputChange}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowDown") {
-                e.preventDefault()
-                setOpen(true)
-              }
-            }}
-            ref={ref}
-            {...rest}
+  const togglePeriod = (): void => {
+    const newPeriod: "AM" | "PM" = period === "AM" ? "PM" : "AM";
+    setPeriod(newPeriod);
+    if (!date) return;
+    const newDate = apply12hTime(date, timeStr, newPeriod);
+    setDate(newDate);
+    onChange?.(newDate);
+  };
+
+  const handleClear = (): void => {
+    setDate(null);
+    setTimeStr("");
+    setPeriod("AM");
+    onChange?.(null);
+  };
+
+  const formatted: string =
+    date && isValid(date)
+      ? format(date, "dd/MM/yyyy hh:mm:ss aa", { locale: cubanLocale })
+      : "";
+
+  return (
+    <div className="flex flex-col gap-1.5 w-full max-w-sm">
+      {label && <Label>{label}</Label>}
+      <Popover open={open} onOpenChange={handleOpenChange}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            disabled={disabled}
+            className={cn(
+              "w-full justify-start text-left font-normal",
+              !date && "text-muted-foreground",
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+            {formatted || placeholder}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={date ?? undefined}
+            onSelect={handleDaySelect}
+            locale={cubanLocale}
+            initialFocus
           />
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                id={`${id}-picker`}
-                variant="ghost"
-                className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
-              >
-                <CalendarIcon className="size-3.5" />
-                <span className="sr-only">Select date</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-auto overflow-hidden p-0"
-              align="end"
-              alignOffset={-8}
-              sideOffset={10}
-            >
-              <Calendar
-                mode="single"
-                selected={internalDate}
-                captionLayout="dropdown"
-                month={month}
-                onMonthChange={setMonth}
-                onSelect={(date) => {
-                  const normalizedDate = date ? normalizeToNoon(date) : undefined
-                  setInternalDate(normalizedDate)
-                  setInternalValue(formatDate(normalizedDate))
-                  if (onChangeProp && controlledValueIsDate) {
-                    const oc = onChangeProp as unknown as OnChangeAny
-                    oc(normalizedDate)
-                  }
-                  onDateChange?.(normalizedDate)
-                  setOpen(false)
-                }}
+          <div className="border-t p-3">
+            <div className="flex items-center gap-1 mb-3 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span className="font-medium">Hora exacta</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Time input */}
+              <Input
+                value={timeStr}
+                onChange={handleTimeInput}
+                onBlur={handleTimeBlur}
+                placeholder="hh:mm:ss"
+                className="font-mono text-center flex-1"
+                maxLength={8}
               />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
-    )
-  }
-)
-
-DatePicker.displayName = "DatePicker"
+              {/* AM / PM toggle */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={togglePeriod}
+                className="w-14 font-semibold shrink-0"
+              >
+                {period}
+              </Button>
+            </div>
+            {date && isValid(date) && (
+              <p className="text-xs text-center text-muted-foreground mt-2 font-mono">
+                {format(date, "dd/MM/yyyy hh:mm:ss aa")}
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2 p-3 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={handleClear}
+            >
+              Limpiar
+            </Button>
+            <Button size="sm" className="flex-1" onClick={() => setOpen(false)}>
+              Aceptar
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}

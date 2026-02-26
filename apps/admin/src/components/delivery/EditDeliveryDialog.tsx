@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useUpdateDelivery } from '@/hooks/delivery';
-import { useCategories } from '@/hooks/category/useCategory';
-import { useUsers } from '@/hooks/user';
-import { toast } from 'sonner';
+import { useState, useEffect, useMemo } from "react";
+import { useUpdateDelivery } from "@/hooks/delivery";
+import { useCategories } from "@/hooks/category/useCategory";
+import { useUsers } from "@/hooks/user";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -10,20 +10,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, Truck, Package, CheckCircle2, Weight } from 'lucide-react';
-import type { DeliverReceip, DeliveryStatus } from '@/types';
-import { DatePicker } from '../utils/DatePicker';
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, Truck, Package, CheckCircle2, Weight } from "lucide-react";
+import type { DeliverReceip, DeliveryStatus } from "@/types";
+import DatePicker from "../utils/DatePicker";
 
 interface EditDeliveryDialogProps {
   open: boolean;
@@ -31,26 +31,36 @@ interface EditDeliveryDialogProps {
   delivery: DeliverReceip | null;
 }
 
-export default function EditDeliveryDialog({ open, onOpenChange, delivery }: EditDeliveryDialogProps) {
+export default function EditDeliveryDialog({
+  open,
+  onOpenChange,
+  delivery,
+}: EditDeliveryDialogProps) {
   const updateDeliveryMutation = useUpdateDelivery();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
-  const { data: agentsData } = useUsers({ role: 'agent' });
-  const categoryList = useMemo(() => categories?.results || [], [categories?.results]);
-  const agents = useMemo(() => agentsData?.results || [], [agentsData?.results]);
+  const { data: agentsData } = useUsers({ role: "agent" });
+  const categoryList = useMemo(
+    () => categories?.results || [],
+    [categories?.results],
+  );
+  const agents = useMemo(
+    () => agentsData?.results || [],
+    [agentsData?.results],
+  );
 
   // Obtener el agente asignado al cliente del delivery
   const assignedAgent = useMemo(() => {
-    if (!delivery?.client || typeof delivery.client !== 'object') return null;
+    if (!delivery?.client || typeof delivery.client !== "object") return null;
     if (!delivery.client.assigned_agent) return null;
-    return agents.find(a => a.id === delivery.client.assigned_agent);
+    return agents.find((a) => a.id === delivery.client.assigned_agent);
   }, [delivery, agents]);
 
   // Estado del formulario
   const [formData, setFormData] = useState({
     category_id: undefined as number | undefined,
     weight: 0,
-    status: 'Pendiente' as DeliveryStatus,
-    deliver_date: '',
+    status: "Pendiente" as DeliveryStatus,
+    deliver_date: "",
     weight_cost: 0,
     manager_profit: 0,
   });
@@ -61,8 +71,10 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
       setFormData({
         category_id: delivery.category?.id,
         weight: delivery.weight || 0,
-        status: delivery.status || 'Pendiente',
-        deliver_date: delivery.deliver_date ? delivery.deliver_date.split('T')[0] : '',
+        status: delivery.status || "Pendiente",
+        deliver_date: delivery.deliver_date
+          ? delivery.deliver_date.split("T")[0]
+          : "",
         weight_cost: delivery.weight_cost || 0,
         manager_profit: delivery.manager_profit || 0,
       });
@@ -72,11 +84,17 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
   // Efecto para calcular automáticamente el costo por peso
   useEffect(() => {
     if (formData.category_id && formData.weight > 0) {
-      const selectedCategory = categoryList.find(c => c.id === formData.category_id);
+      const selectedCategory = categoryList.find(
+        (c) => c.id === formData.category_id,
+      );
 
       if (selectedCategory) {
-        const calculatedCost = selectedCategory.client_shipping_charge * formData.weight;
-        setFormData(prev => ({ ...prev, weight_cost: parseFloat(calculatedCost.toFixed(2)) }));
+        const calculatedCost =
+          selectedCategory.client_shipping_charge * formData.weight;
+        setFormData((prev) => ({
+          ...prev,
+          weight_cost: parseFloat(calculatedCost.toFixed(2)),
+        }));
       }
     }
   }, [formData.category_id, formData.weight, categoryList]);
@@ -88,7 +106,10 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
 
       if (agentProfit > 0) {
         const calculatedProfit = formData.weight * agentProfit;
-        setFormData(prev => ({ ...prev, manager_profit: parseFloat(calculatedProfit.toFixed(2)) }));
+        setFormData((prev) => ({
+          ...prev,
+          manager_profit: parseFloat(calculatedProfit.toFixed(2)),
+        }));
       }
     }
   }, [assignedAgent, formData.weight]);
@@ -96,34 +117,34 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
   // Funciones para obtener estilos según el estado
   const getDeliveryStatusStyles = (status: string) => {
     const styles = {
-      'Pendiente': 'bg-yellow-50 border-yellow-300 text-yellow-800',
-      'En transito': 'bg-blue-50 border-blue-300 text-blue-800',
-      'Entregado': 'bg-green-50 border-green-300 text-green-800',
+      Pendiente: "bg-yellow-50 border-yellow-300 text-yellow-800",
+      "En transito": "bg-blue-50 border-blue-300 text-blue-800",
+      Entregado: "bg-green-50 border-green-300 text-green-800",
     };
-    return styles[status as keyof typeof styles] || '';
+    return styles[status as keyof typeof styles] || "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!delivery) {
-      toast.error('No se ha seleccionado un delivery');
+      toast.error("No se ha seleccionado un delivery");
       return;
     }
 
     // Validación básica
     if (formData.weight <= 0) {
-      toast.error('El peso debe ser mayor a 0');
+      toast.error("El peso debe ser mayor a 0");
       return;
     }
 
     if (!formData.deliver_date) {
-      toast.error('La fecha de entrega es obligatoria');
+      toast.error("La fecha de entrega es obligatoria");
       return;
     }
 
     if (!formData.category_id) {
-      toast.error('La categoría es obligatoria');
+      toast.error("La categoría es obligatoria");
       return;
     }
 
@@ -144,8 +165,10 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
       toast.success(`Delivery #${delivery.id} actualizado exitosamente`);
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating delivery:', error);
-      toast.error('No se pudo actualizar el delivery. Por favor intenta de nuevo.');
+      console.error("Error updating delivery:", error);
+      toast.error(
+        "No se pudo actualizar el delivery. Por favor intenta de nuevo.",
+      );
     }
   };
 
@@ -155,7 +178,8 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
         <DialogHeader>
           <DialogTitle>Editar Delivery #{delivery?.id}</DialogTitle>
           <DialogDescription>
-            Modifica los datos del delivery. Los campos con (*) son obligatorios.
+            Modifica los datos del delivery. Los campos con (*) son
+            obligatorios.
           </DialogDescription>
         </DialogHeader>
 
@@ -165,16 +189,21 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
             <div className="grid gap-2">
               <Label>Cliente</Label>
               <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-200">
-                {delivery?.client && typeof delivery.client === 'object' ? (
+                {delivery?.client && typeof delivery.client === "object" ? (
                   <>
                     <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
                       <span className="text-sm font-medium text-orange-600">
-                        {delivery.client.name?.[0]}{delivery.client.last_name?.[0]}
+                        {delivery.client.name?.[0]}
+                        {delivery.client.last_name?.[0]}
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{delivery.client.name} {delivery.client.last_name}</p>
-                      <p className="text-xs text-gray-500">{delivery.client.email}</p>
+                      <p className="text-sm font-medium">
+                        {delivery.client.name} {delivery.client.last_name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {delivery.client.email}
+                      </p>
                     </div>
                   </>
                 ) : (
@@ -189,9 +218,12 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                 Categoría <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={formData.category_id?.toString() || ''}
+                value={formData.category_id?.toString() || ""}
                 onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, category_id: value ? parseInt(value) : undefined }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    category_id: value ? parseInt(value) : undefined,
+                  }))
                 }
                 disabled={categoriesLoading}
               >
@@ -204,16 +236,26 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                       <div className="flex items-center gap-2">
                         <Package className="h-4 w-4 text-gray-500" />
                         <span>
-                          {categoryList.find(c => c.id === formData.category_id)?.name || 'Categoría desconocida'}
+                          {categoryList.find(
+                            (c) => c.id === formData.category_id,
+                          )?.name || "Categoría desconocida"}
                         </span>
-                        {categoryList.find(c => c.id === formData.category_id) && (
+                        {categoryList.find(
+                          (c) => c.id === formData.category_id,
+                        ) && (
                           <span className="text-xs text-gray-500">
-                            (${categoryList.find(c => c.id === formData.category_id)?.client_shipping_charge}/lb)
+                            ($
+                            {
+                              categoryList.find(
+                                (c) => c.id === formData.category_id,
+                              )?.client_shipping_charge
+                            }
+                            /lb)
                           </span>
                         )}
                       </div>
                     ) : (
-                      'Selecciona una categoría'
+                      "Selecciona una categoría"
                     )}
                   </SelectValue>
                 </SelectTrigger>
@@ -225,7 +267,10 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                     </div>
                   ) : categoryList.length > 0 ? (
                     categoryList.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
+                      <SelectItem
+                        key={category.id}
+                        value={category.id.toString()}
+                      >
                         <div className="flex items-center justify-between gap-4 w-full">
                           <div className="flex items-center gap-2">
                             <Package className="h-4 w-4" />
@@ -246,7 +291,10 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
               </Select>
               {formData.category_id && categoryList && (
                 <p className="text-xs text-gray-500">
-                  Cobro al cliente: ${categoryList.find(c => c.id === formData.category_id)?.client_shipping_charge || 0}/lb
+                  Cobro al cliente: $
+                  {categoryList.find((c) => c.id === formData.category_id)
+                    ?.client_shipping_charge || 0}
+                  /lb
                 </p>
               )}
             </div>
@@ -266,7 +314,10 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                   placeholder="Ej: 5.5"
                   value={formData.weight}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, weight: parseFloat(e.target.value) || 0 }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      weight: parseFloat(e.target.value) || 0,
+                    }))
                   }
                   className="pl-9 border-gray-200 focus:border-orange-300 focus:ring-orange-200"
                 />
@@ -276,10 +327,19 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
             {/* Fecha de Entrega */}
             <div className="grid gap-2">
               <DatePicker
-                selected={formData.deliver_date ? new Date(formData.deliver_date) : undefined}
-                onDateChange={(date: Date | undefined) => setFormData({ ...formData, deliver_date: date?.toISOString() || '' })}
+                label="Fecha de Entrega"
+                value={
+                  formData.deliver_date
+                    ? new Date(formData.deliver_date)
+                    : undefined
+                }
+                onChange={(date: Date | null) =>
+                  setFormData({
+                    ...formData,
+                    deliver_date: date?.toISOString() || "",
+                  })
+                }
               />
-
             </div>
 
             {/* Estado del Delivery */}
@@ -343,14 +403,17 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                   {formData.category_id && formData.weight > 0 && (
                     <p className="text-xs text-gray-500">
                       Cálculo: {formData.weight} lb × $
-                      {categoryList.find(c => c.id === formData.category_id)?.client_shipping_charge || 0}/lb = $
-                      {formData.weight_cost.toFixed(2)}
+                      {categoryList.find((c) => c.id === formData.category_id)
+                        ?.client_shipping_charge || 0}
+                      /lb = ${formData.weight_cost.toFixed(2)}
                     </p>
                   )}
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="manager_profit">Ganancia del Manager ($) - Editable</Label>
+                  <Label htmlFor="manager_profit">
+                    Ganancia del Manager ($) - Editable
+                  </Label>
                   <Input
                     id="manager_profit"
                     type="number"
@@ -359,46 +422,64 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                     placeholder="0.00"
                     value={formData.manager_profit}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, manager_profit: parseFloat(e.target.value) || 0 }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        manager_profit: parseFloat(e.target.value) || 0,
+                      }))
                     }
                     className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
                   />
                   {assignedAgent && formData.weight > 0 && (
                     <p className="text-xs text-gray-500">
-                      Cálculo: {formData.weight} lb × ${assignedAgent.agent_profit || 0}/lb (profit del agente {assignedAgent.name}) = $
+                      Cálculo: {formData.weight} lb × $
+                      {assignedAgent.agent_profit || 0}/lb (profit del agente{" "}
+                      {assignedAgent.name}) = $
                       {formData.manager_profit.toFixed(2)}
                     </p>
                   )}
-                  {delivery?.client && typeof delivery.client === 'object' && !assignedAgent && (
-                    <p className="text-xs text-amber-600">
-                      ⚠️ Este cliente no tiene un agente asignado
-                    </p>
-                  )}
+                  {delivery?.client &&
+                    typeof delivery.client === "object" &&
+                    !assignedAgent && (
+                      <p className="text-xs text-amber-600">
+                        ⚠️ Este cliente no tiene un agente asignado
+                      </p>
+                    )}
                 </div>
               </div>
             </details>
 
             {/* Resumen de costos */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm font-medium text-blue-900 mb-2">Resumen de Costos de Envío</p>
+              <p className="text-sm font-medium text-blue-900 mb-2">
+                Resumen de Costos de Envío
+              </p>
               <div className="space-y-1 text-sm text-blue-800">
                 {formData.category_id && categoryList && (
                   <div className="flex justify-between">
                     <span>Costo de entrega ({formData.weight} lb):</span>
                     <span className="font-medium">
-                      ${((categoryList.find(c => c.id === formData.category_id)?.client_shipping_charge || 0) * formData.weight).toFixed(2)}
+                      $
+                      {(
+                        (categoryList.find((c) => c.id === formData.category_id)
+                          ?.client_shipping_charge || 0) * formData.weight
+                      ).toFixed(2)}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span>Ganancia manager:</span>
-                  <span className="font-medium">${formData.manager_profit.toFixed(2)}</span>
+                  <span className="font-medium">
+                    ${formData.manager_profit.toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between border-t border-blue-300 pt-1 mt-1">
                   <span className="font-semibold">Total estimado:</span>
                   <span className="font-semibold">
-                    ${(
-                      ((categoryList.find(c => c.id === formData.category_id)?.client_shipping_charge || 0) * formData.weight) +
+                    $
+                    {(
+                      (categoryList.find((c) => c.id === formData.category_id)
+                        ?.client_shipping_charge || 0) *
+                        formData.weight +
                       formData.manager_profit
                     ).toFixed(2)}
                   </span>
@@ -423,7 +504,7 @@ export default function EditDeliveryDialog({ open, onOpenChange, delivery }: Edi
                   Guardando...
                 </>
               ) : (
-                'Guardar Cambios'
+                "Guardar Cambios"
               )}
             </Button>
           </DialogFooter>

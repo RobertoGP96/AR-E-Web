@@ -4,6 +4,8 @@ import { type Order } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { fetchClientBalancesReport } from "@/services/reports/reports";
 import { User2Icon } from "lucide-react";
+import DateTimePicker from "../utils/DatePicker";
+ // ← nuevo componente
 
 interface ConfirmPaymentDialogProps {
   order: Order | null;
@@ -52,14 +54,12 @@ export function ConfirmPaymentDialog({
   onConfirm,
 }: ConfirmPaymentDialogProps) {
   const [montoPagado, setMontoPagado] = useState("");
-  const [fechaPago, setFechaPago] = useState(
-    new Date().toISOString().split("T")[0],
-  );
-  const [estadoSelect, setEstadoSelect] = useState("auto"); // "auto" or "pagado"
+  // Ahora guardamos un Date en lugar de un string
+  const [fechaPago, setFechaPago] = useState<Date | null>(new Date());
+  const [estadoSelect, setEstadoSelect] = useState("auto");
   const [usarSaldo, setUsarSaldo] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch client balances to show surplus
   const { data: clientBalances } = useQuery({
     queryKey: ["clientBalances"],
     queryFn: fetchClientBalancesReport,
@@ -71,7 +71,7 @@ export function ConfirmPaymentDialog({
 
   useEffect(() => {
     if (open) {
-      setFechaPago(new Date().toISOString().split("T")[0]);
+      setFechaPago(new Date()); // se inicializa con la fecha/hora actual
       setMontoPagado("");
       setUsarSaldo(false);
       setEstadoSelect("auto");
@@ -94,15 +94,11 @@ export function ConfirmPaymentDialog({
   const totalCubierto = monto + saldoAplicado;
   const diferencia = totalCubierto - costoPedido;
   const pendiente = Math.max(0, costoPedido - totalCubierto);
-
-  // Si el cliente paga de más, el excedente se suma al saldo restante
   const excedente = diferencia > 0 ? diferencia : 0;
   const saldoDeshabilitado = saldoCliente <= 0 || monto >= costoPedido;
   const saldoBase = usarSaldo
     ? Math.max(0, saldoCliente - saldoAplicado)
     : saldoCliente;
-
-  // Si paga de más: excedente suma al saldo. Si paga de menos: el pendiente descuenta del saldo (si no usa saldo).
   const saldoRestante =
     saldoBase + excedente - (pendiente > 0 && !usarSaldo ? pendiente : 0);
 
@@ -129,21 +125,18 @@ export function ConfirmPaymentDialog({
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    if (totalCubierto <= 0 && estadoSelect !== "pagado") {
-      return;
-    }
+    if (totalCubierto <= 0 && estadoSelect !== "pagado") return;
 
     setIsSubmitting(true);
     try {
-      const [year, month, day] = fechaPago.split("-").map(Number);
-      const paymentDate = new Date(year, month - 1, day);
-
+      // Pasamos el Date directamente — si es null usamos hoy como fallback
+      const paymentDate = fechaPago ?? new Date();
       const isPaid = estadoActual === "pagado";
       const payStatus = isPaid ? "Pagado" : "Pendiente";
 
       await onConfirm(order.id!, totalCubierto || 0, paymentDate, payStatus);
     } catch {
-      // Errors should be handled by the parent
+      // Errors handled by parent
     } finally {
       setIsSubmitting(false);
     }
@@ -167,7 +160,7 @@ export function ConfirmPaymentDialog({
             </div>
           </div>
 
-          {/* Costo + Saldo (Fixed at top) */}
+          {/* Costo + Saldo */}
           <div className="grid grid-cols-2 divide-x divide-orange-100 border-b border-orange-100 shrink-0">
             <div className="p-4 text-center bg-white">
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">
@@ -214,16 +207,16 @@ export function ConfirmPaymentDialog({
               </div>
             </div>
 
-            {/* Fecha */}
+            {/* Fecha de pago */}
             <div>
               <label className="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-2">
                 Fecha de pago
               </label>
-              <input
-                type="date"
+              <DateTimePicker
+                label=""
+                placeholder="Seleccionar fecha y hora"
                 value={fechaPago}
-                onChange={(e) => setFechaPago(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 bg-gray-50 text-gray-700 font-semibold focus:outline-none focus:border-orange-400 focus:bg-white transition-all"
+                onChange={(date) => setFechaPago(date)}
               />
             </div>
 
@@ -305,7 +298,7 @@ export function ConfirmPaymentDialog({
                 </div>
               </div>
 
-              <div className="px-4 py-3.5 space-y-2.5 text-sm ">
+              <div className="px-4 py-3.5 space-y-2.5 text-sm">
                 <Row
                   label="Costo del pedido"
                   value={`$${costoPedido.toFixed(2)}`}
@@ -315,7 +308,6 @@ export function ConfirmPaymentDialog({
                   value={`$${monto.toFixed(2)}`}
                   highlight={monto > 0}
                 />
-
                 {usarSaldo && (
                   <Row
                     label="Saldo aplicado"
@@ -324,7 +316,6 @@ export function ConfirmPaymentDialog({
                     accent="text-orange-400"
                   />
                 )}
-
                 <div className="border-t border-orange-400 pt-2.5 mt-1">
                   <Row
                     label="Total cubierto"
@@ -332,21 +323,18 @@ export function ConfirmPaymentDialog({
                     bold
                   />
                 </div>
-
                 {pendiente > 0 && (
                   <div className="flex justify-between text-red-400 font-bold text-xs pt-1">
                     <span>Faltará abonar</span>
                     <span>${pendiente.toFixed(2)}</span>
                   </div>
                 )}
-
                 {excedente > 0 && (
                   <div className="flex justify-between text-green-400 font-semibold text-xs pt-1">
                     <span>Excedente al saldo</span>
                     <span>+${excedente.toFixed(2)}</span>
                   </div>
                 )}
-
                 <Row
                   label="Saldo resultante cliente"
                   value={`$${saldoRestante.toFixed(2)}`}
@@ -356,7 +344,6 @@ export function ConfirmPaymentDialog({
                       : "text-gray-300"
                   }
                 />
-
                 {(clientInfo?.total_balance ?? 0) < 0 &&
                   !usarSaldo &&
                   monto === 0 && (

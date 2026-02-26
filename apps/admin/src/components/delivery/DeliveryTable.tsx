@@ -22,7 +22,6 @@ import {
   Package,
   CheckCircle2,
   Weight,
-  Boxes,
   Image as ImageIcon,
   CreditCard,
 } from "lucide-react";
@@ -467,6 +466,37 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
+                            setPaymentDelivery(delivery);
+                            setShowPaymentDialog(true);
+                          }}
+                          disabled={delivery.payment_status === "Pagado"}
+                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                        >
+                          <CreditCard className="h-4 w-4" />
+                          Confirmar Pago
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
+                        >
+                          <Link
+                            to={`/delivery/${delivery.id}`}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                            }}
+                            className="inline-flex items-center gap-2"
+                            title={`Ver detalles del delivery ${delivery.id}`}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Ver detalles
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
                             navigate(`/delivery/${delivery.id}/edit`);
                           }}
                           className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
@@ -483,64 +513,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                           className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
                         >
                           <Camera className="h-4 w-4" />
-                          Capturar
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                        >
-                          <Link
-                            to={`/delivery/${delivery.id}/add-products`}
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                            }}
-                            className="inline-flex items-center gap-2"
-                            title={`Agregar productos al delivery ${delivery.id}`}
-                          >
-                            <Package className="h-4 w-4" />
-                            Agregar Productos
-                          </Link>
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
-                        >
-                          <Link
-                            to={`/delivery/${delivery.id}/manage-products`}
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                            }}
-                            className="inline-flex items-center gap-2"
-                            title={`Gestionar productos de la compra ${delivery.id}`}
-                          >
-                            <Boxes className="h-4 w-4" />
-                            Gestionar Productos
-                          </Link>
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                        >
-                          <Link
-                            to={`/delivery/${delivery.id}/remove-products`}
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                            }}
-                            className="inline-flex items-center gap-2"
-                            title={`Eliminar productos del delivery ${delivery.id}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Eliminar Productos
-                          </Link>
+                          Hacer Captura
                         </DropdownMenuItem>
 
                         {getNextStatus(delivery.status) && (
@@ -562,7 +535,7 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                                 return (
                                   <>
                                     <IconComponent className="h-4 w-4" />
-                                    <span>Marcar como {nextStatus}</span>
+                                    <span>Marcar {nextStatus}</span>
                                   </>
                                 );
                               })()}
@@ -571,39 +544,6 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                         )}
 
                         <DropdownMenuSeparator />
-
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPaymentDelivery(delivery);
-                            setShowPaymentDialog(true);
-                          }}
-                          disabled={delivery.payment_status === "Pagado"}
-                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                        >
-                          <CreditCard className="h-4 w-4" />
-                          Confirmar Pago
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
-                        >
-                          <Link
-                            to={`/delivery/${delivery.id}`}
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                            }}
-                            className="inline-flex items-center gap-2"
-                            title={`Ver detalles del delivery ${delivery.id}`}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            Ver detalles
-                          </Link>
-                        </DropdownMenuItem>
 
                         <DropdownMenuItem
                           onClick={(e) => {

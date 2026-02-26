@@ -40,7 +40,7 @@ import type {
   ProductReceived,
 } from "@/types/models";
 import { PACKAGE_STATUSES } from "@/types/models/base";
-import { DatePicker } from "@/components/utils/DatePicker";
+import DateTimePicker from "@/components/utils/DatePicker"; // ← nuevo componente
 import { useProducts } from "@/hooks/product";
 import { InputGroupInput } from "@/components/ui/input-group";
 import { PackageProductSelector } from "./package-products/PackageProductSelector";
@@ -72,7 +72,6 @@ export function PackageForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Estados para productos
   const [selectedProducts, setSelectedProducts] = useState<
     CreateProductReceivedData[]
   >([]);
@@ -92,7 +91,7 @@ export function PackageForm({
     },
   });
 
-  // Cargar datos iniciales si estamos en modo edición
+  // Cargar datos iniciales en modo edición
   useEffect(() => {
     if (packageData) {
       form.setValue("agency_name", packageData.agency_name);
@@ -105,7 +104,6 @@ export function PackageForm({
           : "",
       );
 
-      // Cargar productos
       if (packageData.contained_products) {
         setSelectedProductsDetails(packageData.contained_products);
         setSelectedProducts(
@@ -119,7 +117,6 @@ export function PackageForm({
     }
   }, [packageData, form]);
 
-  // Manejar cambios en el carrito desde PackageProductSelector
   const handleCartChange = (
     apiData: CreateProductReceivedData[],
     fullDetails?: ProductReceived[],
@@ -130,20 +127,20 @@ export function PackageForm({
     }
   };
 
-  // Eliminar un producto
   const removeProduct = (productId: string) => {
     const newDetails = selectedProductsDetails.filter(
       (item) => item.original_product.id !== productId,
     );
     setSelectedProductsDetails(newDetails);
-
-    const newApiData = selectedProducts.filter(
-      (item) => item.original_product_id !== productId,
+    setSelectedProducts(
+      newDetails.map((item) => ({
+        original_product_id: item.original_product.id,
+        amount_received: item.amount_received,
+        observation: item.observation,
+      })),
     );
-    setSelectedProducts(newApiData);
   };
 
-  // Actualizar cantidad
   const updateProductQuantity = (productId: string, delta: number) => {
     const newDetails = selectedProductsDetails
       .map((item) => {
@@ -157,13 +154,13 @@ export function PackageForm({
       .filter(Boolean) as ProductReceived[];
 
     setSelectedProductsDetails(newDetails);
-
-    const newApiData = newDetails.map((item) => ({
-      original_product_id: item.original_product.id,
-      amount_received: item.amount_received,
-      observation: item.observation,
-    }));
-    setSelectedProducts(newApiData);
+    setSelectedProducts(
+      newDetails.map((item) => ({
+        original_product_id: item.original_product.id,
+        amount_received: item.amount_received,
+        observation: item.observation,
+      })),
+    );
   };
 
   const onSubmit = async (data: PackageFormData) => {
@@ -172,37 +169,24 @@ export function PackageForm({
       let resultPackage: PackageType;
 
       if (packageData?.id) {
-        // Enviar también los productos si el backend lo soporta,
-        // o manejar la actualización de productos por separado.
-        // Por ahora, asumimos que enviamos el paquete y luego actualizamos productos
-        resultPackage = await updatePackage(packageData.id, {
-          ...data,
-          // contained_products: selectedProducts // Intentamos enviarlos por si acaso
-        } as PackageFormData);
-
-        // Sincronizar productos
+        resultPackage = await updatePackage(
+          packageData.id,
+          data as PackageFormData,
+        );
         await apiClient.post(
           `/api_data/package/${packageData.id}/add_products/`,
-          {
-            products: selectedProducts,
-          },
+          { products: selectedProducts },
         );
-
         toast.success("Paquete actualizado exitosamente");
         onInvalidate?.();
       } else {
         resultPackage = await createPackage(data as PackageFormData);
-
-        // Agregar productos al nuevo paquete
         if (selectedProducts.length > 0) {
           await apiClient.post(
             `/api_data/package/${resultPackage.id}/add_products/`,
-            {
-              products: selectedProducts,
-            },
+            { products: selectedProducts },
           );
         }
-
         toast.success("Paquete creado exitosamente");
         onInvalidate?.();
       }
@@ -218,6 +202,14 @@ export function PackageForm({
       setIsSubmitting(false);
     }
   };
+
+  // Derivar Date desde el string ISO del form para pasarlo al DateTimePicker
+  const arrivalDateValue = (() => {
+    const raw = form.watch("arrival_date");
+    if (!raw) return null;
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+  })();
 
   return (
     <Form {...form}>
@@ -385,6 +377,7 @@ export function PackageForm({
                   )}
                 />
 
+                {/* ── Fecha con el nuevo DateTimePicker ── */}
                 <FormField
                   control={form.control}
                   name="arrival_date"
@@ -395,17 +388,17 @@ export function PackageForm({
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <DatePicker
-                            placeholder="Seleccionar fecha"
-                            selected={
-                              field.value ? new Date(field.value) : undefined
-                            }
-                            onDateChange={(date) =>
+                          <DateTimePicker
+                            label=""
+                            placeholder="Seleccionar fecha y hora"
+                            value={arrivalDateValue}
+                            onChange={(date: Date | null) =>
                               field.onChange(
-                                date ? date.toISOString().split("T")[0] : "",
+                                date
+                                  ? date.toISOString().split("T")[0]
+                                  : "",
                               )
                             }
-                            className="h-12 w-full rounded-2xl border-slate-100 bg-slate-50/50 hover:bg-white hover:border-slate-200 transition-all shadow-none font-bold"
                           />
                           <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 pointer-events-none" />
                         </div>

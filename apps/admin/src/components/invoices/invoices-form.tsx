@@ -1,12 +1,20 @@
-import React, { useMemo } from 'react';
-import type { Invoice, CreateInvoiceData, UpdateInvoiceData } from '../../types/models/invoice';
-import { useInvoiceForm } from '../../hooks/useInvoiceForm';
-import { useQueryClient } from '@tanstack/react-query';
-import { invoiceKeys } from '@/hooks/invoice';
-import { TagItem } from './tag-item';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { NewTagForm } from './new-tag-form';
-import { InvoiceSummary } from './invoices-summary';
+import React, { useMemo } from "react";
+import type {
+  Invoice,
+  CreateInvoiceData,
+  UpdateInvoiceData,
+} from "../../types/models/invoice";
+import { useInvoiceForm } from "../../hooks/useInvoiceForm";
+import { useQueryClient } from "@tanstack/react-query";
+import { invoiceKeys } from "@/hooks/invoice";
+import { TagItem } from "./tag-item";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import { NewTagForm } from "./new-tag-form";
+import { InvoiceSummary } from "./invoices-summary";
 import {
   Dialog,
   DialogTrigger,
@@ -15,18 +23,27 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { DatePicker } from '@/components/utils/DatePicker';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Save, Loader2, FileText, TriangleAlert } from 'lucide-react';
-import { /*createInvoiceSchema, editInvoiceSchema*/ } from '../../schemas/invoiceSchemas';
-import type { CreateInvoiceFormData, EditInvoiceFormData } from '../../schemas/invoiceSchemas';
-import type { SubmitHandler } from 'react-hook-form';
+} from "@/components/ui/dialog";
+import DatePicker from "@/components/utils/DatePicker";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Plus, Save, Loader2, FileText, TriangleAlert } from "lucide-react";
+import {} from /*createInvoiceSchema, editInvoiceSchema*/ "../../schemas/invoiceSchemas";
+import type {
+  CreateInvoiceFormData,
+  EditInvoiceFormData,
+} from "../../schemas/invoiceSchemas";
+import type { SubmitHandler } from "react-hook-form";
 
 interface InvoiceFormProps {
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   invoice?: Invoice;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -64,7 +81,7 @@ export function InvoiceForm({
   const queryClient = useQueryClient();
 
   // Calcular el total de la factura basado en los subtotales de las tags
-  const watchedTags = watch('tags');
+  const watchedTags = watch("tags");
 
   const calculatedTotal = useMemo(() => {
     if (watchedTags && watchedTags.length > 0) {
@@ -78,15 +95,21 @@ export function InvoiceForm({
     // `total` es parte del schema y no está en el form por defecto; lo actualizamos aquí.
     // Redondeamos a 2 decimales y forzamos validación para que Zod muestre errores si los hay.
     const rounded = Math.round(calculatedTotal * 100) / 100;
-    setValue('total' as const, rounded as number, { shouldValidate: true, shouldDirty: true });
-    if (mode === 'edit' && invoice && invoice.id && isOpen) {
+    setValue("total" as const, rounded as number, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    if (mode === "edit" && invoice && invoice.id && isOpen) {
       try {
-        queryClient.setQueryData<Invoice | undefined>(invoiceKeys.detail(invoice.id), (old) => {
-          if (!old) return old;
-          return { ...old, total: rounded } as Invoice;
-        });
+        queryClient.setQueryData<Invoice | undefined>(
+          invoiceKeys.detail(invoice.id),
+          (old) => {
+            if (!old) return old;
+            return { ...old, total: rounded } as Invoice;
+          },
+        );
       } catch (err) {
-        console.warn('No fue posible actualizar cache de invoices', err);
+        console.warn("No fue posible actualizar cache de invoices", err);
       }
     }
   }, [calculatedTotal, setValue, invoice, mode, queryClient, isOpen]);
@@ -98,22 +121,34 @@ export function InvoiceForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, onOpenChange]);
 
-  const onFormSubmit: SubmitHandler<CreateInvoiceFormData | EditInvoiceFormData> = async (data) => {
+  const onFormSubmit: SubmitHandler<
+    CreateInvoiceFormData | EditInvoiceFormData
+  > = async (data) => {
     try {
       const dataWithTotal = { ...data, total: calculatedTotal };
-      
-      const submitData = mode === 'create'
-        ? { ...dataWithTotal, date: new Date((data as CreateInvoiceFormData).date).toISOString() }
-        : { ...dataWithTotal, id: invoice!.id, date: new Date((data as EditInvoiceFormData).date).toISOString() };
+
+      const submitData =
+        mode === "create"
+          ? {
+              ...dataWithTotal,
+              date: new Date(
+                (data as CreateInvoiceFormData).date,
+              ).toISOString(),
+            }
+          : {
+              ...dataWithTotal,
+              id: invoice!.id,
+              date: new Date((data as EditInvoiceFormData).date).toISOString(),
+            };
 
       await onSubmit?.(submitData as CreateInvoiceData | UpdateInvoiceData);
 
-      if (mode === 'create') {
+      if (mode === "create") {
         reset();
         handleOpenChange(false, onOpenChange);
       }
     } catch (error) {
-      console.error('Error al guardar factura:', error);
+      console.error("Error al guardar factura:", error);
       // Re-lanzamos para que el componente padre (hook de mutación) maneje el error y muestre toasts
       throw error;
     }
@@ -125,16 +160,27 @@ export function InvoiceForm({
       <div className="space-y-6">
         <div className="grid grid-cols-1 gap-6">
           <div className="space-y-3">
-            <Label htmlFor="date" className="text-sm font-semibold text-gray-700">
+            <Label
+              htmlFor="date"
+              className="text-sm font-semibold text-gray-700"
+            >
               Fecha
             </Label>
             <DatePicker
-              id="date"
-              selected={watch('date') ? new Date(watch('date') as string) : undefined}
-              onDateChange={(date) => setValue('date' as const, date ? date.toISOString().split('T')[0] : '', { shouldValidate: true, shouldDirty: true })}
+              label="Fecha"
+              value={
+                watch("date") ? new Date(watch("date") as string) : undefined
+              }
+              onChange={(date: Date | null) =>
+                setValue(
+                  "date" as const,
+                  date ? date.toISOString().split("T")[0] : "",
+                  { shouldValidate: true, shouldDirty: true },
+                )
+              }
               placeholder="Selecciona la fecha"
             />
-            
+
             {errors.date && (
               <p className="text-sm text-red-600 flex items-center gap-1">
                 <span className="text-xs">⚠️</span> {errors.date.message}
@@ -150,14 +196,16 @@ export function InvoiceForm({
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <CardTitle className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                
                 Detalles
               </CardTitle>
               <p className="text-sm text-gray-600">
                 Agrega los diferentes conceptos que componen esta factura
               </p>
             </div>
-            <Popover open={showNewTagPopover} onOpenChange={(open) => setShowNewTagPopover(open)}>
+            <Popover
+              open={showNewTagPopover}
+              onOpenChange={(open) => setShowNewTagPopover(open)}
+            >
               <PopoverTrigger asChild>
                 <Button
                   type="button"
@@ -170,11 +218,11 @@ export function InvoiceForm({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="!w-auto p-4 max-w-[380px]">
-                  <NewTagForm
+                <NewTagForm
                   onCancel={() => setShowNewTagPopover(false)}
                   onSave={(t) => {
                     // Asegurarse de que el subtotal se almacene con 2 decimales
-                    append({ ...t, subtotal: Number((t.subtotal).toFixed(2)) });
+                    append({ ...t, subtotal: Number(t.subtotal.toFixed(2)) });
                     setShowNewTagPopover(false);
                   }}
                 />
@@ -192,7 +240,6 @@ export function InvoiceForm({
               <h3 className="text-md font-medium text-gray-600 mb-2">
                 No hay conceptos agregados
               </h3>
-              
             </div>
           ) : (
             <div className="space-y-4">
@@ -218,23 +265,26 @@ export function InvoiceForm({
               ))}
 
               {/* Resumen Total */}
-              
             </div>
           )}
 
           {/* NewTagForm ahora se integra dentro del Popover del botón de Agregar Concepto */}
 
-          {errors.tags && typeof errors.tags === 'object' && 'message' in errors.tags && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-600 flex items-center gap-2">
-                <TriangleAlert className="h-4 w-4" /> {errors.tags.message}
-              </p>
-            </div>
-          )}
-          
+          {errors.tags &&
+            typeof errors.tags === "object" &&
+            "message" in errors.tags && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-600 flex items-center gap-2">
+                  <TriangleAlert className="h-4 w-4" /> {errors.tags.message}
+                </p>
+              </div>
+            )}
         </CardContent>
-        <CardFooter >
-          <InvoiceSummary fieldsLength={fields.length} calculatedTotal={calculatedTotal} />
+        <CardFooter>
+          <InvoiceSummary
+            fieldsLength={fields.length}
+            calculatedTotal={calculatedTotal}
+          />
         </CardFooter>
       </Card>
 
@@ -254,7 +304,7 @@ export function InvoiceForm({
           className="h-11 px-8 bg-orange-400 hover:bg-orange-500 text-white font-medium shadow-sm"
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {mode === 'create' ? (
+          {mode === "create" ? (
             <>
               <Plus className="mr-2 h-4 w-4" />
               Crear Factura
@@ -272,17 +322,20 @@ export function InvoiceForm({
 
   if (trigger) {
     return (
-      <Dialog open={isOpen} onOpenChange={(newOpen) => handleOpenChange(newOpen, onOpenChange)}>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(newOpen) => handleOpenChange(newOpen, onOpenChange)}
+      >
         <DialogTrigger asChild>{trigger}</DialogTrigger>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {mode === 'create' ? 'Nueva Factura' : 'Editar Factura'}
+              {mode === "create" ? "Nueva Factura" : "Editar Factura"}
             </DialogTitle>
             <DialogDescription>
-              {mode === 'create' 
-                ? 'Crea una nueva factura agregando fecha y conceptos con sus detalles.' 
-                : 'Edita la factura existente modificando fecha y conceptos.'}
+              {mode === "create"
+                ? "Crea una nueva factura agregando fecha y conceptos con sus detalles."
+                : "Edita la factura existente modificando fecha y conceptos."}
             </DialogDescription>
           </DialogHeader>
           {formContent}
@@ -292,16 +345,19 @@ export function InvoiceForm({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(newOpen) => handleOpenChange(newOpen, onOpenChange)}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(newOpen) => handleOpenChange(newOpen, onOpenChange)}
+    >
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? 'Nueva Factura' : 'Editar Factura'}
+            {mode === "create" ? "Nueva Factura" : "Editar Factura"}
           </DialogTitle>
           <DialogDescription>
-            {mode === 'create' 
-              ? 'Crea una nueva factura agregando fecha y conceptos con sus detalles.' 
-              : 'Edita la factura existente modificando fecha y conceptos.'}
+            {mode === "create"
+              ? "Crea una nueva factura agregando fecha y conceptos con sus detalles."
+              : "Edita la factura existente modificando fecha y conceptos."}
           </DialogDescription>
         </DialogHeader>
         {formContent}

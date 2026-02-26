@@ -25,7 +25,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-import { DatePicker } from "@/components/utils/DatePicker";
+import DatePickerWithRange from "@/components/utils/DatePickerRange";
+import type { DateRange } from "react-day-picker";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -40,7 +41,6 @@ import {
   ShoppingBag,
   BaggageClaim,
   ReceiptText,
-  ArrowBigRight,
   Save,
   CheckCircle2,
   CreditCard,
@@ -80,6 +80,16 @@ export default function BalanceReport() {
   const previousPresetRef = React.useRef<
     "1m" | "3m" | "6m" | "12m" | "custom" | null
   >(null);
+
+  const [tempRange, setTempRange] = React.useState<DateRange | undefined>({
+    from: startDate,
+    to: endDate,
+  });
+
+  // Keep temp range in sync when dates change via presets
+  React.useEffect(() => {
+    setTempRange({ from: startDate, to: endDate });
+  }, [startDate, endDate]);
 
   // Handler to toggle between custom range and standard presets
   const handleUseCustomRangeChange = (value: boolean) => {
@@ -138,6 +148,16 @@ export default function BalanceReport() {
     purchasesError,
     refetch,
   } = useBalanceData({ startDate, endDate });
+
+  const handleApplyRange = () => {
+    if (tempRange?.from) {
+      setStartDate(tempRange.from);
+      setEndDate(tempRange.to);
+      toast.info("Rango aplicado. Cargando datos...");
+    } else {
+      toast.error("Selecciona al menos una fecha de inicio");
+    }
+  };
 
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
@@ -371,24 +391,29 @@ export default function BalanceReport() {
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-end">
                   <div className="flex-1 min-w-0">
-                    <DatePicker
-                      label="Fecha Inicio"
-                      selected={startDate}
-                      onDateChange={setStartDate}
+                    <DatePickerWithRange
+                      label="Rango Seleccionado"
+                      value={tempRange}
+                      onChange={(range: DateRange | undefined) => {
+                        setTempRange(range);
+                      }}
                       disabled={!useCustomRange}
                     />
                   </div>
-                  <div className="hidden sm:flex h-10 items-center">
-                    <ArrowBigRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <DatePicker
-                      label="Fecha Fin"
-                      selected={endDate}
-                      onDateChange={setEndDate}
-                      disabled={!useCustomRange}
-                    />
-                  </div>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleApplyRange();
+                    }}
+                    disabled={
+                      !useCustomRange ||
+                      (tempRange?.from === startDate &&
+                        tempRange?.to === endDate)
+                    }
+                    className="shrink-0"
+                  >
+                    Calcular
+                  </Button>
                 </div>
               </div>
             </CardContent>

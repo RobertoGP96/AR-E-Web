@@ -35,7 +35,7 @@ import {
   Weight,
   Tag,
 } from "lucide-react";
-import { DatePicker } from "@/components/utils/DatePicker";
+import DatePicker from "@/components/utils/DatePicker";
 import { InputGroupInput } from "@/components/ui/input-group";
 
 // Hooks
@@ -157,22 +157,6 @@ export function DeliveryForm({
     }
   }, [delivery]);
 
-  // Fetch products for selected client
-  const productFilters: ProductFilters = useMemo(
-    () => ({
-      // Filter logic can be added here if backend supports it
-    }),
-    [],
-  );
-
-  const { products: allProducts } = useProducts(productFilters || {});
-
-  // Filter products by client locally
-  const clientProducts = useMemo(() => {
-    if (!selectedClientId) return [];
-    return allProducts;
-  }, [allProducts, selectedClientId]);
-
   // Calculations
   const selectedClient = clients.find(
     (c) => c.id.toString() === selectedClientId,
@@ -183,6 +167,24 @@ export function DeliveryForm({
   const selectedCategory = categories.find(
     (c) => c.id.toString() === selectedCategoryId,
   );
+
+  // Fetch products for selected client and category
+  // Fetch products for selected client and category
+  const productFilters: ProductFilters = useMemo(
+    () => ({
+      client_id: selectedClientId ? parseInt(selectedClientId) : undefined,
+      category: selectedCategory?.name,
+    }),
+    [selectedClientId, selectedCategory],
+  );
+
+  const { products: allProducts } = useProducts(productFilters);
+
+  // Filter products by client locally
+  const clientProducts = useMemo(() => {
+    if (!selectedClientId) return [];
+    return allProducts;
+  }, [allProducts, selectedClientId]);
 
   // Auto-calculate weight cost (Only if not manually edited or if in create mode? For now auto-calc always on change)
   useEffect(() => {
@@ -454,7 +456,11 @@ export function DeliveryForm({
                         Categoría de Envío
                       </FormLabel>
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          // Clear products when category changes as products depend on category
+                          setSelectedProductsItem([]);
+                        }}
                         value={field.value}
                         disabled={isLoadingCategories}
                       >
@@ -664,17 +670,16 @@ export function DeliveryForm({
                       <FormControl>
                         <DatePicker
                           placeholder="Fijar fecha"
-                          selected={
+                          value={
                             field.value ? new Date(field.value) : undefined
                           }
-                          onDateChange={(date) =>
+                          onChange={(date: Date | null) =>
                             field.onChange(
                               date
                                 ? date.toISOString().split("T")[0]
                                 : undefined,
                             )
                           }
-                          className="h-11 w-full rounded-xl border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all shadow-none"
                         />
                       </FormControl>
                       <FormMessage />
@@ -721,17 +726,16 @@ export function DeliveryForm({
                       <FormControl>
                         <DatePicker
                           placeholder="Fijar fecha de pago"
-                          selected={
+                          value={
                             field.value ? new Date(field.value) : undefined
                           }
-                          onDateChange={(date) =>
+                          onChange={(date: Date | null) =>
                             field.onChange(
                               date
                                 ? date.toISOString().split("T")[0]
                                 : undefined,
                             )
                           }
-                          className="h-11 w-full rounded-xl border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all shadow-none"
                         />
                       </FormControl>
                       <FormMessage />

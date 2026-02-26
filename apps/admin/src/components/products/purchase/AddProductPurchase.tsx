@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -10,30 +10,39 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
-import { Loader2, Plus } from 'lucide-react';
-import { useCreateProductBuyed } from '@/hooks/product/useCreateProductBuyed';
-import { shoppingReceipService } from '@/services/api';
-import type { ShoppingReceip } from '@/types/models';
-import { DatePicker } from '@/components/utils/DatePicker';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { Loader2, Plus } from "lucide-react";
+import { useCreateProductBuyed } from "@/hooks/product/useCreateProductBuyed";
+import { shoppingReceipService } from "@/services/api";
+import type { ShoppingReceip } from "@/types/models";
+import DateTimePicker from "@/components/utils/DatePicker";
 
 // Schema de validación
 const addProductPurchaseSchema = z.object({
-  shoping_receip: z.number().min(1, 'Debes seleccionar un recibo de compra'),
-  amount_buyed: z.number().min(1, 'La cantidad debe ser al menos 1'),
-  actual_cost_of_product: z.number().min(0, 'El costo debe ser mayor o igual a 0').optional(),
-  shop_discount: z.number().min(0, 'El descuento debe ser mayor o igual a 0').optional(),
-  offer_discount: z.number().min(0, 'El descuento debe ser mayor o igual a 0').optional(),
+  shoping_receip: z.number().min(1, "Debes seleccionar un recibo de compra"),
+  amount_buyed: z.number().min(1, "La cantidad debe ser al menos 1"),
+  actual_cost_of_product: z
+    .number()
+    .min(0, "El costo debe ser mayor o igual a 0")
+    .optional(),
+  shop_discount: z
+    .number()
+    .min(0, "El descuento debe ser mayor o igual a 0")
+    .optional(),
+  offer_discount: z
+    .number()
+    .min(0, "El descuento debe ser mayor o igual a 0")
+    .optional(),
   buy_date: z.string().optional(),
   observation: z.string().optional(),
 });
@@ -51,7 +60,9 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
   orderId,
   onPurchaseAdded,
 }) => {
-  const [shoppingReceipts, setShoppingReceipts] = useState<ShoppingReceip[]>([]);
+  const [shoppingReceipts, setShoppingReceipts] = useState<ShoppingReceip[]>(
+    [],
+  );
   const [isLoadingReceipts, setIsLoadingReceipts] = useState(false);
   const { createProductBuyed, isCreating } = useCreateProductBuyed();
 
@@ -64,7 +75,7 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
       shop_discount: 0,
       offer_discount: 0,
       buy_date: new Date().toISOString(),
-      observation: '',
+      observation: "",
     },
   });
 
@@ -81,8 +92,8 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
       });
       setShoppingReceipts(response.results || []);
     } catch (error) {
-      console.error('Error loading shopping receipts:', error);
-      toast.error('Error al cargar los recibos de compra');
+      console.error("Error loading shopping receipts:", error);
+      toast.error("Error al cargar los recibos de compra");
     } finally {
       setIsLoadingReceipts(false);
     }
@@ -103,16 +114,16 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
         buy_date: data.buy_date || new Date().toISOString(),
         shoping_receip: data.shoping_receip,
         amount_buyed: data.amount_buyed,
-        observation: data.observation || '',
+        observation: data.observation || "",
       };
 
       await createProductBuyed(payload);
-      toast.success('Compra agregada exitosamente');
+      toast.success("Compra agregada exitosamente");
       form.reset();
       onPurchaseAdded?.();
     } catch (error) {
-      console.error('Error creating product purchase:', error);
-      toast.error('Error al agregar la compra');
+      console.error("Error creating product purchase:", error);
+      toast.error("Error al agregar la compra");
     }
   };
 
@@ -144,8 +155,15 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
                       </div>
                     ) : (
                       shoppingReceipts.map((receipt) => (
-                        <SelectItem key={receipt.id} value={receipt.id.toString()}>
-                          #{receipt.id} - {receipt.shop_of_buy} ({new Date(receipt.buy_date || '').toLocaleDateString()})
+                        <SelectItem
+                          key={receipt.id}
+                          value={receipt.id.toString()}
+                        >
+                          #{receipt.id} - {receipt.shop_of_buy} (
+                          {new Date(
+                            receipt.buy_date || "",
+                          ).toLocaleDateString()}
+                          )
                         </SelectItem>
                       ))
                     )}
@@ -169,7 +187,9 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
                     min={1}
                     placeholder="1"
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value) || 1)
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -191,7 +211,9 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
                     min={0}
                     placeholder="0.00"
                     {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      field.onChange(parseFloat(e.target.value) || 0)
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -213,7 +235,9 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
                     min={0}
                     placeholder="0.00"
                     {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      field.onChange(parseFloat(e.target.value) || 0)
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -235,7 +259,9 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
                     min={0}
                     placeholder="0.00"
                     {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      field.onChange(parseFloat(e.target.value) || 0)
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -251,9 +277,11 @@ const AddProductPurchase: React.FC<AddProductPurchaseProps> = ({
               <FormItem>
                 <FormLabel>Fecha de Compra</FormLabel>
                 <FormControl>
-                  <DatePicker
-                    selected={field.value ? new Date(field.value) : undefined}
-                    onDateChange={(date: Date | undefined) => field.onChange(date?.toISOString())}
+                  <DateTimePicker
+                    value={field.value ? new Date(field.value) : undefined}
+                    onChange={(date: Date | null) =>
+                      field.onChange(date?.toISOString())
+                    }
                   />
                 </FormControl>
                 <FormMessage />

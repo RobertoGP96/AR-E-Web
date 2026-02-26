@@ -1,9 +1,15 @@
-import { DatePicker } from '@/components/utils/DatePicker';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import DatePicker from "@/components/utils/DatePicker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
-type PresetType = '1m' | '3m' | '6m' | '12m' | 'custom';
+type PresetType = "1m" | "3m" | "6m" | "12m" | "custom";
 
 interface DateRangeSelectorProps {
   startDate: Date | undefined;
@@ -26,12 +32,12 @@ export function DateRangeSelector({
   useCustomRange,
   onUseCustomRangeChange,
 }: DateRangeSelectorProps) {
-  const handleStartDateChange = (date: Date | undefined) => {
-    onStartDateChange(date);
+  const handleStartDateChange = (date: Date | null) => {
+    onStartDateChange(date ?? undefined);
   };
 
-  const handleEndDateChange = (date: Date | undefined) => {
-    onEndDateChange(date);
+  const handleEndDateChange = (date: Date | null) => {
+    onEndDateChange(date ?? undefined);
   };
 
   return (
@@ -60,21 +66,17 @@ export function DateRangeSelector({
         <div className="flex-1 space-y-2">
           <Label htmlFor="start-date">Desde</Label>
           <DatePicker
-            id="start-date"
-            selected={startDate}
-            onDateChange={handleStartDateChange}
+            value={startDate}
+            onChange={handleStartDateChange}
             disabled={!useCustomRange}
-            className="w-full"
           />
         </div>
         <div className="flex-1 space-y-2">
           <Label htmlFor="end-date">Hasta</Label>
           <DatePicker
-            id="end-date"
-            selected={endDate}
-            onDateChange={handleEndDateChange}
+            value={endDate}
+            onChange={handleEndDateChange}
             disabled={!useCustomRange}
-            className="w-full"
           />
         </div>
       </div>

@@ -118,22 +118,22 @@ const navigationGroups = [
         icon: BaggageClaim,
       },
       {
-        name: "Gastos",
+        name: "Registro de Gastos",
         href: "/expenses",
         icon: ReceiptText,
       },
       {
-        name: "Balance",
+        name: "Balance General",
         href: "/balance",
         icon: ReceiptIcon,
       },
       {
-        name: "Clientes",
+        name: "Balance de Clientes",
         href: "/client-balances",
         icon: CoinsIcon,
       },
       {
-        name: "Analisis",
+        name: "Análisis",
         href: "/analytics",
         icon: ChartColumn,
       },
