@@ -27,7 +27,7 @@ class PackageViewSet(viewsets.ModelViewSet):
         if user.role == 'logistical':
             queryset = queryset.filter(delivery__logistical=user)
         elif user.role == 'client':
-            queryset = queryset.filter(delivery__order__client=user)
+            queryset = queryset.filter(delivery__client=user)  # ✅ Relación directa: delivery.client
 
         return queryset
 
@@ -125,9 +125,7 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
         if user.role == 'logistical':
             queryset = queryset.filter(delivery__logistical=user)
         elif user.role == 'client':
-            queryset = queryset.filter(client=user)  # ✅ CORRECCIÓN: Filtrar directamente por cliente
-
-        return queryset
+            queryset = queryset.filter(client=user)  # ✅ Filtrar directamente por cliente
 
         return queryset
 

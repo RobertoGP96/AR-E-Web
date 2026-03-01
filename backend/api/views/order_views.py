@@ -45,7 +45,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(status=status_filter)
 
         # pago
-        pay_status_filter = self.request.query_params.get('pay_status') or self.request.query_params.get('pay_status')
+        pay_status_filter = self.request.query_params.get('pay_status') or self.request.query_params.get('payment_status')
         if pay_status_filter:
             queryset = queryset.filter(pay_status=pay_status_filter)
 
