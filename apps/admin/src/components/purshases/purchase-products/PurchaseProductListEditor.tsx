@@ -1,8 +1,12 @@
+import { useState, useMemo } from "react";
 import { Package, Trash2, ShoppingCart, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { ProductBuyed } from "@/types/models";
 import { calculateProductPurchaseCost } from "@/lib/purchase-calculations";
+import { ProductSearchBar } from "./ProductSearchBar";
+
+type SearchCriteria = "id" | "sku" | "nombre" | "cliente" | "agente";
 
 interface PurchaseProductListEditorProps {
   items: ProductBuyed[];
@@ -18,14 +22,82 @@ export function PurchaseProductListEditor({
   onUpdateQuantity,
   onRemove,
 }: PurchaseProductListEditorProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCriteria, setSelectedCriteria] =
+    useState<SearchCriteria>("nombre");
+
+  // Filtrar items basado en búsqueda
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return items;
+
+    const query = searchQuery.toLowerCase();
+
+    return items.filter((item) => {
+      const product = item.original_product_details;
+      if (!product) return false;
+
+      switch (selectedCriteria) {
+        case "id":
+          return (
+            item.id?.toString().toLowerCase().includes(query) ||
+            item.product_id?.toString().toLowerCase().includes(query)
+          );
+        case "sku":
+          return product.sku?.toLowerCase().includes(query);
+        case "nombre":
+          return product.name?.toLowerCase().includes(query);
+        case "cliente":
+          return product.client_name?.toLowerCase().includes(query);
+        case "agente":
+          return (
+            product.shop?.toLowerCase().includes(query) ||
+            product.description?.toLowerCase().includes(query)
+          );
+        default:
+          return true;
+      }
+    });
+  }, [searchQuery, selectedCriteria, items]);
+
   const totalItems = items.reduce((sum, item) => sum + item.amount_buyed, 0);
   const totalCost = items.reduce(
     (sum, item) => sum + calculateProductPurchaseCost(item),
     0,
   );
 
+  const handleSearch = (query: string, criteria: SearchCriteria) => {
+    setSearchQuery(query);
+    setSelectedCriteria(criteria);
+  };
+
+  const handleSelectSuggestion = (product: ProductBuyed) => {
+    // Limpiar búsqueda para mostrar el producto en contexto
+    setSearchQuery("");
+    setSelectedCriteria("nombre");
+    
+    // Scroll al producto seleccionado
+    const productId = (product.product_id || product.original_product_details?.id) as string;
+    setTimeout(() => {
+      const element = document.getElementById(`product-${productId}`);
+      element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      element?.classList.add("ring-2", "ring-orange-500", "rounded-lg");
+      setTimeout(() => {
+        element?.classList.remove("ring-2", "ring-orange-500", "rounded-lg");
+      }, 2500);
+    }, 100);
+  };
+
   return (
     <div className="w-full space-y-4">
+      {/* Search Bar */}
+      {items.length > 0 && (
+        <ProductSearchBar
+          items={items}
+          onSearch={handleSearch}
+          onSelectSuggestion={handleSelectSuggestion}
+        />
+      )}
+
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
@@ -37,9 +109,21 @@ export function PurchaseProductListEditor({
               Agrega artículos para verlos aquí y completar la compra
             </p>
           </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
+            <div className="p-4 bg-white rounded-full shadow-sm mb-4">
+              <Package className="h-8 w-8 text-slate-300" />
+            </div>
+            <p className="font-semibold text-slate-600">
+              No se encontraron productos
+            </p>
+            <p className="text-sm text-slate-400 max-w-[250px] text-center mt-1 font-medium">
+              Intenta con otro criterio de búsqueda
+            </p>
+          </div>
         ) : (
           <div className="flex flex-col divide-y divide-slate-100 bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
-            {items.map((item) => {
+            {filteredItems.map((item) => {
               const product = item.original_product_details;
               if (!product) return null;
 
@@ -48,6 +132,7 @@ export function PurchaseProductListEditor({
               return (
                 <div
                   key={productId}
+                  id={`product-${productId}`}
                   className="group flex flex-col sm:flex-row items-center gap-4 p-4 hover:bg-slate-50/30 transition-all duration-200"
                 >
                   <div className="relative h-14 w-14 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 overflow-hidden border border-slate-100">

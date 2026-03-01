@@ -7,11 +7,9 @@ import {
   ShoppingCart,
   Trash2,
   Package,
-  Search,
   Box,
   ShoppingBag,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,6 +28,9 @@ import type {
   ProductBuyed,
 } from "@/types/models";
 import { calculateProductPurchaseCost } from "@/lib/purchase-calculations";
+import { ProductCatalogSearchBar } from "./ProductCatalogSearchBar";
+
+type SearchCriteria = "nombre" | "sku" | "cliente" | "categoria";
 
 interface ProductSelectorProps {
   products: Product[];
@@ -54,39 +55,53 @@ export function ProductSelector({
   maxHeight = "400px",
 }: ProductSelectorProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCriteria, setSelectedCriteria] =
+    useState<SearchCriteria>("nombre");
   const [cart, setCart] = useState<ProductBuyed[]>(initialCart);
 
   // Filtrado optimizado de productos
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       // 1. Filtro por tienda (si existe)
-      if (
-        shopFilter &&
-        product.shop.toLowerCase() !== shopFilter.toLowerCase()
-      ) {
-        return false;
+      if (shopFilter) {
+        if (
+          !product.shop ||
+          product.shop.toLowerCase() !== shopFilter.toLowerCase()
+        ) {
+          return false;
+        }
       }
 
       // 2. Filtro por estado
-      if (product.status.toLowerCase() !== statusFilter.toLowerCase()) {
+      if (
+        !product.status ||
+        product.status.toLowerCase() !== statusFilter.toLowerCase()
+      ) {
         return false;
       }
 
       // 3. Filtro por búsqueda de texto (si existe)
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
-        const matchesSearch =
-          product.name.toLowerCase().includes(searchLower) ||
-          product.sku.toLowerCase().includes(searchLower) ||
-          product.category?.toLowerCase().includes(searchLower);
-
-        return matchesSearch;
+        
+        switch (selectedCriteria) {
+          case "nombre":
+            return product.name?.toLowerCase().includes(searchLower) || false;
+          case "sku":
+            return product.sku?.toLowerCase().includes(searchLower) || false;
+          case "cliente":
+            return product.client_name?.toLowerCase().includes(searchLower) || false;
+          case "categoria":
+            return product.category?.toLowerCase().includes(searchLower) || false;
+          default:
+            return false;
+        }
       }
 
       // Si no hay búsqueda, el producto ya pasó los filtros anteriores
       return true;
     });
-  }, [products, shopFilter, statusFilter, searchTerm]);
+  }, [products, shopFilter, statusFilter, searchTerm, selectedCriteria]);
 
   // Calcular totales
   const cartSummary = useMemo(() => {
@@ -172,6 +187,23 @@ export function ProductSelector({
     );
   };
 
+  const handleSearch = (query: string, criteria: SearchCriteria) => {
+    setSearchTerm(query);
+    setSelectedCriteria(criteria);
+  };
+
+  const handleSelectSuggestion = (product: Product) => {
+    // Scroll al producto seleccionado y destacarlo
+    setTimeout(() => {
+      const element = document.getElementById(`product-${product.id}`);
+      element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      element?.classList.add("ring-2", "ring-orange-500", "rounded-lg");
+      setTimeout(() => {
+        element?.classList.remove("ring-2", "ring-orange-500", "rounded-lg");
+      }, 2500);
+    }, 100);
+  };
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       {/* Lista de productos disponibles */}
@@ -189,13 +221,11 @@ export function ProductSelector({
               !statusFilter &&
               "Selecciona productos para agregar a la compra"}
           </CardDescription>
-          <div className="relative pt-2">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 translate-y-[-25%] text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nombre, SKU o categoría..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+          <div className="pt-4">
+            <ProductCatalogSearchBar
+              products={filteredProducts}
+              onSearch={handleSearch}
+              onSelectSuggestion={handleSelectSuggestion}
             />
           </div>
         </CardHeader>
@@ -217,6 +247,7 @@ export function ProductSelector({
                   return (
                     <div
                       key={product.id}
+                      id={`product-${product.id}`}
                       className={
                         "flex items-center gap-4 rounded-lg border p-3 transition-colors hover:bg-muted/50 " +
                         (cartQty > 0 ? "bg-orange-50 border-orange-200" : "")
