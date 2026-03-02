@@ -1,21 +1,15 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { Separator } from '../ui/separator';
 
-import { Button } from '../ui/button';
 import { OrderStatusLabel, PaymentStatusLabel } from './order-status';
+import { ProductCard } from './product-card';
 import { 
   ShoppingCart, 
   Package, 
   DollarSign, 
-  ExternalLink,
-  Eye,
   Truck,
-  CheckCircle,
-  Clock,
-  TrendingUp,
-  BarChart3
+  Eye
 } from 'lucide-react';
 
 import type { Order } from '../../types/order';
@@ -44,30 +38,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
-
-  // Función para calcular el progreso de entrega
-  const calculateDeliveryProgress = (product: Product) => {
-    const requested = product.amount_requested || 0;
-    const delivered = product.amount_delivered || 0;
-    const percentage = requested > 0 ? Math.round((delivered / requested) * 100) : 0;
-    
-    return {
-      delivered,
-      requested,
-      percentage,
-      remaining: requested - delivered,
-      isComplete: delivered >= requested
-    };
-  };
-
-  // Función para obtener el color del progreso
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 100) return 'bg-orange-500';
-    if (percentage >= 75) return 'bg-amber-500';
-    if (percentage >= 50) return 'bg-yellow-500';
-    if (percentage >= 25) return 'bg-orange-400';
-    return 'bg-red-500';
   };
 
   // Función para obtener el color del badge según el status (para productos y entregas)
@@ -139,11 +109,11 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
               <span className="truncate">Resumen Financiero</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 p-4 sm:p-5 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="flex flex-row sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 p-4 sm:p-5  rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">Total del pedido:</span>
                 <span className="font-bold text-xl sm:text-2xl lg:text-3xl text-orange-600 dark:text-orange-400">{formatPrice(order.total_cost)}</span>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 p-4 sm:p-5 bg-gray-50 dark:bg-gray-800/50 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="flex flex-row sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 p-4 sm:p-5  rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Valor recibido:</span>
                 <span className="font-bold text-lg sm:text-xl text-gray-900 dark:text-gray-200">{formatPrice(order.received_value_of_client || 0)}</span>
               </div>
@@ -165,179 +135,14 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
             Detalles de todos los productos incluidos en este pedido
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6 lg:p-8 bg-white dark:bg-gray-900">
-          <div className="space-y-6">
+        <CardContent className="p-4 sm:p-6 lg:p-8">
+          <div className="flex flex-wrap gap-4 sm:gap-6">
             {order.products?.length > 0 ? (
-              order.products.map((product: Product) => {
-                const progress = calculateDeliveryProgress(product);
-                
-                return (
-                  <div key={product.id} className=" rounded-lg sm:rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 sm:gap-6">
-                      <div className="flex-1 space-y-4 sm:space-y-6">
-                        {/* Header del producto con status y progress */}
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                          <h4 className="font-bold text-base sm:text-lg lg:text-xl text-gray-900 dark:text-orange-100 flex-1 line-clamp-2">{product.name}</h4>
-                          <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
-                            <Badge className={getStatusColor(product.status)}>
-                              {product.status}
-                            </Badge>
-                            {progress.isComplete ? (
-                              <Badge className="bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/50 dark:text-orange-200 dark:border-orange-700 flex items-center gap-1 text-xs sm:text-sm">
-                                <CheckCircle className="h-3 w-3 flex-shrink-0" />
-                                <span className="hidden sm:inline">Entregado</span>
-                                <span className="sm:hidden">Ok</span>
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/50 dark:text-amber-200 dark:border-amber-700 flex items-center gap-1 text-xs sm:text-sm">
-                                <Clock className="h-3 w-3 flex-shrink-0" />
-                                <span className="hidden sm:inline">Pendiente</span>
-                                <span className="sm:hidden">Pend</span>
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Barra de progreso de entrega */}
-                        <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <div className="flex items-center justify-between mb-2 sm:mb-3">
-                            <h5 className="font-semibold text-orange-900 dark:text-orange-100 flex items-center gap-2 text-sm sm:text-base">
-                              <div className="p-1 bg-orange-100 dark:bg-orange-900/50 rounded flex-shrink-0">
-                                <BarChart3 className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                              </div>
-                              <span className="truncate">Progreso</span>
-                            </h5>
-                            <span className="text-xs sm:text-sm font-bold text-orange-700 dark:text-orange-300 ml-2 flex-shrink-0">
-                              {progress.percentage}%
-                            </span>
-                          </div>
-                          
-                          {/* Barra de progreso visual */}
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-3 mb-2 sm:mb-3 overflow-hidden">
-                            <div 
-                              className={`h-full transition-all duration-700 ease-out ${getProgressColor(progress.percentage)} shadow-lg`}
-                              style={{ width: `${progress.percentage}%` }}
-                            />
-                          </div>
-                          
-                          {/* Estadísticas de cantidad */}
-                          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                            <div className="text-center bg-white/60 dark:bg-gray-800/60 p-2 sm:p-3 rounded-lg text-xs sm:text-sm">
-                              <p className="text-gray-600 dark:text-gray-400 mb-1 font-medium">Solicitado</p>
-                              <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-orange-100">{progress.requested}</p>
-                            </div>
-                            <div className="text-center bg-white/60 dark:bg-gray-800/60 p-2 sm:p-3 rounded-lg text-xs sm:text-sm">
-                              <p className="text-orange-600 dark:text-orange-400 mb-1 font-medium">Entregado</p>
-                              <p className="text-base sm:text-lg font-bold text-orange-600 dark:text-orange-400">{progress.delivered}</p>
-                            </div>
-                            <div className="text-center bg-white/60 dark:bg-gray-800/60 p-2 sm:p-3 rounded-lg text-xs sm:text-sm">
-                              <p className="text-amber-600 dark:text-amber-400 mb-1 font-medium">Pendiente</p>
-                              <p className="text-base sm:text-lg font-bold text-amber-600 dark:text-amber-400">{progress.remaining}</p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Información básica del producto */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm">
-                          
-                          <div className="bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-900/20 dark:to-yellow-800/20 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-amber-200 dark:border-amber-700">
-                            <span className="font-medium text-amber-700 dark:text-amber-300 block mb-2">Cantidad Total:</span>
-                            <p className="text-amber-900 dark:text-amber-100 font-bold text-sm sm:text-lg">{product.amount_requested}</p>
-                          </div>
-                          <div className="bg-gradient-to-br from-yellow-50 to-orange-100 dark:from-yellow-900/20 dark:to-orange-800/20 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-yellow-200 dark:border-yellow-700">
-                            <span className="font-medium text-yellow-700 dark:text-yellow-300 block mb-2">Tienda:</span>
-                            <p className="text-yellow-900 dark:text-yellow-100 font-semibold text-xs sm:text-base truncate">{product.shop?.name || 'No especificada'}</p>
-                          </div>
-                          {product.category && (
-                            <div className="bg-gradient-to-br from-red-50 to-orange-100 dark:from-red-900/20 dark:to-orange-800/20 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-red-200 dark:border-red-700">
-                              <span className="font-medium text-red-700 dark:text-red-300 block mb-2">Categoría:</span>
-                              <p className="text-red-900 dark:text-red-100 font-semibold text-xs sm:text-base truncate">{product.category}</p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Observaciones */}
-                        {product.observation && (
-                          <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                            <div className="flex items-start gap-2 sm:gap-3">
-                              <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-lg flex-shrink-0">
-                                <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-amber-600 dark:text-amber-400" />
-                              </div>
-                              <div className="min-w-0">
-                                <span className="font-semibold text-amber-800 dark:text-amber-300 block mb-1 text-sm sm:text-base">Observaciones:</span>
-                                <p className="text-amber-700 dark:text-amber-200 leading-relaxed text-xs sm:text-sm">{product.observation}</p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Sección de precio y acciones */}
-                      <div className="lg:text-right space-y-3 sm:space-y-4 lg:min-w-[200px] sm:min-w-fit">
-                        <div className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white p-4 sm:p-5 rounded-lg shadow-md text-center lg:text-right transition-all duration-200">
-                          <p className="text-xs sm:text-sm font-medium opacity-90 mb-1">Costo total</p>
-                          <p className="text-xl sm:text-2xl lg:text-3xl font-bold">
-                            {formatPrice(product.total_cost)}
-                          </p>
-                        </div>
-                        {product.link && (
-                          <Button variant="outline" size="sm" className="w-full sm:w-auto lg:w-full hover:bg-orange-50 hover:border-orange-300 dark:hover:bg-orange-900/20 transition-all duration-200 shadow-sm text-xs sm:text-sm" asChild>
-                            <a href={product.link} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
-                              <span className="hidden sm:inline">Ver producto</span>
-                              <span className="sm:hidden">Ver</span>
-                            </a>
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Desglose de costos */}
-                    <Separator className="my-4 sm:my-6" />
-                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-800/20 dark:to-amber-800/20 p-4 sm:p-5 rounded-lg sm:rounded-xl border border-orange-200 dark:border-orange-700">
-                      <h5 className="font-semibold text-gray-900 dark:text-orange-100 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
-                        <div className="p-1 sm:p-1.5 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex-shrink-0">
-                          <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600 dark:text-orange-400" />
-                        </div>
-                        <span>Desglose de costos</span>
-                      </h5>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-                        <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-orange-200 dark:border-orange-600 shadow-sm">
-                          <span className="text-gray-600 dark:text-orange-400 block mb-2 font-medium">Precio con impuestos:</span>
-                          <p className="font-bold text-gray-900 dark:text-orange-200 text-base sm:text-lg">{formatPrice(product.shop_cost + product.shop_delivery_cost + product.shop_taxes)}</p>
-                        </div>
-                        
-                      </div>
-                    </div>
-
-                    {/* Imágenes del producto */}
-                    {product.product_pictures ? (
-                      <>
-                        <Separator className="my-4 sm:my-6" />
-                        <div className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg sm:rounded-xl border border-gray-200 dark:border-gray-700">
-                          <h5 className="font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
-                            <div className="p-1 sm:p-1.5 bg-slate-100 dark:bg-slate-700 rounded-lg flex-shrink-0">
-                              <Eye className="h-3 w-3 sm:h-4 sm:w-4 text-slate-600 dark:text-slate-400" />
-                            </div>
-                            <span>Imágenes {product.product_pictures ? '(1)' : '(0)'}</span>
-                          </h5>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-3">
-                            <div key={0} className="group cursor-pointer">
-                              <img
-                                src={(product.product_pictures ? product.product_pictures : '') as string}
-                                alt={`${product.name} - Imagen 1`}
-                                className="w-full aspect-square object-cover rounded-lg sm:rounded-xl border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-all duration-200 shadow-sm group-hover:shadow-md transform group-hover:scale-105"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    ) : null}
-                  </div>
-                );
-              })
+              order.products.map((product: Product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
             ) : (
-              <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600">
+              <div className="w-full text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600">
                 <div className="p-6 bg-gray-100 dark:bg-gray-700 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
                   <Package className="h-12 w-12 text-gray-400 dark:text-gray-500" />
                 </div>
