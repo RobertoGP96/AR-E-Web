@@ -209,6 +209,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const hasCheckedAuth = useRef(false);
   const isCheckingAuth = useRef(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const checkExistingAuth = useCallback(async () => {
     if (isCheckingAuth.current || hasCheckedAuth.current) return;
@@ -292,19 +294,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const user = await apiClient.getCurrentUser();
       dispatch({
         type: "AUTH_SUCCESS",
-        payload: { user, permissions: state.permissions },
+        payload: { user, permissions: stateRef.current.permissions },
       });
     } catch {
       await logout();
     }
-  }, [logout, state.permissions]);
+  }, [logout]);
 
   const updateUser = useCallback(
     async (userData: Partial<CustomUser>): Promise<void> => {
-      if (!state.user) return;
+      if (!stateRef.current.user) return;
       try {
         const updatedUser = await apiClient.patch<CustomUser>(
-          `/users/${state.user.id}/`,
+          `/users/${stateRef.current.user.id}/`,
           userData,
         );
         dispatch({ type: "UPDATE_USER", payload: updatedUser });
@@ -313,86 +315,101 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    [state.user],
+    [],
   );
 
   const hasPermission = useCallback(
     (permission: string): boolean => {
-      return state.permissions.includes(permission);
+      return stateRef.current.permissions.includes(permission);
     },
-    [state.permissions],
+    [],
   );
 
   const hasRole = useCallback(
     (role: UserRole): boolean => {
-      if (!state.user) return false;
-      return userRoleUtils.hasRole(state.user, role);
+      if (!stateRef.current.user) return false;
+      return userRoleUtils.hasRole(stateRef.current.user, role);
     },
-    [state.user],
+    [],
   );
 
   const handleAuthStateChange = useCallback(
     (isAuthenticated: boolean) => {
-      if (!isAuthenticated && state.isAuthenticated) {
+      if (!isAuthenticated && stateRef.current.isAuthenticated) {
         dispatch({ type: "AUTH_LOGOUT" });
       }
     },
-    [state.isAuthenticated],
+    [],
   );
 
   // Sincronización entre pestañas
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "access_token" && !e.newValue && state.isAuthenticated) {
+      if (e.key === "access_token" && !e.newValue && stateRef.current.isAuthenticated) {
         dispatch({ type: "AUTH_LOGOUT" });
       }
-      if (e.key === "access_token" && e.newValue && !state.isAuthenticated) {
+      if (e.key === "access_token" && e.newValue && !stateRef.current.isAuthenticated) {
         window.location.reload(); // Recargar para obtener el nuevo estado
       }
     };
 
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, [state.isAuthenticated]);
+  }, []);
 
   useEffect(() => {
     checkExistingAuth();
   }, [checkExistingAuth]);
 
-  // Inactividad
+  const lastActivityUpdate = useRef<number>(0);
+  const updateActivity = useCallback(() => {
+    if (!stateRef.current.isAuthenticated) return;
+    const now = Date.now();
+    if (now - lastActivityUpdate.current < 60_000) return;
+    lastActivityUpdate.current = now;
+    dispatch({ type: "UPDATE_ACTIVITY" });
+  }, []);
+
+  // Activity listeners — re-registers only when auth state changes
   useEffect(() => {
     if (!state.isAuthenticated) return;
 
-    const events = [
-      "mousedown",
-      "mousemove",
-      "keypress",
-      "scroll",
-      "touchstart",
-    ];
-    const handleActivity = () => dispatch({ type: "UPDATE_ACTIVITY" });
+    const events = ["mousedown", "keypress", "scroll", "touchstart"];
 
     events.forEach((event) =>
-      document.addEventListener(event, handleActivity, true),
+      document.addEventListener(event, updateActivity, true),
     );
+
+    return () => {
+      events.forEach((event) =>
+        document.removeEventListener(event, updateActivity, true),
+      );
+    };
+  }, [state.isAuthenticated, updateActivity]);
+
+  // Inactivity timeout check — reads lastActivity from ref, no re-registration on activity
+  useEffect(() => {
+    if (!state.isAuthenticated) return;
 
     const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 1 hora
     const interval = setInterval(() => {
-      if (state.lastActivity) {
+      const lastActivity = stateRef.current.lastActivity;
+      if (lastActivity) {
         const now = Date.now();
-        if (now - state.lastActivity.getTime() > INACTIVITY_TIMEOUT) {
+        if (now - lastActivity.getTime() > INACTIVITY_TIMEOUT) {
           logout();
         }
       }
     }, 60000);
 
     return () => {
-      events.forEach((event) =>
-        document.removeEventListener(event, handleActivity, true),
-      );
       clearInterval(interval);
     };
-  }, [state.isAuthenticated, state.lastActivity, logout]);
+  }, [state.isAuthenticated, logout]);
+
+  const clearError = useCallback(() => {
+    dispatch({ type: "CLEAR_ERROR" });
+  }, []);
 
   const contextValue: AuthContextType = {
     ...state,
@@ -403,7 +420,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateUser,
     hasPermission,
     hasRole,
-    clearError: () => dispatch({ type: "CLEAR_ERROR" }),
+    clearError,
     handleAuthStateChange,
   };
 

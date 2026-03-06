@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { CheckCircle2, Truck, XCircle, LoaderIcon } from "lucide-react";
 import type { OrderStatus } from "@/types";
 
@@ -29,7 +29,7 @@ const statusConfig: Record<OrderStatus, { color: string; label: string; icon: Re
   }
 };
 
-const OrderStatusBadge: React.FC<Props> = ({ status }) => {
+function OrderStatusBadgeComponent({ status }: Props) {
   const config = statusConfig[status] || statusConfig["Encargado"];
   const Icon = config.icon;
   return (
@@ -41,6 +41,8 @@ const OrderStatusBadge: React.FC<Props> = ({ status }) => {
       {config.label}
     </span>
   );
-};
+}
+
+const OrderStatusBadge = memo(OrderStatusBadgeComponent);
 
 export default OrderStatusBadge;

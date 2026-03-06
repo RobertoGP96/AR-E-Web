@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { CheckCircle2, Home, Tag } from 'lucide-react';
 import type { Product } from '../../types/product';
 
@@ -45,7 +45,7 @@ const IconCheck: React.FC<IconProps> = ({ className = 'w-3 h-3' }) => (
   <CheckCircle2 className={className} />
 );
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+function ProductCardComponent({ product }: ProductCardProps) {
   const statusClass = STATUS[product.status] || STATUS['pending'];
   const isFullyDelivered = product.is_fully_delivered;
 
@@ -57,7 +57,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="flex flex-col gap-1.5">
           <span className="text-sm font-semibold text-orange-400 line-clamp-2">{product.name}</span>
 
-          
+
         </div>
 
         {/* Right: status + ok badges */}
@@ -109,4 +109,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
     </div>
   );
-};
+}
+
+export const ProductCard = memo(ProductCardComponent);

@@ -39,8 +39,8 @@ const NavBar = () => {
             <nav className="flex items-center justify-between p-3 lg:px-8">
                 <div className="flex lg:flex-1 ml-5">
                     {/* Logo space - Responsive logo */}
-                    <img src={logoSvg} alt="Logo" className="hidden lg:block h-15" />
-                    <img src={fLogoSvg} alt="Logo" className="block lg:hidden h-12" />
+                    <img src={logoSvg} alt="Logo" className="hidden lg:block h-15" loading="lazy" decoding="async" width={60} height={60} />
+                    <img src={fLogoSvg} alt="Logo" className="block lg:hidden h-12" loading="lazy" decoding="async" width={48} height={48} />
                 </div>
 
                 {/* Desktop Navigation */}
@@ -48,7 +48,7 @@ const NavBar = () => {
                     {navigation.map((item) => (
                         <NavLink key={item.href} to={item.href}>
                             <div className={`flex flex-row justify-center items-center gap-1  hover:text-primary ${location.pathname.includes(item.href) ? "text-primary" : "text-white"}`}>
-                                <item.icon className='h-4 w-4' />
+                                <item.icon className='h-4 w-4' aria-hidden="true" />
                                 <span className="text-sm/6 font-semibold  ">
                                     {item.name}
                                 </span>

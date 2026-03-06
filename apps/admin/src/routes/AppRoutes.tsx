@@ -1,16 +1,16 @@
 import { Routes, Route } from "react-router-dom";
 import { lazy } from "react";
 import MainLayout from "@/layouts/MainLayout";
-import Dashboard from "@/pages/Dashboard";
-import Delivery from "@/pages/Delivery";
-import Orders from "@/pages/Orders";
-import Settings from "@/pages/Settings";
-import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/LoginPage";
-
 import ProtectedRoute from "@/components/utils/ProtectedRoute";
 import Unauthorized from "./unauthorized";
+
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Delivery = lazy(() => import("@/pages/Delivery"));
+const Orders = lazy(() => import("@/pages/Orders"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const Profile = lazy(() => import("@/pages/Profile"));
 
 const Users = lazy(() => import("@/pages/Users"));
 const Shops = lazy(() => import("@/pages/Shops"));

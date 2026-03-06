@@ -4,7 +4,7 @@ import { ArrowRight, ShoppingBag } from 'lucide-react'
 import { Button } from '../ui/button'
 import { CarouselStores } from '../store/store-carousel'
 import { Link, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { toast } from 'sonner'
 import logoSvg from '@/assets/logo/logo.svg'
@@ -15,9 +15,16 @@ export default function Home() {
     const [isVisible, setIsVisible] = useState(false)
     const { isAuthenticated, isLoading } = useAuth()
     const navigate = useNavigate()
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     useEffect(() => {
         setIsVisible(true)
+    }, [])
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current)
+        }
     }, [])
 
     const handleComenzarClick = () => {
@@ -28,11 +35,11 @@ export default function Home() {
 
         if (!isAuthenticated) {
             toast.warning('Debes iniciar sesión', {
-                description: 'Para acceder a los productos necesitas estar autenticado. Te redirigiremos a la página principal.'
+                description: 'Para acceder a los productos necesitas estar autenticado. Te redirigiremos a la página de inicio de sesión.'
             })
-            // Redirigir a la página principal (home) después de un breve delay
-            setTimeout(() => {
-                navigate('/')
+            // Redirigir a login después de un breve delay
+            timeoutRef.current = setTimeout(() => {
+                navigate('/login')
             }, 2000)
             return
         }
@@ -57,6 +64,9 @@ export default function Home() {
                                     alt="are-logo"
                                     src={logoSvg}
                                     className="h-24 sm:h-36 lg:h-44 w-auto animate-pulse-slow hover:scale-105 transition-transform duration-300"
+                                    decoding="async"
+                                    width={176}
+                                    height={176}
                                 />
                             </div>
                             

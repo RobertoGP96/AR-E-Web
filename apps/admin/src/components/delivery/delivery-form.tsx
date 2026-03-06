@@ -24,6 +24,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
 import {
   Truck,
@@ -34,6 +46,8 @@ import {
   Plus,
   Weight,
   Tag,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import DatePicker from "@/components/utils/DatePicker";
 import { InputGroupInput } from "@/components/ui/input-group";
@@ -47,7 +61,6 @@ import { useRemoveProductFromDelivery } from "@/hooks/delivery/useRemoveProductF
 import { useUsers } from "@/hooks/user";
 import { useCategories } from "@/hooks/category/useCategory";
 import { useProducts } from "@/hooks/product/useProducts";
-import type { ProductFilters } from "@/types/api";
 
 // Logic components
 import {
@@ -72,9 +85,6 @@ const createDeliverySchema = z.object({
   weight_cost: z.number().optional(),
   manager_profit: z.number().optional(),
   deliver_picture: z.string().optional(),
-  payment_status: z.enum(["No pagado", "Pagado", "Parcial"]).optional(),
-  payment_date: z.string().optional(),
-  payment_amount: z.number().optional(),
 });
 
 type CreateDeliveryFormData = z.infer<typeof createDeliverySchema>;
@@ -92,6 +102,7 @@ export function DeliveryForm({
 }: DeliveryFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [isClientPopoverOpen, setIsClientPopoverOpen] = useState(false);
   const [selectedProductsItem, setSelectedProductsItem] = useState<
     DeliveryProductItem[]
   >([]);
@@ -131,11 +142,6 @@ export function DeliveryForm({
       weight: delivery?.weight || 0,
       weight_cost: delivery?.weight_cost || 0,
       manager_profit: delivery?.manager_profit || 0,
-      payment_status: delivery?.payment_status || "No pagado",
-      payment_date: delivery?.payment_date
-        ? new Date(delivery.payment_date).toISOString().split("T")[0]
-        : undefined,
-      payment_amount: delivery?.payment_amount || 0,
     },
   });
 
@@ -168,23 +174,52 @@ export function DeliveryForm({
     (c) => c.id.toString() === selectedCategoryId,
   );
 
-  // Fetch products for selected client and category
-  // Fetch products for selected client and category
-  const productFilters: ProductFilters = useMemo(
-    () => ({
-      client_id: selectedClientId ? parseInt(selectedClientId) : undefined,
-      category: selectedCategory?.name,
-    }),
-    [selectedClientId, selectedCategory],
-  );
+  // Fetch ALL products (without client filter initially)
+  const { products: allProducts } = useProducts({});
 
-  const { products: allProducts } = useProducts(productFilters);
+  // Filter products that can be delivered (not fully delivered yet)
+  const deliverableProducts = useMemo(() => {
+    return allProducts.filter(product =>
+      // Solo productos que aún no han sido completamente entregados
+      // cantidad entregada < cantidad recibida
+      (product.amount_delivered || 0) < (product.amount_received || 0)
+    );
+  }, [allProducts]);
 
-  // Filter products by client locally
+  // Get unique client IDs from deliverable products
+  const availableClientIds = useMemo(() => {
+    const clientIds = new Set<number>();
+    deliverableProducts.forEach(product => {
+      // Find client by name since product.order is just an ID, not an object
+      const client = clients.find(c =>
+        c.full_name === product.client_name ||
+        `${c.name} ${c.last_name || ''}`.trim() === product.client_name
+      );
+      if (client) {
+        clientIds.add(client.id);
+      }
+    });
+    return Array.from(clientIds);
+  }, [deliverableProducts, clients]);
+
+  // Filter clients to only show those with deliverable products
+  const availableClients = useMemo(() => {
+    return clients.filter(client => availableClientIds.includes(client.id));
+  }, [clients, availableClientIds]);
+
+  // Filter products by selected client and category
   const clientProducts = useMemo(() => {
     if (!selectedClientId) return [];
-    return allProducts;
-  }, [allProducts, selectedClientId]);
+    return deliverableProducts.filter(product => {
+      // Find client by name since product.order is just an ID, not an object
+      const client = clients.find(c =>
+        c.full_name === product.client_name ||
+        `${c.name} ${c.last_name || ''}`.trim() === product.client_name
+      );
+      return client?.id === parseInt(selectedClientId) &&
+        (!selectedCategory?.name || product.category === selectedCategory.name);
+    });
+  }, [deliverableProducts, selectedClientId, selectedCategory, clients]);
 
   // Auto-calculate weight cost (Only if not manually edited or if in create mode? For now auto-calc always on change)
   useEffect(() => {
@@ -256,9 +291,6 @@ export function DeliveryForm({
           deliver_date: data.deliver_date ? data.deliver_date : undefined,
           weight_cost: data.weight_cost,
           manager_profit: data.manager_profit,
-          payment_status: data.payment_status,
-          payment_date: data.payment_date,
-          payment_amount: data.payment_amount,
         };
 
         await updateDeliveryMutation.mutateAsync({
@@ -335,9 +367,6 @@ export function DeliveryForm({
           deliver_date: data.deliver_date ? data.deliver_date : undefined,
           weight_cost: data.weight_cost,
           manager_profit: data.manager_profit,
-          payment_status: data.payment_status,
-          payment_date: data.payment_date,
-          payment_amount: data.payment_amount,
         };
 
         const newDelivery =
@@ -415,33 +444,52 @@ export function DeliveryForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-slate-600">Cliente</FormLabel>
-                      <Select
-                        onValueChange={(val) => {
-                          field.onChange(val);
-                          // Clear products when client changes as products depend on client
-                          setSelectedProductsItem([]);
-                        }}
-                        value={field.value}
-                        disabled={isLoadingUsers}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-12 rounded-2xl border-slate-200 bg-white/50 hover:bg-white transition-all shadow-sm">
-                            <SelectValue placeholder="Seleccionar Cliente" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="rounded-2xl border-slate-100 shadow-2xl h-[300px]">
-                          {clients.map((user) => (
-                            <SelectItem
-                              key={user.id}
-                              value={user.id.toString()}
-                              className="rounded-lg py-3"
+                      <Popover open={isClientPopoverOpen} onOpenChange={setIsClientPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={isClientPopoverOpen}
+                              className="h-10 w-full justify-between rounded-2xl border-slate-200 bg-white/50 hover:bg-white transition-all shadow-sm"
+                              disabled={isLoadingUsers}
                             >
-                              {user.full_name ||
-                                `${user.name} ${user.last_name}`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                              {field.value
+                                ? availableClients.find((client) => client.id.toString() === field.value)?.full_name ||
+                                  `${availableClients.find((client) => client.id.toString() === field.value)?.name} ${availableClients.find((client) => client.id.toString() === field.value)?.last_name}`
+                                : "Seleccionar Cliente"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Buscar cliente..." />
+                            <CommandEmpty>No se encontraron clientes.</CommandEmpty>
+                            <CommandGroup className="max-h-64 overflow-auto">
+                              {availableClients.map((client) => (
+                                <CommandItem
+                                  key={client.id}
+                                  value={`${client.name} ${client.last_name || ""} ${client.full_name || ""}`}
+                                  onSelect={() => {
+                                    field.onChange(client.id.toString());
+                                    setIsClientPopoverOpen(false);
+                                    // Clear products when client changes as products depend on client
+                                    setSelectedProductsItem([]);
+                                  }}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      field.value === client.id.toString() ? "opacity-100" : "opacity-0"
+                                    }`}
+                                  />
+                                  {client.full_name || `${client.name} ${client.last_name || ""}`}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -680,87 +728,6 @@ export function DeliveryForm({
                                 : undefined,
                             )
                           }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="payment_status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs text-slate-500">
-                        Estado de Pago
-                      </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-11 rounded-xl border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all shadow-none">
-                            <SelectValue placeholder="Seleccionar estado" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                          <SelectItem value="No pagado">No Pagado</SelectItem>
-                          <SelectItem value="Pagado">Pagado</SelectItem>
-                          <SelectItem value="Parcial">Parcial</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="payment_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs text-slate-500">
-                        Fecha de Pago
-                      </FormLabel>
-                      <FormControl>
-                        <DatePicker
-                          placeholder="Fijar fecha de pago"
-                          value={
-                            field.value ? new Date(field.value) : undefined
-                          }
-                          onChange={(date: Date | null) =>
-                            field.onChange(
-                              date
-                                ? date.toISOString().split("T")[0]
-                                : undefined,
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="payment_amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs text-slate-500">
-                        Monto Pagado ($)
-                      </FormLabel>
-                      <FormControl>
-                        <InputGroupInput
-                          className="h-11 rounded-xl border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all shadow-none"
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value))
-                          }
-                          value={field.value}
                         />
                       </FormControl>
                       <FormMessage />

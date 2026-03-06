@@ -3,6 +3,7 @@ import AppRoutes from "./routes/Routes"
 import { Toaster } from "./components/ui/sonner"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { queryClient } from "./lib/query-client"
+import ErrorBoundary from "./components/error-boundary"
 
 function App() {
   return (
@@ -24,11 +25,13 @@ function App() {
       {/* Contenido principal */}
       <main className="relative z-0 min-h-screen">
 
-        <AuthProvider>
-          <QueryClientProvider client={queryClient}>
-            <AppRoutes />
-          </QueryClientProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <QueryClientProvider client={queryClient}>
+              <AppRoutes />
+            </QueryClientProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </main>
 
       {/* Toaster para notificaciones */}

@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
+import { useEffect, useRef } from "react";
 import useAuth from "@/hooks/auth/useAuth";
 
 import type { UserRole } from "@/types/models/user";
@@ -11,10 +12,21 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const location = useLocation();
+  const hasLoggedOutClient = useRef(false);
 
-  // Mientras carga la sesión, no redirigir
+  // Si el usuario tiene rol "client", cerrar sesión para romper el loop.
+  // Sin esto: Login detecta isAuthenticated=true → navega a "/" →
+  // ProtectedRoute ve role "client" → Navigate a "/login" → LOOP INFINITO.
+  useEffect(() => {
+    if (isAuthenticated && user && user.role === "client" && !hasLoggedOutClient.current) {
+      hasLoggedOutClient.current = true;
+      logout();
+    }
+  }, [isAuthenticated, user, logout]);
+
+  // Mientras carga la sesión o se está cerrando sesión de un client, no redirigir
   if (isLoading) return null;
 
   // Sin sesión → al login
@@ -24,9 +36,9 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   const role = user.role as UserRole;
 
-  // Los clientes no tienen acceso al sistema admin
+  // Los clientes no tienen acceso — logout ya fue disparado en el useEffect
   if (role === "client") {
-    return <Navigate to="/login" replace />;
+    return null;
   }
 
   // Si se especificaron roles permitidos, verificar

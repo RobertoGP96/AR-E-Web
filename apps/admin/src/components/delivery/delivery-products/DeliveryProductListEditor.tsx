@@ -1,4 +1,4 @@
-import { Package, Trash2, Plus, Minus, Truck } from "lucide-react";
+import { Package, Trash2, Plus, Minus, Truck, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/types/models";
@@ -155,10 +155,10 @@ export function DeliveryProductListEditor({
                 </div>
                 <div className="text-center sm:text-right">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-black mb-1">
-                    Valor Mercancía
+                    Cantidad de Productos
                   </p>
                   <p className="text-2xl font-black text-white tabular-nums">
-                    <span className="text-orange-400 mr-1">$</span>
+                    <Box className="h-6 w-6 text-orange-400 inline-flex items-center justify-center mr-2"/>
                     {totalItems}
                   </p>
                 </div>

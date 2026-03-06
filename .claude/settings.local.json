@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs wc -l)",
+      "Bash(grep -n \"dangerouslySetInnerHTML\\\\|innerHTML\\\\|textContent\\\\|innerText\" \"D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\client\\\\src\"/*.tsx \"D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\client\\\\src\"/**/*.tsx)",
+      "Bash(pnpm --filter client build)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(pnpm install)",
+      "Bash(pnpm exec tsc --noEmit)",
+      "Bash(pnpm exec vite build)"
+    ]
+  }
+}

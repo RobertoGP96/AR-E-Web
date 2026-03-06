@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,13 +25,13 @@ interface ProductRowProps {
   onEdit?: (product: Product) => void;
 }
 
-const ProductRow: React.FC<ProductRowProps> = ({
+function ProductRowComponent({
   product,
   selectable = false,
   isSelected = false,
   onSelect,
   onEdit,
-}) => {
+}: ProductRowProps) {
   const tags = parseTagsFromDescriptionBlock(product.description);
 
   const handleRowClick = (e: React.MouseEvent) => {
@@ -203,6 +203,8 @@ const ProductRow: React.FC<ProductRowProps> = ({
       </CardContent>
     </Card>
   );
-};
+}
+
+const ProductRow = memo(ProductRowComponent);
 
 export default ProductRow;

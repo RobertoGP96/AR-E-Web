@@ -69,6 +69,7 @@ interface ApiErrorResponse {
 export class ApiClient {
   private client: AxiosInstance;
   private authToken: string | null = null;
+  private redirectTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(config: ApiClientConfig = {}) {
     this.client = axios.create({
@@ -379,8 +380,9 @@ export class ApiClient {
   private redirectToLogin() {
     // Solo redirigir si no estamos ya en la página de login
     if (!window.location.pathname.includes('/login')) {
-      // Usar setTimeout para evitar conflictos con otros procesos
-      setTimeout(() => {
+      // Clear any pending redirect before scheduling a new one
+      if (this.redirectTimeout) clearTimeout(this.redirectTimeout);
+      this.redirectTimeout = setTimeout(() => {
         window.location.href = '/login';
       }, 1000);
     }

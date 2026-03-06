@@ -1,4 +1,5 @@
 import { Plus, Save, Tag, X, Store, Link2, FileText, CheckCircle, AlertCircle, CircleAlert } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { useState, useEffect } from "react"
@@ -103,12 +104,12 @@ export const ProductForm = ({ onSubmit }: ProductFormProps) => {
         
         // Validación básica
         if (!newProduct.name.trim()) {
-            alert('El nombre es un campo obligatorio')
+            toast.warning('El nombre es un campo obligatorio')
             return
         }
-        
+
         if (!newProduct.link.trim()) {
-            alert('El link es un campo obligatorio')
+            toast.warning('El link es un campo obligatorio')
             return
         }
 
@@ -116,7 +117,7 @@ export const ProductForm = ({ onSubmit }: ProductFormProps) => {
         try {
             new URL(newProduct.link)
         } catch {
-            alert('Por favor, introduce un link válido')
+            toast.warning('Por favor, introduce un link válido')
             return
         }
 

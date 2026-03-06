@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 /**
  * Hook personalizado para manejar el estado sincronizado con localStorage
@@ -20,7 +20,7 @@ export function useLocalStorage<T>(
 
       // Obtener el item de localStorage
       const item = window.localStorage.getItem(key)
-      
+
       // Parsear el JSON almacenado o devolver el valor inicial
       return item ? JSON.parse(item) : initialValue
     } catch (error) {
@@ -30,11 +30,15 @@ export function useLocalStorage<T>(
     }
   })
 
+  // Ref to always reflect the latest storedValue without adding it to setValue's deps
+  const storedValueRef = useRef(storedValue)
+  storedValueRef.current = storedValue
+
   // Función para actualizar tanto el estado como localStorage
   const setValue = useCallback((value: T | ((prevValue: T) => T)) => {
     try {
       // Permitir que value sea una función para que tenga la misma API que useState
-      const valueToStore = value instanceof Function ? value(storedValue) : value
+      const valueToStore = typeof value === 'function' ? (value as (prevValue: T) => T)(storedValueRef.current) : value
       
       // Guardar en el estado
       setStoredValue(valueToStore)
@@ -52,7 +56,7 @@ export function useLocalStorage<T>(
     } catch (error) {
       console.error(`Error setting localStorage key "${key}":`, error)
     }
-  }, [key, storedValue])
+  }, [key])
 
   // Función para eliminar el valor de localStorage
   const removeValue = useCallback(() => {

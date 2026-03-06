@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,9 +19,9 @@ interface ProductBuyedShoppingProps {
   product: ProductBuyed;
 }
 
-const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({
+function ProductPurchaseRowComponent({
   product,
-}) => {
+}: ProductBuyedShoppingProps) {
   const tags = parseTagsFromDescriptionBlock(
     product.original_product_details?.description,
   );
@@ -180,6 +180,8 @@ const ProductPurchaseRow: React.FC<ProductBuyedShoppingProps> = ({
       </CardContent>
     </Card>
   );
-};
+}
+
+const ProductPurchaseRow = memo(ProductPurchaseRowComponent);
 
 export default ProductPurchaseRow;

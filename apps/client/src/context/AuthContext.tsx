@@ -218,8 +218,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const hasCheckedAuth = useRef(false);
   const isCheckingAuth = useRef(false);
 
+  // Ref para leer el estado actual sin agregarlo como dependencia de useCallback.
+  // Esto evita que los callbacks se recreen en cada cambio de estado y
+  // previene cascadas de re-renders.
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
   /**
-   * Verifica si existe un token válido al cargar la aplicación
+   * Verifica si existe un token válido al cargar la aplicación.
+   * No depende de state directamente — lee de stateRef para evitar re-creación.
    */
   const checkExistingAuth = useCallback(async () => {
     // Evitar múltiples verificaciones simultáneas
@@ -227,13 +234,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
+    const currentState = stateRef.current;
+
     // Verificar validación de datos antes de proceder
     const validation = validateAuthData();
-    
+
     // Si no hay datos válidos, limpiar y salir
     if (!validation.isValid || !validation.hasToken) {
       hasCheckedAuth.current = true;
-      if (state.isLoading) {
+      if (currentState.isLoading) {
         dispatch({ type: 'AUTH_ERROR', payload: 'No valid authentication data found' });
       }
       return;
@@ -243,20 +252,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!apiClient.isAuthenticated()) {
       hasCheckedAuth.current = true;
       clearAuthStorage();
-      if (state.isLoading) {
+      if (currentState.isLoading) {
         dispatch({ type: 'AUTH_ERROR', payload: 'No authentication token found' });
       }
       return;
     }
 
     // Si ya tenemos datos del usuario válidos y estamos autenticados, no hacer nueva llamada
-    if (state.user && state.isAuthenticated && !state.isLoading && validation.hasConsistentData) {
+    if (currentState.user && currentState.isAuthenticated && !currentState.isLoading && validation.hasConsistentData) {
       hasCheckedAuth.current = true;
-      return;
-    }
-
-    // Evitar múltiples llamadas simultáneas
-    if (state.isLoading && !isCheckingAuth.current) {
       return;
     }
 
@@ -275,12 +279,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Por ahora, permissions vacío hasta implementar sistema de permisos
       const permissions: string[] = [];
 
-      dispatch({ 
-        type: 'AUTH_SUCCESS', 
-        payload: { 
-          user, 
-          permissions 
-        } 
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: {
+          user,
+          permissions
+        }
       });
 
       hasCheckedAuth.current = true;
@@ -288,14 +292,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Error verifying existing auth
       apiClient.clearAuthToken();
       clearAuthStorage();
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Invalid authentication token';
       dispatch({ type: 'AUTH_ERROR', payload: errorMessage });
       hasCheckedAuth.current = true;
     } finally {
       isCheckingAuth.current = false;
     }
-  }, [state.user, state.isAuthenticated, state.isLoading]);
+  }, []); // Sin dependencias de estado — lee de stateRef
 
   /**
    * Función de login
@@ -417,28 +421,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Actualizar información del usuario
    */
   const updateUser = useCallback(async (userData: Partial<CustomUser>): Promise<void> => {
-    if (!state.user) return;
+    if (!stateRef.current.user) return;
 
     // Usar el método específico para actualizar perfil del usuario actual
     const updatedUser = await apiClient.updateCurrentUser<CustomUser>(userData);
     dispatch({ type: 'UPDATE_USER', payload: updatedUser });
-  }, [state.user]);
+  }, []);
 
   /**
    * Verificar si el usuario tiene un permiso específico
    */
   const hasPermission = useCallback((permission: string): boolean => {
-    return state.permissions.includes(permission);
-  }, [state.permissions]);
+    return stateRef.current.permissions.includes(permission);
+  }, []);
 
   /**
    * Verificar si el usuario tiene un rol específico
    */
   const hasRole = useCallback((role: string): boolean => {
-    if (!state.user) return false;
-    
-        return state.user.role===role;
-  }, [state.user]);
+    if (!stateRef.current.user) return false;
+    return stateRef.current.user.role === role;
+  }, []);
 
   /**
    * Limpiar errores
@@ -448,62 +451,68 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   /**
-   * Actualizar actividad del usuario
+   * Actualizar actividad del usuario — throttled para evitar re-renders excesivos.
+   * Solo actualiza si han pasado al menos 60 segundos desde la última actualización.
    */
+  const lastActivityUpdate = useRef<number>(0);
   const updateActivity = useCallback(() => {
-    if (state.isAuthenticated) {
-      dispatch({ type: 'UPDATE_ACTIVITY' });
-    }
-  }, [state.isAuthenticated]);
+    if (!stateRef.current.isAuthenticated) return;
 
-  // Verificar autenticación existente al montar el componente
+    const now = Date.now();
+    // Throttle: solo actualizar cada 60 segundos para evitar re-renders en cada mousemove
+    if (now - lastActivityUpdate.current < 60_000) return;
+
+    lastActivityUpdate.current = now;
+    dispatch({ type: 'UPDATE_ACTIVITY' });
+  }, []);
+
+  // Verificar autenticación existente al montar — se ejecuta UNA sola vez
   useEffect(() => {
-    // Solo verificar si no se ha hecho antes
-    if (!hasCheckedAuth.current) {
-      checkExistingAuth();
-    }
-  }, [checkExistingAuth]);
+    checkExistingAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Configurar listener para actividad del usuario
   useEffect(() => {
     if (!state.isAuthenticated) return;
 
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    const handleActivity = () => updateActivity();
+    const events = ['mousedown', 'keypress', 'scroll', 'touchstart'];
+    // Nota: removido 'mousemove' — demasiado frecuente incluso con throttle
 
     // Añadir listeners
     events.forEach(event => {
-      document.addEventListener(event, handleActivity, true);
+      document.addEventListener(event, updateActivity, true);
     });
 
     // Cleanup
     return () => {
       events.forEach(event => {
-        document.removeEventListener(event, handleActivity, true);
+        document.removeEventListener(event, updateActivity, true);
       });
     };
   }, [state.isAuthenticated, updateActivity]);
 
-  // Auto-logout por inactividad (opcional)
+  // Auto-logout por inactividad
   useEffect(() => {
-    if (!state.isAuthenticated || !state.lastActivity) return;
+    if (!state.isAuthenticated) return;
 
     const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutos
-    
+
     const checkInactivity = () => {
-      const now = new Date();
-      const timeSinceLastActivity = now.getTime() - state.lastActivity!.getTime();
-      
+      const currentState = stateRef.current;
+      if (!currentState.lastActivity) return;
+
+      const timeSinceLastActivity = Date.now() - currentState.lastActivity.getTime();
+
       if (timeSinceLastActivity > INACTIVITY_TIMEOUT) {
-        // Auto-logout due to inactivity
         logout();
       }
     };
 
-    const interval = setInterval(checkInactivity, 60000); // Verificar cada minuto
-    
+    const interval = setInterval(checkInactivity, 60_000); // Verificar cada minuto
+
     return () => clearInterval(interval);
-  }, [state.isAuthenticated, state.lastActivity, logout]);
+  }, [state.isAuthenticated, logout]);
 
   // Valor del contexto
   const contextValue: AuthContextType = {
