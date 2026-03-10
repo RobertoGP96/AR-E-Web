@@ -87,7 +87,7 @@ export function PackageForm({
       agency_name: "",
       number_of_tracking: "",
       status_of_processing: "Enviado",
-      arrival_date: new Date().toISOString().split("T")[0],
+      arrival_date: new Date().toISOString(),
     },
   });
 
@@ -100,7 +100,7 @@ export function PackageForm({
       form.setValue(
         "arrival_date",
         packageData.arrival_date
-          ? new Date(packageData.arrival_date).toISOString().split("T")[0]
+          ? new Date(packageData.arrival_date).toISOString()
           : "",
       );
 
@@ -395,7 +395,7 @@ export function PackageForm({
                             onChange={(date: Date | null) =>
                               field.onChange(
                                 date
-                                  ? date.toISOString().split("T")[0]
+                                  ? date.toISOString()
                                   : "",
                               )
                             }

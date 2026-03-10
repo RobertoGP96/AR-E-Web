@@ -4,6 +4,7 @@ import { type DeliverReceip } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { fetchClientBalancesReport } from "@/services/reports/reports";
 import { User2Icon } from "lucide-react";
+import DateTimePicker from "@/components/utils/DatePicker";
 
 interface ConfirmPaymentDialogProps {
   delivery: DeliverReceip | null;
@@ -53,9 +54,7 @@ export function ConfirmPaymentDialog({
   onConfirm,
 }: ConfirmPaymentDialogProps) {
   const [montoPagado, setMontoPagado] = useState("");
-  const [fechaPago, setFechaPago] = useState(
-    new Date().toISOString().split("T")[0],
-  );
+  const [fechaPago, setFechaPago] = useState<Date | null>(new Date());
   const [estadoSelect, setEstadoSelect] = useState("auto"); // "auto" or "pagado"
   const [usarSaldo, setUsarSaldo] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,7 +71,7 @@ export function ConfirmPaymentDialog({
 
   useEffect(() => {
     if (open) {
-      setFechaPago(new Date().toISOString().split("T")[0]);
+      setFechaPago(new Date());
       setMontoPagado("");
       setUsarSaldo(false);
       setEstadoSelect("auto");
@@ -136,8 +135,7 @@ export function ConfirmPaymentDialog({
 
     setIsSubmitting(true);
     try {
-      const [year, month, day] = fechaPago.split("-").map(Number);
-      const paymentDate = new Date(year, month - 1, day);
+      const paymentDate = fechaPago ?? new Date();
 
       const isPaid = estadoActual === "pagado";
       const payStatus = isPaid ? "Pagado" : "Pendiente";
@@ -220,11 +218,11 @@ export function ConfirmPaymentDialog({
               <label className="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-2">
                 Fecha de pago
               </label>
-              <input
-                type="date"
+              <DateTimePicker
+                label=""
+                placeholder="Seleccionar fecha y hora"
                 value={fechaPago}
-                onChange={(e) => setFechaPago(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 bg-gray-50 text-gray-700 font-semibold focus:outline-none focus:border-orange-400 focus:bg-white transition-all"
+                onChange={(date) => setFechaPago(date)}
               />
             </div>
 

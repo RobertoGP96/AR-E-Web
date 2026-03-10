@@ -174,7 +174,7 @@ export function InvoiceForm({
               onChange={(date: Date | null) =>
                 setValue(
                   "date" as const,
-                  date ? date.toISOString().split("T")[0] : "",
+                  date ? date.toISOString() : "",
                   { shouldValidate: true, shouldDirty: true },
                 )
               }

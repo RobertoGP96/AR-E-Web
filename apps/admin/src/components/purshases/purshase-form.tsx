@@ -137,7 +137,7 @@ export function PurchaseForm({
       form.setValue(
         "buy_date",
         purchase.buy_date
-          ? new Date(purchase.buy_date).toISOString().split("T")[0]
+          ? new Date(purchase.buy_date).toISOString()
           : undefined,
       );
       form.setValue("card_id", purchase.card_id || "");
@@ -484,7 +484,7 @@ export function PurchaseForm({
                           onChange={(date: Date | null) =>
                             field.onChange(
                               date
-                                ? date.toISOString().split("T")[0]
+                                ? date.toISOString()
                                 : undefined,
                             )
                           }

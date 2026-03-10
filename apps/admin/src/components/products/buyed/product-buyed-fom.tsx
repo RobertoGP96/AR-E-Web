@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { CreateProductBuyedData } from '@/types/models/product-buyed';
+import DateTimePicker from '@/components/utils/DatePicker';
 
 // Esquema de validación con Zod
 const createProductBuyedSchema = z.object({
@@ -215,9 +216,11 @@ export function ProductBuyedForm({ onSubmit, isLoading = false, products = [] }:
             <FormItem>
               <FormLabel>Fecha de Compra (opcional)</FormLabel>
               <FormControl>
-                <Input
-                  type="date"
-                  {...field}
+                <DateTimePicker
+                  label=""
+                  placeholder="Seleccionar fecha y hora"
+                  value={field.value ? new Date(field.value) : null}
+                  onChange={(date: Date | null) => field.onChange(date ? date.toISOString() : "")}
                 />
               </FormControl>
               <FormMessage />

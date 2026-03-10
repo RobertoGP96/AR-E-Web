@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Truck, Package, CheckCircle2, Weight } from "lucide-react";
 import type { DeliverReceip, DeliveryStatus } from "@/types";
-import DatePicker from "../utils/DatePicker";
+import DateTimePicker from "../utils/DatePicker";
 
 interface EditDeliveryDialogProps {
   open: boolean;
@@ -73,7 +73,7 @@ export default function EditDeliveryDialog({
         weight: delivery.weight || 0,
         status: delivery.status || "Pendiente",
         deliver_date: delivery.deliver_date
-          ? delivery.deliver_date.split("T")[0]
+          ? delivery.deliver_date
           : "",
         weight_cost: delivery.weight_cost || 0,
         manager_profit: delivery.manager_profit || 0,
@@ -326,7 +326,7 @@ export default function EditDeliveryDialog({
 
             {/* Fecha de Entrega */}
             <div className="grid gap-2">
-              <DatePicker
+              <DateTimePicker
                 label="Fecha de Entrega"
                 value={
                   formData.deliver_date

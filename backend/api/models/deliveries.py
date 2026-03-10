@@ -160,7 +160,7 @@ class Package(models.Model):
         choices=[(tag.value, tag.value) for tag in PackageStatusEnum],
         default=PackageStatusEnum.ENVIADO.value
     )
-    arrival_date = models.DateField(default=timezone.now, help_text="Fecha de llegada del paquete")
+    arrival_date = models.DateTimeField(default=timezone.now, help_text="Fecha de llegada del paquete")
     package_picture = models.TextField(blank=True, null=True, help_text=' image URL')
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

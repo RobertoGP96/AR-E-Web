@@ -49,7 +49,7 @@ import {
   Check,
   ChevronsUpDown,
 } from "lucide-react";
-import DatePicker from "@/components/utils/DatePicker";
+import DateTimePicker from "@/components/utils/DatePicker";
 import { InputGroupInput } from "@/components/ui/input-group";
 
 // Hooks
@@ -137,8 +137,8 @@ export function DeliveryForm({
         : undefined,
       status: delivery?.status || "Pendiente",
       deliver_date: delivery?.deliver_date
-        ? new Date(delivery.deliver_date).toISOString().split("T")[0]
-        : new Date().toISOString().split("T")[0],
+        ? new Date(delivery.deliver_date).toISOString()
+        : new Date().toISOString(),
       weight: delivery?.weight || 0,
       weight_cost: delivery?.weight_cost || 0,
       manager_profit: delivery?.manager_profit || 0,
@@ -716,7 +716,7 @@ export function DeliveryForm({
                         Fecha de Entrega
                       </FormLabel>
                       <FormControl>
-                        <DatePicker
+                        <DateTimePicker
                           placeholder="Fijar fecha"
                           value={
                             field.value ? new Date(field.value) : undefined
@@ -724,7 +724,7 @@ export function DeliveryForm({
                           onChange={(date: Date | null) =>
                             field.onChange(
                               date
-                                ? date.toISOString().split("T")[0]
+                                ? date.toISOString()
                                 : undefined,
                             )
                           }

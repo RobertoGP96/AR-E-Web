@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import type { ProductBuyed } from '@/types/models';
+import DateTimePicker from '@/components/utils/DatePicker';
 
 interface RefundPopoverProps {
   productBuyed: ProductBuyed;
@@ -30,7 +31,7 @@ export const RefundPopover: React.FC<RefundPopoverProps> = ({
   const [open, setOpen] = useState(false);
   const [refundData, setRefundData] = useState<RefundData>({
     is_refunded: true,
-    refund_date: new Date().toISOString().split('T')[0],
+    refund_date: new Date().toISOString(),
     refund_amount: 0,
     refund_notes: '',
   });
@@ -69,8 +70,8 @@ export const RefundPopover: React.FC<RefundPopoverProps> = ({
     // Resetear datos
     setRefundData({
       is_refunded: true,
-      refund_date: new Date().toISOString().split('T')[0],
-      refund_amount:  0,
+      refund_date: new Date().toISOString(),
+      refund_amount: 0,
       refund_notes: '',
     });
   };
@@ -111,15 +112,11 @@ export const RefundPopover: React.FC<RefundPopoverProps> = ({
               <Label htmlFor="refund_date" className="text-xs">
                 Fecha de Reembolso
               </Label>
-              <Input
-                id="refund_date"
-                type="date"
-                value={refundData.refund_date}
-                onChange={(e) =>
-                  setRefundData({ ...refundData, refund_date: e.target.value })
-                }
-                required
-                className="h-9"
+              <DateTimePicker
+                label=""
+                placeholder="Fecha y hora"
+                value={refundData.refund_date ? new Date(refundData.refund_date) : null}
+                onChange={(date: Date | null) => setRefundData({...refundData, refund_date: date ? date.toISOString() : new Date().toISOString()})}
               />
             </div>
 

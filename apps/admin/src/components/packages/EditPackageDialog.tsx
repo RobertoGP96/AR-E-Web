@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Package, Truck, CheckCircle2 } from "lucide-react";
 import type { Package as PackageType } from "@/types";
-import DatePicker from "../utils/DatePicker";
+import DateTimePicker from "../utils/DatePicker";
 
 interface EditPackageDialogProps {
   open: boolean;
@@ -51,7 +51,7 @@ export default function EditPackageDialog({
         agency_name: pkg.agency_name || "",
         number_of_tracking: pkg.number_of_tracking || "",
         status_of_processing: pkg.status_of_processing || "Enviado",
-        arrival_date: pkg.arrival_date ? pkg.arrival_date.split("T")[0] : "",
+        arrival_date: pkg.arrival_date ? pkg.arrival_date : "",
       });
     }
   }, [pkg]);
@@ -157,7 +157,7 @@ export default function EditPackageDialog({
 
             {/* Fecha de Llegada */}
             <div className="grid gap-2">
-              <DatePicker
+              <DateTimePicker
                 label="Fecha de Llegada"
                 value={
                   formData.arrival_date

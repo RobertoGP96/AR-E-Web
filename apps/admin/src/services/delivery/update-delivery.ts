@@ -5,7 +5,6 @@
 import { apiClient } from '../../lib/api-client';
 import type { DeliverReceip, PayStatus } from '../../types';
 import type { UpdateDeliverReceipData } from '../../types/models/delivery';
-import { formatToYYYYMMDD } from '@/lib/format-date';
 
 /**
  * Actualiza un delivery existente
@@ -57,7 +56,7 @@ export const markDeliveryAsPaid = async (id: number, amountReceived?: number, pa
   }
   
   if (paymentDate) {
-    patchData.payment_date = formatToYYYYMMDD(paymentDate);
+    patchData.payment_date = paymentDate instanceof Date ? paymentDate.toISOString() : paymentDate;
   }
   
   if (paymentStatus) {

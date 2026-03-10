@@ -143,7 +143,7 @@ export function ExpencesForm({
                 onChange={(date: Date | null) =>
                   setValue(
                     "date" as const,
-                    date ? new Date(date).toISOString().split("T")[0] : "",
+                    date ? new Date(date).toISOString() : "",
                     { shouldValidate: true, shouldDirty: true },
                   )
                 }
