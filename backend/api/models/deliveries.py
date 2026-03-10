@@ -75,20 +75,23 @@ class DeliverReceip(models.Model):
         """
         return float(self.weight_cost - self.manager_profit - self.delivery_expenses)
 
-    def add_payment_amount(self, amount: float, payment_date=None) -> None:
+    def add_payment_amount(self, amount: float, payment_date=None, applied_balance: float = 0) -> None:
         """
         Añade una cantidad a `payment_amount` y actualiza `payment_status` en base
-        al costo total de la entrega (weight_cost). Guarda la instancia con los campos necesarios.
+        al costo total de la entrega (weight_cost). Si se aplica saldo del cliente,
+        reduce el balance del cliente por esa cantidad.
         
         Args:
             amount: Cantidad a añadir al pago
             payment_date: Fecha del pago (opcional). Si no se proporciona, se usa la fecha actual.
+            applied_balance: Cantidad de saldo del cliente que se aplicó al pago
         """
         if amount is None:
             return
 
         try:
             amount_float = float(amount)
+            applied_balance_float = float(applied_balance or 0)
         except (TypeError, ValueError):
             return
 
@@ -96,6 +99,15 @@ class DeliverReceip(models.Model):
             return
 
         self.payment_amount = round(self.payment_amount + amount_float, 2)
+
+        # Si se aplicó saldo del cliente, reducir el balance del cliente
+        if applied_balance_float > 0 and self.client:
+            try:
+                # Reducir el balance del cliente por el saldo aplicado
+                self.client.balance = round((self.client.balance or 0) - applied_balance_float, 2)
+                self.client.save(update_fields=['balance', 'updated_at'])
+            except Exception as e:
+                print(f"[DeliverReceip.add_payment_amount] Error al reducir balance del cliente: {e}")
 
         # Calcular el costo total de la entrega
         total_cost = self.weight_cost
@@ -118,6 +130,8 @@ class DeliverReceip(models.Model):
         elif not self.payment_date:
             # Si no hay fecha previa y no se proporciona, usar la fecha actual
             self.payment_date = timezone.now()
+        
+        self.save()
 
         # Guardar cambios mínimamente
         self.save(update_fields=['payment_amount', 'payment_status', 'payment_date', 'updated_at'])

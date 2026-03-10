@@ -36,13 +36,13 @@ export const updateDeliveryPaymentStatus = async (id: number, paymentStatus: str
 };
 
 /**
- * Marca un delivery como pagado con la cantidad recibida.
+ * Marca un delivery como pagado con la cantidad recibida y saldo aplicado.
  * El backend determinará automáticamente el payment_status basándose en:
  * - Si payment_amount >= weight_cost => 'Pagado'
  * - Si 0 < payment_amount < weight_cost => 'Parcial'
  * - Si payment_amount == 0 => 'No pagado'
  */
-export const markDeliveryAsPaid = async (id: number, amountReceived?: number, paymentDate?: Date, paymentStatus?: string): Promise<DeliverReceip> => {
+export const markDeliveryAsPaid = async (id: number, amountReceived?: number, paymentDate?: Date, paymentStatus?: string, appliedBalance?: number): Promise<DeliverReceip> => {
   // Validar que el ID sea válido
   if (!id || id === undefined || id === null) {
     const error = `[markDeliveryAsPaid] ERROR: ID inválido recibido: ${id}`;
@@ -65,6 +65,11 @@ export const markDeliveryAsPaid = async (id: number, amountReceived?: number, pa
   } else if (amountReceived === undefined) {
     // Si no se proporciona cantidad ni estado, marcamos como Pagado por defecto
     patchData.payment_status = 'Pagado';
+  }
+
+  // Incluir saldo aplicado si se proporciona
+  if (appliedBalance !== undefined && appliedBalance > 0) {
+    (patchData as any).applied_balance = appliedBalance;
   }
 
   if (Object.keys(patchData).length > 0) {

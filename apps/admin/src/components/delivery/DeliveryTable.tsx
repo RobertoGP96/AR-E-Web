@@ -219,6 +219,7 @@ const DeliveryTableComponent: React.FC<DeliveryTableProps> = ({
     amountReceived: number,
     paymentDate: Date | undefined,
     paymentStatus?: string,
+    appliedBalance?: number,
   ) => {
     try {
       // Reemplazar directamente el monto de pago
@@ -227,6 +228,7 @@ const DeliveryTableComponent: React.FC<DeliveryTableProps> = ({
         amountReceived,
         paymentDate,
         paymentStatus,
+        appliedBalance,
       });
       toast.success(`Pago confirmado para la entrega #${deliveryId}`);
     } catch (err) {

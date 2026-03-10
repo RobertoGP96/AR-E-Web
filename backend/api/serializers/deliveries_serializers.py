@@ -131,8 +131,9 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
         # Manejar payment_amount de forma acumulativa (similar a órdenes)
         if 'payment_amount' in validated_data:
             amount_to_add = validated_data.pop('payment_amount')
+            applied_balance = validated_data.pop('applied_balance', 0)
             try:
-                instance.add_payment_amount(amount_to_add)
+                instance.add_payment_amount(amount_to_add, applied_balance=applied_balance)
             except Exception as e:
                 print(f"[DeliverReceipSerializer] Error al añadir payment amount: {e}")
 
