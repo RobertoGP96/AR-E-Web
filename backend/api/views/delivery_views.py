@@ -122,10 +122,13 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
         queryset = DeliverReceip.objects.all().order_by('-created_at')
         user = self.request.user
 
-        if user.role == 'logistical':
+        if user.role == 'agent':
+            # Agentes ven entregas de sus clientes asignados
+            queryset = queryset.filter(client__assigned_agent=user)
+        elif user.role == 'logistical':
             queryset = queryset.filter(delivery__logistical=user)
         elif user.role == 'client':
-            queryset = queryset.filter(client=user)  # ✅ Filtrar directamente por cliente
+            queryset = queryset.filter(client=user)
 
         return queryset
 

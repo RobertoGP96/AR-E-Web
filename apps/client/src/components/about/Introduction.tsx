@@ -150,7 +150,7 @@ export default function Introduction() {
   return (
     <div className="space-y-10 relative flex flex-col md:flex-row max-w-5xl mx-auto scroll-smooth">
       {/* Índice fijo */}
-      <nav className="md:sticky md:top-8 md:self-start md:w-64 p-6 mb-4 md:mb-0 z-10">
+      <nav className="hidden md:block md:sticky md:top-8 md:self-start md:w-64 p-6 mb-4 md:mb-0 z-10">
         <h4 className="text-xl text-primary uppercase font-extrabold mb-4 tracking-wide">
           Índice
         </h4>

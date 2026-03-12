@@ -206,7 +206,7 @@ export default function UserDeliveries() {
 
                                             {/* Delivery Details */}
                                             <Separator className="my-2" />
-                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 text-sm">
                                                 <div className='flex flex-row gap-2.5'>
                                                     <p className="text-xs text-muted-foreground font-medium">Peso</p>
                                                     <p className="font-semibold text-foreground">{delivery.weight} lb</p>
@@ -237,7 +237,7 @@ export default function UserDeliveries() {
                                                     <Separator className="my-2" />
                                                     <div>
                                                         <p className="text-xs text-muted-foreground font-medium mb-2">Evidencia de entrega</p>
-                                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
                                                             {delivery.deliver_picture.map((image, idx) => (
                                                                 <img
                                                                     key={idx}

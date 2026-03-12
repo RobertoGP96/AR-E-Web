@@ -1,30 +1,102 @@
-import { useState } from 'react';
-import { User, Mail, Phone, MapPin, Calendar, Camera, Save, Edit3 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, Mail, Phone, MapPin, Calendar, Save, Edit3, Loader2, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useCurrentUser, useUpdateUser } from '@/hooks/user/useUsers';
+import { roleLabels } from '@/types/models/user';
+
+interface EditableFields {
+  name: string;
+  last_name: string;
+  phone_number: string;
+  home_address: string;
+}
 
 export default function Profile() {
+  const { user: authUser } = useAuth();
+  const { data: currentUser, isLoading, isError } = useCurrentUser();
+  const updateUser = useUpdateUser();
+
   const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState({
-    firstName: 'Juan',
-    lastName: 'Pérez',
-    email: 'juan.perez@admin.com',
-    phone: '+57 300 123 4567',
-    address: 'Carrera 15 #32-45, Bogotá',
-    role: 'Administrador',
-    department: 'Tecnología',
-    joinDate: '15 de Enero, 2023',
-    bio: 'Administrador del sistema con más de 5 años de experiencia en gestión de plataformas digitales.'
+  const [formData, setFormData] = useState<EditableFields>({
+    name: '',
+    last_name: '',
+    phone_number: '',
+    home_address: '',
   });
 
-  const handleInputChange = (field: string, value: string) => {
-    setProfileData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  // Sync form data when API data arrives or auth user changes
+  const userData = currentUser ?? authUser;
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        name: userData.name ?? '',
+        last_name: userData.last_name ?? '',
+        phone_number: userData.phone_number ?? '',
+        home_address: userData.home_address ?? '',
+      });
+    }
+  }, [userData]);
+
+  const handleInputChange = (field: keyof EditableFields, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  const handleCancel = () => {
+    // Reset form to current server data
+    if (userData) {
+      setFormData({
+        name: userData.name ?? '',
+        last_name: userData.last_name ?? '',
+        phone_number: userData.phone_number ?? '',
+        home_address: userData.home_address ?? '',
+      });
+    }
+    setIsEditing(false);
+  };
+
+  const handleSave = () => {
+    if (!userData?.id) return;
+    updateUser.mutate(
+      { id: userData.id, ...formData },
+      {
+        onSuccess: () => setIsEditing(false),
+      }
+    );
+  };
+
+  const formatJoinDate = (dateString?: string) => {
+    if (!dateString) return '—';
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
+
+  if (isLoading && !authUser) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+        <span className="ml-3 text-gray-600">Cargando perfil...</span>
+      </div>
+    );
+  }
+
+  if (isError && !authUser) {
+    return (
+      <div className="flex items-center justify-center h-64 gap-3 text-red-600">
+        <AlertCircle className="h-8 w-8" />
+        <span>No se pudo cargar el perfil. Por favor, recarga la página.</span>
+      </div>
+    );
+  }
+
+  const displayName = `${formData.name} ${formData.last_name}`.trim() || userData?.full_name || '—';
+  const roleLabel = userData?.role ? (roleLabels[userData.role] ?? userData.role) : '—';
 
   return (
     <div className="space-y-6">
@@ -39,10 +111,10 @@ export default function Profile() {
             Gestiona tu información personal y configuración de cuenta
           </p>
         </div>
-        <Button 
-          onClick={() => setIsEditing(!isEditing)}
+        <Button
+          onClick={() => (isEditing ? handleCancel() : setIsEditing(true))}
           className={`flex items-center gap-2 transition-all duration-300 rounded-xl border-0 ${
-            isEditing 
+            isEditing
               ? 'bg-gray-500 hover:bg-gray-600 shadow-lg hover:shadow-xl'
               : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl'
           }`}
@@ -53,43 +125,38 @@ export default function Profile() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
+        {/* Profile Summary Card */}
         <div className="lg:col-span-1">
           <Card className="shadow-lg border-0 bg-white rounded-2xl">
             <CardContent className="p-6 text-center">
-              <div className="relative inline-block">
-                <div className="w-32 h-32 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <User className="h-16 w-16 text-white" />
-                </div>
-                {isEditing && (
-                  <button className="absolute bottom-2 right-2 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-shadow">
-                    <Camera className="h-4 w-4 text-gray-600" />
-                  </button>
-                )}
+              <div className="w-32 h-32 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <User className="h-16 w-16 text-white" />
               </div>
-              
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {profileData.firstName} {profileData.lastName}
+
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                {isLoading ? (
+                  <span className="inline-block w-40 h-7 bg-gray-200 rounded animate-pulse" />
+                ) : (
+                  displayName
+                )}
               </h2>
-              
-              <div className="space-y-2 mb-4">
+
+              <div className="mb-4">
                 <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100 rounded-full px-3 py-1">
-                  {profileData.role}
+                  {roleLabel}
                 </Badge>
-                <p className="text-gray-600 text-sm">{profileData.department}</p>
               </div>
 
               <div className="flex items-center justify-center text-gray-600 text-sm">
-                <Calendar className="h-4 w-4 mr-2" />
-                Desde {profileData.joinDate}
+                <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                Desde {formatJoinDate(userData?.date_joined)}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Information Cards */}
+        {/* Information Card */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Personal Information */}
           <Card className="shadow-lg border-0 bg-white rounded-2xl">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold text-gray-900">
@@ -98,165 +165,91 @@ export default function Profile() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Nombre */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Nombre
                   </label>
                   {isEditing ? (
                     <Input
-                      value={profileData.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
                       className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
                     />
                   ) : (
                     <div className="flex items-center gap-2 text-gray-900">
                       <User className="h-4 w-4 text-gray-400" />
-                      {profileData.firstName}
+                      {formData.name || '—'}
                     </div>
                   )}
                 </div>
 
+                {/* Apellido */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Apellido
                   </label>
                   {isEditing ? (
                     <Input
-                      value={profileData.lastName}
-                      onChange={(e) => handleInputChange('lastName', e.target.value)}
+                      value={formData.last_name}
+                      onChange={(e) => handleInputChange('last_name', e.target.value)}
                       className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
                     />
                   ) : (
                     <div className="flex items-center gap-2 text-gray-900">
                       <User className="h-4 w-4 text-gray-400" />
-                      {profileData.lastName}
+                      {formData.last_name || '—'}
                     </div>
                   )}
                 </div>
 
+                {/* Email (read-only) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Email
                   </label>
-                  {isEditing ? (
-                    <Input
-                      type="email"
-                      value={profileData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
-                    />
-                  ) : (
-                    <div className="flex items-center gap-2 text-gray-900">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      {profileData.email}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 text-gray-900">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    {userData?.email || '—'}
+                  </div>
                 </div>
 
+                {/* Teléfono */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Teléfono
                   </label>
                   {isEditing ? (
                     <Input
-                      value={profileData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      value={formData.phone_number}
+                      onChange={(e) => handleInputChange('phone_number', e.target.value)}
                       className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
                     />
                   ) : (
                     <div className="flex items-center gap-2 text-gray-900">
                       <Phone className="h-4 w-4 text-gray-400" />
-                      {profileData.phone}
+                      {formData.phone_number || '—'}
                     </div>
                   )}
                 </div>
 
+                {/* Dirección */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Dirección
                   </label>
                   {isEditing ? (
                     <Input
-                      value={profileData.address}
-                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      value={formData.home_address}
+                      onChange={(e) => handleInputChange('home_address', e.target.value)}
                       className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
                     />
                   ) : (
                     <div className="flex items-center gap-2 text-gray-900">
                       <MapPin className="h-4 w-4 text-gray-400" />
-                      {profileData.address}
+                      {formData.home_address || '—'}
                     </div>
                   )}
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Biografía
-                  </label>
-                  {isEditing ? (
-                    <textarea
-                      value={profileData.bio}
-                      onChange={(e) => handleInputChange('bio', e.target.value)}
-                      rows={3}
-                      className="w-full py-3 px-4 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 text-sm resize-none"
-                    />
-                  ) : (
-                    <p className="text-gray-900 text-sm leading-relaxed">
-                      {profileData.bio}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Security Settings */}
-          <Card className="shadow-lg border-0 bg-white rounded-2xl">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold text-gray-900">
-                Configuración de Seguridad
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cambiar Contraseña
-                </label>
-                <div className="space-y-3">
-                  <Input
-                    type="password"
-                    placeholder="Contraseña actual"
-                    className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
-                  />
-                  <Input
-                    type="password"
-                    placeholder="Nueva contraseña"
-                    className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
-                  />
-                  <Input
-                    type="password"
-                    placeholder="Confirmar nueva contraseña"
-                    className="border-gray-200 focus:border-orange-300 focus:ring-orange-200 rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-gray-100">
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input
-                      id="two-factor-profile"
-                      name="two-factor-profile"
-                      type="checkbox"
-                      className="focus:ring-orange-500 h-4 w-4 text-orange-600 border-gray-300 rounded"
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <label htmlFor="two-factor-profile" className="font-medium text-gray-700 text-sm">
-                      Autenticación de dos factores
-                    </label>
-                    <p className="text-gray-500 text-sm">Añade una capa extra de seguridad a tu cuenta</p>
-                  </div>
                 </div>
               </div>
             </CardContent>
@@ -265,17 +258,33 @@ export default function Profile() {
           {isEditing && (
             <div className="flex justify-end gap-3">
               <Button
-                onClick={() => setIsEditing(false)}
+                onClick={handleCancel}
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
+                disabled={updateUser.isPending}
               >
                 Cancelar
               </Button>
-              <Button className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border-0">
-                <Save className="h-4 w-4 mr-2" />
+              <Button
+                onClick={handleSave}
+                disabled={updateUser.isPending}
+                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border-0"
+              >
+                {updateUser.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
                 Guardar Cambios
               </Button>
             </div>
+          )}
+
+          {updateUser.isError && (
+            <p className="text-sm text-red-600 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              No se pudieron guardar los cambios. Inténtalo de nuevo.
+            </p>
           )}
         </div>
       </div>

@@ -25,7 +25,10 @@
       "Bash(./node_modules/.bin/tsc --noEmit)",
       "Bash(python backend/manage.py test api.tests.test_balance_payments --verbosity=2)",
       "Bash(python backend/manage.py test api.tests.test_balance_payments --verbosity=2 --keepdb)",
-      "Bash(find 'D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\client' -name tailwind.config.*)"
+      "Bash(find 'D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\client' -name tailwind.config.*)",
+      "Bash(ls -la \"D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\admin\\\\src\\\\pages\"\" 2>/dev/null || find \"D:DevReact WorksStartNewappsadminsrc\" -maxdepth 3 -type d -name \"pages \")",
+      "Bash(pnpm build:*)",
+      "Bash(xargs cat:*)"
     ]
   }
 }

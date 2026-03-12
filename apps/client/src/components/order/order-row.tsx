@@ -67,7 +67,7 @@ const OrderRow = ({ order }: { order: Order }) => {
                             type="button" 
                             variant="ghost" 
                             size="sm"
-                            className="h-8 w-8 p-0 hover:bg-white/10 focus:bg-white/10"
+                            className="h-10 w-10 p-0 hover:bg-white/10 focus:bg-white/10"
                         >
                             <EllipsisVertical className="h-4 w-4" />
                             <span className="sr-only">Abrir menú de opciones</span>

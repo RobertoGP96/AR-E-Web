@@ -29,7 +29,14 @@ class UserViewSet(viewsets.ModelViewSet):
         Optimiza las queries usando select_related para cargar el agente asignado
         y evitar el problema N+1.
         """
-        return CustomUser.objects.select_related('assigned_agent').all()
+        queryset = CustomUser.objects.select_related('assigned_agent').all()
+        user = self.request.user
+
+        if user.role == 'agent':
+            # Agentes solo ven sus clientes asignados
+            queryset = queryset.filter(assigned_agent=user)
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'create':

@@ -32,7 +32,7 @@ export function NavUser({ onNavigate }: NavUserProps) {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <div className="w-full flex items-center gap-3 px-2 py-1 rounded-xl hover:bg-gray-800/50 transition-all duration-200 group">
-                    <Avatar className="h-10 w-10 rounded-xl">
+                    <Avatar className="h-11 w-11 sm:h-10 sm:w-10 rounded-xl">
                         <AvatarFallback className="rounded-full bg-gradient-to-r from-orange-400 to-amber-500 text-gray-900 font-semibold">
                             {auth ? auth?.name.charAt(0).toUpperCase() + auth?.last_name.charAt(0).toUpperCase() : "N/A"}
                         </AvatarFallback>

@@ -200,7 +200,7 @@ export const ProductList = () => {
                                         variant={viewMode === "list" ? "default" : "ghost"}
                                         size="sm"
                                         onClick={() => setViewMode("list")}
-                                        className="h-8 w-8 p-0"
+                                        className="h-10 w-10 p-0"
                                     >
                                         <List className="h-4 w-4" />
                                         <span className="sr-only">Vista lista</span>
@@ -209,7 +209,7 @@ export const ProductList = () => {
                                         variant={viewMode === "grid" ? "default" : "ghost"}
                                         size="sm"
                                         onClick={() => setViewMode("grid")}
-                                        className="h-8 w-8 p-0"
+                                        className="h-10 w-10 p-0"
                                     >
                                         <Grid className="h-4 w-4" />
                                         <span className="sr-only">Vista cuadrícula</span>
