@@ -192,24 +192,20 @@ export function NotificationsPopover() {
         {/* Footer con acciones */}
         <div className="bg-gray-50/80 backdrop-blur-sm border-t border-gray-100 p-4">
           <div className="flex gap-3">
-            {displayUnreadCount > 0 && (
+            {displayUnreadCount > 0 ? (
               <Button
                 onClick={handleMarkAllAsRead}
                 disabled={actions.markAllAsRead.isPending}
-                className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
               >
                 {actions.markAllAsRead.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : null}
                 Marcar todas como leídas
               </Button>
+            ) : (
+              <p className="w-full text-center text-xs text-gray-400 py-1">Fin de notificaciones</p>
             )}
-            <Button
-              variant="outline"
-              className={`${displayUnreadCount > 0 ? 'flex-1' : 'w-full'} bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-4 rounded-xl border border-gray-200 transition-all duration-200 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]`}
-            >
-              Ver todas
-            </Button>
           </div>
         </div>
       </PopoverContent>

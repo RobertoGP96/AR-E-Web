@@ -221,15 +221,8 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
         - per_page: Items por página (default: 20)
         """
         user = request.user
-        
-        # ✅ SEGURIDAD: Solo clientes pueden ver sus entregas
-        if user.role != 'client':
-            return Response(
-                {"error": "Solo clientes pueden ver sus entregas"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        # ✅ SEGURIDAD: Filtrar entregas solo del cliente autenticado
+
+        # ✅ SEGURIDAD: Cada usuario solo ve sus propias entregas (donde es el cliente)
         queryset = self.get_queryset().filter(client=user).order_by('-deliver_date')
         
         # ✅ FILTRO: Status opcional

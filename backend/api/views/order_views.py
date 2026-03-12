@@ -158,15 +158,14 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_orders(self, request):
         """
-        Endpoint que devuelve las órdenes del usuario autenticado.
-        Los clientes verán solo sus órdenes.
-        Los agentes verán las órdenes que gestionan.
-        Los administradores pueden ver todas (a través del queryset filtrado).
+        Endpoint que devuelve las órdenes propias del usuario autenticado.
+        Cada usuario solo ve las órdenes donde es el cliente.
         """
         from rest_framework.pagination import PageNumberPagination
-        
+
         user = request.user
-        queryset = self.get_queryset()
+        # Cada usuario ve solo sus propias órdenes (donde es el cliente)
+        queryset = Order.objects.filter(client=user).order_by('-created_at')
 
         # Paginar los resultados
         paginator = PageNumberPagination()

@@ -32,6 +32,10 @@ class DashboardMetricsView(APIView):
     def get(self, request):
         user = request.user
 
+        # Métricas específicas para agentes
+        if user.role == 'agent':
+            return self._get_agent_metrics(user)
+
         # Solo administradores pueden ver métricas completas
         if user.role != 'admin':
             return Response({
@@ -437,6 +441,87 @@ class DashboardMetricsView(APIView):
                 'exchange_rate': exchange_rate,
             },
             'message': 'Métricas del dashboard obtenidas exitosamente'
+        })
+
+    def _get_agent_metrics(self, user):
+        """Métricas del dashboard filtradas para un agente específico."""
+        now = timezone.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        month_start = today_start.replace(day=1)
+
+        # Mis Clientes
+        my_clients = CustomUser.objects.filter(assigned_agent=user, role='client')
+        clients_data = my_clients.aggregate(
+            total=Count('id'),
+            active=Count('id', filter=Q(is_active=True))
+        )
+
+        # Mis Órdenes (como sales_manager)
+        my_orders = Order.objects.filter(sales_manager=user)
+        orders_data = my_orders.aggregate(
+            total=Count('id'),
+            pending=Count('id', filter=Q(status='pending')),
+            completed=Count('id', filter=Q(status='completed')),
+            this_month=Count('id', filter=Q(created_at__gte=month_start)),
+            revenue_total=Sum('received_value_of_client'),
+            revenue_this_month=Sum('received_value_of_client', filter=Q(created_at__gte=month_start)),
+        )
+
+        # Entregas de mis clientes
+        my_deliveries = DeliverReceip.objects.filter(client__assigned_agent=user)
+        deliveries_data = my_deliveries.aggregate(
+            total=Count('id'),
+            pending=Count('id', filter=Q(status='Pendiente')),
+            delivered=Count('id', filter=Q(status='Entregado')),
+            this_month=Count('id', filter=Q(created_at__gte=month_start)),
+            paid=Count('id', filter=Q(payment_status=True)),
+            unpaid=Count('id', filter=Q(payment_status=False)),
+        )
+
+        # Mi comisión/ganancia
+        profit_data = my_deliveries.aggregate(
+            total=Sum('manager_profit'),
+            this_month=Sum('manager_profit', filter=Q(created_at__gte=month_start)),
+        )
+
+        # Exchange rate
+        try:
+            common_info = CommonInformation.get_instance()
+            exchange_rate = common_info.change_rate
+        except Exception:
+            exchange_rate = 0.0
+
+        return Response({
+            'success': True,
+            'data': {
+                'role': 'agent',
+                'clients': {
+                    'total': clients_data['total'],
+                    'active': clients_data['active'],
+                },
+                'orders': {
+                    'total': orders_data['total'],
+                    'pending': orders_data['pending'],
+                    'completed': orders_data['completed'],
+                    'this_month': orders_data['this_month'],
+                    'revenue_total': float(orders_data['revenue_total'] or 0),
+                    'revenue_this_month': float(orders_data['revenue_this_month'] or 0),
+                },
+                'deliveries': {
+                    'total': deliveries_data['total'],
+                    'pending': deliveries_data['pending'],
+                    'delivered': deliveries_data['delivered'],
+                    'this_month': deliveries_data['this_month'],
+                    'paid': deliveries_data['paid'],
+                    'unpaid': deliveries_data['unpaid'],
+                },
+                'profit': {
+                    'total': float(profit_data['total'] or 0),
+                    'this_month': float(profit_data['this_month'] or 0),
+                },
+                'exchange_rate': exchange_rate,
+            },
+            'message': 'Métricas del agente obtenidas exitosamente'
         })
 
 

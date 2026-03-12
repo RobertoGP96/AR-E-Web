@@ -277,7 +277,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
         return Response({
             'success': True,
             'message': f'{count} notificaciones eliminadas',
-            'count': count
+            'deleted_count': count
         })
     
     @extend_schema(
@@ -293,7 +293,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
         return Response({
             'success': True,
             'message': f'{count} notificaciones eliminadas',
-            'count': count
+            'deleted_count': count
         })
     
     @extend_schema(

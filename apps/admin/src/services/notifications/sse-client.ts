@@ -1,5 +1,6 @@
 /**
  * Cliente SSE (Server-Sent Events) para notificaciones en tiempo real
+ * Usa fetch + ReadableStream para soportar Authorization headers con JWT
  */
 
 import type {
@@ -9,7 +10,8 @@ import type {
 } from '../../types/models';
 
 export class NotificationSSEClient {
-  private eventSource: EventSource | null = null;
+  private abortController: AbortController | null = null;
+  private isConnecting = false;
   private config: Required<SSEConfig>;
   private reconnectAttempts = 0;
   private reconnectTimeout: NodeJS.Timeout | null = null;
@@ -37,53 +39,95 @@ export class NotificationSSEClient {
   }
 
   /**
-   * Conecta al stream SSE
+   * Conecta al stream SSE usando fetch con Authorization header
    */
-  connect(): void {
-    if (this.eventSource) {
+  async connect(): Promise<void> {
+    if (this.isConnecting) return;
+    if (this.abortController) {
       this.disconnect();
     }
 
+    this.isConnecting = true;
+
     try {
-      this.eventSource = new EventSource(this.config.url);
+      const tokenKey = import.meta.env.VITE_AUTH_TOKEN_KEY || 'access_token';
+      const token = localStorage.getItem(tokenKey);
 
-      // Evento de conexión
-      this.eventSource.onopen = () => {
-        this.state.isConnected = true;
-        this.state.error = undefined;
-        this.reconnectAttempts = 0;
-        this.onConnected?.();
-        this.onStateChange?.(this.state);
-        this.startHeartbeatTimeout();
-      };
+      if (!token) {
+        console.warn('[SSE] No auth token found, skipping connection');
+        this.isConnecting = false;
+        return;
+      }
 
-      // Evento de notificación
-      this.eventSource.addEventListener('notification', (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          this.onNotification?.(data);
-          this.resetHeartbeatTimeout();
-        } catch (error) {
-          console.error('SSE: Error parseando notificación', error);
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const sseUrl = `${apiUrl}${this.config.url}`;
+
+      this.abortController = new AbortController();
+
+      const response = await fetch(sseUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+        },
+        signal: this.abortController.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`SSE connection failed: ${response.status}`);
+      }
+
+      this.state.isConnected = true;
+      this.state.error = undefined;
+      this.isConnecting = false;
+      this.reconnectAttempts = 0;
+      this.onConnected?.();
+      this.onStateChange?.(this.state);
+      this.startHeartbeatTimeout();
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No readable stream');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split('\n\n');
+        buffer = chunks.pop() || '';
+
+        for (const chunk of chunks) {
+          // Handle heartbeat event
+          if (chunk.includes('event: heartbeat')) {
+            this.state.lastHeartbeat = new Date().toISOString();
+            this.onStateChange?.(this.state);
+            this.resetHeartbeatTimeout();
+            continue;
+          }
+
+          const dataLine = chunk.split('\n').find(l => l.startsWith('data: '));
+          if (dataLine) {
+            try {
+              const data = JSON.parse(dataLine.slice(6));
+              this.onNotification?.(data);
+              this.resetHeartbeatTimeout();
+            } catch {
+              // Skip invalid JSON
+            }
+          }
         }
-      });
-
-      // Evento de heartbeat
-      this.eventSource.addEventListener('heartbeat', () => {
-        this.state.lastHeartbeat = new Date().toISOString();
-        this.resetHeartbeatTimeout();
-      });
-
-      // Evento de error
-      this.eventSource.onerror = (error) => {
-        this.state.isConnected = false;
-        this.state.error = 'Connection error';
-        this.onError?.(error);
-        this.onStateChange?.(this.state);
-        this.handleReconnect();
-      };
-
-    } catch {
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') return;
+      console.error('[SSE] Connection error:', error);
+      this.state.isConnected = false;
+      this.state.error = 'Connection error';
+      this.isConnecting = false;
+      this.onError?.(error as Event);
+      this.onStateChange?.(this.state);
       this.handleReconnect();
     }
   }
@@ -92,10 +136,9 @@ export class NotificationSSEClient {
    * Desconecta del stream SSE
    */
   disconnect(): void {
-    if (this.eventSource) {
-      this.eventSource.close();
-      this.eventSource = null;
-    }
+    this.abortController?.abort();
+    this.abortController = null;
+    this.isConnecting = false;
 
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);

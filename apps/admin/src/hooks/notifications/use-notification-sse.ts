@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { getSSEClient, disconnectSSE } from '../../services/notifications';
 import type { Notification, SSEState, SSEConfig } from '../../types/models';
 
@@ -35,13 +36,15 @@ export const useNotificationSSE = (
   options: UseNotificationSSEOptions = {}
 ): UseNotificationSSEReturn => {
   const { autoConnect = true, config } = options;
+  const queryClient = useQueryClient();
   const [sseState, setSSEState] = useState<SSEState>({ isConnected: false });
   const [lastNotification, setLastNotification] = useState<Notification>();
 
   // Callbacks para manejar eventos SSE
   const handleNotification = useCallback((notification: Notification) => {
     setLastNotification(notification);
-  }, []);
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+  }, [queryClient]);
 
 
 

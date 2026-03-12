@@ -311,6 +311,29 @@ export interface DashboardMetrics {
   exchange_rate?: number;
 }
 
+export interface AgentDashboardMetrics {
+  role: 'agent';
+  clients: { total: number; active: number };
+  orders: {
+    total: number;
+    pending: number;
+    completed: number;
+    this_month: number;
+    revenue_total: number;
+    revenue_this_month: number;
+  };
+  deliveries: {
+    total: number;
+    pending: number;
+    delivered: number;
+    this_month: number;
+    paid: number;
+    unpaid: number;
+  };
+  profit: { total: number; this_month: number };
+  exchange_rate?: number;
+}
+
 export interface ChartData {
   labels: string[];
   datasets: {

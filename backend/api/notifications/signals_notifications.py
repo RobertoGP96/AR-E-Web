@@ -3,10 +3,13 @@ Señales de Django para generar notificaciones automáticamente.
 Este archivo detecta eventos en el sistema y crea notificaciones para los usuarios relevantes.
 """
 
+import logging
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from api.models import Order, Product, ProductBuyed, ProductReceived, Package, DeliverReceip, CustomUser
 from api.notifications.models_notifications import Notification, NotificationType, NotificationPriority
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================================================
@@ -455,3 +458,24 @@ def notify_user_verified(sender, instance, **kwargs):
                 )
         except CustomUser.DoesNotExist:
             pass
+
+
+# ============================================================================
+# SEÑAL DE PUSH EN TIEMPO REAL (SSE)
+# ============================================================================
+
+from api.notifications.realtime_notifications import NotificationSSE
+from api.notifications.serializers_notifications import NotificationSerializer
+
+@receiver(post_save, sender=Notification)
+def push_realtime_notification(sender, instance, created, **kwargs):
+    """Push new notifications to SSE subscribers."""
+    if created and instance.recipient_id:
+        try:
+            serializer = NotificationSerializer(instance)
+            NotificationSSE.publish_notification(
+                user_id=instance.recipient_id,
+                notification_data=serializer.data
+            )
+        except Exception as e:
+            logger.warning(f"Failed to push realtime notification {instance.id}: {e}")

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '@/services/api';
-import type { DashboardMetrics } from '@/types/api';
+import type { DashboardMetrics, AgentDashboardMetrics } from '@/types/api';
 
 /**
  * Hook personalizado para obtener métricas del dashboard
@@ -109,4 +109,22 @@ export const useDeliveryMetrics = () => {
     deliveryMetrics: metrics?.deliveries,
     ...query,
   };
+};
+
+/**
+ * Hook para obtener métricas del dashboard para agentes
+ */
+export const useAgentDashboardMetrics = () => {
+  return useQuery<AgentDashboardMetrics>({
+    queryKey: ['dashboard-metrics', 'agent'],
+    queryFn: async (): Promise<AgentDashboardMetrics> => {
+      const response = await dashboardService.getDashboardStats();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'No se pudieron obtener las métricas del agente');
+      }
+      return response.data as unknown as AgentDashboardMetrics;
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 };

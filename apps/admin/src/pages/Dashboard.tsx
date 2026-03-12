@@ -1,9 +1,13 @@
 import { MetricsSummaryCards, ExchangeRateCard } from '@/components/metrics';
+import { AgentMetricsSummary } from '@/components/metrics/AgentMetricsSummary';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useMemo, useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 const Dashboard = () => {
+  const { user } = useAuth();
+
   // Obtener saludo según hora del día
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -46,7 +50,7 @@ const Dashboard = () => {
                     {greeting}
                   </h1>
                   <p className="text-gray-500 mt-1 text-sm md:text-base">
-                    Panel de Administración · Resumen General
+                    {user?.role === 'agent' ? 'Panel de Agente · Mi Resumen' : 'Panel de Administración · Resumen General'}
                   </p>
                 </div>
               </div>
@@ -81,7 +85,7 @@ const Dashboard = () => {
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              Métricas
+              {user?.role === 'agent' ? 'Mi Panel' : 'Métricas'}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               Resumen de las métricas más importantes de tu negocio
@@ -89,7 +93,11 @@ const Dashboard = () => {
           </div>
         </div>
         <Separator className="my-4" />
-        <MetricsSummaryCards />
+        {user?.role === 'agent' ? (
+          <AgentMetricsSummary />
+        ) : (
+          <MetricsSummaryCards />
+        )}
       </section>
 
       
