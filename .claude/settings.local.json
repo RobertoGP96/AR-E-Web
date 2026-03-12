@@ -24,7 +24,8 @@
       "Bash(npx -p typescript tsc --noEmit)",
       "Bash(./node_modules/.bin/tsc --noEmit)",
       "Bash(python backend/manage.py test api.tests.test_balance_payments --verbosity=2)",
-      "Bash(python backend/manage.py test api.tests.test_balance_payments --verbosity=2 --keepdb)"
+      "Bash(python backend/manage.py test api.tests.test_balance_payments --verbosity=2 --keepdb)",
+      "Bash(find 'D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\client' -name tailwind.config.*)"
     ]
   }
 }
