@@ -25,7 +25,8 @@ export interface DeliverReceip {
   // Campos de pago
   payment_status: PayStatus; // Estado de pago: "No pagado", "Pagado", "Parcial"
   payment_date?: DateTime; // Fecha en que se realizó el pago
-  payment_amount: number; // Monto recibido del pago
+  payment_amount: number; // Monto en efectivo recibido del pago
+  balance_applied: number; // Saldo del cliente aplicado al pago
   
   // Propiedades computadas
 

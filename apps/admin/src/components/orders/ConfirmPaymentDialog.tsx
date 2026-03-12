@@ -84,7 +84,7 @@ export function ConfirmPaymentDialog({
   };
 
   const costoPedido = order
-    ? Math.max(0, order.total_cost - order.received_value_of_client)
+    ? Math.max(0, order.total_cost - order.received_value_of_client - (order.balance_applied || 0))
     : 0;
   const nombreCliente = order?.client
     ? `${order.client.name} ${order.client.last_name || ""}`.trim()
@@ -135,7 +135,7 @@ export function ConfirmPaymentDialog({
       const isPaid = estadoActual === "pagado";
       const payStatus = isPaid ? "Pagado" : "Pendiente";
 
-      await onConfirm(order.id!, totalCubierto || 0, paymentDate, payStatus, usarSaldo ? saldoAplicado : undefined);
+      await onConfirm(order.id!, monto, paymentDate, payStatus, usarSaldo ? saldoAplicado : undefined);
     } catch {
       // Errors handled by parent
     } finally {
