@@ -16,19 +16,21 @@ export interface PaymentStatusResult {
 
 /**
  * Calcula el estado de pago basado en la cantidad recibida y el costo total
- * 
+ *
  * @param currentReceived - Cantidad ya recibida
  * @param amountToAdd - Cantidad a agregar
  * @param totalCost - Costo total del pedido
+ * @param balanceApplied - Saldo del cliente aplicado al pago (default 0)
  * @returns Objeto con el nuevo total, estado y color
  */
 export function calculatePaymentStatus(
   currentReceived: number,
   amountToAdd: number,
-  totalCost: number
+  totalCost: number,
+  balanceApplied: number = 0
 ): PaymentStatusResult {
-  // Calcular el nuevo total
-  const newTotal = currentReceived + amountToAdd;
+  // Calcular el nuevo total incluyendo el saldo aplicado
+  const newTotal = currentReceived + amountToAdd + balanceApplied;
   const remaining = totalCost - newTotal;
 
   // Redondear a 2 decimales para evitar problemas de precisión en punto flotante

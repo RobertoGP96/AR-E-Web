@@ -55,6 +55,8 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
         required=False,
     )
 
+    applied_balance = serializers.FloatField(required=False, default=0, write_only=True)
+
     # Nuevos campos calculados
     delivery_expenses = serializers.SerializerMethodField(read_only=True)
 
@@ -76,6 +78,8 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
             "payment_status",
             "payment_date",
             "payment_amount",
+            "applied_balance",
+            "balance_applied",
             "weight_cost",
             "manager_profit",
             # Nuevos campos calculados
@@ -84,7 +88,7 @@ class DeliverReceipSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at", "balance_applied"]
 
 
     def create(self, validated_data):

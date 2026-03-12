@@ -33,7 +33,12 @@ class Order(models.Model):
         default=0,
         help_text="Cantidad total recibida del cliente por este pedido"
     )
-    
+    balance_applied = models.FloatField(
+        default=0,
+        verbose_name="Saldo aplicado",
+        help_text="Cantidad total de saldo del cliente aplicada como pago en este pedido"
+    )
+
     payment_date = models.DateTimeField(default=timezone.now, help_text="Fecha de pago")
 
     # Timestamps
@@ -137,11 +142,14 @@ class Order(models.Model):
                 self.status = OrderStatusEnum.COMPLETADO.value
                 self.save(update_fields=['status', 'updated_at'])
 
-    def add_received_value(self, amount: float, pay_status: str = None) -> None:
+    def add_received_value(self, amount: float, pay_status: str = None, applied_balance: float = 0) -> None:
         """
         Añade una cantidad a `received_value_of_client` y actualiza `pay_status`.
         Si se proporciona `pay_status`, se usa ese valor en lugar de calcularlo.
+        Si se proporciona `applied_balance`, acumula el saldo aplicado en `balance_applied`.
         """
+        from django.db import transaction
+
         if amount is None:
             return
 
@@ -150,34 +158,42 @@ class Order(models.Model):
         except (TypeError, ValueError):
             return
 
-        if amount_float <= 0:
+        try:
+            applied_balance_float = float(applied_balance or 0)
+        except (TypeError, ValueError):
+            applied_balance_float = 0
+
+        with transaction.atomic():
+            if amount_float <= 0 and applied_balance_float <= 0:
+                if pay_status:
+                    self.pay_status = pay_status
+                    self.save(update_fields=['pay_status', 'updated_at'])
+                return
+
+            if amount_float > 0:
+                self.received_value_of_client = round(self.received_value_of_client + amount_float, 2)
+
+            if applied_balance_float > 0:
+                self.balance_applied = round(self.balance_applied + applied_balance_float, 2)
+
             if pay_status:
                 self.pay_status = pay_status
-                self.save(update_fields=['pay_status', 'updated_at'])
-            return
-
-        self.received_value_of_client = round(self.received_value_of_client + amount_float, 2)
-
-        if pay_status:
-            self.pay_status = pay_status
-        else:
-            # Calcular el costo total de la orden
-            total_costs = self.total_costs
-
-            # Redondear ambos valores para evitar problemas de precisión en punto flotante
-            received_rounded = round(self.received_value_of_client, 2)
-            total_rounded = round(total_costs, 2)
-
-            # Actualizar el pay_status
-            if received_rounded >= total_rounded and total_rounded > 0:
-                self.pay_status = 'Pagado'
-            elif received_rounded > 0:
-                self.pay_status = 'Parcial'
             else:
-                self.pay_status = 'No pagado'
+                # Calcular el costo total de la orden
+                total_costs = self.total_costs
+                total_rounded = round(total_costs, 2)
+                total_paid = round(self.received_value_of_client + self.balance_applied, 2)
 
-        # Guardar cambios
-        self.save(update_fields=['received_value_of_client', 'pay_status', 'updated_at'])
+                # Actualizar el pay_status
+                if total_paid >= total_rounded and total_rounded > 0:
+                    self.pay_status = 'Pagado'
+                elif total_paid > 0:
+                    self.pay_status = 'Parcial'
+                else:
+                    self.pay_status = 'No pagado'
+
+            # Guardar cambios
+            self.save(update_fields=['received_value_of_client', 'balance_applied', 'pay_status', 'updated_at'])
 
     @property
     def total_cost(self):
@@ -187,11 +203,9 @@ class Order(models.Model):
     @property
     def balance(self):
         """
-        Balance del pedido = cantidad recibida - costo total
-        Un balance positivo indica que el cliente pagó de más
-        Un balance negativo indica que falta por cobrar
+        Balance del pedido = (cantidad recibida + saldo aplicado) - costo total
         """
-        return round(float(self.received_value_of_client - self.total_costs), 2)
+        return round(float(self.received_value_of_client + self.balance_applied - self.total_costs), 2)
 
     @property
     def total_products_requested(self):
@@ -289,37 +303,37 @@ class Order(models.Model):
         Ahora respeta si el estado se cambió manualmente desde afuera.
         """
         total_costs = self.total_costs
-        received_rounded = round(self.received_value_of_client, 2)
+        total_paid = round(float(self.received_value_of_client + self.balance_applied), 2)
         total_rounded = round(total_costs, 2)
 
         if not self.pk:
             # En creación, si pay_status es el default, calculamos
             if self.pay_status == PaymentStatusEnum.NO_PAGADO.value:
-                if received_rounded >= total_rounded and total_rounded > 0:
+                if total_paid >= total_rounded and total_rounded > 0:
                     self.pay_status = 'Pagado'
-                elif received_rounded > 0:
+                elif total_paid > 0:
                     self.pay_status = 'Parcial'
         else:
             try:
                 previous = Order.objects.get(pk=self.pk)
-                
+
                 # REGLA 1: Solo auto-recalcular pay_status si el usuario NO lo cambió
                 # y el valor recibido SÍ cambió.
-                if (previous.pay_status == self.pay_status and 
+                if (previous.pay_status == self.pay_status and
                     previous.received_value_of_client != self.received_value_of_client):
-                    
-                    if received_rounded >= total_rounded and total_rounded > 0:
+
+                    if total_paid >= total_rounded and total_rounded > 0:
                         self.pay_status = 'Pagado'
-                    elif received_rounded > 0:
+                    elif total_paid > 0:
                         self.pay_status = 'Parcial'
                     else:
                         self.pay_status = 'No pagado'
-                
+
                 # REGLA 2: Solo auto-recalcular status si el usuario NO lo cambió
                 # (Para evitar que signals sobreescriban cambios manuales)
                 # OJO: La lógica de update_status_based_on_products sigue disparándose en signals
                 # pero aquí podemos proteger el campo si viene un cambio explícito.
-                
+
             except Order.DoesNotExist:
                 pass
 

@@ -41,6 +41,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
     total_cost = serializers.SerializerMethodField(read_only=True)
 
+    applied_balance = serializers.FloatField(required=False, default=0, write_only=True)
+
     @extend_schema_field(float)
     def get_total_cost(self, obj):
         """Mantiene la compatibilidad con el campo calculado anterior"""
@@ -67,10 +69,12 @@ class OrderSerializer(serializers.ModelSerializer):
             "total_cost",
             "products",
             "received_value_of_client",
+            "applied_balance",
+            "balance_applied",
             "payment_date",
         ]
         depth = 0
-        read_only_fields = ["id"]
+        read_only_fields = ["id", "balance_applied"]
 
     def validate_sales_manager(self, value):
         """Agent Validation"""
@@ -90,9 +94,10 @@ class OrderSerializer(serializers.ModelSerializer):
         # para acumular el valor (sumarlo al anterior) en lugar de reemplazarlo
         if 'received_value_of_client' in validated_data:
             amount_to_add = validated_data.pop('received_value_of_client')
+            applied_balance = validated_data.pop('applied_balance', 0)
             pay_status = validated_data.get('pay_status')
             try:
-                instance.add_received_value(amount_to_add, pay_status=pay_status)
+                instance.add_received_value(amount_to_add, pay_status=pay_status, applied_balance=applied_balance)
             except Exception as e:
                 # Log en caso de errores inesperados, luego intentar actualizar otras partes igualmente
                 print(f"[OrderSerializer] Error al añadir received value: {e}")
@@ -146,9 +151,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             "pay_status",
             "observations",
             "received_value_of_client",
+            "balance_applied",
             "total_costs",
         ]
-        read_only_fields = ["id", "total_costs"]  # Marcar el ID como solo lectura
+        read_only_fields = ["id", "total_costs", "balance_applied"]  # Marcar el ID como solo lectura
 
     def validate_sales_manager(self, value):
         if value and value.role != 'agent':
@@ -179,6 +185,8 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
     Serializador para actualizar órdenes.
     """
 
+    applied_balance = serializers.FloatField(required=False, default=0, write_only=True)
+
     class Meta:
         model = Order
         fields = [
@@ -187,10 +195,12 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
             "pay_status",
             "observations",
             "received_value_of_client",
+            "applied_balance",
+            "balance_applied",
             "payment_date",
             "total_costs"
         ]
-        read_only_fields = ["total_costs"]
+        read_only_fields = ["total_costs", "balance_applied"]
 
     def validate_sales_manager(self, value):
         if value and value.role != 'agent':
@@ -208,9 +218,10 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
         # Manejar la actualización del monto recibido de forma acumulativa
         if 'received_value_of_client' in validated_data:
             amount_to_add = validated_data.pop('received_value_of_client')
+            applied_balance = validated_data.pop('applied_balance', 0)
             pay_status = validated_data.get('pay_status')
             try:
-                instance.add_received_value(amount_to_add, pay_status=pay_status)
+                instance.add_received_value(amount_to_add, pay_status=pay_status, applied_balance=applied_balance)
             except Exception as e:
                 print(f"[OrderUpdateSerializer] Error al añadir received value: {e}")
 

@@ -250,6 +250,23 @@ def get_client_operations_statement(client_id: int) -> Dict[str, Any]:
                 "payment_status": order.pay_status
             })
 
+    # 2b. Saldo aplicado a pedidos (informativo - no afecta el saldo corriente)
+    for order in orders:
+        if order.balance_applied and order.balance_applied > 0:
+            operation_date = order.payment_date if order.payment_date else order.created_at
+            operations.append({
+                "id": f"order_{order.id}_balance",
+                "date": operation_date.strftime('%Y-%m-%d') + (" 12:00:00" if not order.payment_date else ""),
+                "type": "SALDO APLICADO",
+                "description": f"Saldo aplicado a pedido #{order.id}",
+                "debit": round(float(order.balance_applied), 2),
+                "credit": 0.0,
+                "balance": 0.0,  # Se calculará después
+                "reference_id": order.id,
+                "status": order.status,
+                "payment_status": order.pay_status
+            })
+
     # 3. Operaciones de Entregas - Creación (débito)
     deliveries = DeliverReceip.objects.filter(client=client).order_by('deliver_date')
     for delivery in deliveries:
@@ -285,17 +302,41 @@ def get_client_operations_statement(client_id: int) -> Dict[str, Any]:
                 "payment_status": delivery.payment_status
             })
 
+    # 4b. Saldo aplicado a entregas (informativo - no afecta el saldo corriente)
+    for delivery in deliveries:
+        if delivery.balance_applied and delivery.balance_applied > 0:
+            operation_date = delivery.payment_date if delivery.payment_date else delivery.deliver_date
+            operations.append({
+                "id": f"delivery_{delivery.id}_balance",
+                "date": operation_date.strftime('%Y-%m-%d %H:%M:%S') if delivery.payment_date else operation_date.strftime('%Y-%m-%d') + " 13:00:00",
+                "type": "SALDO APLICADO",
+                "description": f"Saldo aplicado a entrega #{delivery.id}",
+                "debit": round(float(delivery.balance_applied), 2),
+                "credit": 0.0,
+                "balance": 0.0,  # Se calculará después
+                "reference_id": delivery.id,
+                "status": delivery.status,
+                "payment_status": delivery.payment_status
+            })
+
     # Ordenar todas las operaciones por fecha
     operations.sort(key=lambda x: x['date'])
 
     # Calcular saldo acumulado
+    # Las filas "SALDO APLICADO" son informativas: el costo ya fue debitado en la creación
+    # del pedido/entrega y el balance_applied no es efectivo nuevo, por lo que no
+    # modifican el saldo corriente.
     for operation in operations:
-        running_balance += operation['credit'] - operation['debit']
-        operation['balance'] = round(running_balance, 2)
+        if operation['type'] == 'SALDO APLICADO':
+            operation['balance'] = round(running_balance, 2)
+        else:
+            running_balance += operation['credit'] - operation['debit']
+            operation['balance'] = round(running_balance, 2)
 
-    # Calcular totales
-    total_debits = sum(op['debit'] for op in operations)
-    total_credits = sum(op['credit'] for op in operations)
+    # Calcular totales excluyendo filas informativas de "SALDO APLICADO"
+    cash_operations = [op for op in operations if op['type'] != 'SALDO APLICADO']
+    total_debits = sum(op['debit'] for op in cash_operations)
+    total_credits = sum(op['credit'] for op in cash_operations)
     final_balance = total_credits - total_debits
 
     # Determinar estado final

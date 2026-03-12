@@ -6,19 +6,20 @@ interface MarkOrderAsPaidVariables {
   amountReceived?: number;
   paymentDate?: Date;
   payStatus?: string;
+  appliedBalance?: number;
 }
 
 export function useMarkOrderAsPaid() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, amountReceived, paymentDate, payStatus }: MarkOrderAsPaidVariables) => {
-      
+    mutationFn: ({ orderId, amountReceived, paymentDate, payStatus, appliedBalance }: MarkOrderAsPaidVariables) => {
+
       if (!orderId || orderId === undefined) {
         throw new Error('Order ID is undefined');
       }
-      
-      return markOrderAsPaid(orderId, amountReceived, paymentDate, payStatus);
+
+      return markOrderAsPaid(orderId, amountReceived, paymentDate, payStatus, appliedBalance);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });

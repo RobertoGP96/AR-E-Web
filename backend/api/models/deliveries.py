@@ -42,6 +42,11 @@ class DeliverReceip(models.Model):
         default=0,
         help_text='Monto recibido del pago'
     )
+    balance_applied = models.FloatField(
+        default=0,
+        verbose_name="Saldo aplicado",
+        help_text="Cantidad total de saldo del cliente aplicada como pago en esta entrega"
+    )
     deliver_date = models.DateTimeField(default=timezone.now)
     deliver_picture = models.TextField(blank=True, null=True, help_text='image URLs')
     weight_cost = models.FloatField(default=0)
@@ -79,13 +84,16 @@ class DeliverReceip(models.Model):
         """
         Añade una cantidad a `payment_amount` y actualiza `payment_status` en base
         al costo total de la entrega (weight_cost). Si se aplica saldo del cliente,
-        reduce el balance del cliente por esa cantidad.
-        
+        acumula el saldo aplicado en `balance_applied` (el recálculo del balance del
+        cliente se delega a recalculate_balance() vía signal).
+
         Args:
             amount: Cantidad a añadir al pago
             payment_date: Fecha del pago (opcional). Si no se proporciona, se usa la fecha actual.
             applied_balance: Cantidad de saldo del cliente que se aplicó al pago
         """
+        from django.db import transaction
+
         if amount is None:
             return
 
@@ -95,46 +103,38 @@ class DeliverReceip(models.Model):
         except (TypeError, ValueError):
             return
 
-        if amount_float <= 0:
+        if amount_float <= 0 and applied_balance_float <= 0:
             return
 
-        self.payment_amount = round(self.payment_amount + amount_float, 2)
+        with transaction.atomic():
+            if amount_float > 0:
+                self.payment_amount = round(self.payment_amount + amount_float, 2)
 
-        # Si se aplicó saldo del cliente, reducir el balance del cliente
-        if applied_balance_float > 0 and self.client:
-            try:
-                # Reducir el balance del cliente por el saldo aplicado
-                self.client.balance = round((self.client.balance or 0) - applied_balance_float, 2)
-                self.client.save(update_fields=['balance', 'updated_at'])
-            except Exception as e:
-                print(f"[DeliverReceip.add_payment_amount] Error al reducir balance del cliente: {e}")
+            if applied_balance_float > 0:
+                self.balance_applied = round(self.balance_applied + applied_balance_float, 2)
 
-        # Calcular el costo total de la entrega
-        total_cost = self.weight_cost
+            # Calcular el costo total de la entrega
+            total_cost = self.weight_cost
+            total_rounded = round(total_cost, 2)
+            total_paid = round(self.payment_amount + self.balance_applied, 2)
 
-        # Redondear ambos valores para evitar problemas de precisión en punto flotante
-        payment_rounded = round(self.payment_amount, 2)
-        total_rounded = round(total_cost, 2)
+            # Actualizar el payment_status
+            if total_paid >= total_rounded and total_rounded > 0:
+                self.payment_status = 'Pagado'
+            elif total_paid > 0:
+                self.payment_status = 'Parcial'
+            else:
+                self.payment_status = 'No pagado'
 
-        # Actualizar el payment_status
-        if payment_rounded >= total_rounded and total_rounded > 0:
-            self.payment_status = 'Pagado'
-        elif payment_rounded > 0:
-            self.payment_status = 'Parcial'
-        else:
-            self.payment_status = 'No pagado'
-        
-        # Actualizar la fecha de pago si se proporciona
-        if payment_date:
-            self.payment_date = payment_date
-        elif not self.payment_date:
-            # Si no hay fecha previa y no se proporciona, usar la fecha actual
-            self.payment_date = timezone.now()
-        
-        self.save()
+            # Actualizar la fecha de pago si se proporciona
+            if payment_date:
+                self.payment_date = payment_date
+            elif not self.payment_date:
+                # Si no hay fecha previa y no se proporciona, usar la fecha actual
+                self.payment_date = timezone.now()
 
-        # Guardar cambios mínimamente
-        self.save(update_fields=['payment_amount', 'payment_status', 'payment_date', 'updated_at'])
+            # Guardar cambios mínimamente
+            self.save(update_fields=['payment_amount', 'balance_applied', 'payment_status', 'payment_date', 'updated_at'])
 
     def delete(self, *args, **kwargs):
         """

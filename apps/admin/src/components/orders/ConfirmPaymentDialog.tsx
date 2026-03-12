@@ -16,6 +16,7 @@ interface ConfirmPaymentDialogProps {
     amountReceived: number,
     paymentDate: Date | undefined,
     payStatus?: string,
+    appliedBalance?: number,
   ) => Promise<void>;
 }
 
@@ -134,7 +135,7 @@ export function ConfirmPaymentDialog({
       const isPaid = estadoActual === "pagado";
       const payStatus = isPaid ? "Pagado" : "Pendiente";
 
-      await onConfirm(order.id!, totalCubierto || 0, paymentDate, payStatus);
+      await onConfirm(order.id!, totalCubierto || 0, paymentDate, payStatus, usarSaldo ? saldoAplicado : undefined);
     } catch {
       // Errors handled by parent
     } finally {

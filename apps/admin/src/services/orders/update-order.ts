@@ -12,6 +12,7 @@ export interface UpdateOrderData {
   client_email?: string;
   received_value_of_client?: number;
   payment_date?: string;
+  applied_balance?: number;
 }
 
 /**
@@ -56,7 +57,7 @@ export const assignOrderToAgent = async (orderId: number, agentEmail: string): P
  * - Si 0 < received_value < total_cost => 'Parcial'
  * - Si received_value == 0 => 'No pagado'
  */
-export const markOrderAsPaid = async (id: number, amountReceived?: number, paymentDate?: Date, payStatus?: string): Promise<Order> => {
+export const markOrderAsPaid = async (id: number, amountReceived?: number, paymentDate?: Date, payStatus?: string, appliedBalance?: number): Promise<Order> => {
   // Validar que el ID sea válido
   if (!id || id === undefined || id === null) {
     const error = `[markOrderAsPaid] ERROR: ID inválido recibido: ${id}`;
@@ -79,6 +80,10 @@ export const markOrderAsPaid = async (id: number, amountReceived?: number, payme
   } else if (amountReceived === undefined) {
     // Si no se proporciona cantidad ni estado, marcamos como Pagado por defecto (comportamiento anterior)
     patchData.pay_status = 'Pagado';
+  }
+
+  if (appliedBalance !== undefined && appliedBalance > 0) {
+    patchData.applied_balance = appliedBalance;
   }
 
   if (Object.keys(patchData).length > 0) {

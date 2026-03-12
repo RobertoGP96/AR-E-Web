@@ -47,6 +47,8 @@ export const ClientOperationsStatement: React.FC<
         return "bg-green-100 text-green-600 border-none font-semibold hover:bg-green-100";
       case "entrega":
         return "bg-blue-100 text-blue-600 border-none font-semibold hover:bg-blue-100";
+      case "saldo aplicado":
+        return "bg-purple-100 text-purple-700 border-none font-semibold hover:bg-purple-100";
       default:
         return "bg-slate-50 text-slate-700 border-none font-semibold";
     }

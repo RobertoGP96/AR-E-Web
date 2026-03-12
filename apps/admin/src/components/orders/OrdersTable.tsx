@@ -68,6 +68,7 @@ interface OrderTableProps {
     amountReceived: number,
     paymentDate: Date | undefined,
     payStatus?: string,
+    appliedBalance?: number,
   ) => void;
   onAddProducts?: (order: Order) => void;
   itemsPerPage?: number;
@@ -139,6 +140,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
     amountReceived: number,
     paymentDate: Date | undefined,
     payStatus?: string,
+    appliedBalance?: number,
   ) => {
     if (!orderId || orderId === undefined) {
       console.error(
@@ -152,7 +154,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
     try {
       if (onConfirmPayment && selectedOrderForPayment) {
         // Si se proporciona un callback personalizado, pásale el id, la cantidad recibida y la fecha de pago
-        await onConfirmPayment(orderId, amountReceived, paymentDate, payStatus);
+        await onConfirmPayment(orderId, amountReceived, paymentDate, payStatus, appliedBalance);
       } else {
         // Usar el hook de mutación
         await markOrderAsPaidMutation.mutateAsync({
@@ -160,6 +162,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
           amountReceived,
           paymentDate,
           payStatus,
+          appliedBalance,
         });
         toast.success(`Pago confirmado para el pedido #${orderId}`, {
           description: `Se registró ${formatCurrency(amountReceived)} como cantidad recibida.`,

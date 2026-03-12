@@ -333,14 +333,16 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 2. Calcular deuda pendiente de la entrega
-        pending_in_delivery = round(float(delivery.weight_cost) - float(delivery.payment_amount), 2)
+        # 2. Calcular deuda pendiente de la entrega (efectivo + saldo aplicado)
+        total_paid = round(float(delivery.payment_amount) + float(delivery.balance_applied), 2)
+        pending_in_delivery = round(float(delivery.weight_cost) - total_paid, 2)
 
         if pending_in_delivery <= 0:
             return Response(
                 {
                     "error": "Esta entrega ya está completamente pagada.",
                     "payment_amount": float(delivery.payment_amount),
+                    "balance_applied": float(delivery.balance_applied),
                     "weight_cost": float(delivery.weight_cost),
                 },
                 status=status.HTTP_400_BAD_REQUEST
@@ -385,7 +387,7 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
             if parsed:
                 payment_date = parsed
 
-        delivery.add_payment_amount(amount_to_apply, payment_date=payment_date)
+        delivery.add_payment_amount(0, payment_date=payment_date, applied_balance=amount_to_apply)
 
         # 5. El signal post_save de DeliverReceip recalcula el balance automáticamente.
         client.refresh_from_db()

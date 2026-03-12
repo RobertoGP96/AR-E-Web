@@ -25,6 +25,7 @@ export interface Order {
   total_expenses: number;
   total_profit: number;
   received_value_of_client: number;
+  balance_applied: number;
   
   // Propiedades computadas de productos (del backend)
   total_products_requested: number;
