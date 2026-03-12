@@ -34,23 +34,7 @@ const tiers = [
       'Artículos deportivos',
     ],
     featured: true,
-  },
-  {
-    name: 'Electrónicos',
-    id: 'tier-elect',
-    href: '#',
-    priceMonthly: '$8',
-    description: 'Esta categoría abarca una amplia gama de dispositivos y accesorios tecnológicos.',
-    features: [
-      'Productos de tecnología',
-      'Repuestos para vehículos',
-      'Electrodomésticos pequeños',
-      'Gadgets y dispositivos',
-      'Accesorios electrónicos',
-      'Herramientas eléctricas',
-    ],
-    featured: false,
-  },
+  }
 ]
 
 function classNames(...classes: string[]) {

@@ -268,3 +268,5 @@ coverage.xml
 secrets/
 .secrets/
 .vercel
+
+settings.local.json

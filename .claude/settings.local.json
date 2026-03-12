@@ -7,7 +7,24 @@
       "Bash(npx tsc --noEmit)",
       "Bash(pnpm install)",
       "Bash(pnpm exec tsc --noEmit)",
-      "Bash(pnpm exec vite build)"
+      "Bash(pnpm exec vite build)",
+      "Bash(find '/d/Dev/React Works/StartNew/apps/admin/src/hooks' -name *.ts)",
+      "Bash(xargs grep:*)",
+      "Bash(python manage.py makemigrations api)",
+      "Bash(python manage.py check --no-color)",
+      "Bash(pnpm type-check:*)",
+      "Bash(find 'D:/Dev/React Works/StartNew/backend' -name test_*.py -o -name *_test.py -o -name conftest.py)",
+      "Bash(python manage.py test api.tests.test_balance -v2)",
+      "Bash(python manage.py test api.tests.test_balance -v2 --keepdb)",
+      "Bash(python manage.py test api.tests.test_balance.OrderPaymentCashExactTest.test_exact_cash_payment_marks_paid --keepdb)",
+      "Bash(python backend/manage.py showmigrations api)",
+      "Bash(python backend/manage.py makemigrations --check --dry-run)",
+      "Bash(python backend/manage.py migrate api 0039)",
+      "Bash(python backend/manage.py check)",
+      "Bash(npx -p typescript tsc --noEmit)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(python backend/manage.py test api.tests.test_balance_payments --verbosity=2)",
+      "Bash(python backend/manage.py test api.tests.test_balance_payments --verbosity=2 --keepdb)"
     ]
   }
 }
