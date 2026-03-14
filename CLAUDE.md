@@ -155,6 +155,7 @@ pytest --cov=api
 
 - Components in PascalCase, one component per file
 - Hooks in `hooks/` prefixed with `use`
+- Shared components in `components/shared/` (e.g., `mobile-data-card.tsx` for responsive data display)
 - API services in `services/`
 - Types in `types/`
 - Zod schemas in `schemas/`
@@ -162,6 +163,10 @@ pytest --cov=api
 - shadcn/ui components live in `components/ui/` — do NOT modify these files
 - Use `class-variance-authority` for component variants
 - Path alias: `@/` maps to `src/`
+
+**New Utilities (Admin Dashboard Responsiveness):**
+- `hooks/use-responsive-view.ts` — Detects viewport breakpoint for responsive layouts (mobile, tablet, desktop)
+- `components/shared/mobile-data-card.tsx` — Reusable card component for displaying data on mobile views with consistent styling
 
 ### Backend
 
