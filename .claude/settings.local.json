@@ -40,7 +40,9 @@
       "Bash(pnpm --filter admin type-check)",
       "Bash(pnpm --filter \"./apps/client\" exec tsc --noEmit)",
       "mcp__Claude_Preview__preview_start",
-      "Bash(netstat -ano)"
+      "Bash(netstat -ano)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"docs: update CLAUDE.md with new responsive utilities:*)"
     ]
   }
 }
