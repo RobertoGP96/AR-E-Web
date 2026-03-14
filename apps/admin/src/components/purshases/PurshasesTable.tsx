@@ -51,6 +51,8 @@ import {
   ProductListPopover,
   useProductListAdapter,
 } from "../utils/ProductListPopover";
+import { useResponsiveView } from "@/hooks/use-responsive-view";
+import { MobileDataCard, MobileDataCardList } from "@/components/shared/mobile-data-card";
 
 interface PurshasesTableProps {
   onDelete?: (receipt: ShoppingReceip) => void;
@@ -87,6 +89,8 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({
 
   // Calcular total de páginas
   const totalPages = Math.ceil(shoppingReceipts.length / itemsPerPage);
+
+  const { viewMode } = useResponsiveView();
 
   // Resetear a la primera página cuando cambian los receipts o el tamaño de página
   useEffect(() => {
@@ -168,39 +172,32 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({
 
   return (
     <>
-      <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(90vh-20rem)]">
-        <div className="overflow-auto flex-1">
-          <Table>
-            <TableHeader className="bg-gray-100 ">
-              <TableRow>
-                <TableHead>#</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Tienda</TableHead>
-                <TableHead>Cuenta</TableHead>
-                <TableHead>Productos</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Costo Total</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedReceipts.map((purchase, index) => (
-                <TableRow key={purchase.id}>
-                  <TableCell>
-                    {(currentPage - 1) * itemsPerPage + index + 1}
-                  </TableCell>
-
-                  <TableCell>
-                    <div>
-                      <CalendarIcon className="h-5 w-5 inline-block mr-1 text-gray-500" />
-                      {formatDayMonth(purchase.buy_date)}
-                    </div>
-                  </TableCell>
-                  <TableCell>{purchase.shop_of_buy + ""}</TableCell>
-                  <TableCell>
-                    <p>{purchase.shopping_account_name + ""}</p>
-                  </TableCell>
-                  <TableCell>
+      {viewMode === "cards" ? (
+        <MobileDataCardList>
+          {paginatedReceipts.map((purchase) => (
+            <MobileDataCard
+              key={purchase.id}
+              title={`#${purchase.id}`}
+              subtitle={
+                <div className="flex items-center gap-1">
+                  <CalendarIcon className="h-3 w-3" />
+                  {formatDayMonth(purchase.buy_date)}
+                </div>
+              }
+              badges={<StatusBadge status={purchase.status_of_shopping} />}
+              primaryMetric={`$${purchase.total_cost_of_purchase.toFixed(2)}`}
+              rows={[
+                {
+                  label: "Tienda",
+                  value: purchase.shop_of_buy + "",
+                },
+                {
+                  label: "Cuenta",
+                  value: purchase.shopping_account_name + "",
+                },
+                {
+                  label: "Productos",
+                  value: (
                     <ProductListPopover
                       products={adaptBuyedProducts(
                         purchase.buyed_products || [],
@@ -208,113 +205,238 @@ const PurshasesTable: React.FC<PurshasesTableProps> = ({
                       title="Productos Comprados"
                       showPrice
                     />
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={purchase.status_of_shopping} />
-                  </TableCell>
-                  <TableCell>
-                    ${purchase.total_cost_of_purchase.toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="w-48 rounded-xl shadow-xl border-gray-200"
-                        >
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleConfirmPayment(purchase);
-                            }}
-                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Confirmar pago
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/purchases/${purchase.id}/edit`);
-                            }}
-                            className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg cursor-pointer"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-
-                          <DropdownMenuSeparator />
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                            }}
-                            className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
-                          >
-                            <Link
-                              to={`/purchases/${purchase.id}`}
-                              onClick={(e: React.MouseEvent) => {
-                                e.stopPropagation();
-                              }}
-                              className="inline-flex items-center gap-2"
-                              title={`Ver detalles de la compra ${purchase.id}`}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              Ver detalles
-                            </Link>
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                            }}
-                            className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
-                          >
-                            <Link
-                              to={`/purchases/${purchase.id}/manage-products`}
-                              onClick={(e: React.MouseEvent) => {
-                                e.stopPropagation();
-                              }}
-                              className="inline-flex items-center gap-2"
-                              title={`Gestionar productos de la compra ${purchase.id}`}
-                            >
-                              <ShoppingCart className="h-4 w-4" />
-                              Gestionar Productos
-                            </Link>
-                          </DropdownMenuItem>
-
-                          <DropdownMenuSeparator />
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClick(purchase);
-                            }}
-                            className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Eliminar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
+                  ),
+                },
+              ]}
+              actions={
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="hover:bg-gray-100 rounded-full"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 rounded-xl shadow-xl border-gray-200"
+                  >
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleConfirmPayment(purchase);
+                      }}
+                      className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      Confirmar pago
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/purchases/${purchase.id}/edit`);
+                      }}
+                      className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg cursor-pointer"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
+                    >
+                      <Link
+                        to={`/purchases/${purchase.id}`}
+                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                        className="inline-flex items-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Ver detalles
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
+                    >
+                      <Link
+                        to={`/purchases/${purchase.id}/manage-products`}
+                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                        className="inline-flex items-center gap-2"
+                      >
+                        <ShoppingCart className="h-4 w-4" />
+                        Gestionar Productos
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(purchase);
+                      }}
+                      className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              }
+            />
+          ))}
+        </MobileDataCardList>
+      ) : (
+        <div className="rounded-lg border border-muted bg-background shadow flex flex-col">
+          <div className="overflow-auto flex-1">
+            <Table>
+              <TableHeader className="bg-gray-100 ">
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Tienda</TableHead>
+                  <TableHead>Cuenta</TableHead>
+                  <TableHead>Productos</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Costo Total</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedReceipts.map((purchase, index) => (
+                  <TableRow key={purchase.id}>
+                    <TableCell>
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </TableCell>
+
+                    <TableCell>
+                      <div>
+                        <CalendarIcon className="h-5 w-5 inline-block mr-1 text-gray-500" />
+                        {formatDayMonth(purchase.buy_date)}
+                      </div>
+                    </TableCell>
+                    <TableCell>{purchase.shop_of_buy + ""}</TableCell>
+                    <TableCell>
+                      <p>{purchase.shopping_account_name + ""}</p>
+                    </TableCell>
+                    <TableCell>
+                      <ProductListPopover
+                        products={adaptBuyedProducts(
+                          purchase.buyed_products || [],
+                        )}
+                        title="Productos Comprados"
+                        showPrice
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={purchase.status_of_shopping} />
+                    </TableCell>
+                    <TableCell>
+                      ${purchase.total_cost_of_purchase.toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-48 rounded-xl shadow-xl border-gray-200"
+                          >
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleConfirmPayment(purchase);
+                              }}
+                              className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              Confirmar pago
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/purchases/${purchase.id}/edit`);
+                              }}
+                              className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg cursor-pointer"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                              className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
+                            >
+                              <Link
+                                to={`/purchases/${purchase.id}`}
+                                onClick={(e: React.MouseEvent) => {
+                                  e.stopPropagation();
+                                }}
+                                className="inline-flex items-center gap-2"
+                                title={`Ver detalles de la compra ${purchase.id}`}
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                                Ver detalles
+                              </Link>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                              className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
+                            >
+                              <Link
+                                to={`/purchases/${purchase.id}/manage-products`}
+                                onClick={(e: React.MouseEvent) => {
+                                  e.stopPropagation();
+                                }}
+                                className="inline-flex items-center gap-2"
+                                title={`Gestionar productos de la compra ${purchase.id}`}
+                              >
+                                <ShoppingCart className="h-4 w-4" />
+                                Gestionar Productos
+                              </Link>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(purchase);
+                              }}
+                              className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Componente de paginación */}
       <TablePagination

@@ -14,7 +14,9 @@ export default function Packages() {
   return (
     <div className="space-y-5">
       <PackagesHeader />
-      <PackagesStats />
+      <div className="hidden md:block">
+        <PackagesStats />
+      </div>
       <PackagesFilters 
         searchTerm={searchTerm}
         onSearchChange={(v) => { setSearchTerm(v); setFilters(prev => ({ ...prev, search: v, page: 1 })); }}

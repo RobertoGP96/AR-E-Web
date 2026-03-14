@@ -40,18 +40,18 @@ export default function UsersFilters({
   };
   return (
     <div className="flex flex-col sm:flex-row gap-4">
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => handleRefresh()}
-        disabled={isFetching}
-        title="Actualizar lista"
-      >
-        <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-      </Button>
+      <div className="flex gap-2 flex-1">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => handleRefresh()}
+          disabled={isFetching}
+          title="Actualizar lista"
+        >
+          <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+        </Button>
 
-      <div className="flex-1">
-        <div className="relative">
+        <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             type="text"
@@ -63,23 +63,25 @@ export default function UsersFilters({
         </div>
       </div>
 
-      <UserFilters
-        filters={filters}
-        onFiltersChange={onFiltersChange}
-        resultCount={resultCount}
-      />
+      <div className="flex gap-2">
+        <UserFilters
+          filters={filters}
+          onFiltersChange={onFiltersChange}
+          resultCount={resultCount}
+        />
 
-      <UserForm
-        mode="create"
-        onSubmit={onCreateUser}
-        loading={isCreatingUser}
-        trigger={
-          <Button className="h-10">
-            <Plus className="h-4 w-4 mr-2" />
-            Agregar usuario
-          </Button>
-        }
-      />
+        <UserForm
+          mode="create"
+          onSubmit={onCreateUser}
+          loading={isCreatingUser}
+          trigger={
+            <Button className="h-10">
+              <Plus className="h-4 w-4 mr-2" />
+              Agregar
+            </Button>
+          }
+        />
+      </div>
     </div>
   );
 }

@@ -51,7 +51,7 @@ export const DeliveryFilters: React.FC<DeliveryFiltersProps> = ({ filters, onFil
           {activeFiltersCount > 0 && <Badge variant="default" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">{activeFiltersCount}</Badge>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[520px] p-0" align="start">
+      <PopoverContent className="w-[min(520px,calc(100vw-2rem))] p-0" align="start">
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2"><Filter className="h-4 w-4" /><h4 className="font-semibold text-sm">Filtros de entregas</h4></div>

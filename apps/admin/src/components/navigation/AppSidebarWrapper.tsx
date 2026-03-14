@@ -34,7 +34,7 @@ export function AppSidebarWrapper({ children }: AppSidebarWrapperProps) {
           </header>
 
           {/* Contenido */}
-          <main className="flex-1 min-h-0 p-6 sm:p-8 xl:p-10 bg-background overflow-auto">
+          <main className="flex-1 min-h-0 p-3 sm:p-6 xl:p-10 bg-background overflow-auto">
             {children}
           </main>
         </div>

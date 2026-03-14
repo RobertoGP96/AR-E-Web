@@ -62,19 +62,21 @@ export default function PurshasesFilters({
           />
         </div>
       </div>
-      <PurchaseFilters
-        filters={filters}
-        onFiltersChange={(newFilters) => onFiltersChange(newFilters)}
-        resultCount={undefined}
-      />
+      <div className="flex gap-2">
+        <PurchaseFilters
+          filters={filters}
+          onFiltersChange={(newFilters) => onFiltersChange(newFilters)}
+          resultCount={undefined}
+        />
 
-      <Button
-        className="flex items-center gap-2 border-0"
-        onClick={handleNewPurchase}
-      >
-        <Plus className="h-5 w-5" />
-        Crear Compra
-      </Button>
+        <Button
+          className="flex items-center gap-2 border-0"
+          onClick={handleNewPurchase}
+        >
+          <Plus className="h-5 w-5" />
+          Crear Compra
+        </Button>
+      </div>
     </div>
   );
 }

@@ -46,6 +46,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchClientBalancesReport } from "@/services/reports/reports";
 import type { ClientBalanceEntry } from "@/types";
 import { Avatar, AvatarFallback } from "../ui/avatar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("es-MX", {
@@ -201,9 +202,157 @@ function TableSkeleton() {
   );
 }
 
+function MobileCardSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Card key={i} className="overflow-hidden">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-muted animate-pulse flex-shrink-0" />
+              <div className="space-y-1.5 flex-1">
+                <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+              </div>
+              <div className="h-5 w-16 bg-muted animate-pulse rounded-full" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="h-3 w-full bg-muted animate-pulse rounded" />
+              <div className="h-3 w-full bg-muted animate-pulse rounded" />
+              <div className="h-3 w-full bg-muted animate-pulse rounded" />
+              <div className="h-3 w-full bg-muted animate-pulse rounded" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+interface MobileClientCardsProps {
+  paginatedData: ClientBalanceEntry[];
+  openPopoverId: number | null;
+  setOpenPopoverId: (id: number | null) => void;
+}
+
+function MobileClientCards({
+  paginatedData,
+  openPopoverId,
+  setOpenPopoverId,
+}: MobileClientCardsProps) {
+  if (paginatedData.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+        <Users className="h-8 w-8 opacity-50" />
+        <span className="text-sm">No se encontraron clientes</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {paginatedData.map((client) => (
+        <Card
+          key={client.id}
+          className="overflow-hidden border hover:border-orange-200 transition-colors duration-200"
+        >
+          <CardContent className="p-4">
+            {/* Header row: avatar + name/phone + status badge */}
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar className="h-10 w-10 flex-shrink-0">
+                  <AvatarFallback className="font-bold text-sm bg-orange-50 text-orange-700">
+                    {client.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold leading-tight truncate">
+                    {client.name}
+                  </p>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                    <Phone className="h-3 w-3 flex-shrink-0" />
+                    <span>{client.phone}</span>
+                  </div>
+                </div>
+              </div>
+              <StatusBadge status={client.status} />
+            </div>
+
+            {/* Agent row */}
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
+              <UserCircle className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="truncate">{client.agent_name}</span>
+            </div>
+
+            {/* Financial details grid */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
+              <div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mb-0.5">
+                  <Receipt className="h-3 w-3" />
+                  Costo Pedidos
+                </p>
+                <p className="text-sm font-medium">
+                  {formatCurrency(client.total_order_cost)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mb-0.5">
+                  <Wallet className="h-3 w-3" />
+                  Balance
+                </p>
+                <p
+                  className={`text-sm font-semibold ${
+                    client.total_balance < 0
+                      ? "text-red-600 dark:text-red-400"
+                      : client.total_balance > 0
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : ""
+                  }`}
+                >
+                  {formatCurrency(client.total_balance)}
+                </p>
+              </div>
+            </div>
+
+            {/* Footer: operations button */}
+            <div className="flex justify-end pt-2 border-t border-dashed">
+              <Dialog
+                open={openPopoverId === client.id}
+                onOpenChange={(open) =>
+                  setOpenPopoverId(open ? client.id : null)
+                }
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs border-orange-200 text-orange-700 hover:bg-orange-50 hover:text-orange-800"
+                  >
+                    <ReceiptText className="h-3.5 w-3.5" />
+                    Ver Operaciones
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="min-w-250 w-[90vw] h-[95vh] overflow-y-auto p-0 sm:p-2 lg:p-4 bg-slate-50 border-0 rounded-none sm:rounded-2xl custom-scrollbar">
+                  <div className="relative pt-8 sm:pt-4">
+                    {openPopoverId === client.id && (
+                      <ClientOperationsStatement clientId={client.id} />
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 export function ClientBalancesTable() {
+  const isMobile = useIsMobile();
+
   const { data: clientBalances, isLoading } = useQuery<
     ClientBalanceEntry[],
     Error
@@ -345,9 +494,19 @@ export function ClientBalancesTable() {
             balanceMax={balanceMax}
           />
 
-          {/* Tabla */}
+          {/* Table / Cards */}
           {isLoading ? (
-            <TableSkeleton />
+            isMobile ? (
+              <MobileCardSkeleton />
+            ) : (
+              <TableSkeleton />
+            )
+          ) : isMobile ? (
+            <MobileClientCards
+              paginatedData={paginatedData}
+              openPopoverId={openPopoverId}
+              setOpenPopoverId={setOpenPopoverId}
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>

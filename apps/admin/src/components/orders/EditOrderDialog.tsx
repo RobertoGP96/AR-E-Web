@@ -152,6 +152,7 @@ export default function EditOrderDialog({ open, onOpenChange, order }: EditOrder
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
+          <div className="max-h-[65vh] overflow-y-auto pr-1">
           <div className="grid grid-cols-2 gap-4 py-4">
             {/* Manager de Ventas - Primero para filtrar clientes */}
             <div className="grid gap-2">
@@ -334,6 +335,7 @@ export default function EditOrderDialog({ open, onOpenChange, order }: EditOrder
                 className="min-h-[100px] border-gray-200 focus:border-orange-300"
               />
             </div>
+          </div>
           </div>
 
           <DialogFooter>

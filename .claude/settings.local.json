@@ -28,7 +28,19 @@
       "Bash(find 'D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\client' -name tailwind.config.*)",
       "Bash(ls -la \"D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\admin\\\\src\\\\pages\"\" 2>/dev/null || find \"D:DevReact WorksStartNewappsadminsrc\" -maxdepth 3 -type d -name \"pages \")",
       "Bash(pnpm build:*)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(find 'D:\\\\Dev\\\\React Works\\\\StartNew\\\\backend' -type f -name *order*view* -o -name *delivery*view*)",
+      "Bash(find 'D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\admin\\\\src\\\\components\\\\ui' -type f -name *.tsx -o -name *.ts)",
+      "Bash(ls -la \"D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\admin\\\\tailwind.config.\"*)",
+      "Bash(find 'D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\admin' -maxdepth 2 -name tailwind.config* -o -name vite.config*)",
+      "Bash(find 'D:\\\\Dev\\\\React Works\\\\StartNew' -name tailwind.config.* -type f)",
+      "Bash(ls -la \"D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\admin\"\" | grep -E \"tailwind)",
+      "Bash(postcss)",
+      "Bash(grep -r \"breakpoint\\\\|screens\" 'D:\\\\Dev\\\\React Works\\\\StartNew\\\\apps\\\\admin' --include=*.ts --include=*.js --include=*.tsx)",
+      "Bash(pnpm --filter admin type-check)",
+      "Bash(pnpm --filter \"./apps/client\" exec tsc --noEmit)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(netstat -ano)"
     ]
   }
 }

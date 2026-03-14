@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TablePaginationProps {
   currentPage: number;
@@ -38,6 +39,7 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
   className,
   pageSizeOptions = [5, 10, 20, 50, 100],
 }) => {
+  const isMobile = useIsMobile();
   // Generar números de página para mostrar (logic extracted from existing tables)
   const getPageNumbers = () => {
     const pages: (number | "ellipsis")[] = [];
@@ -113,21 +115,29 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
               />
             </PaginationItem>
 
-            {getPageNumbers().map((page, idx) => (
-              <PaginationItem key={idx}>
-                {page === "ellipsis" ? (
-                  <PaginationEllipsis />
-                ) : (
-                  <PaginationLink
-                    onClick={() => onPageChange(page as number)}
-                    isActive={currentPage === page}
-                    className="cursor-pointer"
-                  >
-                    {page}
-                  </PaginationLink>
-                )}
+            {isMobile ? (
+              <PaginationItem>
+                <PaginationLink isActive className="cursor-default">
+                  {currentPage}
+                </PaginationLink>
               </PaginationItem>
-            ))}
+            ) : (
+              getPageNumbers().map((page, idx) => (
+                <PaginationItem key={idx}>
+                  {page === "ellipsis" ? (
+                    <PaginationEllipsis />
+                  ) : (
+                    <PaginationLink
+                      onClick={() => onPageChange(page as number)}
+                      isActive={currentPage === page}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  )}
+                </PaginationItem>
+              ))
+            )}
 
             <PaginationItem>
               <PaginationNext

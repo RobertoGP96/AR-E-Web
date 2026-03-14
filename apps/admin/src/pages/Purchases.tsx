@@ -13,7 +13,9 @@ export default function Purchases() {
       <PurshasesHeader />
 
       {/* Estadísticas */}
-      <PurshasesStats />
+      <div className="hidden md:block">
+        <PurshasesStats />
+      </div>
       {/* Filtros */}
       <PurshasesFilters filters={filters} onFiltersChange={(f) => setFilters({ ...f, page: 1 })} searchValue={filters.search} onSearchChange={(v) => setFilters(prev => ({ ...prev, search: v, page: 1 }))} />
 

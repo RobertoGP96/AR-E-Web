@@ -104,7 +104,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           </Button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-[520px] p-0" align="start">
+        <PopoverContent className="w-[min(520px,calc(100vw-2rem))] p-0" align="start">
           <div className="p-4 border-b">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">

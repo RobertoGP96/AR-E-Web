@@ -170,6 +170,7 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
+          <div className="max-h-[65vh] overflow-y-auto pr-1">
           <div className="grid grid-cols-2 gap-4 py-4">
             {/* Agente de Ventas - Ahora primero para filtrar clientes */}
             <div className="grid gap-2">
@@ -322,6 +323,7 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
                 className="min-h-[100px]"
               />
             </div>
+          </div>
           </div>
 
           <DialogFooter>

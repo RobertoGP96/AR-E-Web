@@ -11,6 +11,8 @@ import { useDeleteInvoice } from '@/hooks/invoice';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import LoadingSpinner from '../utils/LoadingSpinner';
+import { useResponsiveView } from "@/hooks/use-responsive-view";
+import { MobileDataCard, MobileDataCardList } from "@/components/shared/mobile-data-card";
 
 interface InvoicesTableProps {
   invoices?: Invoice[];
@@ -44,6 +46,8 @@ export default function InvoicesTable({
 
   // Hook para eliminar invoice
   const deleteInvoiceMutation = useDeleteInvoice();
+
+  const { viewMode } = useResponsiveView();
 
   // Manejadores de acciones
   const handleDelete = async () => {
@@ -106,106 +110,167 @@ export default function InvoicesTable({
 
   return (
     <>
-      <div className="rounded-lg border border-muted bg-background shadow">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Fecha</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Conceptos</TableHead>
-              <TableHead>Creado</TableHead>
-              <TableHead className="w-[70px]">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {invoices.map((invoice) => (
-              <TableRow
-                key={invoice.id}
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => onInvoiceClick?.(invoice)}
-              >
-                <TableCell className="font-medium">#{invoice.id}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    {invoiceUtils.formatDate(invoice.date)}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-green-500" />
-                    <span className="font-semibold text-green-600">
-                      {invoiceUtils.formatTotal(invoice.total)}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {invoice.tags && invoice.tags.length > 0 ? (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" className="h-6 p-0" onClick={(e) => e.stopPropagation()}>
-                          <Badge variant="secondary" className="cursor-pointer py-1">
-                            <Receipt className="h-4 w-4 mr-1" />
-                            {invoice.tags.length}
-                          </Badge>
-                        </Button>
-                      </PopoverTrigger>
-
-                      <PopoverContent className="!w-auto p-3">
-                        <div className="flex flex-col gap-2 max-w-[280px]">
-                          {invoice.tags.map((tag) => (
-                            <div key={tag.id} className="flex items-center justify-between gap-4">
-                              <div className="flex items-center gap-3">
-                                <Badge variant="outline" className="text-xs">
-                                  {tag.type === 'pesaje' ? 'Pesaje' : 'Nominal'}
-                                </Badge>
-                                {tag.type === 'pesaje' && (
-                                  <div className="text-sm text-gray-500">
-                                    {tag.type === 'pesaje' ? `${tag.weight} lb x $${tag.cost_per_lb}` : `$${tag.fixed_cost}`}
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="text-sm text-gray-800 font-bold">
-                                {invoiceUtils.formatTotal(tag.subtotal)}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  ) : (
-                    <Badge variant="outline">Sin tags</Badge>
-                  )}
-                </TableCell>
-                <TableCell className="text-sm text-gray-600">
-                  {invoiceUtils.formatDateTime(invoice.created_at)}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      
-                      <DropdownMenuItem
-                        onClick={() => openDeleteDialog(invoice)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+      {viewMode === 'cards' ? (
+        <MobileDataCardList>
+          {invoices.map((invoice) => (
+            <MobileDataCard
+              key={invoice.id}
+              title={`#${invoice.id}`}
+              subtitle={
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {invoiceUtils.formatDate(invoice.date)}
+                </span>
+              }
+              badges={
+                invoice.tags && invoice.tags.length > 0 ? (
+                  <Badge variant="secondary" className="py-1">
+                    <Receipt className="h-3 w-3 mr-1" />
+                    {invoice.tags.length} tag{invoice.tags.length !== 1 ? 's' : ''}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline">Sin tags</Badge>
+                )
+              }
+              primaryMetric={
+                <span className="font-semibold text-green-600">
+                  {invoiceUtils.formatTotal(invoice.total)}
+                </span>
+              }
+              rows={[
+                {
+                  icon: Calendar,
+                  label: "Creado",
+                  value: invoiceUtils.formatDateTime(invoice.created_at),
+                },
+              ]}
+              actions={
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDeleteDialog(invoice);
+                      }}
+                      className="text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              }
+              onClick={() => onInvoiceClick?.(invoice)}
+            />
+          ))}
+        </MobileDataCardList>
+      ) : (
+        <div className="rounded-lg border border-muted bg-background shadow">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Conceptos</TableHead>
+                <TableHead>Creado</TableHead>
+                <TableHead className="w-[70px]">Acciones</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {invoices.map((invoice) => (
+                <TableRow
+                  key={invoice.id}
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={() => onInvoiceClick?.(invoice)}
+                >
+                  <TableCell className="font-medium">#{invoice.id}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      {invoiceUtils.formatDate(invoice.date)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-green-500" />
+                      <span className="font-semibold text-green-600">
+                        {invoiceUtils.formatTotal(invoice.total)}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {invoice.tags && invoice.tags.length > 0 ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="ghost" className="h-6 p-0" onClick={(e) => e.stopPropagation()}>
+                            <Badge variant="secondary" className="cursor-pointer py-1">
+                              <Receipt className="h-4 w-4 mr-1" />
+                              {invoice.tags.length}
+                            </Badge>
+                          </Button>
+                        </PopoverTrigger>
+
+                        <PopoverContent className="!w-auto p-3">
+                          <div className="flex flex-col gap-2 max-w-[280px]">
+                            {invoice.tags.map((tag) => (
+                              <div key={tag.id} className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                  <Badge variant="outline" className="text-xs">
+                                    {tag.type === 'pesaje' ? 'Pesaje' : 'Nominal'}
+                                  </Badge>
+                                  {tag.type === 'pesaje' && (
+                                    <div className="text-sm text-gray-500">
+                                      {tag.type === 'pesaje' ? `${tag.weight} lb x $${tag.cost_per_lb}` : `$${tag.fixed_cost}`}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="text-sm text-gray-800 font-bold">
+                                  {invoiceUtils.formatTotal(tag.subtotal)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <Badge variant="outline">Sin tags</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {invoiceUtils.formatDateTime(invoice.created_at)}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+
+                        <DropdownMenuItem
+                          onClick={() => openDeleteDialog(invoice)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {/* Diálogo de confirmación para eliminar */}
       <AlertDialog open={dialogState.type === 'delete'} onOpenChange={closeDialog}>

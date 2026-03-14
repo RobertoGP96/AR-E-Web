@@ -156,7 +156,9 @@ const Orders = () => {
       <OrdersHeader />
 
       {/* Métricas compactas de órdenes */}
-      <CompactMetricsSummary type="orders" />
+      <div className="hidden md:block">
+        <CompactMetricsSummary type="orders" />
+      </div>
 
       <OrdersFilters
         searchTerm={filters.search ?? ""}

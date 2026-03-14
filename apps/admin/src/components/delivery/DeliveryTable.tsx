@@ -79,6 +79,8 @@ import {
   ProductListPopover,
   useProductListAdapter,
 } from "../utils/ProductListPopover";
+import { useResponsiveView } from "@/hooks/use-responsive-view";
+import { MobileDataCard, MobileDataCardList } from "@/components/shared/mobile-data-card";
 
 interface DeliveryTableProps {
   deliveries: DeliverReceip[];
@@ -133,6 +135,8 @@ const DeliveryTableComponent: React.FC<DeliveryTableProps> = ({
   useEffect(() => {
     setCurrentPage(1);
   }, [deliveries.length, itemsPerPage]);
+
+  const { viewMode } = useResponsiveView();
 
   const handleDeleteConfirm = async () => {
     if (!dialogState.delivery || !dialogState.delivery.id) return;
@@ -299,282 +303,464 @@ const DeliveryTableComponent: React.FC<DeliveryTableProps> = ({
 
   return (
     <>
-      <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(92vh-16rem)]">
-        <Table>
-          <TableHeader className="bg-gray-100 ">
-            <TableRow>
-              <TableHead>#</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Categoría</TableHead>
-              <TableHead>Peso</TableHead>
-              <TableHead>Costo</TableHead>
-              <TableHead>Llegada</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Pago</TableHead>
-              <TableHead>Productos</TableHead>
-              <TableHead>Captura</TableHead>
-              <TableHead>Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedDeliveries.map((delivery, index) => (
-              <TableRow key={delivery.id}>
-                <TableCell>
-                  {(currentPage - 1) * itemsPerPage + index + 1}
-                </TableCell>
-                <TableCell>
-                  {delivery.client && typeof delivery.client === "object" ? (
-                    <AvatarUser user={delivery.client} />
-                  ) : (
-                    <span className="text-gray-400 text-sm italic">
-                      Sin cliente
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {delivery.category ? (
-                    <div className="flex flex-col">
-                      <span className="font-medium text-sm">
-                        {delivery.category.name}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        ${delivery.category.shipping_cost_per_pound}/lb
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400 text-sm italic">
-                      Sin categoría
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-row items-center text-gray-500">
-                    <Weight className="mr-2 inline h-4 w-4" />
-                    <span>{(delivery.weight || 0) + " Lb"}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div>{"$ " + (delivery.weight_cost || 0).toFixed(2)}</div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-row items-center text-gray-500">
-                    <Clock className="mr-2 inline h-4 w-4" />
-                    {delivery.deliver_date
-                      ? formatDeliveryDate(delivery.deliver_date)
-                      : "N/A"}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <DeliveryStatusBadge
-                    status={(delivery.status || "Pendiente") as DeliveryStatus}
-                  />
-                </TableCell>
-                <TableCell>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex">
-                          <PayStatusBadge
-                            status={
-                              (delivery.payment_status ||
-                                "No pagado") as PayStatus
-                            }
-                          />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs">
-                        <div className="space-y-1">
-                          <p className="font-semibold">Información de Pago</p>
-                          <p className="text-sm">
-                            Estado: {delivery.payment_status || "No pagado"}
-                          </p>
-                          {delivery.payment_amount > 0 && (
-                            <p className="text-sm">
-                              Monto: {formatCurrency(delivery.payment_amount)}
-                            </p>
-                          )}
-                          {delivery.payment_date && (
-                            <p className="text-sm">
-                              Fecha: {formatDeliveryDate(delivery.payment_date)}
-                            </p>
-                          )}
-                          {!delivery.payment_date &&
-                            delivery.payment_status !== "No pagado" && (
-                              <p className="text-xs text-yellow-500">
-                                Sin fecha de pago registrada
-                              </p>
-                            )}
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableCell>
-                <TableCell>
+      {viewMode === "cards" ? (
+        <MobileDataCardList>
+          {paginatedDeliveries.map((delivery) => {
+            const nextStatus = getNextStatus(delivery.status);
+            const deliveryRows = [
+              {
+                icon: Weight,
+                label: "Peso",
+                value: `${delivery.weight || 0} Lb`,
+              },
+              ...(delivery.category
+                ? [
+                    {
+                      label: delivery.category.name,
+                      value: `$${delivery.category.shipping_cost_per_pound}/lb`,
+                    },
+                  ]
+                : []),
+              {
+                label: "Productos",
+                value: (
                   <ProductListPopover
                     products={adaptDeliveredProducts(
                       delivery.delivered_products || [],
                     )}
                     title="Productos Entregados"
                   />
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-row gap-2">
-                    {isValidImage(delivery.deliver_picture) ? (
-                      <HoverCard>
-                        <HoverCardTrigger asChild>
-                          <div className="flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer">
-                            <ImageIcon className="h-5 w-5 text-gray-500" />
-                          </div>
-                        </HoverCardTrigger>
-                        <HoverCardContent className="w-32 h-32 flex items-center justify-center">
-                          <img
-                            src={(delivery.deliver_picture as string) || ""}
-                            alt={`Entrega ${delivery.id}`}
-                            className="h-25 w-25 object-cover rounded-md"
-                          />
-                        </HoverCardContent>
-                      </HoverCard>
-                    ) : (
-                      <button
-                        type="button"
-                        className="text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50"
-                        onClick={() => {
-                          setCaptureDelivery(delivery);
-                          setShowCaptureDialog(true);
-                        }}
-                        title="Subir imagen de entrega"
-                      >
-                        <Camera className="h-5 w-5" />
-                      </button>
-                    )}
+                ),
+              },
+            ];
+            return (
+              <MobileDataCard
+                key={delivery.id}
+                title={
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">#{delivery.id}</span>
+                    {delivery.client &&
+                      typeof delivery.client === "object" && (
+                        <AvatarUser user={delivery.client} />
+                      )}
                   </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        className="w-48 rounded-xl shadow-xl border-gray-200"
+                }
+                subtitle={
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {delivery.deliver_date
+                      ? formatDeliveryDate(delivery.deliver_date)
+                      : "N/A"}
+                  </div>
+                }
+                badges={
+                  <>
+                    <DeliveryStatusBadge
+                      status={
+                        (delivery.status || "Pendiente") as DeliveryStatus
+                      }
+                    />
+                    <PayStatusBadge
+                      status={
+                        (delivery.payment_status || "No pagado") as PayStatus
+                      }
+                    />
+                  </>
+                }
+                primaryMetric={`$ ${(delivery.weight_cost || 0).toFixed(2)}`}
+                rows={deliveryRows}
+                actions={
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <DropdownMenuItem
-                          onClick={(e) => {
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-48 rounded-xl shadow-xl border-gray-200"
+                    >
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPaymentDelivery(delivery);
+                          setShowPaymentDialog(true);
+                        }}
+                        disabled={delivery.payment_status === "Pagado"}
+                        className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                      >
+                        <CreditCard className="h-4 w-4" />
+                        Confirmar Pago
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
+                      >
+                        <Link
+                          to={`/delivery/${delivery.id}`}
+                          onClick={(e: React.MouseEvent) => {
                             e.stopPropagation();
-                            setPaymentDelivery(delivery);
-                            setShowPaymentDialog(true);
                           }}
-                          disabled={delivery.payment_status === "Pagado"}
-                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                          className="inline-flex items-center gap-2"
+                          title={`Ver detalles del delivery ${delivery.id}`}
                         >
-                          <CreditCard className="h-4 w-4" />
-                          Confirmar Pago
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          <ExternalLink className="h-4 w-4" />
+                          Ver detalles
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/delivery/${delivery.id}/edit`);
+                        }}
+                        className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCapture?.(delivery);
+                        }}
+                        className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                      >
+                        <Camera className="h-4 w-4" />
+                        Hacer Captura
+                      </DropdownMenuItem>
+                      {nextStatus && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChange(delivery);
+                            }}
+                            className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(nextStatus)}`}
+                          >
+                            {(() => {
+                              const IconComponent =
+                                getNextStatusIcon(nextStatus);
+                              return (
+                                <>
+                                  <IconComponent className="h-4 w-4" />
+                                  <span>Marcar {nextStatus}</span>
+                                </>
+                              );
+                            })()}
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!delivery || !delivery.id) {
+                            console.error(
+                              "Error: Delivery sin ID válido",
+                              delivery,
+                            );
+                            return;
+                          }
+                          setDialogState({ type: "delete", delivery });
+                        }}
+                        className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                }
+              />
+            );
+          })}
+        </MobileDataCardList>
+      ) : (
+        <div className="rounded-lg border border-muted bg-background shadow flex flex-col">
+          <Table>
+            <TableHeader className="bg-gray-100 ">
+              <TableRow>
+                <TableHead>#</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Categoría</TableHead>
+                <TableHead>Peso</TableHead>
+                <TableHead>Costo</TableHead>
+                <TableHead>Llegada</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Pago</TableHead>
+                <TableHead>Productos</TableHead>
+                <TableHead>Captura</TableHead>
+                <TableHead>Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedDeliveries.map((delivery, index) => (
+                <TableRow key={delivery.id}>
+                  <TableCell>
+                    {(currentPage - 1) * itemsPerPage + index + 1}
+                  </TableCell>
+                  <TableCell>
+                    {delivery.client && typeof delivery.client === "object" ? (
+                      <AvatarUser user={delivery.client} />
+                    ) : (
+                      <span className="text-gray-400 text-sm italic">
+                        Sin cliente
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {delivery.category ? (
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm">
+                          {delivery.category.name}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          ${delivery.category.shipping_cost_per_pound}/lb
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-sm italic">
+                        Sin categoría
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-row items-center text-gray-500">
+                      <Weight className="mr-2 inline h-4 w-4" />
+                      <span>{(delivery.weight || 0) + " Lb"}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div>{"$ " + (delivery.weight_cost || 0).toFixed(2)}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-row items-center text-gray-500">
+                      <Clock className="mr-2 inline h-4 w-4" />
+                      {delivery.deliver_date
+                        ? formatDeliveryDate(delivery.deliver_date)
+                        : "N/A"}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <DeliveryStatusBadge
+                      status={(delivery.status || "Pendiente") as DeliveryStatus}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex">
+                            <PayStatusBadge
+                              status={
+                                (delivery.payment_status ||
+                                  "No pagado") as PayStatus
+                              }
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <div className="space-y-1">
+                            <p className="font-semibold">Información de Pago</p>
+                            <p className="text-sm">
+                              Estado: {delivery.payment_status || "No pagado"}
+                            </p>
+                            {delivery.payment_amount > 0 && (
+                              <p className="text-sm">
+                                Monto: {formatCurrency(delivery.payment_amount)}
+                              </p>
+                            )}
+                            {delivery.payment_date && (
+                              <p className="text-sm">
+                                Fecha: {formatDeliveryDate(delivery.payment_date)}
+                              </p>
+                            )}
+                            {!delivery.payment_date &&
+                              delivery.payment_status !== "No pagado" && (
+                                <p className="text-xs text-yellow-500">
+                                  Sin fecha de pago registrada
+                                </p>
+                              )}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
+                  <TableCell>
+                    <ProductListPopover
+                      products={adaptDeliveredProducts(
+                        delivery.delivered_products || [],
+                      )}
+                      title="Productos Entregados"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-row gap-2">
+                      {isValidImage(delivery.deliver_picture) ? (
+                        <HoverCard>
+                          <HoverCardTrigger asChild>
+                            <div className="flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer">
+                              <ImageIcon className="h-5 w-5 text-gray-500" />
+                            </div>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="w-32 h-32 flex items-center justify-center">
+                            <img
+                              src={(delivery.deliver_picture as string) || ""}
+                              alt={`Entrega ${delivery.id}`}
+                              className="h-25 w-25 object-cover rounded-md"
+                            />
+                          </HoverCardContent>
+                        </HoverCard>
+                      ) : (
+                        <button
+                          type="button"
+                          className="text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50"
+                          onClick={() => {
+                            setCaptureDelivery(delivery);
+                            setShowCaptureDialog(true);
                           }}
-                          className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
+                          title="Subir imagen de entrega"
                         >
-                          <Link
-                            to={`/delivery/${delivery.id}`}
-                            onClick={(e: React.MouseEvent) => {
+                          <Camera className="h-5 w-5" />
+                        </button>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-48 rounded-xl shadow-xl border-gray-200"
+                        >
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPaymentDelivery(delivery);
+                              setShowPaymentDialog(true);
+                            }}
+                            disabled={delivery.payment_status === "Pagado"}
+                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                          >
+                            <CreditCard className="h-4 w-4" />
+                            Confirmar Pago
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={(e) => {
                               e.stopPropagation();
                             }}
-                            className="inline-flex items-center gap-2"
-                            title={`Ver detalles del delivery ${delivery.id}`}
+                            className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
                           >
-                            <ExternalLink className="h-4 w-4" />
-                            Ver detalles
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/delivery/${delivery.id}/edit`);
-                          }}
-                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCapture?.(delivery);
-                          }}
-                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                        >
-                          <Camera className="h-4 w-4" />
-                          Hacer Captura
-                        </DropdownMenuItem>
-
-                        {getNextStatus(delivery.status) && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={(e) => {
+                            <Link
+                              to={`/delivery/${delivery.id}`}
+                              onClick={(e: React.MouseEvent) => {
                                 e.stopPropagation();
-                                handleStatusChange(delivery);
                               }}
-                              className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(getNextStatus(delivery.status)!)}`}
+                              className="inline-flex items-center gap-2"
+                              title={`Ver detalles del delivery ${delivery.id}`}
                             >
-                              {(() => {
-                                const nextStatus = getNextStatus(
-                                  delivery.status,
-                                )!;
-                                const IconComponent =
-                                  getNextStatusIcon(nextStatus);
-                                return (
-                                  <>
-                                    <IconComponent className="h-4 w-4" />
-                                    <span>Marcar {nextStatus}</span>
-                                  </>
+                              <ExternalLink className="h-4 w-4" />
+                              Ver detalles
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/delivery/${delivery.id}/edit`);
+                            }}
+                            className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCapture?.(delivery);
+                            }}
+                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                          >
+                            <Camera className="h-4 w-4" />
+                            Hacer Captura
+                          </DropdownMenuItem>
+
+                          {getNextStatus(delivery.status) && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusChange(delivery);
+                                }}
+                                className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(getNextStatus(delivery.status)!)}`}
+                              >
+                                {(() => {
+                                  const nextStatus = getNextStatus(
+                                    delivery.status,
+                                  )!;
+                                  const IconComponent =
+                                    getNextStatusIcon(nextStatus);
+                                  return (
+                                    <>
+                                      <IconComponent className="h-4 w-4" />
+                                      <span>Marcar {nextStatus}</span>
+                                    </>
+                                  );
+                                })()}
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          <DropdownMenuSeparator />
+
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+
+                              if (!delivery || !delivery.id) {
+                                console.error(
+                                  "Error: Delivery sin ID válido",
+                                  delivery,
                                 );
-                              })()}
-                            </DropdownMenuItem>
-                          </>
-                        )}
+                                return;
+                              }
 
-                        <DropdownMenuSeparator />
-
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-
-                            if (!delivery || !delivery.id) {
-                              console.error(
-                                "Error: Delivery sin ID válido",
-                                delivery,
-                              );
-                              return;
-                            }
-
-                            setDialogState({ type: "delete", delivery });
-                          }}
-                          className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                              setDialogState({ type: "delete", delivery });
+                            }}
+                            className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {/* Componente de paginación */}
       <TablePagination

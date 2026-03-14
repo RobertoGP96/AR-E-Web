@@ -97,7 +97,9 @@ export default function Products() {
       <ProductsHeader />
 
       {/* Métricas compactas de productos */}
-      <CompactMetricsSummary type="products" />
+      <div className="hidden md:block">
+        <CompactMetricsSummary type="products" />
+      </div>
 
       {/* Barra de búsqueda y filtros */}
       <div className="flex flex-col sm:flex-row gap-4 items-center">

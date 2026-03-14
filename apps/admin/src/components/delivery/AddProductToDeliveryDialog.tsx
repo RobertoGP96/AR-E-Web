@@ -107,6 +107,7 @@ export function AddProductToDeliveryDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
           {/* Buscador de productos */}
           <div className="space-y-2">
             <Label>Buscar Producto</Label>
@@ -223,6 +224,7 @@ export function AddProductToDeliveryDialog({
                 {selectedProduct.amount_delivered})
               </p>
             )}
+          </div>
           </div>
 
           <DialogFooter>

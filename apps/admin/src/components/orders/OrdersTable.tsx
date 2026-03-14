@@ -24,6 +24,8 @@ import {
   Loader2,
   ExternalLink,
   CalendarIcon,
+  User,
+  Handshake,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import AvatarUser from "../utils/AvatarUser";
@@ -57,6 +59,8 @@ import {
   useProductListAdapter,
 } from "../utils/ProductListPopover";
 import LoadingSpinner from "../utils/LoadingSpinner";
+import { useResponsiveView } from "@/hooks/use-responsive-view";
+import { MobileDataCard, MobileDataCardList } from "@/components/shared/mobile-data-card";
 
 interface OrderTableProps {
   orders: Order[];
@@ -109,6 +113,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
 
   // Calcular total de páginas
   const totalPages = Math.ceil(orders.length / itemsPerPage);
+
+  const { viewMode } = useResponsiveView();
 
   // Resetear a la primera página cuando cambian las órdenes o el tamaño de página
   useEffect(() => {
@@ -206,197 +212,346 @@ const OrderTable: React.FC<OrderTableProps> = ({
 
   return (
     <>
-      <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(92vh-16rem)]">
-        <div className="overflow-auto flex-1">
-          <Table>
-            <TableHeader className="bg-gray-100 ">
-              <TableRow>
-                <TableHead>#</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Manager</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Productos</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Costo</TableHead>
-                <TableHead>Pago</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedOrders.map((order, index) => (
-                <TableRow key={order.id}>
-                  <TableCell>
-                    {(currentPage - 1) * itemsPerPage + index + 1}
-                  </TableCell>
-
-                  <TableCell>
-                    <div className="flex flex-row items-center gap-1">
-                      <CalendarIcon className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">
-                        {order.created_at
-                          ? formatDayMonth(order.created_at)
-                          : "N/A"}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {order.sales_manager ? (
-                      <AvatarUser user={order.sales_manager} />
-                    ) : (
-                      <span className="text-gray-400">Sin asignar</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {order.client ? (
-                      <AvatarUser user={order.client} />
-                    ) : (
-                      <span className="text-gray-400">Sin cliente</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
+      {viewMode === "cards" ? (
+        <MobileDataCardList>
+          {paginatedOrders.map((order) => (
+            <MobileDataCard
+              key={order.id}
+              title={
+                <span className="font-mono text-primary">#{order.id}</span>
+              }
+              subtitle={
+                <div className="flex items-center gap-1">
+                  <CalendarIcon className="h-3 w-3" />
+                  {order.created_at ? formatDayMonth(order.created_at) : "N/A"}
+                </div>
+              }
+              badges={
+                <>
+                  <OrderStatusBadge status={order.status as OrderStatus} />
+                  <PayStatusBadge status={order.pay_status as PayStatus} />
+                </>
+              }
+              primaryMetric={
+                <span className="text-primary font-bold">
+                  {formatCurrency(order.total_cost)}
+                </span>
+              }
+              rows={[
+                ...(order.client
+                  ? [
+                      {
+                        icon: User as React.ElementType,
+                        label: "Cliente",
+                        value: (
+                          <AvatarUser user={order.client} />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(order.sales_manager
+                  ? [
+                      {
+                        icon: Handshake as React.ElementType,
+                        label: "Manager",
+                        value: (
+                          <AvatarUser user={order.sales_manager} />
+                        ),
+                      },
+                    ]
+                  : []),
+                {
+                  icon: ShoppingCart as React.ElementType,
+                  label: "Productos",
+                  value: (
                     <ProductListPopover
                       products={adaptOrderProducts(order.products || [])}
                       title="Productos del Pedido"
                       showPrice
                     />
-                  </TableCell>
-                  <TableCell>
-                    <OrderStatusBadge status={order.status as OrderStatus} />
-                  </TableCell>
-                  <TableCell>{formatCurrency(order.total_cost)}</TableCell>
-                  <TableCell>
-                    <PayStatusBadge status={order.pay_status as PayStatus} />
-                  </TableCell>
-
-                  <TableCell>
-                    <div className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="w-48 rounded-xl shadow-xl border-gray-200"
-                        >
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              // Evitar confirmar si ya está pagado
-                              if (order.pay_status === "Pagado") {
-                                toast.info(
-                                  `El pedido #${order.id} ya está marcado como Pagado`,
-                                );
-                                return;
-                              }
-
-                              // Abrir el diálogo de confirmación de pago
-                              setSelectedOrderForPayment(order);
-                              setPaymentDialogOpen(true);
-                            }}
-                            className={`flex items-center gap-2 rounded-lg ${order.pay_status === "Pagado" ? "opacity-50 cursor-not-allowed" : "hover:bg-green-50 hover:text-green-600"}`}
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Confirmar pago
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEdit?.(order);
-                            }}
-                            className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onAddProducts?.(order);
-                            }}
-                            className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
-                          >
-                            <Plus className="h-4 w-4" />
-                            Añadir producto
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                            }}
-                            className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
-                          >
-                            <Link
-                              to={`/orders/${order.id}/add-products`}
-                              onClick={(e: React.MouseEvent) => {
-                                e.stopPropagation();
-                              }}
-                              className="inline-flex items-center gap-2"
-                              title={`Agregar múltiples productos al pedido ${order.id}`}
-                            >
-                              <ShoppingCart className="h-4 w-4" />
-                              Agregar múltiples productos
-                            </Link>
-                          </DropdownMenuItem>
-
-                          <DropdownMenuSeparator />
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                            }}
-                            className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
-                          >
-                            <Link
-                              to={`/orders/${order.id}`}
-                              onClick={(e: React.MouseEvent) => {
-                                e.stopPropagation();
-                              }}
-                              className="inline-flex items-center gap-2"
-                              title={`Ver detalles del pedido ${order.id}`}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              Ver detalles
-                            </Link>
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              if (!order || !order.id) {
-                                console.error(
-                                  "Error: Pedido sin ID válido",
-                                  order,
-                                );
-                                return;
-                              }
-
-                              setDialogState({ type: "delete", order });
-                            }}
-                            className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Eliminar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
+                  ),
+                },
+              ]}
+              actions={
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="hover:bg-gray-100 rounded-full"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 rounded-xl shadow-xl border-gray-200"
+                  >
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (order.pay_status === "Pagado") {
+                          toast.info(`El pedido #${order.id} ya está marcado como Pagado`);
+                          return;
+                        }
+                        setSelectedOrderForPayment(order);
+                        setPaymentDialogOpen(true);
+                      }}
+                      className={`flex items-center gap-2 rounded-lg ${order.pay_status === "Pagado" ? "opacity-50 cursor-not-allowed" : "hover:bg-green-50 hover:text-green-600"}`}
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      Confirmar pago
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit?.(order);
+                      }}
+                      className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddProducts?.(order);
+                      }}
+                      className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Añadir producto
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg">
+                      <Link
+                        to={`/orders/${order.id}/add-products`}
+                        className="inline-flex items-center gap-2"
+                      >
+                        <ShoppingCart className="h-4 w-4" />
+                        Agregar múltiples productos
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg">
+                      <Link
+                        to={`/orders/${order.id}`}
+                        className="inline-flex items-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Ver detalles
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!order || !order.id) return;
+                        setDialogState({ type: "delete", order });
+                      }}
+                      className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              }
+            />
+          ))}
+        </MobileDataCardList>
+      ) : (
+        <div className="rounded-lg border border-muted bg-background shadow flex flex-col">
+          <div className="overflow-auto flex-1">
+            <Table>
+              <TableHeader className="bg-gray-100 ">
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Manager</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Productos</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Costo</TableHead>
+                  <TableHead>Pago</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedOrders.map((order, index) => (
+                  <TableRow key={order.id}>
+                    <TableCell>
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="flex flex-row items-center gap-1">
+                        <CalendarIcon className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">
+                          {order.created_at
+                            ? formatDayMonth(order.created_at)
+                            : "N/A"}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {order.sales_manager ? (
+                        <AvatarUser user={order.sales_manager} />
+                      ) : (
+                        <span className="text-gray-400">Sin asignar</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {order.client ? (
+                        <AvatarUser user={order.client} />
+                      ) : (
+                        <span className="text-gray-400">Sin cliente</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <ProductListPopover
+                        products={adaptOrderProducts(order.products || [])}
+                        title="Productos del Pedido"
+                        showPrice
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <OrderStatusBadge status={order.status as OrderStatus} />
+                    </TableCell>
+                    <TableCell>{formatCurrency(order.total_cost)}</TableCell>
+                    <TableCell>
+                      <PayStatusBadge status={order.pay_status as PayStatus} />
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-48 rounded-xl shadow-xl border-gray-200"
+                          >
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+
+                                // Evitar confirmar si ya está pagado
+                                if (order.pay_status === "Pagado") {
+                                  toast.info(
+                                    `El pedido #${order.id} ya está marcado como Pagado`,
+                                  );
+                                  return;
+                                }
+
+                                // Abrir el diálogo de confirmación de pago
+                                setSelectedOrderForPayment(order);
+                                setPaymentDialogOpen(true);
+                              }}
+                              className={`flex items-center gap-2 rounded-lg ${order.pay_status === "Pagado" ? "opacity-50 cursor-not-allowed" : "hover:bg-green-50 hover:text-green-600"}`}
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              Confirmar pago
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit?.(order);
+                              }}
+                              className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAddProducts?.(order);
+                              }}
+                              className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Añadir producto
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                              className="flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg"
+                            >
+                              <Link
+                                to={`/orders/${order.id}/add-products`}
+                                onClick={(e: React.MouseEvent) => {
+                                  e.stopPropagation();
+                                }}
+                                className="inline-flex items-center gap-2"
+                                title={`Agregar múltiples productos al pedido ${order.id}`}
+                              >
+                                <ShoppingCart className="h-4 w-4" />
+                                Agregar múltiples productos
+                              </Link>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                              className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
+                            >
+                              <Link
+                                to={`/orders/${order.id}`}
+                                onClick={(e: React.MouseEvent) => {
+                                  e.stopPropagation();
+                                }}
+                                className="inline-flex items-center gap-2"
+                                title={`Ver detalles del pedido ${order.id}`}
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                                Ver detalles
+                              </Link>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+
+                                if (!order || !order.id) {
+                                  console.error(
+                                    "Error: Pedido sin ID válido",
+                                    order,
+                                  );
+                                  return;
+                                }
+
+                                setDialogState({ type: "delete", order });
+                              }}
+                              className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Componente de paginación */}
       <TablePagination

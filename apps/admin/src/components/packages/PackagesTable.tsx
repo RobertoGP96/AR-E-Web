@@ -62,6 +62,8 @@ import {
   ProductListPopover,
   useProductListAdapter,
 } from "../utils/ProductListPopover";
+import { useResponsiveView } from "@/hooks/use-responsive-view";
+import { MobileDataCard, MobileDataCardList } from "@/components/shared/mobile-data-card";
 
 interface PackagesTableProps {
   packages: PackageType[];
@@ -109,6 +111,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   useEffect(() => {
     setCurrentPage(1);
   }, [packages.length, itemsPerPage]);
+
+  const { viewMode } = useResponsiveView();
 
   const updatePackageMutation = useUpdatePackage();
 
@@ -278,177 +282,278 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
   return (
     <>
-      <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(90vh-16rem)]">
-        <Table>
-          <TableHeader className="bg-gray-100 ">
-            <TableRow>
-              <TableHead>#</TableHead>
-              <TableHead>ID</TableHead>
-              <TableHead>No. Rastreo</TableHead>
-              <TableHead>Llegada</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Productos</TableHead>
-              <TableHead>Captura</TableHead>
-              <TableHead>Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedPackages.map((pkg, index) => (
-              <TableRow key={pkg.id}>
-                <TableCell>
-                  {(currentPage - 1) * itemsPerPage + index + 1}
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-row items-center">
-                    <span className="rounded-full bg-gray-200 px-2 py-1 text-xs font-medium">
-                      {"#" + pkg.agency_name}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>{pkg.number_of_tracking}</TableCell>
-                <TableCell>
-                  <div className="flex flex-row items-center text-gray-500">
-                    <Clock className="mr-2 inline h-4 w-4" />
-                    {formatDate(pkg.arrival_date)}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <PackageStatusBadge status={pkg.status_of_processing} />
-                </TableCell>
-                <TableCell>
-                  <ProductListPopover
-                    products={adaptReceivedProducts(
-                      pkg.contained_products || [],
-                    )}
-                    title="Productos Recibidos"
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-row gap-2">
-                    {isValidImage(pkg.package_picture) ? (
-                      <HoverCard>
-                        <HoverCardTrigger asChild>
-                          <div className="flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer">
-                            <Image className="h-5 w-5 text-gray-500" />
-                          </div>
-                        </HoverCardTrigger>
-                        <HoverCardContent className="w-32 h-32 flex items-center justify-center">
-                          <img
-                            src={(() => {
-                              const pic = pkg.package_picture;
-                              if (!pic) return "";
-                              if (Array.isArray(pic)) {
-                                const first = pic[0];
-                                return (
-                                  (typeof first === "string"
-                                    ? first
-                                    : first?.picture) || ""
-                                );
-                              }
-                              return typeof pic === "string" ? pic : "";
-                            })()}
-                            alt={`Entrega ${pkg.id}`}
-                            className="h-25 w-30 object-cover rounded-md"
-                          />
-                        </HoverCardContent>
-                      </HoverCard>
-                    ) : (
-                      <button
-                        type="button"
-                        className="text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50"
-                        onClick={() => {
-                          setImageDialogPackage(pkg);
-                          setShowImageDialog(true);
+      {viewMode === "cards" ? (
+        <MobileDataCardList>
+          {paginatedPackages.map((pkg) => (
+            <MobileDataCard
+              key={pkg.id}
+              title={`#${pkg.agency_name}`}
+              subtitle={pkg.number_of_tracking}
+              badges={<PackageStatusBadge status={pkg.status_of_processing} />}
+              primaryMetric={
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {formatDate(pkg.arrival_date)}
+                </div>
+              }
+              rows={[
+                {
+                  label: "Productos",
+                  value: (
+                    <ProductListPopover
+                      products={adaptReceivedProducts(
+                        pkg.contained_products || [],
+                      )}
+                      title="Productos Recibidos"
+                    />
+                  ),
+                },
+              ]}
+              actions={
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 rounded-xl shadow-xl border-gray-200"
+                  >
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                      className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
+                    >
+                      <Link
+                        to={`/packages/${pkg.id}`}
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
                         }}
-                        title="Subir imagen de paquete"
+                        className="inline-flex items-center gap-2 w-full"
                       >
-                        <Camera className="h-5 w-5" />
-                      </button>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        className="w-48 rounded-xl shadow-xl border-gray-200"
-                      >
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
+                        <ExternalLink className="h-4 w-4" />
+                        Ver detalles
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/packages/${pkg.id}/edit`);
+                      }}
+                      className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCapture?.(pkg);
+                      }}
+                      className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                    >
+                      <Camera className="h-4 w-4" />
+                      Capturar
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {renderStatusUpdateMenuItem(pkg, "Recibido")}
+                    {renderStatusUpdateMenuItem(pkg, "Procesado")}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDialogState({ type: "delete", pkg });
+                      }}
+                      className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              }
+            />
+          ))}
+        </MobileDataCardList>
+      ) : (
+        <div className="rounded-lg border border-muted bg-background shadow flex flex-col">
+          <Table>
+            <TableHeader className="bg-gray-100 ">
+              <TableRow>
+                <TableHead>#</TableHead>
+                <TableHead>ID</TableHead>
+                <TableHead>No. Rastreo</TableHead>
+                <TableHead>Llegada</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Productos</TableHead>
+                <TableHead>Captura</TableHead>
+                <TableHead>Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedPackages.map((pkg, index) => (
+                <TableRow key={pkg.id}>
+                  <TableCell>
+                    {(currentPage - 1) * itemsPerPage + index + 1}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-row items-center">
+                      <span className="rounded-full bg-gray-200 px-2 py-1 text-xs font-medium">
+                        {"#" + pkg.agency_name}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{pkg.number_of_tracking}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-row items-center text-gray-500">
+                      <Clock className="mr-2 inline h-4 w-4" />
+                      {formatDate(pkg.arrival_date)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <PackageStatusBadge status={pkg.status_of_processing} />
+                  </TableCell>
+                  <TableCell>
+                    <ProductListPopover
+                      products={adaptReceivedProducts(
+                        pkg.contained_products || [],
+                      )}
+                      title="Productos Recibidos"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-row gap-2">
+                      {isValidImage(pkg.package_picture) ? (
+                        <HoverCard>
+                          <HoverCardTrigger asChild>
+                            <div className="flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer">
+                              <Image className="h-5 w-5 text-gray-500" />
+                            </div>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="w-32 h-32 flex items-center justify-center">
+                            <img
+                              src={(() => {
+                                const pic = pkg.package_picture;
+                                if (!pic) return "";
+                                if (Array.isArray(pic)) {
+                                  const first = pic[0];
+                                  return (
+                                    (typeof first === "string"
+                                      ? first
+                                      : first?.picture) || ""
+                                  );
+                                }
+                                return typeof pic === "string" ? pic : "";
+                              })()}
+                              alt={`Entrega ${pkg.id}`}
+                              className="h-25 w-30 object-cover rounded-md"
+                            />
+                          </HoverCardContent>
+                        </HoverCard>
+                      ) : (
+                        <button
+                          type="button"
+                          className="text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50"
+                          onClick={() => {
+                            setImageDialogPackage(pkg);
+                            setShowImageDialog(true);
                           }}
-                          className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
+                          title="Subir imagen de paquete"
                         >
-                          <Link
-                            to={`/packages/${pkg.id}`}
-                            onClick={(e: React.MouseEvent) => {
+                          <Camera className="h-5 w-5" />
+                        </button>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-48 rounded-xl shadow-xl border-gray-200"
+                        >
+                          <DropdownMenuItem
+                            onClick={(e) => {
                               e.stopPropagation();
                             }}
-                            className="inline-flex items-center gap-2 w-full"
+                            className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg"
                           >
-                            <ExternalLink className="h-4 w-4" />
-                            Ver detalles
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/packages/${pkg.id}/edit`);
-                          }}
-                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
+                            <Link
+                              to={`/packages/${pkg.id}`}
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                              }}
+                              className="inline-flex items-center gap-2 w-full"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Ver detalles
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/packages/${pkg.id}/edit`);
+                            }}
+                            className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
 
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCapture?.(pkg);
-                          }}
-                          className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                        >
-                          <Camera className="h-4 w-4" />
-                          Capturar
-                        </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCapture?.(pkg);
+                            }}
+                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                          >
+                            <Camera className="h-4 w-4" />
+                            Capturar
+                          </DropdownMenuItem>
 
-                        <DropdownMenuSeparator />
+                          <DropdownMenuSeparator />
 
-                        {renderStatusUpdateMenuItem(pkg, "Recibido")}
-                        {renderStatusUpdateMenuItem(pkg, "Procesado")}
-                        <DropdownMenuSeparator />
+                          {renderStatusUpdateMenuItem(pkg, "Recibido")}
+                          {renderStatusUpdateMenuItem(pkg, "Procesado")}
+                          <DropdownMenuSeparator />
 
 
 
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDialogState({ type: "delete", pkg });
-                          }}
-                          className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDialogState({ type: "delete", pkg });
+                            }}
+                            className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <TablePagination
         currentPage={currentPage}

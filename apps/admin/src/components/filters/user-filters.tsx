@@ -78,7 +78,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
         </Button>
       </PopoverTrigger>
       
-      <PopoverContent className="w-[400px] p-0" align="start">
+      <PopoverContent className="w-[min(400px,calc(100vw-2rem))] p-0" align="start">
         <div className="p-4 border-b">
           <div className="flex items-center gap-2 mb-1">
             <Filter className="h-4 w-4" />

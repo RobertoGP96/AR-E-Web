@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "admin",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:/Users/Trolbert14/AppData/Roaming/npm/node_modules/pnpm/bin/pnpm.cjs", "dev:admin"],
+      "port": 5173,
+      "autoPort": false
+    }
+  ]
+}

@@ -11,6 +11,8 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 // No local state required here
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import LoadingSpinner from '../utils/LoadingSpinner';
+import { useResponsiveView } from "@/hooks/use-responsive-view";
+import { MobileDataCard, MobileDataCardList } from "@/components/shared/mobile-data-card";
 
 interface ExpensesTableProps {
 	expenses?: Expense[];
@@ -36,6 +38,7 @@ export default function ExpensesTable({
 	error = null,
 	pagination,
 }: ExpensesTableProps) {
+	const { viewMode } = useResponsiveView();
 
 	// no local deletion mutation; parent controls it via onDeleteExpense
 
@@ -71,85 +74,145 @@ export default function ExpensesTable({
 
 	return (
 		<>
-			<div className="rounded-lg border border-muted bg-background shadow">
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>ID</TableHead>
-							<TableHead>Fecha</TableHead>
-							<TableHead>Categoría</TableHead>
-							<TableHead>Monto</TableHead>
-							<TableHead>Descripción</TableHead>
-							<TableHead>Creado</TableHead>
-							<TableHead className="w-[70px]">Acciones</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{expenses.map((expense) => (
-							<TableRow
-								key={expense.id}
-								className="cursor-pointer hover:bg-gray-50"
-								onClick={() => onExpenseClick?.(expense)}
-							>
-								<TableCell className="font-medium">#{expense.id}</TableCell>
-								<TableCell>
-									<div className="flex items-center gap-2">
-										<Calendar className="h-4 w-4 text-gray-400" />
-										{formatDate(expense.date)}
-									</div>
-								</TableCell>
-
-								<TableCell>
-									<Badge variant="secondary" className="py-1">{expense.category}</Badge>
-								</TableCell>
-								<TableCell>
-									<div className="flex items-center gap-2">
-										<DollarSign className="h-4 w-4 text-green-500" />
-										<span className="font-semibold text-green-600">{formatCurrency(expense.amount)}</span>
-									</div>
-								</TableCell>
-
-								<TableCell>
-									<div className="text-sm text-gray-700 max-w-[200px] overflow-ellipsis overflow-hidden whitespace-nowrap">{expense.description || '—'}</div>
-								</TableCell>
-								<TableCell className="text-sm text-gray-600">
-									<div className="flex items-center gap-2">
-										<Calendar className="h-4 w-4 text-gray-400" />
-										{formatDateTime(expense.created_at)}
-									</div>
-								</TableCell>
-								<TableCell>
-									<DropdownMenu>
-										<DropdownMenuTrigger asChild>
-											<Button variant="ghost" className="h-8 w-8 p-0">
-												<MoreHorizontal className="h-4 w-4" />
-											</Button>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent align="end">
-											
-											<DropdownMenuItem onClick={() => onEditExpense?.(expense)}>
-												<Edit className="mr-2 h-4 w-4" />
-												Editar
-											</DropdownMenuItem>
-											<DropdownMenuSeparator />
-											<DropdownMenuItem
-												onClick={(e) => {
-													e.stopPropagation();
-													onDeleteExpense?.(expense); // notify parent to open delete dialog
-												}}
-												className="text-red-600"
-											>
-												<Trash2 className="mr-2 h-4 w-4" />
-												Eliminar
-											</DropdownMenuItem>
-										</DropdownMenuContent>
-									</DropdownMenu>
-								</TableCell>
+			{viewMode === 'cards' ? (
+				<MobileDataCardList>
+					{expenses.map((expense) => (
+						<MobileDataCard
+							key={expense.id}
+							title={`#${expense.id}`}
+							subtitle={
+								<span className="flex items-center gap-1">
+									<Calendar className="h-3 w-3" />
+									{formatDate(expense.date)}
+								</span>
+							}
+							badges={<Badge variant="secondary" className="py-1">{expense.category}</Badge>}
+							primaryMetric={
+								<span className="font-semibold text-green-600">{formatCurrency(expense.amount)}</span>
+							}
+							rows={[
+								{
+									icon: Calendar,
+									label: "Creado",
+									value: formatDateTime(expense.created_at),
+								},
+								...(expense.description ? [{
+									icon: ReceiptText,
+									label: "Descripción",
+									value: <span className="truncate max-w-[160px] block">{expense.description}</span>,
+								}] : []),
+							]}
+							actions={
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+											<MoreHorizontal className="h-4 w-4" />
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEditExpense?.(expense); }}>
+											<Edit className="mr-2 h-4 w-4" />
+											Editar
+										</DropdownMenuItem>
+										<DropdownMenuSeparator />
+										<DropdownMenuItem
+											onClick={(e) => {
+												e.stopPropagation();
+												onDeleteExpense?.(expense);
+											}}
+											className="text-red-600"
+										>
+											<Trash2 className="mr-2 h-4 w-4" />
+											Eliminar
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							}
+							onClick={() => onExpenseClick?.(expense)}
+						/>
+					))}
+				</MobileDataCardList>
+			) : (
+				<div className="rounded-lg border border-muted bg-background shadow">
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead>ID</TableHead>
+								<TableHead>Fecha</TableHead>
+								<TableHead>Categoría</TableHead>
+								<TableHead>Monto</TableHead>
+								<TableHead>Descripción</TableHead>
+								<TableHead>Creado</TableHead>
+								<TableHead className="w-[70px]">Acciones</TableHead>
 							</TableRow>
-						))}
-					</TableBody>
-				</Table>
-			</div>
+						</TableHeader>
+						<TableBody>
+							{expenses.map((expense) => (
+								<TableRow
+									key={expense.id}
+									className="cursor-pointer hover:bg-gray-50"
+									onClick={() => onExpenseClick?.(expense)}
+								>
+									<TableCell className="font-medium">#{expense.id}</TableCell>
+									<TableCell>
+										<div className="flex items-center gap-2">
+											<Calendar className="h-4 w-4 text-gray-400" />
+											{formatDate(expense.date)}
+										</div>
+									</TableCell>
+
+									<TableCell>
+										<Badge variant="secondary" className="py-1">{expense.category}</Badge>
+									</TableCell>
+									<TableCell>
+										<div className="flex items-center gap-2">
+											<DollarSign className="h-4 w-4 text-green-500" />
+											<span className="font-semibold text-green-600">{formatCurrency(expense.amount)}</span>
+										</div>
+									</TableCell>
+
+									<TableCell>
+										<div className="text-sm text-gray-700 max-w-[200px] overflow-ellipsis overflow-hidden whitespace-nowrap">{expense.description || '—'}</div>
+									</TableCell>
+									<TableCell className="text-sm text-gray-600">
+										<div className="flex items-center gap-2">
+											<Calendar className="h-4 w-4 text-gray-400" />
+											{formatDateTime(expense.created_at)}
+										</div>
+									</TableCell>
+									<TableCell>
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<Button variant="ghost" className="h-8 w-8 p-0">
+													<MoreHorizontal className="h-4 w-4" />
+												</Button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end">
+
+												<DropdownMenuItem onClick={() => onEditExpense?.(expense)}>
+													<Edit className="mr-2 h-4 w-4" />
+													Editar
+												</DropdownMenuItem>
+												<DropdownMenuSeparator />
+												<DropdownMenuItem
+													onClick={(e) => {
+														e.stopPropagation();
+														onDeleteExpense?.(expense); // notify parent to open delete dialog
+													}}
+													className="text-red-600"
+												>
+													<Trash2 className="mr-2 h-4 w-4" />
+													Eliminar
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</div>
+			)}
 
 			{/* Pagination (server-side) */}
 			{pagination && pagination.total && pagination.pageSize && pagination.total > pagination.pageSize && (
@@ -218,4 +281,3 @@ export default function ExpensesTable({
 		</>
 	);
 }
-

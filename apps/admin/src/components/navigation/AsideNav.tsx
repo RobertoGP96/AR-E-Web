@@ -41,6 +41,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { roleVisibleNavHrefs } from "@/routes/role-config";
 import type { UserRole } from "@/types/models/user";
@@ -155,6 +156,13 @@ export function AsideNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const closeMobileSidebar = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -213,7 +221,7 @@ export function AsideNav() {
                   return (
                     <SidebarMenuItem key={item.name}>
                       <SidebarMenuButton asChild isActive={active}>
-                        <Link to={item.href}>
+                        <Link to={item.href} onClick={closeMobileSidebar}>
                           <Icon className="h-7 w-7 " />
                           <span className="text-[15px]">{item.name}</span>
                         </Link>
@@ -236,7 +244,7 @@ export function AsideNav() {
                 return (
                   <SidebarMenuItem key={item.name}>
                     <SidebarMenuButton asChild isActive={active}>
-                      <Link to={item.href}>
+                      <Link to={item.href} onClick={closeMobileSidebar}>
                         <Icon className="h-5 w-5" />
                         <span>{item.name}</span>
                       </Link>
@@ -315,11 +323,11 @@ export function AsideNav() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                <DropdownMenuItem onClick={() => { navigate("/profile"); closeMobileSidebar(); }}>
                   <User className="h-4 w-4" />
                   Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/settings")}>
+                <DropdownMenuItem onClick={() => { navigate("/settings"); closeMobileSidebar(); }}>
                   <Settings className="h-4 w-4" />
                   Configuración
                 </DropdownMenuItem>

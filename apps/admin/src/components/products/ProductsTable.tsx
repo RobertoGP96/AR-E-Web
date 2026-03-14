@@ -50,6 +50,8 @@ import { Link } from "react-router-dom";
 import QRLink from "./qr-link";
 import { TablePagination } from "../utils/TablePagination";
 import type { ProductStatus } from "@/types";
+import { useResponsiveView } from "@/hooks/use-responsive-view";
+import { MobileDataCard, MobileDataCardList } from "@/components/shared/mobile-data-card";
 
 interface ProductsTableProps {
   products: Product[];
@@ -138,6 +140,8 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
   // Calcular total de páginas
   const totalPages = Math.ceil(products.length / itemsPerPage);
 
+  const { viewMode } = useResponsiveView();
+
   // Resetear a la primera página cuando cambian los productos o el tamaño de página
   React.useEffect(() => {
     setCurrentPage(1);
@@ -190,9 +194,142 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
 
   return (
     <>
-      <div className="rounded-lg border border-muted bg-background shadow flex flex-col h-[calc(90vh-16rem)]">
-        <div className="overflow-auto flex-1">
-          <Table>
+      {viewMode === "cards" ? (
+        <MobileDataCardList>
+          {paginatedProducts.map((product) => {
+            const description = product.description as string | undefined;
+            const tags = parseTagsFromDescriptionBlock(description);
+            return (
+              <MobileDataCard
+                key={product.id}
+                title={
+                  <span className="capitalize">{product.name}</span>
+                }
+                subtitle={product.sku ? `SKU: ${product.sku}` : undefined}
+                badges={
+                  <>
+                    <Badge variant={getStatusBadgeVariant(product.status)}>
+                      {product.status}
+                    </Badge>
+                    {product.category && (
+                      <Badge variant="outline">{product.category}</Badge>
+                    )}
+                  </>
+                }
+                primaryMetric={`$${product.total_cost.toFixed(2)}`}
+                rows={[
+                  ...(tags && tags.length > 0
+                    ? [
+                        {
+                          label: "Etiquetas",
+                          value: (
+                            <div className="flex flex-wrap gap-1">
+                              {tags.map((tag, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs">
+                                  {tag.name}{tag.value ? `: ${tag.value}` : ""}
+                                </Badge>
+                              ))}
+                            </div>
+                          ),
+                        },
+                      ]
+                    : []),
+                ]}
+                actions={
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="hover:bg-gray-100 rounded-full"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-48 rounded-xl shadow-xl border-gray-200"
+                    >
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDialogState({
+                            type: "set_image",
+                            product,
+                            imageUrl: product.image_url || "",
+                          });
+                        }}
+                        className="flex items-center gap-2 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Definir imagen por URL
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onViewDetails?.(product);
+                        }}
+                        className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                      >
+                        <Link
+                          to={`/products/${product.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-2"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Ver detalles
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onGoToOrder?.(product);
+                        }}
+                        className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                      >
+                        <Link
+                          to={`/orders/${typeof product.order === "number" ? product.order : product.order?.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-2"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Ir a pedido
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit?.(product);
+                        }}
+                        className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!product || !product.id) return;
+                          setDialogState({ type: "delete", product });
+                        }}
+                        className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                }
+              />
+            );
+          })}
+        </MobileDataCardList>
+      ) : (
+        <div className="rounded-lg border border-muted bg-background shadow flex flex-col">
+          <div className="overflow-auto flex-1">
+            <Table>
             <TableHeader className="bg-gray-100">
               <TableRow>
                 <TableHead className="w-12">#</TableHead>
@@ -506,181 +643,182 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
             </TableBody>
           </Table>
         </div>
+        </div>
+      )}
 
-        <AlertDialog
-          open={
-            dialogState.type === "delete" ||
-            dialogState.type === "set_image" ||
-            isDeleting ||
-            isUpdating
-          }
-          onOpenChange={(open) => {
-            // Prevent closing while deleting or updating image
-            if (!open && (isDeleting || isUpdating)) return;
-            if (!open)
-              setDialogState({ type: null, product: null, imageUrl: "" });
-          }}
-        >
-          <AlertDialogContent>
-            {/* Delete dialog */}
-            {dialogState.type === "delete" && (
-              <>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    ¿Estás seguro de que deseas eliminar el producto{" "}
-                    {dialogState.product
-                      ? `#${dialogState.product.id} - ${dialogState.product.name}`
-                      : ""}
-                    ? Esta acción no se puede deshacer.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel
-                    onClick={handleDeleteCancel}
-                    disabled={isDeleting}
-                  >
-                    Cancelar
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteConfirm}
-                    className="bg-red-600 hover:bg-red-700"
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Eliminando...
-                      </>
-                    ) : (
-                      "Eliminar"
-                    )}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </>
-            )}
+      <AlertDialog
+        open={
+          dialogState.type === "delete" ||
+          dialogState.type === "set_image" ||
+          isDeleting ||
+          isUpdating
+        }
+        onOpenChange={(open) => {
+          // Prevent closing while deleting or updating image
+          if (!open && (isDeleting || isUpdating)) return;
+          if (!open)
+            setDialogState({ type: null, product: null, imageUrl: "" });
+        }}
+      >
+        <AlertDialogContent>
+          {/* Delete dialog */}
+          {dialogState.type === "delete" && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  ¿Estás seguro de que deseas eliminar el producto{" "}
+                  {dialogState.product
+                    ? `#${dialogState.product.id} - ${dialogState.product.name}`
+                    : ""}
+                  ? Esta acción no se puede deshacer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel
+                  onClick={handleDeleteCancel}
+                  disabled={isDeleting}
+                >
+                  Cancelar
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteConfirm}
+                  className="bg-red-600 hover:bg-red-700"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    "Eliminar"
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
 
-            {/* Set image by URL dialog */}
-            {dialogState.type === "set_image" && (
-              <>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Definir imagen por URL</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Introduce la URL de la imagen para el producto{" "}
-                    {dialogState.product
-                      ? `#${dialogState.product.id} - ${dialogState.product.name}`
-                      : ""}
-                    .
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
+          {/* Set image by URL dialog */}
+          {dialogState.type === "set_image" && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Definir imagen por URL</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Introduce la URL de la imagen para el producto{" "}
+                  {dialogState.product
+                    ? `#${dialogState.product.id} - ${dialogState.product.name}`
+                    : ""}
+                  .
+                </AlertDialogDescription>
+              </AlertDialogHeader>
 
-                <div className="p-4">
-                  <Input
-                    placeholder="https://.../imagen.jpg"
-                    value={dialogState.imageUrl}
-                    onChange={(e) =>
-                      setDialogState((prev) => ({
-                        ...(prev || {}),
-                        imageUrl: e.target.value,
-                      }))
+              <div className="p-4">
+                <Input
+                  placeholder="https://.../imagen.jpg"
+                  value={dialogState.imageUrl}
+                  onChange={(e) =>
+                    setDialogState((prev) => ({
+                      ...(prev || {}),
+                      imageUrl: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              {/* Preview area */}
+              <div className="p-4">
+                {previewStatus === "idle" && (
+                  <div className="text-sm text-muted-foreground">
+                    Pega una URL para ver la previsualización.
+                  </div>
+                )}
+
+                {previewStatus === "loading" && (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-sm">Cargando preview...</span>
+                  </div>
+                )}
+
+                {previewStatus === "loaded" && previewUrl && (
+                  <div className="border rounded-md overflow-hidden max-w-xs">
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="w-full h-40 object-contain bg-white"
+                      onLoad={() => setPreviewStatus("loaded")}
+                      onError={() => setPreviewStatus("error")}
+                    />
+                  </div>
+                )}
+
+                {previewStatus === "error" && (
+                  <div className="text-sm text-red-600">
+                    No se pudo cargar la imagen. Revisa la URL o el dominio.
+                  </div>
+                )}
+              </div>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel
+                  onClick={() =>
+                    setDialogState({
+                      type: null,
+                      product: null,
+                      imageUrl: "",
+                    })
+                  }
+                  disabled={isUpdating}
+                >
+                  Cancelar
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    if (!dialogState.product) return;
+                    const url = dialogState.imageUrl?.trim();
+                    if (!url) {
+                      toast.error("Por favor introduce una URL válida");
+                      return;
                     }
-                  />
-                </div>
 
-                {/* Preview area */}
-                <div className="p-4">
-                  {previewStatus === "idle" && (
-                    <div className="text-sm text-muted-foreground">
-                      Pega una URL para ver la previsualización.
-                    </div>
-                  )}
+                    // Build new array of image URLs ensuring no duplicates and keeping existing pictures
+                    // Only accept a single URL string for product_pictures
+                    const newPicture = url;
 
-                  {previewStatus === "loading" && (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      <span className="text-sm">Cargando preview...</span>
-                    </div>
-                  )}
-
-                  {previewStatus === "loaded" && previewUrl && (
-                    <div className="border rounded-md overflow-hidden max-w-xs">
-                      <img
-                        src={previewUrl}
-                        alt="Preview"
-                        className="w-full h-40 object-contain bg-white"
-                        onLoad={() => setPreviewStatus("loaded")}
-                        onError={() => setPreviewStatus("error")}
-                      />
-                    </div>
-                  )}
-
-                  {previewStatus === "error" && (
-                    <div className="text-sm text-red-600">
-                      No se pudo cargar la imagen. Revisa la URL o el dominio.
-                    </div>
-                  )}
-                </div>
-
-                <AlertDialogFooter>
-                  <AlertDialogCancel
-                    onClick={() =>
+                    try {
+                      await updateMutation.mutateAsync({
+                        id: dialogState.product.id,
+                        product_pictures: newPicture,
+                      } as unknown as UpdateProductData);
+                      toast.success("Imagen actualizada");
                       setDialogState({
                         type: null,
                         product: null,
                         imageUrl: "",
-                      })
+                      });
+                    } catch (err) {
+                      console.error("Error updating image", err);
+                      toast.error("No se pudo actualizar la imagen");
                     }
-                    disabled={isUpdating}
-                  >
-                    Cancelar
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={async () => {
-                      if (!dialogState.product) return;
-                      const url = dialogState.imageUrl?.trim();
-                      if (!url) {
-                        toast.error("Por favor introduce una URL válida");
-                        return;
-                      }
-
-                      // Build new array of image URLs ensuring no duplicates and keeping existing pictures
-                      // Only accept a single URL string for product_pictures
-                      const newPicture = url;
-
-                      try {
-                        await updateMutation.mutateAsync({
-                          id: dialogState.product.id,
-                          product_pictures: newPicture,
-                        } as unknown as UpdateProductData);
-                        toast.success("Imagen actualizada");
-                        setDialogState({
-                          type: null,
-                          product: null,
-                          imageUrl: "",
-                        });
-                      } catch (err) {
-                        console.error("Error updating image", err);
-                        toast.error("No se pudo actualizar la imagen");
-                      }
-                    }}
-                    disabled={isUpdating}
-                    className="bg-orange-400 hover:bg-orange-500"
-                  >
-                    {isUpdating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Guardando...
-                      </>
-                    ) : (
-                      "Definir imagen"
-                    )}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </>
-            )}
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+                  }}
+                  disabled={isUpdating}
+                  className="bg-orange-400 hover:bg-orange-500"
+                >
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    "Definir imagen"
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Componente de paginación */}
       <TablePagination

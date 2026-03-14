@@ -41,20 +41,20 @@ export default function DeliveryFilters({
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-4">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleRefresh}
-          disabled={isFetching}
-          title="Actualizar lista"
-          className="border-gray-200 hover:bg-gray-50 cursor-pointer"
-        >
-          <RefreshCw
-            className={`${isFetching ? "animate-spin" : ""} h-4 w-4`}
-          />
-        </Button>
-        <div className="flex-1">
-          <div className="relative">
+        <div className="flex gap-2 flex-1">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isFetching}
+            title="Actualizar lista"
+            className="border-gray-200 hover:bg-gray-50 cursor-pointer"
+          >
+            <RefreshCw
+              className={`${isFetching ? "animate-spin" : ""} h-4 w-4`}
+            />
+          </Button>
+          <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               type="text"
@@ -65,18 +65,20 @@ export default function DeliveryFilters({
             />
           </div>
         </div>
-        <DeliveryFiltersComponent
-          filters={filters}
-          onFiltersChange={(newFilters) => onFiltersChange(newFilters)}
-          resultCount={undefined}
-        />
-        <Button
-          onClick={() => navigate("/delivery/new")}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          Agregar Delivery
-        </Button>
+        <div className="flex gap-2">
+          <DeliveryFiltersComponent
+            filters={filters}
+            onFiltersChange={(newFilters) => onFiltersChange(newFilters)}
+            resultCount={undefined}
+          />
+          <Button
+            onClick={() => navigate("/delivery/new")}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            Agregar
+          </Button>
+        </div>
       </div>
 
       <CreateDeliveryDialog
