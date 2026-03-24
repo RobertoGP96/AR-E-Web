@@ -179,7 +179,7 @@ export default function UserDeliveries() {
                                     <Card className="hover:shadow-md  border border-primary bg-transparent transition-shadow duration-200  p-0">
                                         <CardContent className="p-4 space-y-3">
                                             {/* Delivery Header */}
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                                 <div className="flex items-center gap-3">
                                                     <div className="p-2 rounded-lg bg-primary/10">
                                                         <Package className="h-5 w-5 text-primary" />
@@ -191,8 +191,9 @@ export default function UserDeliveries() {
                                                         <p className="text-xs text-muted-foreground">
                                                             Orden #{delivery.order}
                                                         </p>
-
                                                     </div>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
                                                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
                                                         {statusInfo.label}
                                                     </span>

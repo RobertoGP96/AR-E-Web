@@ -31,6 +31,7 @@ from api.views.expense_views import ExpenseViewSet
 from api.views.invoice_views import InvoiceViewSet
 
 from api.views.card_views import CardOperationsView
+from api.views.public_views import PublicCategoryListView, PublicShopListView
 
 urlpatterns = [
     # Inclusión de las rutas del router bajo el prefijo `api_data/`
@@ -72,4 +73,8 @@ urlpatterns = [
     path("api_data/system/info/", views.SystemInfoView.as_view(), name="system_info"),
     # URLs de notificaciones (incluidas bajo el mismo prefijo `api_data/`)
     path("api_data/", include("api.notifications.urls_notifications")),
+
+    # Public endpoints (no authentication required)
+    path("api_data/public/categories/", PublicCategoryListView.as_view(), name="public_categories"),
+    path("api_data/public/shops/", PublicShopListView.as_view(), name="public_shops"),
 ]

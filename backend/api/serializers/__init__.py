@@ -10,6 +10,7 @@ from .products_serializers import (
     ProductCreateSerializer,
     ProductUpdateSerializer,
     CategorySerializer,
+    PublicCategorySerializer,
     ProductBuyedSerializer,
     ProductReceivedSerializer,
     ProductDeliverySerializer,
@@ -31,6 +32,7 @@ from .shops_serializers import (
     ShopCreateSerializer,
     ShopUpdateSerializer,
     ShoppingReceipSerializer,
+    PublicShopSerializer,
 )
 from .deliveries_serializers import (
     DeliverReceipSerializer,
@@ -70,6 +72,7 @@ __all__ = [
     'ProductCreateSerializer',
     'ProductUpdateSerializer',
     'CategorySerializer',
+    'PublicCategorySerializer',
     'ProductBuyedSerializer',
     'ProductReceivedSerializer',
     'ProductDeliverySerializer',
@@ -86,6 +89,7 @@ __all__ = [
     'ShopCreateSerializer',
     'ShopUpdateSerializer',
     'ShoppingReceipSerializer',
+    'PublicShopSerializer',
 
     # Deliveries
     'DeliverReceipSerializer',

@@ -50,6 +50,7 @@ import {
   InfoIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/auth";
 import { useUsersByRole } from "@/hooks/user";
 import {
   InputGroup,
@@ -113,6 +114,9 @@ export const UserForm: React.FC<UserFormProps> = ({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
 }) => {
+  const { user: currentUser } = useAuth();
+  const isAgent = currentUser?.role === "agent";
+
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
@@ -137,7 +141,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         password: "",
         role: "client",
         agent_profit: 0,
-        assigned_agent: null,
+        assigned_agent: isAgent && currentUser?.id ? currentUser.id : null,
       };
     }
     if (user) {
@@ -338,7 +342,8 @@ export const UserForm: React.FC<UserFormProps> = ({
           password: (data as CreateUserFormSchema).password ?? "",
           role: data.role as import("../../types/models/user").UserRole,
           agent_profit: data.agent_profit || 0,
-          assigned_agent: data.assigned_agent || null,
+          // Force assigned_agent to current user when agent creates a user
+          assigned_agent: isAgent && currentUser?.id ? currentUser.id : (data.assigned_agent || null),
         };
 
         await onSubmit(createUserData);
@@ -886,7 +891,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                 </div>
               )}
 
-              {/* Solo mostrar agente asignado si el rol es 'client' */}
+              {/* Agente asignado — locked to self when current user is agent */}
               {
                 <div className="space-y-2">
                   <Label
@@ -896,6 +901,13 @@ export const UserForm: React.FC<UserFormProps> = ({
                     <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
                     Agente asignado
                   </Label>
+                  {isAgent ? (
+                    <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-muted/50">
+                      <UserCheck className="h-4 w-4 text-primary" />
+                      <span>{currentUser?.name} {currentUser?.last_name}</span>
+                      <Badge variant="secondary" className="ml-auto text-xs">Tú</Badge>
+                    </div>
+                  ) : (
                   <Controller
                     name="assigned_agent"
                     control={control}
@@ -954,6 +966,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                       </Select>
                     )}
                   />
+                  )}
                   {errors.assigned_agent && (
                     <span className="text-destructive text-xs flex items-center gap-1">
                       <XCircle className="h-3 w-3" />

@@ -174,6 +174,14 @@ class ShoppingReceipSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class PublicShopSerializer(serializers.ModelSerializer):
+    """Public serializer with limited fields for shop display in calculator."""
+    class Meta:
+        model = Shop
+        fields = ["id", "name", "tax_rate"]
+        read_only_fields = ["id", "name", "tax_rate"]
+
+
 class ShopCreateSerializer(serializers.ModelSerializer):
     """
     Serializador para crear tiendas.

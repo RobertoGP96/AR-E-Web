@@ -13,7 +13,7 @@ export default function Purchases() {
       <PurshasesHeader />
 
       {/* Estadísticas */}
-      <div className="hidden md:block">
+      <div>
         <PurshasesStats />
       </div>
       {/* Filtros */}

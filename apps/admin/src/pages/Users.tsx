@@ -152,7 +152,7 @@ const Users = () => {
       
       {/* Métricas compactas de usuarios */}
       {user && user.role === 'admin' && (
-        <div className="hidden md:block">
+        <div>
           <CompactMetricsSummary type="users" />
         </div>
       )

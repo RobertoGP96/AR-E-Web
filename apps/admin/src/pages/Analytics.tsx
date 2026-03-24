@@ -12,6 +12,8 @@ import type { ProfitReportsData, MonthlyReport, AgentReport } from '@/services/r
 import { formatUSD } from '@/lib/format-usd';
 import * as React from 'react';
 import LoadingSpinner from '@/components/utils/LoadingSpinner';
+import { useResponsiveView } from '@/hooks/use-responsive-view';
+import { MobileDataCard, MobileDataCardList } from '@/components/shared/mobile-data-card';
 
 // Types for Profit Reports are defined in `src/lib/api/reports.ts` and imported above
 
@@ -19,6 +21,7 @@ import LoadingSpinner from '@/components/utils/LoadingSpinner';
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = React.useState("12m");
+  const { viewMode } = useResponsiveView();
 
   const { data: reports, isLoading, error } = useQuery<ProfitReportsData, Error>({
     queryKey: ['profitReports'],
@@ -256,7 +259,7 @@ export default function Analytics() {
                     color: 'hsl(27 87% 67%)',
                   },
                 }}
-                className="aspect-auto h-[400px] w-full"
+                className="aspect-auto h-[250px] md:h-[400px] w-full"
               >
                 <AreaChart data={filteredData} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
                   <defs>
@@ -350,117 +353,183 @@ export default function Analytics() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Tabla de Reportes Detallados</CardTitle>
-              <CardDescription>
-                Datos tabulares de ingresos, costos y ganancias por mes
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Mes</TableHead>
-                    <TableHead className="text-right">Ingresos</TableHead>
-                    <TableHead className="text-right">Compras Pagadas</TableHead>
-                    <TableHead className="text-right">Gastos Operativos</TableHead>
-                    <TableHead className="text-right">Gastos Entrega</TableHead>
-                    <TableHead className="text-right">Total Gastos</TableHead>
-                    <TableHead className="text-right">Ganancia Agentes</TableHead>
-                    <TableHead className="text-right">Ganancia Sistema</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(filteredData || []).map((report: MonthlyReport, index: number) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{report.month}</TableCell>
-                      <TableCell className="text-right font-semibold" style={{ color: 'hsl(33 100% 50%)' }}>
-                        ${(report.revenue || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold" style={{ color: 'hsl(16 90% 48%)' }}>
-                        ${(report.paid_purchase_expenses || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold" style={{ color: 'hsl(39 100% 57%)' }}>
-                        ${(report.purchase_operational_expenses || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold" style={{ color: 'hsl(27 87% 67%)' }}>
-                        ${(report.delivery_expenses || report.delivery_costs || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right font-bold" style={{ color: 'hsl(16 90% 48%)' }}>
-                        ${(report.total_expenses || report.costs || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold" style={{ color: 'hsl(280 65% 60%)' }}>
-                        ${(report.agent_profits || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right font-bold" style={{ color: 'hsl(25 95% 53%)' }}>
-                        ${(report.system_profit || 0).toLocaleString()}
-                      </TableCell>
+          {viewMode === 'cards' ? (
+            <MobileDataCardList>
+              {(filteredData || []).map((report: MonthlyReport, index: number) => (
+                <MobileDataCard
+                  key={index}
+                  title={report.month}
+                  primaryMetric={
+                    <span style={{ color: 'hsl(33 100% 50%)' }}>
+                      ${(report.revenue || 0).toLocaleString()}
+                    </span>
+                  }
+                  rows={[
+                    { label: 'Compras Pagadas', value: `$${(report.paid_purchase_expenses || 0).toLocaleString()}` },
+                    { label: 'Gastos Operativos', value: `$${(report.purchase_operational_expenses || 0).toLocaleString()}` },
+                    { label: 'Gastos Entrega', value: `$${(report.delivery_expenses || report.delivery_costs || 0).toLocaleString()}` },
+                    { label: 'Total Gastos', value: `$${(report.total_expenses || report.costs || 0).toLocaleString()}` },
+                    { label: 'Ganancia Agentes', value: `$${(report.agent_profits || 0).toLocaleString()}` },
+                    { label: 'Ganancia Sistema', value: `$${(report.system_profit || 0).toLocaleString()}` },
+                  ]}
+                />
+              ))}
+            </MobileDataCardList>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tabla de Reportes Detallados</CardTitle>
+                <CardDescription>
+                  Datos tabulares de ingresos, costos y ganancias por mes
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Mes</TableHead>
+                      <TableHead className="text-right">Ingresos</TableHead>
+                      <TableHead className="text-right">Compras Pagadas</TableHead>
+                      <TableHead className="text-right">Gastos Operativos</TableHead>
+                      <TableHead className="text-right">Gastos Entrega</TableHead>
+                      <TableHead className="text-right">Total Gastos</TableHead>
+                      <TableHead className="text-right">Ganancia Agentes</TableHead>
+                      <TableHead className="text-right">Ganancia Sistema</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {(filteredData || []).map((report: MonthlyReport, index: number) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{report.month}</TableCell>
+                        <TableCell className="text-right font-semibold" style={{ color: 'hsl(33 100% 50%)' }}>
+                          ${(report.revenue || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold" style={{ color: 'hsl(16 90% 48%)' }}>
+                          ${(report.paid_purchase_expenses || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold" style={{ color: 'hsl(39 100% 57%)' }}>
+                          ${(report.purchase_operational_expenses || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold" style={{ color: 'hsl(27 87% 67%)' }}>
+                          ${(report.delivery_expenses || report.delivery_costs || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right font-bold" style={{ color: 'hsl(16 90% 48%)' }}>
+                          ${(report.total_expenses || report.costs || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold" style={{ color: 'hsl(280 65% 60%)' }}>
+                          ${(report.agent_profits || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right font-bold" style={{ color: 'hsl(25 95% 53%)' }}>
+                          ${(report.system_profit || 0).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="agents" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ranking de Agentes por Ganancias</CardTitle>
-              <CardDescription>
-                Desempeño y ganancias de cada agente
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>Agente</TableHead>
-                    <TableHead>Teléfono</TableHead>
-                    <TableHead className="text-right">Clientes</TableHead>
-                    <TableHead className="text-right">Órdenes</TableHead>
-                    <TableHead className="text-right">Completadas</TableHead>
-                    <TableHead className="text-right">Ganancia Mes</TableHead>
-                    <TableHead className="text-right">Ganancia Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(reports.agent_reports || []).map((agent: AgentReport, index: number) => (
-                    <TableRow key={agent.agent_id}>
-                      <TableCell className="font-medium">
-                        {index === 0 && <Trophy className="h-4 w-4" />}
-                        {index > 0 && <span className="ml-2">{index + 1}</span>}
-                      </TableCell>
-                      <TableCell className="font-medium">{agent.agent_name}</TableCell>
-                      <TableCell>{agent.agent_phone}</TableCell>
-                      <TableCell className="text-right">{agent.clients_count || 0}</TableCell>
-                      <TableCell className="text-right">{agent.orders_count || 0}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant={(agent.orders_completed || 0) > 0 ? 'default' : 'secondary'}>
-                          {agent.orders_completed || 0}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right text-blue-600">
-                        ${(agent.current_month_profit || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-green-600">
-                        ${(agent.total_profit || 0).toLocaleString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {(reports.agent_reports || []).length === 0 && (
+          {viewMode === 'cards' ? (
+            <MobileDataCardList>
+              {(reports.agent_reports || []).map((agent: AgentReport, index: number) => (
+                <MobileDataCard
+                  key={agent.agent_id}
+                  title={agent.agent_name}
+                  subtitle={agent.agent_phone}
+                  badges={
+                    index === 0 ? (
+                      <Badge variant="default" className="flex items-center gap-1">
+                        <Trophy className="h-3 w-3" />
+                        #1
+                      </Badge>
+                    ) : undefined
+                  }
+                  primaryMetric={
+                    <span className="text-green-600">
+                      ${(agent.total_profit || 0).toLocaleString()}
+                    </span>
+                  }
+                  rows={[
+                    { label: 'Clientes', value: agent.clients_count || 0 },
+                    { label: 'Órdenes', value: agent.orders_count || 0 },
+                    { label: 'Completadas', value: (
+                      <Badge variant={(agent.orders_completed || 0) > 0 ? 'default' : 'secondary'}>
+                        {agent.orders_completed || 0}
+                      </Badge>
+                    )},
+                    { label: 'Ganancia Mes', value: (
+                      <span className="text-blue-600">${(agent.current_month_profit || 0).toLocaleString()}</span>
+                    )},
+                  ]}
+                />
+              ))}
+              {(reports.agent_reports || []).length === 0 && (
+                <p className="text-center text-muted-foreground py-4">
+                  No hay agentes con ganancias registradas
+                </p>
+              )}
+            </MobileDataCardList>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Ranking de Agentes por Ganancias</CardTitle>
+                <CardDescription>
+                  Desempeño y ganancias de cada agente
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground">
-                        No hay agentes con ganancias registradas
-                      </TableCell>
+                      <TableHead>#</TableHead>
+                      <TableHead>Agente</TableHead>
+                      <TableHead>Teléfono</TableHead>
+                      <TableHead className="text-right">Clientes</TableHead>
+                      <TableHead className="text-right">Órdenes</TableHead>
+                      <TableHead className="text-right">Completadas</TableHead>
+                      <TableHead className="text-right">Ganancia Mes</TableHead>
+                      <TableHead className="text-right">Ganancia Total</TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {(reports.agent_reports || []).map((agent: AgentReport, index: number) => (
+                      <TableRow key={agent.agent_id}>
+                        <TableCell className="font-medium">
+                          {index === 0 && <Trophy className="h-4 w-4" />}
+                          {index > 0 && <span className="ml-2">{index + 1}</span>}
+                        </TableCell>
+                        <TableCell className="font-medium">{agent.agent_name}</TableCell>
+                        <TableCell>{agent.agent_phone}</TableCell>
+                        <TableCell className="text-right">{agent.clients_count || 0}</TableCell>
+                        <TableCell className="text-right">{agent.orders_count || 0}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={(agent.orders_completed || 0) > 0 ? 'default' : 'secondary'}>
+                            {agent.orders_completed || 0}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right text-blue-600">
+                          ${(agent.current_month_profit || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-green-600">
+                          ${(agent.total_profit || 0).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(reports.agent_reports || []).length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground">
+                          No hay agentes con ganancias registradas
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-2 shadow-sm hover:shadow-lg transition-shadow duration-300">
             <CardHeader>
@@ -484,7 +553,7 @@ export default function Analytics() {
                   },
                 }}
                 className="w-full"
-                style={{ height: `${(reports.agent_reports || []).length * 52 + 20}px` }}
+                style={{ height: `${(reports.agent_reports || []).length * (viewMode === 'cards' ? 40 : 52) + 20}px` }}
               >
                 <BarChart
                   data={reports.agent_reports || []}

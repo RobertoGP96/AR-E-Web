@@ -3,60 +3,26 @@ import { useMemo, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, ShoppingBag, Receipt, Weight } from "lucide-react";
-
-// Types
-interface StoreOption {
-  value: string;
-  label: string;
-  extra: number;
-}
-
-interface CategoryOption {
-  name: string;
-  value: string;
-  price: number;
-}
-
-// Constants moved outside component for better performance
-const STORE_OPTIONS: StoreOption[] = [
-  { value: "shein", label: "Shein", extra: 0.00 },
-  { value: "amazon", label: "Amazon / Temu", extra: 0.03 },
-  { value: "aliexpress", label: "AliExp/ eBay / ***", extra: 0.05 },
-];
-
-const CATEGORY_OPTIONS: CategoryOption[] = [
-  {
-    name: "Alim / Medic./ Aseo",
-    value: "alimed",
-    price: 6
-  },
-  {
-    name: "Misceláneas",
-    value: "misc",
-    price: 7
-  },
-  {
-    name: "Electrod / Partes",
-    value: "elect",
-    price: 8
-  }
-];
+import { useCategories } from "@/hooks/useCategories";
+import { useShops } from "@/hooks/useShops";
 
 const BASE_TAX = 0.07;
 
 // Utility functions
-function calculateBuy(price: number, store: string, additionalTax: number = 0): number {
+function calculateBuy(
+  price: number,
+  taxRate: number,
+  additionalTax: number = 0
+): number {
   if (!price || price <= 0) return 0;
-  const extra = STORE_OPTIONS.find((opt: StoreOption) => opt.value === store)?.extra ?? 0;
   const taxes = price * BASE_TAX;
-  const extraFee = (price + taxes) * extra;
+  const extraFee = (price + taxes) * taxRate;
   return price + taxes + extraFee + additionalTax;
 }
 
-function calculateWeight(weight: number, category: string): number {
+function calculateWeight(weight: number, shippingCharge: number): number {
   if (!weight || weight <= 0) return 0;
-  const extra = CATEGORY_OPTIONS.find((opt: CategoryOption) => opt.value === category)?.price ?? 0;
-  return weight * extra;
+  return weight * shippingCharge;
 }
 
 function formatCurrency(value: number) {
@@ -69,6 +35,11 @@ function PurchaseCalculator() {
   const [store, setStore] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [additionalTax, setAdditionalTax] = useState<number>(0);
+
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { shops, isLoading: shopsLoading } = useShops();
+
+  const isLoading = categoriesLoading || shopsLoading;
 
   // Input handlers with validation
   const handlePriceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,31 +57,56 @@ function PurchaseCalculator() {
     setAdditionalTax(Math.max(0, Math.min(100, value)));
   }, []);
 
+  const selectedShop = useMemo(
+    () => shops.find((s) => s.id.toString() === store) ?? null,
+    [shops, store]
+  );
+
+  const selectedCategory = useMemo(
+    () => categories.find((c) => c.id.toString() === category) ?? null,
+    [categories, category]
+  );
+
   const subtotal1 = useMemo(() => {
     if (isNaN(price) || price <= 0) return 0;
-    return calculateBuy(price, store, additionalTax);
-  }, [price, store, additionalTax]);
+    const taxRate = selectedShop?.tax_rate ?? 0;
+    return calculateBuy(price, taxRate, additionalTax);
+  }, [price, store, selectedShop, additionalTax]);
 
   const subtotal2 = useMemo((): number => {
     if (isNaN(weight) || weight <= 0) return 0;
-    return calculateWeight(weight, category);
-  }, [weight, category]);
+    const shippingCharge = selectedCategory?.client_shipping_charge ?? 0;
+    return calculateWeight(weight, shippingCharge);
+  }, [weight, category, selectedCategory]);
 
   const total = useMemo(() => {
     return subtotal1 + subtotal2;
   }, [subtotal2, subtotal1]);
 
-  const selectedStore = STORE_OPTIONS.find((opt: StoreOption) => opt.value === store);
-  const selectedCategory = CATEGORY_OPTIONS.find((opt: CategoryOption) => opt.value === category);
+  if (isLoading) {
+    return (
+      <div
+        className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative"
+        role="status"
+        aria-label="Cargando calculadora"
+      >
+        <div className="p-6 sm:p-8 space-y-8 animate-pulse">
+          <div className="bg-black/10 border border-orange-400/20 rounded-xl p-6 h-48" />
+          <div className="bg-slate-800/30 border border-orange-400/20 rounded-xl p-6 h-64" />
+          <div className="bg-slate-800/30 border border-green-400/20 rounded-xl p-6 h-48" />
+          <div className="bg-black/10 border-2 border-orange-400/50 rounded-2xl p-8 h-32" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div 
+    <div
       className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative"
       role="application"
       aria-label="Calculadora de envío internacional"
     >
       <div className="p-6 sm:p-8 space-y-8">
-
 
         {/* Explicación del Cálculo */}
         <div className=" bg-black/10 border border-orange-400/20 rounded-xl p-6">
@@ -128,9 +124,11 @@ function PurchaseCalculator() {
                 <p>• <span className="text-orange-300 font-medium">Impuesto base: 7%</span></p>
                 <p>• <span className="text-orange-300 font-medium">Tarifa por tienda:</span></p>
                 <div className="ml-4 space-y-1 text-xs">
-                  <p>→ Shein: 0%</p>
-                  <p>→ Amazon/Temu: 3%</p>
-                  <p>→ AliExpress/Otras: 5%</p>
+                  {shops.map((shop) => (
+                    <p key={shop.id}>
+                      → {shop.name}: {(shop.tax_rate * 100).toFixed(0)}%
+                    </p>
+                  ))}
                 </div>
                 <p>• Impuestos adicionales</p>
               </div>
@@ -144,9 +142,11 @@ function PurchaseCalculator() {
                 <p>• Basado en el peso del producto</p>
                 <p>• <span className="text-green-300 font-medium">Tarifas por categoría:</span></p>
                 <div className="ml-4 space-y-1 text-xs">
-                  <p>→ Alimentos/Medicinas/Aseo: $6/lb</p>
-                  <p>→ Misceláneas: $7/lb</p>
-                  <p>→ Electrodomésticos: $8/lb</p>
+                  {categories.map((cat) => (
+                    <p key={cat.id}>
+                      → {cat.name}: ${cat.client_shipping_charge}/lb
+                    </p>
+                  ))}
                 </div>
                 <p>• Pago al momento de recogida</p>
               </div>
@@ -180,6 +180,7 @@ function PurchaseCalculator() {
             </div>
           </div>
         </div>
+
         {/* Información del Producto */}
         <div className="bg-slate-800/30 border border-orange-400/20 rounded-xl p-6 space-y-6">
           <div className="flex items-center gap-3 mb-4">
@@ -205,7 +206,7 @@ function PurchaseCalculator() {
                 value={price || ""}
                 onChange={handlePriceChange}
                 aria-describedby="price-help"
-                className="bg-slate-700/50 border-orange-400/30 text-white placeholder:text-slate-400 
+                className="bg-slate-700/50 border-orange-400/30 text-white placeholder:text-slate-400
                           focus:border-orange-400 focus:ring-orange-400/20 transition-colors
                           h-9 text-base rounded-lg"
               />
@@ -221,16 +222,16 @@ function PurchaseCalculator() {
               <Select value={store} onValueChange={setStore}>
                 <SelectTrigger
                   id="store"
-                  className="w-full min-w-0 bg-slate-700/50 border-orange-400/30 text-white 
+                  className="w-full min-w-0 bg-slate-700/50 border-orange-400/30 text-white
                            focus:border-orange-400 focus:ring-orange-400/20 h-12 rounded-lg flex items-center justify-between"
                   style={{ minWidth: "0" }}
                 >
-                  <SelectValue 
-                    placeholder="Selecciona una tienda" 
+                  <SelectValue
+                    placeholder="Selecciona una tienda"
                     className="truncate w-full text-left"
                   />
                 </SelectTrigger>
-                <SelectContent 
+                <SelectContent
                   className="bg-slate-700 border-slate-600 rounded-lg"
                   position="popper"
                   sideOffset={5}
@@ -238,22 +239,20 @@ function PurchaseCalculator() {
                   avoidCollisions={true}
                   style={{ zIndex: 100001 }}
                 >
-                  {STORE_OPTIONS.map((opt: StoreOption) => (
+                  {shops.map((shop) => (
                     <SelectItem
-                      key={opt.value}
-                      value={opt.value}
+                      key={shop.id}
+                      value={shop.id.toString()}
                       className="text-white hover:bg-slate-600 cursor-pointer"
                     >
                       <div className="flex items-center justify-between w-full gap-3 min-w-0">
-                        <span className="font-medium truncate">{opt.label}</span>
-                        {opt.extra >= 0 && (
-                          <Badge
-                            variant="secondary"
-                            className="bg-orange-400/80 text-white text-xs font-medium px-2 py-1"
-                          >
-                            +{(opt.extra * 100).toFixed(0)}%
-                          </Badge>
-                        )}
+                        <span className="font-medium truncate">{shop.name}</span>
+                        <Badge
+                          variant="secondary"
+                          className="bg-orange-400/80 text-white text-xs font-medium px-2 py-1"
+                        >
+                          +{(shop.tax_rate * 100).toFixed(0)}%
+                        </Badge>
                       </div>
                     </SelectItem>
                   ))}
@@ -275,7 +274,7 @@ function PurchaseCalculator() {
                 value={additionalTax || ""}
                 onChange={handleAdditionalTaxChange}
                 aria-describedby="tax-help"
-                className="bg-slate-700/50 border-orange-400/30 text-white placeholder:text-slate-400 
+                className="bg-slate-700/50 border-orange-400/30 text-white placeholder:text-slate-400
                           focus:border-orange-400 focus:ring-orange-400/20 transition-colors
                           h-9 text-base rounded-lg"
               />
@@ -286,14 +285,14 @@ function PurchaseCalculator() {
           </div>
 
           {/* Subtotal del producto */}
-          <div className="bg-gradient-to-r from-orange-400/10 to-orange-400/5 border-2 border-dashed 
+          <div className="bg-gradient-to-r from-orange-400/10 to-orange-400/5 border-2 border-dashed
                           border-orange-400/40 rounded-xl p-5">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div className="flex-1">
                 <p className="text-white font-semibold text-lg">Subtotal del Producto</p>
-                {selectedStore && (
+                {selectedShop && (
                   <p className="text-sm text-slate-300 mt-1">
-                    Impuesto base 7% + {selectedStore.extra > 0 ? `${(selectedStore.extra * 100).toFixed(0)}%` : '0%'} de tienda
+                    Impuesto base 7% + {selectedShop.tax_rate > 0 ? `${(selectedShop.tax_rate * 100).toFixed(0)}%` : '0%'} de tienda
                     {additionalTax > 0 && ` + ${additionalTax} adicional`}
                   </p>
                 )}
@@ -330,7 +329,7 @@ function PurchaseCalculator() {
                 value={weight || ""}
                 onChange={handleWeightChange}
                 aria-describedby="weight-help"
-                className="bg-slate-700/50 border-green-400/30 text-white placeholder:text-slate-400 
+                className="bg-slate-700/50 border-green-400/30 text-white placeholder:text-slate-400
                           focus:border-green-400 focus:ring-green-400/20 transition-colors
                           h-9 text-base rounded-lg"
               />
@@ -346,16 +345,16 @@ function PurchaseCalculator() {
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger
                   id="category"
-                  className="w-full min-w-0 bg-slate-700/50 border-green-400/30 text-white 
+                  className="w-full min-w-0 bg-slate-700/50 border-green-400/30 text-white
                            focus:border-green-400 focus:ring-green-400/20 h-9 rounded-lg flex items-center justify-between"
                   style={{ minWidth: "0" }}
                 >
-                  <SelectValue 
-                    placeholder="Selecciona una categoría" 
+                  <SelectValue
+                    placeholder="Selecciona una categoría"
                     className="truncate w-full text-left"
                   />
                 </SelectTrigger>
-                <SelectContent 
+                <SelectContent
                   className="bg-slate-700 border-slate-600 rounded-lg"
                   position="popper"
                   sideOffset={5}
@@ -363,19 +362,19 @@ function PurchaseCalculator() {
                   avoidCollisions={true}
                   style={{ zIndex: 100001 }}
                 >
-                  {CATEGORY_OPTIONS.map((opt: CategoryOption) => (
+                  {categories.map((cat) => (
                     <SelectItem
-                      key={opt.value}
-                      value={opt.value}
+                      key={cat.id}
+                      value={cat.id.toString()}
                       className="text-white hover:bg-slate-600 cursor-pointer"
                     >
                       <div className="flex items-center justify-between w-full gap-3 min-w-0">
-                        <span className="font-medium truncate">{opt.name}</span>
+                        <span className="font-medium truncate">{cat.name}</span>
                         <Badge
                           variant="outline"
                           className="bg-green-400/80 border-green-400/80 text-white text-xs font-medium px-2 py-1"
                         >
-                          ${opt.price}/lb
+                          ${cat.client_shipping_charge}/lb
                         </Badge>
                       </div>
                     </SelectItem>
@@ -386,14 +385,14 @@ function PurchaseCalculator() {
           </div>
 
           {/* Subtotal del envío */}
-          <div className="bg-gradient-to-r from-green-400/10 to-green-400/5 border-2 border-dashed 
+          <div className="bg-gradient-to-r from-green-400/10 to-green-400/5 border-2 border-dashed
                           border-green-400/40 rounded-xl p-5">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div className="flex-1">
                 <p className="text-white font-semibold text-lg">Costo de Envío</p>
                 {selectedCategory && weight > 0 && (
                   <p className="text-sm text-slate-300 mt-1">
-                    {weight} lb × ${selectedCategory.price}/lb = {formatCurrency(subtotal2)}
+                    {weight} lb × ${selectedCategory.client_shipping_charge}/lb = {formatCurrency(subtotal2)}
                   </p>
                 )}
               </div>
@@ -405,7 +404,7 @@ function PurchaseCalculator() {
         </div>
 
         {/* Total Final */}
-        <div className="bg-black/10 border-2 border-orange-400/50 
+        <div className="bg-black/10 border-2 border-orange-400/50
                         rounded-2xl p-8 shadow-2xl">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4 text-center sm:text-left">

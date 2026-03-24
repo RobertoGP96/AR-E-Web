@@ -24,6 +24,8 @@ import { toast } from 'sonner';
 import { balanceService } from '@/services';
 import ValueWithUnit from '@/components/utils/ValueWithUnit';
 import { Link } from 'react-router-dom';
+import { useResponsiveView } from '@/hooks/use-responsive-view';
+import { MobileDataCard, MobileDataCardList } from '@/components/shared/mobile-data-card';
 
 
 
@@ -31,6 +33,7 @@ import { Link } from 'react-router-dom';
 
 const ExpectedMetricsPage = () => {
   const queryClient = useQueryClient();
+  const { viewMode } = useResponsiveView();
   
   // Query para obtener todas las métricas
   const { data: metricsResponse, isLoading } = useQuery({
@@ -108,7 +111,7 @@ const ExpectedMetricsPage = () => {
 
       {/* Summary Cards */}
       {summary && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Peso Procesado Total</CardTitle>
@@ -180,6 +183,52 @@ const ExpectedMetricsPage = () => {
                 Comienza creando tu primer balance
               </p>
             </div>
+          ) : viewMode === 'cards' ? (
+            <MobileDataCardList>
+              {metrics.map((metric) => (
+                <MobileDataCard
+                  key={metric.id}
+                  title={
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        {new Date(metric.start_date).toLocaleDateString('es-ES')}
+                        {' — '}
+                        {new Date(metric.end_date).toLocaleDateString('es-ES')}
+                      </span>
+                    </div>
+                  }
+                  primaryMetric={formatCurrency(metric.real_profit)}
+                  rows={[
+                    {
+                      icon: Scale,
+                      label: 'Dif. Peso',
+                      value: `${Number(metric.registered_weight)} - ${Number(metric.system_weight)} Lb`,
+                    },
+                    {
+                      icon: DollarSign,
+                      label: 'Dif. Costo',
+                      value: formatCurrency(Number(metric.total_cost)),
+                    },
+                    {
+                      icon: TrendingUp,
+                      label: 'Gastos generados',
+                      value: formatCurrency(metric.revenues),
+                    },
+                  ]}
+                  actions={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(metric.id as number)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+              ))}
+            </MobileDataCardList>
           ) : (
             <div className="rounded-md border overflow-hidden">
               <Table className=''>

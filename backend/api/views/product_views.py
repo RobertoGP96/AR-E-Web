@@ -40,8 +40,8 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         # Filtros por rol
         if user.role == 'agent':
-            # El campo real en Order es 'sales_manager'
-            queryset = queryset.filter(order__sales_manager=user)
+            # Los agentes ven productos de las órdenes de sus clientes asignados
+            queryset = queryset.filter(order__client__assigned_agent=user)
         elif user.role == 'client':
             # Los clientes están relacionados en Order vía 'client'
             queryset = queryset.filter(order__client=user)
@@ -143,7 +143,7 @@ class ProductBuyedViewSet(viewsets.ModelViewSet):
 
         # Filtrar ProductBuyed por relaciones existentes en el modelo
         if user.role == 'agent':
-            queryset = queryset.filter(original_product__order__sales_manager=user)
+            queryset = queryset.filter(original_product__order__client__assigned_agent=user)
         elif user.role == 'client':
             queryset = queryset.filter(original_product__order__client=user)
 
@@ -178,7 +178,7 @@ class ProductReceivedViewSet(viewsets.ModelViewSet):
 
         # Filtrar ProductReceived por relaciones existentes
         if user.role == 'agent':
-            queryset = queryset.filter(original_product__order__sales_manager=user)
+            queryset = queryset.filter(original_product__order__client__assigned_agent=user)
 
         return queryset
 
@@ -213,7 +213,7 @@ class ProductDeliveryViewSet(viewsets.ModelViewSet):
         if user.role == 'client':
             queryset = queryset.filter(original_product__order__client=user)
         elif user.role == 'agent':
-            queryset = queryset.filter(original_product__order__sales_manager=user)
+            queryset = queryset.filter(original_product__order__client__assigned_agent=user)
 
         return queryset
 

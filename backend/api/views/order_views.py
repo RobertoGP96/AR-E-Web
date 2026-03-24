@@ -31,8 +31,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         # Filtros por rol - aplicar restricción de seguridad
         if user.role == 'agent':
-            # Los agentes solo ven sus órdenes asignadas
-            queryset = queryset.filter(sales_manager=user)
+            # Los agentes ven las órdenes de sus clientes asignados
+            queryset = queryset.filter(client__assigned_agent=user)
         elif user.role == 'client':
             # Los clientes solo ven sus propias órdenes
             queryset = queryset.filter(client=user)

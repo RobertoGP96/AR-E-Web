@@ -24,7 +24,7 @@ export default function Delivery() {
   return (
     <div className="space-y-6">
       <DeliveryHeader />
-      <div className="hidden md:block">
+      <div>
         <DeliveryStats />
       </div>
       <DeliveryFilters

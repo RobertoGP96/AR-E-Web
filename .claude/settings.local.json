@@ -42,7 +42,13 @@
       "mcp__Claude_Preview__preview_start",
       "Bash(netstat -ano)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"docs: update CLAUDE.md with new responsive utilities:*)"
+      "Bash(git commit -m \"docs: update CLAUDE.md with new responsive utilities:*)",
+      "Bash(npx --prefix apps/admin tsc --noEmit)",
+      "Bash(pnpm --filter admin build)",
+      "Bash(mkdir -p \"D:/Dev/React Works/StartNew/apps/client/src/services/categories\")",
+      "Bash(mkdir -p \"D:/Dev/React Works/StartNew/apps/client/src/services/shops\")",
+      "Bash(npx tsc:*)",
+      "Bash(python -c \"from api.views.public_views import PublicCategoryListView, PublicShopListView; print\\(''OK''\\)\")"
     ]
   }
 }

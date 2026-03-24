@@ -578,6 +578,14 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
 # SERIALIZADORES PARA TIMELINE DEL PRODUCTO
 # ============================================================================
 
+class PublicCategorySerializer(serializers.ModelSerializer):
+    """Public serializer with limited fields for category pricing display."""
+    class Meta:
+        model = Category
+        fields = ["id", "name", "client_shipping_charge"]
+        read_only_fields = ["id", "name", "client_shipping_charge"]
+
+
 class ProductBuyedTimelineSerializer(serializers.ModelSerializer):
     """
     Serializador simplificado para ProductBuyed para la timeline.

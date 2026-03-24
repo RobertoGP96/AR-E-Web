@@ -20,7 +20,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CheckCircle2, Truck, XCircle, LoaderIcon, CircleAlert } from 'lucide-react';
+import { Loader2, CheckCircle2, Truck, XCircle, LoaderIcon, CircleAlert, UserCheck } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/auth';
 import type { CustomUser } from '@/types';
 
 interface CreateOrderDialogProps {
@@ -29,23 +31,25 @@ interface CreateOrderDialogProps {
 }
 
 export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps) {
+  const { user: currentUser } = useAuth();
+  const isAgent = currentUser?.role === 'agent';
   const createOrderMutation = useCreateOrder();
-  
+
   // Obtener usuarios (clientes, agentes y admins)
   const { data: clientsData } = useUsersByRole('client');
   const { data: agentsData } = useUsersByRole('agent');
   const { data: adminsData } = useUsersByRole('admin');
-  
+
   // Combinar agentes y admins en una sola lista
   const agents = [
     ...(agentsData?.results || []),
     ...(adminsData?.results || [])
   ];
 
-  // Estado del formulario
+  // Estado del formulario — agents auto-set sales_manager_id to themselves
   const [formData, setFormData] = useState({
     client_id: undefined as number | undefined,
-    sales_manager_id: 0,
+    sales_manager_id: isAgent && currentUser?.id ? currentUser.id : 0,
     observations: '',
     pay_status: 'No pagado',
     status: 'Encargado',
@@ -117,10 +121,10 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
 
       toast.success('Pedido creado exitosamente');
 
-      // Resetear formulario
+      // Resetear formulario — preserve agent's own ID
       setFormData({
         client_id: undefined,
-        sales_manager_id: 0,
+        sales_manager_id: isAgent && currentUser?.id ? currentUser.id : 0,
         observations: '',
         pay_status: 'No pagado',
         status: 'Encargado',
@@ -172,9 +176,16 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
         <form onSubmit={handleSubmit}>
           <div className="max-h-[65vh] overflow-y-auto pr-1">
           <div className="grid grid-cols-2 gap-4 py-4">
-            {/* Agente de Ventas - Ahora primero para filtrar clientes */}
+            {/* Agente de Ventas — locked to self for agent role */}
             <div className="grid gap-2">
               <Label htmlFor="agent">Agente de Ventas</Label>
+              {isAgent ? (
+                <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-muted/50">
+                  <UserCheck className="h-4 w-4 text-primary" />
+                  <span>{currentUser?.name} {currentUser?.last_name}</span>
+                  <Badge variant="secondary" className="ml-auto text-xs">Tú</Badge>
+                </div>
+              ) : (
               <Select
                 value={formData.sales_manager_id.toString()}
                 onValueChange={handleAgentChange}
@@ -193,7 +204,7 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
                   ))}
                 </SelectContent>
               </Select>
-              
+              )}
             </div>
 
             {/* Cliente */}

@@ -97,7 +97,7 @@ export default function Products() {
       <ProductsHeader />
 
       {/* Métricas compactas de productos */}
-      <div className="hidden md:block">
+      <div>
         <CompactMetricsSummary type="products" />
       </div>
 

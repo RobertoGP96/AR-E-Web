@@ -156,7 +156,7 @@ const Orders = () => {
       <OrdersHeader />
 
       {/* Métricas compactas de órdenes */}
-      <div className="hidden md:block">
+      <div>
         <CompactMetricsSummary type="orders" />
       </div>
 

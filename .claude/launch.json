@@ -4,8 +4,8 @@
     {
       "name": "admin",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["C:/Users/Trolbert14/AppData/Roaming/npm/node_modules/pnpm/bin/pnpm.cjs", "dev:admin"],
-      "port": 5173,
+      "runtimeArgs": ["C:/Users/Trolbert14/AppData/Roaming/npm/node_modules/pnpm/bin/pnpm.cjs", "--filter", "admin", "dev", "--", "--port", "5175"],
+      "port": 5175,
       "autoPort": false
     }
   ]

@@ -125,10 +125,9 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
         if user.role == 'agent':
             # Agentes ven entregas de sus clientes asignados
             queryset = queryset.filter(client__assigned_agent=user)
-        elif user.role == 'logistical':
-            queryset = queryset.filter(delivery__logistical=user)
         elif user.role == 'client':
             queryset = queryset.filter(client=user)
+        # logistical users see all deliveries (same as admin)
 
         return queryset
 

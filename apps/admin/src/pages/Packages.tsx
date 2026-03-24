@@ -14,7 +14,7 @@ export default function Packages() {
   return (
     <div className="space-y-5">
       <PackagesHeader />
-      <div className="hidden md:block">
+      <div>
         <PackagesStats />
       </div>
       <PackagesFilters 

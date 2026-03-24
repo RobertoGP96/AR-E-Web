@@ -32,7 +32,7 @@ const About = () => {
             </div>
             
             {/* Métodos de pago */}
-            <div id="metodos-pago" className={`w-4/5 sm:w-1/2 md:w-2/5 p-6 my-20 transition-all duration-1000 delay-500 ${
+            <div id="metodos-pago" className={`w-full max-w-2xl px-4 sm:px-6 my-20 transition-all duration-1000 delay-500 ${
                 isVisible 
                     ? 'opacity-100 transform translate-y-0' 
                     : 'opacity-0 transform translate-y-8'
@@ -46,7 +46,7 @@ const About = () => {
             </div>
 
             {/* Pago*/}
-            <div className={`flex justify-center w-full sm:w-1/2 md:w-2/5 mb-10 transition-all duration-1000 delay-700 ${
+            <div className={`flex justify-center w-full max-w-4xl px-4 sm:px-6 mb-10 transition-all duration-1000 delay-700 ${
                 isVisible 
                     ? 'opacity-100 transform translate-y-0' 
                     : 'opacity-0 transform translate-y-8'
