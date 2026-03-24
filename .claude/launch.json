@@ -7,6 +7,13 @@
       "runtimeArgs": ["C:/Users/Trolbert14/AppData/Roaming/npm/node_modules/pnpm/bin/pnpm.cjs", "--filter", "admin", "dev", "--", "--port", "5175"],
       "port": 5175,
       "autoPort": false
+    },
+    {
+      "name": "client",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:/Users/Trolbert14/AppData/Roaming/npm/node_modules/pnpm/bin/pnpm.cjs", "--filter", "client", "dev", "--", "--port", "5174"],
+      "port": 5174,
+      "autoPort": false
     }
   ]
 }
