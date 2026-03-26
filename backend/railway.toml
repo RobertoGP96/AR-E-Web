@@ -1,6 +1,6 @@
 [build]
 builder = "railpack"
-buildCommand = "chmod +x ./build.sh && sh ./build.sh"
+buildCommand = "pip install --upgrade pip && pip install --only-binary=lxml,psycopg2-binary -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate"
 
 [deploy]
 startCommand = "gunicorn --bind 0.0.0.0:$PORT config.wsgi:application"
