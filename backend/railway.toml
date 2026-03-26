@@ -1,9 +1,8 @@
 [build]
 builder = "railpack"
-buildCommand = "python -m pip install --upgrade pip && python -m pip install --only-binary=lxml,psycopg2-binary -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate"
 
 [deploy]
-startCommand = "gunicorn --bind 0.0.0.0:$PORT config.wsgi:application"
+startCommand = "python manage.py collectstatic --no-input && python manage.py migrate && gunicorn --bind 0.0.0.0:$PORT config.wsgi:application"
 healthcheckPath = "/"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
