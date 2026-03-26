@@ -40,6 +40,22 @@ class AgentPermission(BasePermission):
             raise ValidationError("El usuario no es un agente") from e
 
 
+class AgentReadOnlyPermission(BasePermission):
+    """Permite solo lectura a agentes. Escritura denegada."""
+
+    def has_permission(self, request, view):
+        user = request.user
+        if user.role == 'agent':
+            return request.method in permissions.SAFE_METHODS
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if user.role == 'agent':
+            return request.method in permissions.SAFE_METHODS
+        return True
+
+
 class AccountantPermission(BasePermission):
     """Clase de permisos de contador"""
 

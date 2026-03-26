@@ -25,6 +25,8 @@ export const roleAllowedRoutes: Record<Exclude<UserRole, "admin">, string[]> = {
     "/orders",
     "/orders/:id",
     "/orders/:id/add-products",
+    "/delivery",
+    "/delivery/:id",
     "/profile",
     "/settings",
   ],

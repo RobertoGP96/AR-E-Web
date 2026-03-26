@@ -52,6 +52,7 @@ import { TablePagination } from "../utils/TablePagination";
 import type { ProductStatus } from "@/types";
 import { useResponsiveView } from "@/hooks/use-responsive-view";
 import { MobileDataCard, MobileDataCardList } from "@/components/shared/mobile-data-card";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 interface ProductsTableProps {
   products: Product[];
@@ -141,6 +142,8 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
   const totalPages = Math.ceil(products.length / itemsPerPage);
 
   const { viewMode } = useResponsiveView();
+  const { user } = useAuth();
+  const isAgent = user?.role === "agent";
 
   // Resetear a la primera página cuando cambian los productos o el tamaño de página
   React.useEffect(() => {
@@ -251,20 +254,22 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                       align="end"
                       className="w-48 rounded-xl shadow-xl border-gray-200"
                     >
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDialogState({
-                            type: "set_image",
-                            product,
-                            imageUrl: product.image_url || "",
-                          });
-                        }}
-                        className="flex items-center gap-2 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Definir imagen por URL
-                      </DropdownMenuItem>
+                      {!isAgent && (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDialogState({
+                              type: "set_image",
+                              product,
+                              imageUrl: product.image_url || "",
+                            });
+                          }}
+                          className="flex items-center gap-2 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Definir imagen por URL
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
@@ -297,28 +302,32 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                           Ir a pedido
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit?.(product);
-                        }}
-                        className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!product || !product.id) return;
-                          setDialogState({ type: "delete", product });
-                        }}
-                        className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Eliminar
-                      </DropdownMenuItem>
+                      {!isAgent && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEdit?.(product);
+                            }}
+                            className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!product || !product.id) return;
+                              setDialogState({ type: "delete", product });
+                            }}
+                            className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 }
@@ -548,20 +557,22 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                             align="end"
                             className="w-48 rounded-xl shadow-xl border-gray-200"
                           >
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDialogState({
-                                  type: "set_image",
-                                  product,
-                                  imageUrl: product.image_url || "",
-                                });
-                              }}
-                              className="flex items-center gap-2 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              Definir imagen por URL
-                            </DropdownMenuItem>
+                            {!isAgent && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDialogState({
+                                    type: "set_image",
+                                    product,
+                                    imageUrl: product.image_url || "",
+                                  });
+                                }}
+                                className="flex items-center gap-2 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                                Definir imagen por URL
+                              </DropdownMenuItem>
+                            )}
 
                             <DropdownMenuItem
                               onClick={(e) => {
@@ -603,36 +614,39 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                               </Link>
                             </DropdownMenuItem>
 
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // Alias: Edit desde menú
-                                onEdit?.(product);
-                              }}
-                              className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                              Editar
-                            </DropdownMenuItem>
+                            {!isAgent && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEdit?.(product);
+                                  }}
+                                  className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                  Editar
+                                </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (!product || !product.id) {
-                                  console.error(
-                                    "Producto sin ID válido",
-                                    product,
-                                  );
-                                  return;
-                                }
-                                setDialogState({ type: "delete", product });
-                              }}
-                              className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Eliminar
-                            </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!product || !product.id) {
+                                      console.error(
+                                        "Producto sin ID válido",
+                                        product,
+                                      );
+                                      return;
+                                    }
+                                    setDialogState({ type: "delete", product });
+                                  }}
+                                  className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Eliminar
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>

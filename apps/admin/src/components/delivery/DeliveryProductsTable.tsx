@@ -7,6 +7,7 @@ import type { ProductDelivery, ID } from '@/types';
 import { useState } from 'react';
 import { useRemoveProductFromDelivery } from '@/hooks/delivery';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface DeliveryProductsTableProps {
   deliveryId: ID;
@@ -14,6 +15,8 @@ interface DeliveryProductsTableProps {
 }
 
 export function DeliveryProductsTable({ deliveryId, products }: DeliveryProductsTableProps) {
+  const { user } = useAuth();
+  const isAgent = user?.role === 'agent';
   const [productToDelete, setProductToDelete] = useState<ProductDelivery | null>(null);
   const removeProductMutation = useRemoveProductFromDelivery();
 
@@ -59,7 +62,7 @@ export function DeliveryProductsTable({ deliveryId, products }: DeliveryProducts
               <TableHead>SKU</TableHead>
               <TableHead>Tienda</TableHead>
               <TableHead>Cantidad Entregada</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              {!isAgent && <TableHead className="text-right">Acciones</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -110,16 +113,18 @@ export function DeliveryProductsTable({ deliveryId, products }: DeliveryProducts
                     {productDelivery.amount_delivered} unidades
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => setProductToDelete(productDelivery)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
+                {!isAgent && (
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => setProductToDelete(productDelivery)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>

@@ -81,6 +81,7 @@ import {
 } from "../utils/ProductListPopover";
 import { useResponsiveView } from "@/hooks/use-responsive-view";
 import { MobileDataCard, MobileDataCardList } from "@/components/shared/mobile-data-card";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 interface DeliveryTableProps {
   deliveries: DeliverReceip[];
@@ -96,6 +97,8 @@ const DeliveryTableComponent: React.FC<DeliveryTableProps> = ({
   onCapture,
 }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAgent = user?.role === "agent";
   const { adaptDeliveredProducts } = useProductListAdapter();
   const [dialogState, setDialogState] = useState<{
     type: "delete" | null;
@@ -384,19 +387,23 @@ const DeliveryTableComponent: React.FC<DeliveryTableProps> = ({
                       align="end"
                       className="w-48 rounded-xl shadow-xl border-gray-200"
                     >
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPaymentDelivery(delivery);
-                          setShowPaymentDialog(true);
-                        }}
-                        disabled={delivery.payment_status === "Pagado"}
-                        className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                      >
-                        <CreditCard className="h-4 w-4" />
-                        Confirmar Pago
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
+                      {!isAgent && (
+                        <>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPaymentDelivery(delivery);
+                              setShowPaymentDialog(true);
+                            }}
+                            disabled={delivery.payment_status === "Pagado"}
+                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                          >
+                            <CreditCard className="h-4 w-4" />
+                            Confirmar Pago
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
@@ -415,67 +422,71 @@ const DeliveryTableComponent: React.FC<DeliveryTableProps> = ({
                           Ver detalles
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/delivery/${delivery.id}/edit`);
-                        }}
-                        className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onCapture?.(delivery);
-                        }}
-                        className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                      >
-                        <Camera className="h-4 w-4" />
-                        Hacer Captura
-                      </DropdownMenuItem>
-                      {nextStatus && (
+                      {!isAgent && (
                         <>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/delivery/${delivery.id}/edit`);
+                            }}
+                            className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCapture?.(delivery);
+                            }}
+                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                          >
+                            <Camera className="h-4 w-4" />
+                            Hacer Captura
+                          </DropdownMenuItem>
+                          {nextStatus && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusChange(delivery);
+                                }}
+                                className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(nextStatus)}`}
+                              >
+                                {(() => {
+                                  const IconComponent =
+                                    getNextStatusIcon(nextStatus);
+                                  return (
+                                    <>
+                                      <IconComponent className="h-4 w-4" />
+                                      <span>Marcar {nextStatus}</span>
+                                    </>
+                                  );
+                                })()}
+                              </DropdownMenuItem>
+                            </>
+                          )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleStatusChange(delivery);
+                              if (!delivery || !delivery.id) {
+                                console.error(
+                                  "Error: Delivery sin ID válido",
+                                  delivery,
+                                );
+                                return;
+                              }
+                              setDialogState({ type: "delete", delivery });
                             }}
-                            className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(nextStatus)}`}
+                            className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
                           >
-                            {(() => {
-                              const IconComponent =
-                                getNextStatusIcon(nextStatus);
-                              return (
-                                <>
-                                  <IconComponent className="h-4 w-4" />
-                                  <span>Marcar {nextStatus}</span>
-                                </>
-                              );
-                            })()}
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar
                           </DropdownMenuItem>
                         </>
                       )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!delivery || !delivery.id) {
-                            console.error(
-                              "Error: Delivery sin ID válido",
-                              delivery,
-                            );
-                            return;
-                          }
-                          setDialogState({ type: "delete", delivery });
-                        }}
-                        className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Eliminar
-                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 }
@@ -619,7 +630,7 @@ const DeliveryTableComponent: React.FC<DeliveryTableProps> = ({
                             />
                           </HoverCardContent>
                         </HoverCard>
-                      ) : (
+                      ) : !isAgent ? (
                         <button
                           type="button"
                           className="text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50"
@@ -631,6 +642,8 @@ const DeliveryTableComponent: React.FC<DeliveryTableProps> = ({
                         >
                           <Camera className="h-5 w-5" />
                         </button>
+                      ) : (
+                        <span className="text-gray-400 text-sm italic">—</span>
                       )}
                     </div>
                   </TableCell>
@@ -650,19 +663,23 @@ const DeliveryTableComponent: React.FC<DeliveryTableProps> = ({
                           align="end"
                           className="w-48 rounded-xl shadow-xl border-gray-200"
                         >
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPaymentDelivery(delivery);
-                              setShowPaymentDialog(true);
-                            }}
-                            disabled={delivery.payment_status === "Pagado"}
-                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                          >
-                            <CreditCard className="h-4 w-4" />
-                            Confirmar Pago
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
+                          {!isAgent && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPaymentDelivery(delivery);
+                                  setShowPaymentDialog(true);
+                                }}
+                                disabled={delivery.payment_status === "Pagado"}
+                                className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                              >
+                                <CreditCard className="h-4 w-4" />
+                                Confirmar Pago
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
@@ -681,76 +698,80 @@ const DeliveryTableComponent: React.FC<DeliveryTableProps> = ({
                               Ver detalles
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/delivery/${delivery.id}/edit`);
-                            }}
-                            className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onCapture?.(delivery);
-                            }}
-                            className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
-                          >
-                            <Camera className="h-4 w-4" />
-                            Hacer Captura
-                          </DropdownMenuItem>
-
-                          {getNextStatus(delivery.status) && (
+                          {!isAgent && (
                             <>
-                              <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleStatusChange(delivery);
+                                  navigate(`/delivery/${delivery.id}/edit`);
                                 }}
-                                className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(getNextStatus(delivery.status)!)}`}
+                                className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
                               >
-                                {(() => {
-                                  const nextStatus = getNextStatus(
-                                    delivery.status,
-                                  )!;
-                                  const IconComponent =
-                                    getNextStatusIcon(nextStatus);
-                                  return (
-                                    <>
-                                      <IconComponent className="h-4 w-4" />
-                                      <span>Marcar {nextStatus}</span>
-                                    </>
-                                  );
-                                })()}
+                                <Edit2 className="h-4 w-4" />
+                                Editar
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onCapture?.(delivery);
+                                }}
+                                className="flex items-center gap-2 hover:bg-green-50 hover:text-green-600 rounded-lg"
+                              >
+                                <Camera className="h-4 w-4" />
+                                Hacer Captura
+                              </DropdownMenuItem>
+
+                              {getNextStatus(delivery.status) && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStatusChange(delivery);
+                                    }}
+                                    className={`flex items-center gap-2 rounded-lg ${getNextStatusColor(getNextStatus(delivery.status)!)}`}
+                                  >
+                                    {(() => {
+                                      const nextStatus = getNextStatus(
+                                        delivery.status,
+                                      )!;
+                                      const IconComponent =
+                                        getNextStatusIcon(nextStatus);
+                                      return (
+                                        <>
+                                          <IconComponent className="h-4 w-4" />
+                                          <span>Marcar {nextStatus}</span>
+                                        </>
+                                      );
+                                    })()}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+
+                              <DropdownMenuSeparator />
+
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+
+                                  if (!delivery || !delivery.id) {
+                                    console.error(
+                                      "Error: Delivery sin ID válido",
+                                      delivery,
+                                    );
+                                    return;
+                                  }
+
+                                  setDialogState({ type: "delete", delivery });
+                                }}
+                                className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Eliminar
                               </DropdownMenuItem>
                             </>
                           )}
-
-                          <DropdownMenuSeparator />
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              if (!delivery || !delivery.id) {
-                                console.error(
-                                  "Error: Delivery sin ID válido",
-                                  delivery,
-                                );
-                                return;
-                              }
-
-                              setDialogState({ type: "delete", delivery });
-                            }}
-                            className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Eliminar
-                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

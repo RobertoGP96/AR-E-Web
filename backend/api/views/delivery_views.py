@@ -9,7 +9,7 @@ from api.serializers import (
     PackageSerializer, DeliverReceipSerializer,
     ProductReceivedSerializer, ProductDeliverySerializer,
 )
-from api.permissions.permissions import ReadOnly, AdminPermission, LogisticalPermission
+from api.permissions.permissions import ReadOnly, AdminPermission, LogisticalPermission, AgentReadOnlyPermission
 
 
 class PackageViewSet(viewsets.ModelViewSet):
@@ -116,7 +116,7 @@ class DeliverReceipViewSet(viewsets.ModelViewSet):
     """
     queryset = DeliverReceip.objects.all().order_by('-created_at')
     serializer_class = DeliverReceipSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, AgentReadOnlyPermission]
 
     def get_queryset(self):
         queryset = DeliverReceip.objects.all().order_by('-created_at')

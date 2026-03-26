@@ -64,11 +64,12 @@ function RoleGuard({
 
 // ─── Grupos de roles reutilizables ────────────────────────────────────────────
 
-const ADMIN_ONLY:       UserRole[] = ["admin"];
-const ADMIN_AGENT:      UserRole[] = ["admin", "agent"];
-const ADMIN_ACCOUNTANT: UserRole[] = ["admin", "accountant"];
-const ADMIN_LOGISTICAL: UserRole[] = ["admin", "logistical"];
-const ALL_ROLES:        UserRole[] = ["admin", "agent", "accountant", "logistical"];
+const ADMIN_ONLY:              UserRole[] = ["admin"];
+const ADMIN_AGENT:             UserRole[] = ["admin", "agent"];
+const ADMIN_ACCOUNTANT:        UserRole[] = ["admin", "accountant"];
+const ADMIN_LOGISTICAL:        UserRole[] = ["admin", "logistical"];
+const ADMIN_AGENT_LOGISTICAL:  UserRole[] = ["admin", "agent", "logistical"];
+const ALL_ROLES:               UserRole[] = ["admin", "agent", "accountant", "logistical"];
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
@@ -102,8 +103,8 @@ const AppRoutes = () => {
         <Route path="orders/:id/add-products" element={<RoleGuard roles={ADMIN_AGENT}><AddMultipleProductsToOrderPage /></RoleGuard>} />
 
         {/* ── Productos ── */}
-        <Route path="products"    element={<RoleGuard roles={ADMIN_ONLY}><Products /></RoleGuard>} />
-        <Route path="products/:id" element={<RoleGuard roles={ADMIN_ONLY}><ProductDetails /></RoleGuard>} />
+        <Route path="products"    element={<RoleGuard roles={ADMIN_AGENT}><Products /></RoleGuard>} />
+        <Route path="products/:id" element={<RoleGuard roles={ADMIN_AGENT}><ProductDetails /></RoleGuard>} />
 
         {/* ── Compras ── */}
         <Route path="purchases"                      element={<RoleGuard roles={ADMIN_ONLY}><Purchases /></RoleGuard>} />
@@ -122,9 +123,9 @@ const AppRoutes = () => {
         <Route path="packages/:id/remove-products"  element={<RoleGuard roles={ADMIN_LOGISTICAL}><RemoveProductsFromPackagePage /></RoleGuard>} />
 
         {/* ── Delivery ── */}
-        <Route path="delivery"                      element={<RoleGuard roles={ADMIN_LOGISTICAL}><Delivery /></RoleGuard>} />
+        <Route path="delivery"                      element={<RoleGuard roles={ADMIN_AGENT_LOGISTICAL}><Delivery /></RoleGuard>} />
         <Route path="delivery/new"                  element={<RoleGuard roles={ADMIN_LOGISTICAL}><NewDeliveryPage /></RoleGuard>} />
-        <Route path="delivery/:id"                  element={<RoleGuard roles={ADMIN_LOGISTICAL}><DeliveryDetail /></RoleGuard>} />
+        <Route path="delivery/:id"                  element={<RoleGuard roles={ADMIN_AGENT_LOGISTICAL}><DeliveryDetail /></RoleGuard>} />
         <Route path="delivery/:id/edit"             element={<RoleGuard roles={ADMIN_LOGISTICAL}><EditDeliveryPage /></RoleGuard>} />
         <Route path="delivery/:id/manage-products"  element={<RoleGuard roles={ADMIN_LOGISTICAL}><DeliveryProductsManagement /></RoleGuard>} />
         <Route path="delivery/:id/add-products"     element={<RoleGuard roles={ADMIN_LOGISTICAL}><AddProductsToDeliveryPage /></RoleGuard>} />

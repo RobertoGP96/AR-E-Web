@@ -20,11 +20,14 @@ import DeliveryStatusBadge from "@/components/delivery/DeliveryStatusBadge";
 import { useState } from "react";
 import { AddProductToDeliveryDialog } from "@/components/delivery/AddProductToDeliveryDialog";
 import { DeliveryProductsTable } from "@/components/delivery/DeliveryProductsTable";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 export default function DeliveryDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { delivery, isLoading, error } = useSingleDelivery(Number(id));
+  const { user } = useAuth();
+  const isAgent = user?.role === "agent";
   const [showAddProductDialog, setShowAddProductDialog] = useState(false);
 
   if (isLoading) {
@@ -138,13 +141,15 @@ export default function DeliveryDetail() {
                     Productos en el Delivery
                   </CardTitle>
                 </div>
-                <Button
-                  onClick={() => setShowAddProductDialog(true)}
-                  className="bg-orange-600 hover:bg-orange-700 text-white border-green-600 shadow-sm h-8 text-sm"
-                >
-                  <Plus className="mr-2 h-3 w-3" />
-                  Agregar Producto
-                </Button>
+                {!isAgent && (
+                  <Button
+                    onClick={() => setShowAddProductDialog(true)}
+                    className="bg-orange-600 hover:bg-orange-700 text-white border-green-600 shadow-sm h-8 text-sm"
+                  >
+                    <Plus className="mr-2 h-3 w-3" />
+                    Agregar Producto
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-0">

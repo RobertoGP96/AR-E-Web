@@ -10,7 +10,7 @@ from api.serializers import (
     ProductBuyedSerializer, ProductReceivedSerializer, ProductDeliverySerializer,
     ProductTimelineSerializer, ProductTimelineFormattedSerializer
 )
-from api.permissions.permissions import ReadOnly, AdminPermission, AgentPermission, BuyerPermission
+from api.permissions.permissions import ReadOnly, AdminPermission, AgentPermission, AgentReadOnlyPermission, BuyerPermission
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -18,7 +18,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     ViewSet para gestión de productos.
     """
     queryset = Product.objects.all().order_by('-created_at')
-    permission_classes = [IsAuthenticated, (AdminPermission | AgentPermission)]
+    permission_classes = [IsAuthenticated, (AdminPermission | AgentPermission), AgentReadOnlyPermission]
 
     def get_serializer_class(self):
         if self.action == 'create':
