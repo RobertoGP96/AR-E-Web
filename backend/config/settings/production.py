@@ -28,6 +28,14 @@ if render_host:
     if render_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(render_host)
 
+# Railway sets RAILWAY_PUBLIC_DOMAIN with the public hostname
+railway_host = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+if railway_host:
+    if not isinstance(ALLOWED_HOSTS, list):
+        ALLOWED_HOSTS = list(ALLOWED_HOSTS)
+    if railway_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(railway_host)
+
 # Database
 DATABASE_URL = config('DATABASE_URL')
 
@@ -64,6 +72,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # Security settings for production
 SECURE_SSL_REDIRECT = True
+SECURE_REDIRECT_EXEMPT = [r'^health/$']
 SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
