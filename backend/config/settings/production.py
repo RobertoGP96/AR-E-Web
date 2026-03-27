@@ -37,7 +37,7 @@ if railway_host:
         ALLOWED_HOSTS.append(railway_host)
 
 # Database
-DATABASE_URL = config('DATABASE_URL')
+DATABASE_URL = config('DATABASE_URL', default='')
 
 if DATABASE_URL:
     # Use Neon PostgreSQL in production
