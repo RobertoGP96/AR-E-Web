@@ -36,6 +36,12 @@ if railway_host:
     if railway_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(railway_host)
 
+# Railway healthcheck uses this host header
+if not isinstance(ALLOWED_HOSTS, list):
+    ALLOWED_HOSTS = list(ALLOWED_HOSTS)
+if 'healthcheck.railway.app' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('healthcheck.railway.app')
+
 # Database
 DATABASE_URL = config('DATABASE_URL', default='')
 
