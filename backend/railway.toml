@@ -2,7 +2,7 @@
 builder = "railpack"
 
 [deploy]
-startCommand = "python manage.py collectstatic --no-input && python manage.py migrate && gunicorn --bind 0.0.0.0:$PORT config.wsgi:application"
+startCommand = "python3 manage.py collectstatic --no-input && python3 manage.py migrate && gunicorn --bind 0.0.0.0:$PORT config.wsgi:application"
 healthcheckPath = "/health/"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
