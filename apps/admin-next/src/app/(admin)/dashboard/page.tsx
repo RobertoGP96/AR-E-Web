@@ -1,17 +1,14 @@
-import { createClient } from '@/lib/supabase/server';
+import { auth } from '@/auth';
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await auth();
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Welcome, {user?.email}. This is the Next.js + Supabase admin panel
-        scaffold. Pages below will be progressively ported from{' '}
+        Welcome, {session?.user.name}. This is the Next.js admin panel
+        backed by Prisma + Neon. Pages below will be progressively ported from{' '}
         <code className="rounded bg-zinc-200 px-1 py-0.5 text-xs dark:bg-zinc-800">
           apps/admin
         </code>

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { SignOutButton } from './sign-out-button';
 import Link from 'next/link';
+import { auth } from '@/auth';
+import { SignOutButton } from './sign-out-button';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -24,12 +24,8 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  const session = await auth();
+  if (!session?.user) {
     redirect('/login');
   }
 
@@ -51,9 +47,14 @@ export default async function AdminLayout({
       </aside>
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-3 dark:border-zinc-800 dark:bg-zinc-950">
-          <span className="text-sm text-zinc-600 dark:text-zinc-400">
-            {user.email}
-          </span>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-zinc-900 dark:text-zinc-100">
+              {session.user.name}
+            </span>
+            <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+              {session.user.role}
+            </span>
+          </div>
           <SignOutButton />
         </header>
         <main className="flex-1 bg-zinc-50 p-6 dark:bg-zinc-900">

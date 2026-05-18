@@ -1,9 +1,28 @@
-import type { NextRequest } from 'next/server';
-import { updateSession } from '@/lib/supabase/proxy-helper';
+import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 
-export async function proxy(request: NextRequest) {
-  return await updateSession(request);
-}
+const PUBLIC_PATHS = ['/login', '/api/auth'];
+
+export const proxy = auth((req) => {
+  const { pathname } = req.nextUrl;
+  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isLoggedIn = Boolean(req.auth);
+
+  if (!isLoggedIn && !isPublic) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/login';
+    url.searchParams.set('next', pathname);
+    return NextResponse.redirect(url);
+  }
+
+  if (isLoggedIn && pathname === '/login') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/dashboard';
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: [

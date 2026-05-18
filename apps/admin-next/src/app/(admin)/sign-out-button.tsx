@@ -1,19 +1,14 @@
 'use client';
 
 import { useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { signOut } from 'next-auth/react';
 
 export function SignOutButton() {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    startTransition(() => {
-      router.replace('/login');
-      router.refresh();
+  function handleSignOut() {
+    startTransition(async () => {
+      await signOut({ callbackUrl: '/login' });
     });
   }
 

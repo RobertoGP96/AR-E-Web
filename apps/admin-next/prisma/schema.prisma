@@ -1,0 +1,375 @@
+// Prisma schema mirroring the Django models in backend/api/models/
+// Database: Neon Postgres (shared with the Django backend).
+// To regenerate after schema changes: pnpm --filter @ar-e-web/admin-next exec prisma generate
+// To inspect / introspect the live DB: pnpm --filter @ar-e-web/admin-next exec prisma db pull
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  user
+  agent
+  accountant
+  logistical
+  admin
+  client
+}
+
+enum OrderStatus {
+  Encargado
+  Procesando
+  Completado
+  Cancelado
+}
+
+enum PayStatus {
+  NoPagado    @map("No pagado")
+  Pagado
+  Parcial
+}
+
+enum ProductStatus {
+  Encargado
+  Comprado
+  Recibido
+  Entregado
+}
+
+enum DeliveryStatus {
+  Pendiente
+  EnTransito @map("En transito")
+  Entregado
+  Fallida
+}
+
+enum PackageStatus {
+  Enviado
+  Recibido
+  Procesado
+}
+
+enum ExpenseCategory {
+  Envio
+  Tasas
+  Sueldo
+  Publicidad
+  Operativo
+  Entrega
+  Otro
+}
+
+model CustomUser {
+  id                       BigInt    @id @default(autoincrement())
+  password                 String    @db.VarChar(128)
+  lastLogin                DateTime? @map("last_login") @db.Timestamptz()
+  isSuperuser              Boolean   @default(false) @map("is_superuser")
+  email                    String?   @unique @db.VarChar(254)
+  name                     String    @db.VarChar(100)
+  lastName                 String    @map("last_name") @db.VarChar(100)
+  homeAddress              String    @map("home_address") @db.VarChar(200)
+  phoneNumber              String    @unique @map("phone_number") @db.VarChar(20)
+  role                     UserRole  @default(client)
+  agentProfit              Float     @default(0) @map("agent_profit")
+  balance                  Float     @default(0)
+  assignedAgentId          BigInt?   @map("assigned_agent_id")
+  assignedAgent            CustomUser?  @relation("AssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  assignedClients          CustomUser[] @relation("AssignedAgent")
+  isStaff                  Boolean   @default(false) @map("is_staff")
+  isActive                 Boolean   @default(true) @map("is_active")
+  dateJoined               DateTime  @default(now()) @map("date_joined") @db.Timestamptz()
+  sentVerificationEmail    Boolean   @default(false) @map("sent_verification_email")
+  isVerified               Boolean   @default(false) @map("is_verified")
+  verificationSecret       String?   @map("verification_secret") @db.VarChar(200)
+  passwordSecret           String?   @map("password_secret") @db.VarChar(200)
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  orders                Order[]          @relation("ClientOrders")
+  managedOrders         Order[]          @relation("SalesManagerOrders")
+  deliveries            DeliverReceip[]
+  createdExpenses       Expense[]
+
+  @@map("api_customuser")
+}
+
+model Shop {
+  id              BigInt              @id @default(autoincrement())
+  name            String              @unique @db.VarChar(100)
+  link            String              @unique @db.VarChar(200)
+  isActive        Boolean             @default(true) @map("is_active")
+  taxRate         Float               @default(0) @map("tax_rate")
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
+
+  products        Product[]
+  buyingAccounts  BuyingAccounts[]
+  buys            ShoppingReceip[]
+
+  @@map("api_shop")
+}
+
+model Category {
+  id                    BigInt          @id @default(autoincrement())
+  name                  String          @unique @db.VarChar(100)
+  shippingCostPerPound  Float           @default(0) @map("shipping_cost_per_pound")
+  clientShippingCharge  Float           @default(0) @map("client_shipping_charge")
+  createdAt             DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt             DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+
+  products              Product[]
+  deliveries            DeliverReceip[]
+
+  @@map("api_category")
+}
+
+model BuyingAccounts {
+  id          BigInt           @id @default(autoincrement())
+  accountName String           @map("account_name") @db.VarChar(100)
+  shopId      BigInt?          @map("shop_id")
+  shop        Shop?            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz()
+
+  buys        ShoppingReceip[]
+
+  @@map("api_buyingaccounts")
+}
+
+model ShoppingReceip {
+  id                   BigInt          @id @default(autoincrement())
+  shoppingAccountId    BigInt          @map("shopping_account_id")
+  shoppingAccount      BuyingAccounts  @relation(fields: [shoppingAccountId], references: [id], onDelete: Cascade)
+  shopOfBuyId          BigInt          @map("shop_of_buy_id")
+  shopOfBuy            Shop            @relation(fields: [shopOfBuyId], references: [id], onDelete: Cascade)
+  statusOfShopping     PayStatus       @default(NoPagado) @map("status_of_shopping")
+  cardId               String?         @map("card_id")
+  buyDate              DateTime        @default(now()) @map("buy_date") @db.Timestamptz()
+  totalCostOfPurchase  Float           @default(0) @map("total_cost_of_purchase")
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+
+  buyedProducts        ProductBuyed[]
+
+  @@map("api_shoppingreceip")
+}
+
+model Order {
+  id                     BigInt      @id @default(autoincrement())
+  clientId               BigInt      @map("client_id")
+  client                 CustomUser  @relation("ClientOrders", fields: [clientId], references: [id], onDelete: Cascade)
+  salesManagerId         BigInt?     @map("sales_manager_id")
+  salesManager           CustomUser? @relation("SalesManagerOrders", fields: [salesManagerId], references: [id], onDelete: Cascade)
+  status                 OrderStatus @default(Encargado)
+  payStatus              PayStatus   @default(NoPagado) @map("pay_status")
+  observations           String?
+  receivedValueOfClient  Float       @default(0) @map("received_value_of_client")
+  balanceApplied         Float       @default(0) @map("balance_applied")
+  paymentDate            DateTime    @default(now()) @map("payment_date") @db.Timestamptz()
+  totalCosts             Float       @default(0) @map("total_costs")
+  createdAt              DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt              DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
+
+  products               Product[]
+
+  @@map("api_order")
+}
+
+model Product {
+  id                  String          @id @default(uuid()) @db.Uuid
+  sku                 String?         @db.VarChar(100)
+  name                String          @db.VarChar(100)
+  link                String?         @db.VarChar(200)
+  imageUrl            String?         @map("image_url") @db.VarChar(200)
+  shopId              BigInt          @map("shop_id")
+  shop                Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  description         String?         @db.VarChar(200)
+  observation         String?         @db.VarChar(200)
+  categoryId          BigInt?         @map("category_id")
+  category            Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  amountRequested     Int             @map("amount_requested")
+  amountPurchased     Int             @default(0) @map("amount_purchased")
+  amountReceived      Int             @default(0) @map("amount_received")
+  amountDelivered     Int             @default(0) @map("amount_delivered")
+  orderId             BigInt          @map("order_id")
+  order               Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status              ProductStatus   @default(Encargado)
+  productPictures     String?         @map("product_pictures")
+  shopCost            Float           @map("shop_cost")
+  shopDeliveryCost    Float           @default(0) @map("shop_delivery_cost")
+  shopTaxes           Float           @default(0) @map("shop_taxes")
+  chargeIva           Boolean         @default(true) @map("charge_iva")
+  baseTax             Float           @default(0) @map("base_tax")
+  shopTaxAmount       Float           @default(0) @map("shop_tax_amount")
+  ownTaxes            Float           @default(0) @map("own_taxes")
+  addedTaxes          Float           @default(0) @map("added_taxes")
+  totalCost           Float           @default(0) @map("total_cost")
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+
+  buys                ProductBuyed[]
+  receiveds           ProductReceived[]
+  delivers            ProductDelivery[]
+
+  @@map("api_product")
+}
+
+model ProductBuyed {
+  id                BigInt          @id @default(autoincrement())
+  originalProductId String          @map("original_product_id") @db.Uuid
+  originalProduct   Product         @relation(fields: [originalProductId], references: [id], onDelete: Cascade)
+  shopDiscount      Float           @default(0) @map("shop_discount")
+  offerDiscount     Float           @default(0) @map("offer_discount")
+  buyDate           DateTime        @default(now()) @map("buy_date") @db.Timestamptz()
+  shopingReceipId   BigInt?         @map("shoping_receip_id")
+  shopingReceip     ShoppingReceip? @relation(fields: [shopingReceipId], references: [id], onDelete: Cascade)
+  amountBuyed       Int             @default(0) @map("amount_buyed")
+  quantityRefuned   Int             @default(0) @map("quantity_refuned")
+  isRefunded        Boolean         @default(false) @map("is_refunded")
+  refundDate        DateTime?       @map("refund_date") @db.Timestamptz()
+  refundAmount      Float           @default(0) @map("refund_amount")
+  refundNotes       String?         @map("refund_notes") @db.VarChar(500)
+  observation       String?         @db.VarChar(200)
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("api_productbuyed")
+}
+
+model Package {
+  id                   BigInt            @id @default(autoincrement())
+  agencyName           String            @map("agency_name") @db.VarChar(100)
+  numberOfTracking     String            @unique @map("number_of_tracking") @db.VarChar(100)
+  statusOfProcessing   PackageStatus     @default(Enviado) @map("status_of_processing")
+  arrivalDate          DateTime          @default(now()) @map("arrival_date") @db.Timestamptz()
+  packagePicture       String?           @map("package_picture")
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
+
+  packageProducts      ProductReceived[]
+
+  @@map("api_package")
+}
+
+model ProductReceived {
+  id                BigInt    @id @default(autoincrement())
+  originalProductId String    @map("original_product_id") @db.Uuid
+  originalProduct   Product   @relation(fields: [originalProductId], references: [id], onDelete: Cascade)
+  packageId         BigInt?   @map("package_id")
+  package           Package?  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  amountReceived    Int       @default(1) @map("amount_received")
+  observation       String?   @db.VarChar(200)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("api_productreceived")
+}
+
+model DeliverReceip {
+  id                BigInt            @id @default(autoincrement())
+  clientId          BigInt            @map("client_id")
+  client            CustomUser        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  categoryId        BigInt?           @map("category_id")
+  category          Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  weight            Float
+  status            DeliveryStatus    @default(Pendiente)
+  paymentStatus     PayStatus         @default(NoPagado) @map("payment_status")
+  paymentDate       DateTime?         @map("payment_date") @db.Timestamptz()
+  paymentAmount     Float             @default(0) @map("payment_amount")
+  balanceApplied    Float             @default(0) @map("balance_applied")
+  deliverDate       DateTime          @default(now()) @map("deliver_date") @db.Timestamptz()
+  deliverPicture    String?           @map("deliver_picture")
+  weightCost        Float             @default(0) @map("weight_cost")
+  managerProfit     Float             @default(0) @map("manager_profit")
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
+
+  deliveredProducts ProductDelivery[]
+
+  @@map("api_deliverreceip")
+}
+
+model ProductDelivery {
+  id                BigInt          @id @default(autoincrement())
+  originalProductId String          @map("original_product_id") @db.Uuid
+  originalProduct   Product         @relation(fields: [originalProductId], references: [id], onDelete: Cascade)
+  deliverReceipId   BigInt?         @map("deliver_receip_id")
+  deliverReceip     DeliverReceip?  @relation(fields: [deliverReceipId], references: [id], onDelete: Cascade)
+  amountDelivered   Int             @default(0) @map("amount_delivered")
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("api_productdelivery")
+}
+
+model CommonInformation {
+  id            BigInt   @id @default(autoincrement())
+  changeRate    Float    @default(0) @map("change_rate")
+  costPerPound  Float    @default(0) @map("cost_per_pound")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("api_commoninformation")
+}
+
+model Balance {
+  id                BigInt   @id @default(autoincrement())
+  startDate         DateTime @map("start_date") @db.Date
+  endDate           DateTime @map("end_date") @db.Date
+  systemWeight      Decimal  @default(0) @map("system_weight") @db.Decimal(12, 2)
+  registeredWeight  Decimal  @default(0) @map("registered_weight") @db.Decimal(12, 2)
+  revenues          Decimal  @default(0) @db.Decimal(12, 2)
+  buysCosts         Decimal  @default(0) @map("buys_costs") @db.Decimal(12, 2)
+  costs             Decimal  @default(0) @db.Decimal(12, 2)
+  expenses          Decimal  @default(0) @db.Decimal(12, 2)
+  notes             String?
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("api_balance")
+}
+
+model Expense {
+  id          BigInt           @id @default(autoincrement())
+  date        DateTime         @default(now()) @db.Timestamptz()
+  amount      Float            @default(0)
+  category    ExpenseCategory  @default(Operativo)
+  description String?
+  createdById BigInt?          @map("created_by_id")
+  createdBy   CustomUser?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("api_expense")
+}
+
+model Invoice {
+  id        BigInt   @id @default(autoincrement())
+  date      DateTime @db.Timestamptz()
+  total     Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tags      Tag[]
+
+  @@map("invoices")
+}
+
+model Tag {
+  id          BigInt   @id @default(autoincrement())
+  invoiceId   BigInt   @map("invoice_id")
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  type        String
+  weight      Decimal  @db.Decimal(10, 2)
+  costPerLb   Decimal  @map("cost_per_lb") @db.Decimal(10, 2)
+  fixedCost   Decimal  @map("fixed_cost") @db.Decimal(10, 2)
+  subtotal    Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("tags")
+}

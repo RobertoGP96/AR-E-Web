@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { signIn } from 'next-auth/react';
 
 interface LoginFormProps {
   nextPath: string;
@@ -16,17 +16,17 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
 
   async function handleSubmit(formData: FormData) {
     setError(undefined);
-    const email = String(formData.get('email') ?? '');
+    const identifier = String(formData.get('identifier') ?? '');
     const password = String(formData.get('password') ?? '');
 
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
+    const result = await signIn('credentials', {
+      identifier,
       password,
+      redirect: false,
     });
 
-    if (signInError) {
-      setError(signInError.message);
+    if (!result || result.error) {
+      setError('Invalid email/phone or password.');
       return;
     }
 
@@ -40,16 +40,16 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
     <form action={handleSubmit} className="space-y-4">
       <div className="space-y-1">
         <label
-          htmlFor="email"
+          htmlFor="identifier"
           className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
         >
-          Email
+          Email or phone number
         </label>
         <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
+          id="identifier"
+          name="identifier"
+          type="text"
+          autoComplete="username"
           required
           className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-zinc-100"
         />
