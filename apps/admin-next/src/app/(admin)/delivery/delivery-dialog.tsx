@@ -16,6 +16,7 @@ import {
 } from './actions';
 import { round2 } from '@/lib/order-cost';
 import { formatCurrency } from '@/lib/format';
+import { ImageUploadField } from '@/components/image-upload-field';
 import {
   DELIVERY_STATUSES,
   type CategoryOption,
@@ -242,11 +243,10 @@ export function DeliveryDialog({
             />
           </div>
 
-          <Field
-            label="Picture URL (optional)"
+          <ImageUploadField
             name="deliverPicture"
-            type="url"
-            defaultValue={delivery?.deliverPicture ?? ''}
+            label="Delivery picture (optional)"
+            defaultUrl={delivery?.deliverPicture}
           />
 
           <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs dark:border-zinc-800 dark:bg-zinc-900">

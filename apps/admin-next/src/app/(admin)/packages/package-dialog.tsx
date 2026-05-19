@@ -8,6 +8,7 @@ import {
   updatePackageAction,
   type ActionResult,
 } from './actions';
+import { ImageUploadField } from '@/components/image-upload-field';
 import { PACKAGE_STATUSES, type PackageRow } from './schema';
 
 interface PackageDialogProps {
@@ -144,13 +145,10 @@ export function PackageDialog({
             required
           />
 
-          <Field
-            label="Picture URL (optional)"
+          <ImageUploadField
             name="packagePicture"
-            type="url"
-            placeholder="https://…"
-            defaultValue={pkg?.packagePicture ?? ''}
-            error={errors['packagePicture']}
+            label="Package picture (optional)"
+            defaultUrl={pkg?.packagePicture}
           />
 
           <div className="flex justify-end gap-2 pt-2">

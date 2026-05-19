@@ -7,7 +7,6 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/users', label: 'Users' },
   { href: '/shops', label: 'Shops' },
-  { href: '/products', label: 'Products' },
   { href: '/orders', label: 'Orders' },
   { href: '/delivery', label: 'Delivery' },
   { href: '/packages', label: 'Packages' },
@@ -17,6 +16,8 @@ const NAV_ITEMS = [
   { href: '/analytics', label: 'Analytics' },
   { href: '/invoices', label: 'Invoices' },
   { href: '/expenses', label: 'Expenses' },
+  { href: '/settings', label: 'Settings' },
+  { href: '/profile', label: 'Profile' },
 ];
 
 export default async function AdminLayout({
