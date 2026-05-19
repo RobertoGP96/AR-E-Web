@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Plus, Pencil, Trash2, Truck, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeliveryDialog } from './delivery-dialog';
@@ -142,7 +143,14 @@ export function DeliveryClient({
               ) : (
                 initialRows.map((row) => (
                   <tr key={row.id} className="text-zinc-800 dark:text-zinc-200">
-                    <td className="px-4 py-3 font-medium">{row.clientName}</td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/delivery/${row.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {row.clientName}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-zinc-500">
                       {row.categoryName ?? (
                         <span className="italic text-zinc-400">—</span>
@@ -172,6 +180,12 @@ export function DeliveryClient({
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex gap-1">
+                        <Link
+                          href={`/delivery/${row.id}`}
+                          className="rounded-md px-2 py-1 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                        >
+                          Open
+                        </Link>
                         <button
                           type="button"
                           onClick={() => setEditTarget(row)}

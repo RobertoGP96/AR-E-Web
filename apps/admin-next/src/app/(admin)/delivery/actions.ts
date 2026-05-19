@@ -6,6 +6,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { computePayStatus, round2 } from '@/lib/order-cost';
 import { recalculateClientBalance } from '@/lib/balance';
+import { recomputeProductAmounts } from '@/lib/product-status';
 import {
   deliveryFormSchema,
   toDbDeliveryStatus,
@@ -231,5 +232,68 @@ export async function deleteDeliveryAction(
   await recalculateClientBalance(existing.clientId);
 
   revalidatePath('/delivery');
+  return { ok: true };
+}
+
+export async function addDeliveredProductAction(
+  deliveryId: string,
+  productId: string,
+  amount: number
+): Promise<ActionResult> {
+  const denied = await requireStaff();
+  if (denied) return denied;
+
+  if (!Number.isInteger(amount) || amount <= 0) {
+    return { ok: false, error: 'Amount must be a positive integer' };
+  }
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { amountReceived: true, amountDelivered: true, name: true },
+  });
+  if (!product) return { ok: false, error: 'Product not found' };
+
+  const remaining = product.amountReceived - product.amountDelivered;
+  if (amount > remaining) {
+    return {
+      ok: false,
+      error: `Only ${remaining} unit(s) of "${product.name}" are received but not yet delivered`,
+    };
+  }
+
+  await prisma.productDelivery.create({
+    data: {
+      deliverReceipId: BigInt(deliveryId),
+      originalProductId: productId,
+      amountDelivered: amount,
+    },
+  });
+  await recomputeProductAmounts(productId);
+
+  revalidatePath(`/delivery/${deliveryId}`);
+  revalidatePath('/orders');
+  return { ok: true };
+}
+
+export async function removeDeliveredProductAction(
+  deliveryId: string,
+  productDeliveryId: string
+): Promise<ActionResult> {
+  const denied = await requireStaff();
+  if (denied) return denied;
+
+  const row = await prisma.productDelivery.findUnique({
+    where: { id: BigInt(productDeliveryId) },
+    select: { originalProductId: true },
+  });
+  if (!row) return { ok: false, error: 'Delivered product not found' };
+
+  await prisma.productDelivery.delete({
+    where: { id: BigInt(productDeliveryId) },
+  });
+  await recomputeProductAmounts(row.originalProductId);
+
+  revalidatePath(`/delivery/${deliveryId}`);
+  revalidatePath('/orders');
   return { ok: true };
 }

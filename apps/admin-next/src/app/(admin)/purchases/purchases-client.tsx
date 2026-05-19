@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Plus, Pencil, Trash2, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 import { PurchaseDialog } from './purchase-dialog';
@@ -127,6 +128,12 @@ export function PurchasesClient({
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex gap-1">
+                        <Link
+                          href={`/purchases/${row.id}`}
+                          className="rounded-md px-2 py-1 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                        >
+                          Open
+                        </Link>
                         <button
                           type="button"
                           onClick={() => setEditTarget(row)}

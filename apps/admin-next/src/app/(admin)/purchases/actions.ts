@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { recomputeProductAmounts } from '@/lib/product-status';
 import { purchaseFormSchema, toDbPayStatus } from './schema';
 
 export type ActionResult =
@@ -118,6 +119,102 @@ export async function updatePurchaseAction(
   }
 
   revalidatePath('/purchases');
+  return { ok: true };
+}
+
+export async function addBuyedProductAction(
+  purchaseId: string,
+  productId: string,
+  amount: number
+): Promise<ActionResult> {
+  const denied = await requireStaff();
+  if (denied) return denied;
+
+  if (!Number.isInteger(amount) || amount <= 0) {
+    return { ok: false, error: 'Amount must be a positive integer' };
+  }
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true },
+  });
+  if (!product) return { ok: false, error: 'Product not found' };
+
+  await prisma.productBuyed.create({
+    data: {
+      shopingReceipId: BigInt(purchaseId),
+      originalProductId: productId,
+      amountBuyed: amount,
+    },
+  });
+  await recomputeProductAmounts(productId);
+
+  revalidatePath(`/purchases/${purchaseId}`);
+  revalidatePath('/orders');
+  return { ok: true };
+}
+
+export async function removeBuyedProductAction(
+  purchaseId: string,
+  buyedProductId: string
+): Promise<ActionResult> {
+  const denied = await requireStaff();
+  if (denied) return denied;
+
+  const row = await prisma.productBuyed.findUnique({
+    where: { id: BigInt(buyedProductId) },
+    select: { originalProductId: true },
+  });
+  if (!row) return { ok: false, error: 'Bought product not found' };
+
+  await prisma.productBuyed.delete({
+    where: { id: BigInt(buyedProductId) },
+  });
+  await recomputeProductAmounts(row.originalProductId);
+
+  revalidatePath(`/purchases/${purchaseId}`);
+  revalidatePath('/orders');
+  return { ok: true };
+}
+
+export async function refundBuyedProductAction(
+  purchaseId: string,
+  buyedProductId: string,
+  quantity: number,
+  amount: number,
+  notes: string
+): Promise<ActionResult> {
+  const denied = await requireStaff();
+  if (denied) return denied;
+
+  const row = await prisma.productBuyed.findUnique({
+    where: { id: BigInt(buyedProductId) },
+    select: { originalProductId: true, amountBuyed: true },
+  });
+  if (!row) return { ok: false, error: 'Bought product not found' };
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    return { ok: false, error: 'Refund quantity must be a positive integer' };
+  }
+  if (quantity > row.amountBuyed) {
+    return {
+      ok: false,
+      error: `Cannot refund more than the ${row.amountBuyed} bought`,
+    };
+  }
+
+  await prisma.productBuyed.update({
+    where: { id: BigInt(buyedProductId) },
+    data: {
+      quantityRefuned: quantity,
+      refundAmount: amount,
+      refundNotes: notes.trim() || null,
+      isRefunded: quantity >= row.amountBuyed,
+      refundDate: new Date(),
+    },
+  });
+  await recomputeProductAmounts(row.originalProductId);
+
+  revalidatePath(`/purchases/${purchaseId}`);
+  revalidatePath('/orders');
   return { ok: true };
 }
 
