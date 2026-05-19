@@ -30,14 +30,14 @@ export default async function LoginPage({
       />
 
       {/* Brand panel */}
-      <div className="relative hidden flex-col justify-between p-12 lg:flex">
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand via-orange-900 to-black p-12 lg:flex">
         <Image
           src="/logo.svg"
           alt="AR-E"
-          width={150}
-          height={56}
+          width={260}
+          height={104}
           priority
-          className="h-14 w-auto object-contain brightness-0 invert"
+          className="h-24 w-auto object-contain brightness-0 invert"
         />
 
         <div className="space-y-6 text-white">
