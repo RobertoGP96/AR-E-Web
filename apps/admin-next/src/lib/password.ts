@@ -1,4 +1,24 @@
-import { pbkdf2Sync, timingSafeEqual } from 'node:crypto';
+import { pbkdf2Sync, randomBytes, timingSafeEqual } from 'node:crypto';
+
+const DEFAULT_ITERATIONS = 600_000;
+
+/**
+ * Hash a plaintext password in Django's pbkdf2_sha256 format so the
+ * existing Django backend (which shares this DB) can also verify it.
+ * Format: pbkdf2_sha256$<iterations>$<salt>$<base64_hash>
+ * Salt must not contain "$" (the field separator).
+ */
+export function hashDjangoPassword(
+  plain: string,
+  iterations: number = DEFAULT_ITERATIONS
+): string {
+  const salt = randomBytes(18)
+    .toString('base64')
+    .replace(/[+/=]/g, '')
+    .slice(0, 22);
+  const derived = pbkdf2Sync(plain, salt, iterations, 32, 'sha256');
+  return `pbkdf2_sha256$${iterations}$${salt}$${derived.toString('base64')}`;
+}
 
 /**
  * Verify a plaintext password against a Django pbkdf2_sha256 hash.
