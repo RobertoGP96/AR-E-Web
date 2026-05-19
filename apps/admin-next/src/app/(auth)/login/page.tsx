@@ -19,16 +19,33 @@ export default async function LoginPage({
 
   return (
     <div className="font-sans grid min-h-screen lg:grid-cols-2">
-      {/* Left: logo / brand panel — orange→black gradient */}
-      <div className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand via-orange-900 to-black p-12 lg:flex">
+      {/* Left: logo / brand panel — client-app look: orange clip-path
+          polygon blobs, blurred, on a near-black base */}
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-[oklch(21.779%_0.00002_271.152)] p-12 lg:flex">
         <div
           aria-hidden
-          className="pointer-events-none absolute -left-32 -top-32 h-[32rem] w-[32rem] rounded-full bg-brand/40 blur-3xl motion-safe:animate-pulse"
-        />
+          className="pointer-events-none absolute inset-x-0 -top-40 transform-gpu overflow-hidden blur-3xl"
+        >
+          <div
+            style={{
+              clipPath:
+                'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
+            }}
+            className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] max-w-none -translate-x-1/2 rotate-30 bg-gradient-to-tr from-[#dd6540] to-[#ca9b0d] opacity-30"
+          />
+        </div>
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-40 -right-24 h-[34rem] w-[34rem] rounded-full bg-orange-600/20 blur-3xl"
-        />
+          className="pointer-events-none absolute inset-x-0 bottom-0 transform-gpu overflow-hidden blur-3xl"
+        >
+          <div
+            style={{
+              clipPath:
+                'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
+            }}
+            className="relative left-[calc(50%+3rem)] aspect-[1155/674] w-[36.125rem] max-w-none -translate-x-1/2 bg-gradient-to-tr from-[#fab834] to-[#885b00] opacity-30"
+          />
+        </div>
 
         <Image
           src="/logo.svg"
