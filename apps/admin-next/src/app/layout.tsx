@@ -21,14 +21,8 @@ export const metadata: Metadata = {
   description: "Shein Shop Management Admin Panel",
   applicationName: "AR-E Admin",
   manifest: "/manifest.webmanifest",
-  icons: {
-    icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico", sizes: "any" },
-    ],
-    apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
-    shortcut: ["/favicon.ico"],
-  },
+  // Icons are auto-wired by the app/ file conventions
+  // (favicon.ico, icon.svg, icon.png, apple-icon.png).
   appleWebApp: {
     capable: true,
     title: "AR-E Admin",
