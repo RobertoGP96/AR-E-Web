@@ -60,7 +60,7 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
   }
 
   return (
-    <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/60 bg-white/80 p-7 shadow-2xl ring-1 ring-black/5 backdrop-blur-xl sm:p-9">
+    <div className="w-full max-w-md p-2 sm:p-4">
       <div className="space-y-1.5">
         <div className="mb-5 flex justify-center lg:hidden">
           <Image

@@ -18,29 +18,28 @@ export default async function LoginPage({
   const { next, error } = await searchParams;
 
   return (
-    <div className="font-sans relative grid min-h-screen overflow-hidden bg-gradient-to-br from-brand via-orange-900 to-black lg:grid-cols-2">
-      {/* Decorative glow over the orange→black gradient */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-32 -top-32 h-[32rem] w-[32rem] rounded-full bg-brand/40 blur-3xl motion-safe:animate-pulse"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-40 right-0 h-[34rem] w-[34rem] rounded-full bg-orange-600/20 blur-3xl"
-      />
-
-      {/* Brand panel */}
+    <div className="font-sans grid min-h-screen lg:grid-cols-2">
+      {/* Left: logo / brand panel — orange→black gradient */}
       <div className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand via-orange-900 to-black p-12 lg:flex">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-32 -top-32 h-[32rem] w-[32rem] rounded-full bg-brand/40 blur-3xl motion-safe:animate-pulse"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-40 -right-24 h-[34rem] w-[34rem] rounded-full bg-orange-600/20 blur-3xl"
+        />
+
         <Image
           src="/logo.svg"
           alt="AR-E"
           width={260}
           height={104}
           priority
-          className="h-24 w-auto object-contain brightness-0 invert"
+          className="relative h-24 w-auto object-contain brightness-0 invert"
         />
 
-        <div className="space-y-6 text-white">
+        <div className="relative space-y-6 text-white">
           <h2 className="max-w-md text-3xl font-semibold leading-tight tracking-tight">
             Panel de administración
           </h2>
@@ -56,13 +55,13 @@ export default async function LoginPage({
           </ul>
         </div>
 
-        <p className="text-xs text-white/50">
+        <p className="relative text-xs text-white/50">
           © {new Date().getFullYear()} AR-E · Shein Shop Management
         </p>
       </div>
 
-      {/* Auth panel */}
-      <div className="relative flex items-center justify-center px-4 py-10 sm:px-6">
+      {/* Right: form panel — white background */}
+      <div className="flex items-center justify-center bg-white px-4 py-10 sm:px-6">
         <LoginForm nextPath={next ?? '/dashboard'} initialError={error} />
       </div>
     </div>
