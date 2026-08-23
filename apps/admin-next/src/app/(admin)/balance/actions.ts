@@ -2,35 +2,17 @@
 
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
-import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import {
+  requireRole,
+  zodFieldErrors,
+  parseId,
+  ROLES,
+} from '@/lib/action-helpers';
 import { balanceFormSchema } from './schema';
 
-export type ActionResult =
-  | { ok: true }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
-
-async function requireAdminLikeRole(): Promise<ActionResult | null> {
-  const session = await auth();
-  if (!session?.user) return { ok: false, error: 'Not authenticated' };
-  const allowed = new Set(['admin', 'accountant']);
-  if (!allowed.has(session.user.role)) {
-    return { ok: false, error: 'Forbidden' };
-  }
-  return null;
-}
-
-function flattenZodErrors(
-  result: ReturnType<typeof balanceFormSchema.safeParse>
-): Record<string, string> {
-  if (result.success) return {};
-  const out: Record<string, string> = {};
-  for (const issue of result.error.issues) {
-    const key = issue.path.join('.');
-    if (!out[key]) out[key] = issue.message;
-  }
-  return out;
-}
+export type { ActionResult } from '@/lib/action-helpers';
+import type { ActionResult } from '@/lib/action-helpers';
 
 function parseFormData(formData: FormData) {
   return balanceFormSchema.safeParse({
@@ -50,7 +32,7 @@ export async function createBalanceAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireAdminLikeRole();
+  const { denied } = await requireRole(ROLES.finance);
   if (denied) return denied;
 
   const parsed = parseFormData(formData);
@@ -58,7 +40,7 @@ export async function createBalanceAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: flattenZodErrors(parsed),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
 
@@ -84,26 +66,24 @@ export async function updateBalanceAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireAdminLikeRole();
+  const { denied } = await requireRole(ROLES.finance);
   if (denied) return denied;
 
-  const idRaw = formData.get('id');
-  if (typeof idRaw !== 'string' || !idRaw) {
-    return { ok: false, error: 'Missing id' };
-  }
+  const balanceId = parseId(formData.get('id'));
+  if (!balanceId) return { ok: false, error: 'Missing or invalid id' };
 
   const parsed = parseFormData(formData);
   if (!parsed.success) {
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: flattenZodErrors(parsed),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
 
   try {
     await prisma.balance.update({
-      where: { id: BigInt(idRaw) },
+      where: { id: balanceId },
       data: {
         startDate: new Date(parsed.data.startDate),
         endDate: new Date(parsed.data.endDate),
@@ -131,11 +111,14 @@ export async function updateBalanceAction(
 }
 
 export async function deleteBalanceAction(id: string): Promise<ActionResult> {
-  const denied = await requireAdminLikeRole();
+  const { denied } = await requireRole(ROLES.finance);
   if (denied) return denied;
 
+  const balanceId = parseId(id);
+  if (!balanceId) return { ok: false, error: 'Invalid balance id' };
+
   try {
-    await prisma.balance.delete({ where: { id: BigInt(id) } });
+    await prisma.balance.delete({ where: { id: balanceId } });
   } catch (err) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&

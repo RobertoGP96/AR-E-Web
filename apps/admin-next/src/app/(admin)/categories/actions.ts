@@ -2,43 +2,23 @@
 
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
-import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import {
+  requireRole,
+  zodFieldErrors,
+  parseId,
+  ROLES,
+} from '@/lib/action-helpers';
 import { categoryFormSchema } from './schema';
 
-export type ActionResult =
-  | { ok: true }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
-
-async function requireAdminLikeRole(): Promise<ActionResult | null> {
-  const session = await auth();
-  if (!session?.user) {
-    return { ok: false, error: 'Not authenticated' };
-  }
-  const allowed = new Set(['admin', 'agent', 'accountant', 'logistical']);
-  if (!allowed.has(session.user.role)) {
-    return { ok: false, error: 'Forbidden' };
-  }
-  return null;
-}
-
-function flattenZodErrors(
-  error: ReturnType<typeof categoryFormSchema.safeParse>
-): Record<string, string> {
-  if (error.success) return {};
-  const out: Record<string, string> = {};
-  for (const issue of error.error.issues) {
-    const key = issue.path.join('.');
-    if (!out[key]) out[key] = issue.message;
-  }
-  return out;
-}
+export type { ActionResult } from '@/lib/action-helpers';
+import type { ActionResult } from '@/lib/action-helpers';
 
 export async function createCategoryAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireAdminLikeRole();
+  const { denied } = await requireRole(ROLES.categories);
   if (denied) return denied;
 
   const parsed = categoryFormSchema.safeParse({
@@ -51,7 +31,7 @@ export async function createCategoryAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: flattenZodErrors(parsed),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
 
@@ -85,13 +65,11 @@ export async function updateCategoryAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireAdminLikeRole();
+  const { denied } = await requireRole(ROLES.categories);
   if (denied) return denied;
 
-  const idRaw = formData.get('id');
-  if (typeof idRaw !== 'string' || !idRaw) {
-    return { ok: false, error: 'Missing id' };
-  }
+  const categoryId = parseId(formData.get('id'));
+  if (!categoryId) return { ok: false, error: 'Missing or invalid id' };
 
   const parsed = categoryFormSchema.safeParse({
     name: formData.get('name'),
@@ -103,13 +81,13 @@ export async function updateCategoryAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: flattenZodErrors(parsed),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
 
   try {
     await prisma.category.update({
-      where: { id: BigInt(idRaw) },
+      where: { id: categoryId },
       data: {
         name: parsed.data.name,
         shippingCostPerPound: parsed.data.shippingCostPerPound,
@@ -137,11 +115,14 @@ export async function updateCategoryAction(
 }
 
 export async function deleteCategoryAction(id: string): Promise<ActionResult> {
-  const denied = await requireAdminLikeRole();
+  const { denied } = await requireRole(ROLES.categories);
   if (denied) return denied;
 
+  const categoryId = parseId(id);
+  if (!categoryId) return { ok: false, error: 'Invalid category id' };
+
   try {
-    await prisma.category.delete({ where: { id: BigInt(id) } });
+    await prisma.category.delete({ where: { id: categoryId } });
   } catch (err) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&

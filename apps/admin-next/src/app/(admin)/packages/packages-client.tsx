@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, Pencil, Trash2, Box, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Box, Search, PackageCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { PackageDialog } from './package-dialog';
 import { DeletePackageDialog } from './delete-dialog';
@@ -152,7 +153,12 @@ export function PackagesClient({
                 initialRows.map((row) => (
                   <tr key={row.id} className="text-zinc-800 dark:text-zinc-200">
                     <td className="px-4 py-3 font-mono text-xs">
-                      {row.numberOfTracking}
+                      <Link
+                        href={`/packages/${row.id}`}
+                        className="hover:underline"
+                      >
+                        {row.numberOfTracking}
+                      </Link>
                     </td>
                     <td className="px-4 py-3">{row.agencyName}</td>
                     <td className="px-4 py-3 text-zinc-500">
@@ -179,6 +185,13 @@ export function PackagesClient({
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex gap-1">
+                        <Link
+                          href={`/packages/${row.id}`}
+                          aria-label={`Recepción de ${row.numberOfTracking}`}
+                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                        >
+                          <PackageCheck className="h-4 w-4" aria-hidden />
+                        </Link>
                         <button
                           type="button"
                           onClick={() => setEditTarget(row)}
@@ -214,12 +227,22 @@ export function PackagesClient({
               <li key={row.id} className="space-y-2 px-4 py-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="font-mono text-xs">
+                    <Link
+                      href={`/packages/${row.id}`}
+                      className="font-mono text-xs hover:underline"
+                    >
                       {row.numberOfTracking}
-                    </div>
+                    </Link>
                     <div className="text-sm font-medium">{row.agencyName}</div>
                   </div>
                   <div className="flex gap-1">
+                    <Link
+                      href={`/packages/${row.id}`}
+                      aria-label={`Recepción de ${row.numberOfTracking}`}
+                      className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    >
+                      <PackageCheck className="h-4 w-4" aria-hidden />
+                    </Link>
                     <button
                       type="button"
                       onClick={() => setEditTarget(row)}

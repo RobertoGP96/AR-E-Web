@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
-import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import {
   computeProductCost,
@@ -12,71 +11,62 @@ import {
 } from '@/lib/order-cost';
 import { recalculateClientBalance } from '@/lib/balance';
 import {
+  requireRole,
+  zodFieldErrors,
+  parseId,
+  ROLES,
+} from '@/lib/action-helpers';
+import {
   orderFormSchema,
   productFormSchema,
   toDbPayStatus,
 } from './schema';
 
-export type ActionResult =
-  | { ok: true; id?: string }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
-
-async function requireStaff(): Promise<ActionResult | null> {
-  const session = await auth();
-  if (!session?.user) return { ok: false, error: 'Not authenticated' };
-  const allowed = new Set(['admin', 'agent', 'accountant', 'logistical']);
-  if (!allowed.has(session.user.role)) {
-    return { ok: false, error: 'Forbidden' };
-  }
-  return null;
-}
-
-function zErrors(
-  issues: ReadonlyArray<{ path: PropertyKey[]; message: string }>
-): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const issue of issues) {
-    const key = issue.path.map(String).join('.');
-    if (!out[key]) out[key] = issue.message;
-  }
-  return out;
-}
+export type { ActionResult } from '@/lib/action-helpers';
+import type { ActionResult } from '@/lib/action-helpers';
 
 /**
  * Mirrors Order.update_total_costs() + the pay_status branch in
  * api/models/orders.py. Always run inside (or right after) a product
- * mutation so the cached total stays correct.
+ * mutation so the cached total stays correct. Runs as one transaction
+ * so concurrent product edits cannot persist a stale total.
  */
 async function refreshOrderTotals(orderId: bigint): Promise<void> {
-  const products = await prisma.product.findMany({
-    where: { orderId },
-    select: { totalCost: true },
+  await prisma.$transaction(async (tx) => {
+    const products = await tx.product.findMany({
+      where: { orderId },
+      select: { totalCost: true },
+    });
+    const totalCosts = round2(
+      products.reduce((sum, p) => sum + p.totalCost, 0)
+    );
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      select: {
+        receivedValueOfClient: true,
+        balanceApplied: true,
+        clientId: true,
+      },
+    });
+    if (!order) return;
+    const payStatus = computePayStatus(
+      totalCosts,
+      order.receivedValueOfClient,
+      order.balanceApplied
+    );
+    await tx.order.update({
+      where: { id: orderId },
+      data: { totalCosts, payStatus: toDbPayStatus(payStatus) },
+    });
+    await recalculateClientBalance(order.clientId, tx);
   });
-  const totalCosts = round2(
-    products.reduce((sum, p) => sum + p.totalCost, 0)
-  );
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    select: { receivedValueOfClient: true, balanceApplied: true, clientId: true },
-  });
-  if (!order) return;
-  const payStatus = computePayStatus(
-    totalCosts,
-    order.receivedValueOfClient,
-    order.balanceApplied
-  );
-  await prisma.order.update({
-    where: { id: orderId },
-    data: { totalCosts, payStatus: toDbPayStatus(payStatus) },
-  });
-  await recalculateClientBalance(order.clientId);
 }
 
 export async function createOrderAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireStaff();
+  const { denied } = await requireRole(ROLES.orders);
   if (denied) return denied;
 
   const parsed = orderFormSchema.safeParse({
@@ -91,15 +81,21 @@ export async function createOrderAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: zErrors(parsed.error.issues),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
   const d = parsed.data;
+  const clientId = parseId(d.clientId);
+  if (!clientId) return { ok: false, error: 'Invalid client id' };
+  const salesManagerId = d.salesManagerId ? parseId(d.salesManagerId) : null;
+  if (d.salesManagerId && !salesManagerId) {
+    return { ok: false, error: 'Invalid sales manager id' };
+  }
 
   const order = await prisma.order.create({
     data: {
-      clientId: BigInt(d.clientId),
-      salesManagerId: d.salesManagerId ? BigInt(d.salesManagerId) : null,
+      clientId,
+      salesManagerId,
       status: d.status,
       observations: d.observations,
       receivedValueOfClient: d.receivedValueOfClient,
@@ -109,7 +105,7 @@ export async function createOrderAction(
       ),
     },
   });
-  await recalculateClientBalance(BigInt(d.clientId));
+  await recalculateClientBalance(clientId);
 
   revalidatePath('/orders');
   return { ok: true, id: order.id.toString() };
@@ -119,13 +115,12 @@ export async function updateOrderAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireStaff();
+  const { denied } = await requireRole(ROLES.orders);
   if (denied) return denied;
 
-  const idRaw = formData.get('id');
-  if (typeof idRaw !== 'string' || !idRaw) {
-    return { ok: false, error: 'Missing id' };
-  }
+  const orderId = parseId(formData.get('id'));
+  if (!orderId) return { ok: false, error: 'Missing or invalid id' };
+
   const parsed = orderFormSchema.safeParse({
     clientId: formData.get('clientId'),
     salesManagerId: formData.get('salesManagerId') ?? '',
@@ -138,11 +133,16 @@ export async function updateOrderAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: zErrors(parsed.error.issues),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
   const d = parsed.data;
-  const orderId = BigInt(idRaw);
+  const clientId = parseId(d.clientId);
+  if (!clientId) return { ok: false, error: 'Invalid client id' };
+  const salesManagerId = d.salesManagerId ? parseId(d.salesManagerId) : null;
+  if (d.salesManagerId && !salesManagerId) {
+    return { ok: false, error: 'Invalid sales manager id' };
+  }
 
   const existing = await prisma.order.findUnique({
     where: { id: orderId },
@@ -153,8 +153,8 @@ export async function updateOrderAction(
   await prisma.order.update({
     where: { id: orderId },
     data: {
-      clientId: BigInt(d.clientId),
-      salesManagerId: d.salesManagerId ? BigInt(d.salesManagerId) : null,
+      clientId,
+      salesManagerId,
       status: d.status,
       observations: d.observations,
       receivedValueOfClient: d.receivedValueOfClient,
@@ -171,20 +171,21 @@ export async function updateOrderAction(
 
   // Client may have changed — recalc both old and new.
   await recalculateClientBalance(existing.clientId);
-  if (existing.clientId.toString() !== d.clientId) {
-    await recalculateClientBalance(BigInt(d.clientId));
+  if (existing.clientId !== clientId) {
+    await recalculateClientBalance(clientId);
   }
 
   revalidatePath('/orders');
-  revalidatePath(`/orders/${idRaw}`);
+  revalidatePath(`/orders/${orderId.toString()}`);
   return { ok: true };
 }
 
 export async function deleteOrderAction(id: string): Promise<ActionResult> {
-  const denied = await requireStaff();
+  const { denied } = await requireRole(ROLES.orders);
   if (denied) return denied;
 
-  const orderId = BigInt(id);
+  const orderId = parseId(id);
+  if (!orderId) return { ok: false, error: 'Invalid order id' };
   const existing = await prisma.order.findUnique({
     where: { id: orderId },
     select: { clientId: true },
@@ -235,10 +236,16 @@ async function upsertProduct(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: zErrors(parsed.error.issues),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
   const d = parsed.data;
+  const shopId = parseId(d.shopId);
+  if (!shopId) return { ok: false, error: 'Invalid shop id' };
+  const categoryId = d.categoryId ? parseId(d.categoryId) : null;
+  if (d.categoryId && !categoryId) {
+    return { ok: false, error: 'Invalid category id' };
+  }
 
   const cost = computeProductCost({
     shopCost: d.shopCost,
@@ -252,8 +259,8 @@ async function upsertProduct(
 
   const baseData = {
     name: d.name,
-    shopId: BigInt(d.shopId),
-    categoryId: d.categoryId ? BigInt(d.categoryId) : null,
+    shopId,
+    categoryId,
     link: d.link,
     sku: d.sku,
     description: d.description,
@@ -321,38 +328,37 @@ export async function createProductAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireStaff();
+  const { denied } = await requireRole(ROLES.orders);
   if (denied) return denied;
-  const orderIdRaw = formData.get('orderId');
-  if (typeof orderIdRaw !== 'string' || !orderIdRaw) {
-    return { ok: false, error: 'Missing order id' };
-  }
-  return upsertProduct(formData, BigInt(orderIdRaw));
+  const orderId = parseId(formData.get('orderId'));
+  if (!orderId) return { ok: false, error: 'Missing or invalid order id' };
+  return upsertProduct(formData, orderId);
 }
 
 export async function updateProductAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireStaff();
+  const { denied } = await requireRole(ROLES.orders);
   if (denied) return denied;
-  const orderIdRaw = formData.get('orderId');
+  const orderId = parseId(formData.get('orderId'));
   const productId = formData.get('productId');
-  if (typeof orderIdRaw !== 'string' || !orderIdRaw) {
-    return { ok: false, error: 'Missing order id' };
-  }
+  if (!orderId) return { ok: false, error: 'Missing or invalid order id' };
   if (typeof productId !== 'string' || !productId) {
     return { ok: false, error: 'Missing product id' };
   }
-  return upsertProduct(formData, BigInt(orderIdRaw), productId);
+  return upsertProduct(formData, orderId, productId);
 }
 
 export async function deleteProductAction(
   orderId: string,
   productId: string
 ): Promise<ActionResult> {
-  const denied = await requireStaff();
+  const { denied } = await requireRole(ROLES.orders);
   if (denied) return denied;
+
+  const oid = parseId(orderId);
+  if (!oid) return { ok: false, error: 'Invalid order id' };
 
   try {
     await prisma.product.delete({ where: { id: productId } });
@@ -372,7 +378,7 @@ export async function deleteProductAction(
     throw err;
   }
 
-  await refreshOrderTotals(BigInt(orderId));
+  await refreshOrderTotals(oid);
   revalidatePath(`/orders/${orderId}`);
   revalidatePath('/orders');
   return { ok: true };

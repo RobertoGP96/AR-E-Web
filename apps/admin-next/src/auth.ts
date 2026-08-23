@@ -2,8 +2,7 @@ import NextAuth, { type DefaultSession } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
 import { verifyDjangoPassword } from '@/lib/password';
-
-type Role = 'user' | 'agent' | 'accountant' | 'logistical' | 'admin' | 'client';
+import { authConfig, type Role } from '@/auth.config';
 
 declare module 'next-auth' {
   interface Session {
@@ -23,10 +22,7 @@ declare module 'next-auth' {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  // Required behind Vercel's proxy and for preview deployments.
-  trustHost: true,
-  session: { strategy: 'jwt' },
-  pages: { signIn: '/login' },
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -64,20 +60,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.sub = user.id;
-        token.role = user.role;
-        token.phoneNumber = user.phoneNumber;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (token.sub) session.user.id = token.sub;
-      session.user.role = token.role as Role;
-      session.user.phoneNumber = token.phoneNumber as string;
-      return session;
-    },
-  },
 });

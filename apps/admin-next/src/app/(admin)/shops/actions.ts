@@ -2,35 +2,17 @@
 
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
-import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import {
+  requireRole,
+  zodFieldErrors,
+  parseId,
+  ROLES,
+} from '@/lib/action-helpers';
 import { shopFormSchema } from './schema';
 
-export type ActionResult =
-  | { ok: true }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
-
-async function requireAdminLikeRole(): Promise<ActionResult | null> {
-  const session = await auth();
-  if (!session?.user) return { ok: false, error: 'Not authenticated' };
-  const allowed = new Set(['admin', 'agent', 'accountant', 'logistical']);
-  if (!allowed.has(session.user.role)) {
-    return { ok: false, error: 'Forbidden' };
-  }
-  return null;
-}
-
-function flattenZodErrors(
-  result: ReturnType<typeof shopFormSchema.safeParse>
-): Record<string, string> {
-  if (result.success) return {};
-  const out: Record<string, string> = {};
-  for (const issue of result.error.issues) {
-    const key = issue.path.join('.');
-    if (!out[key]) out[key] = issue.message;
-  }
-  return out;
-}
+export type { ActionResult } from '@/lib/action-helpers';
+import type { ActionResult } from '@/lib/action-helpers';
 
 function translateUniqueError(
   err: Prisma.PrismaClientKnownRequestError
@@ -63,7 +45,7 @@ export async function createShopAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireAdminLikeRole();
+  const { denied } = await requireRole(ROLES.shops);
   if (denied) return denied;
 
   const parsed = shopFormSchema.safeParse({
@@ -76,7 +58,7 @@ export async function createShopAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: flattenZodErrors(parsed),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
 
@@ -105,13 +87,11 @@ export async function updateShopAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireAdminLikeRole();
+  const { denied } = await requireRole(ROLES.shops);
   if (denied) return denied;
 
-  const idRaw = formData.get('id');
-  if (typeof idRaw !== 'string' || !idRaw) {
-    return { ok: false, error: 'Missing id' };
-  }
+  const shopId = parseId(formData.get('id'));
+  if (!shopId) return { ok: false, error: 'Missing or invalid id' };
 
   const parsed = shopFormSchema.safeParse({
     name: formData.get('name'),
@@ -123,13 +103,13 @@ export async function updateShopAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: flattenZodErrors(parsed),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
 
   try {
     await prisma.shop.update({
-      where: { id: BigInt(idRaw) },
+      where: { id: shopId },
       data: {
         name: parsed.data.name,
         link: parsed.data.link,
@@ -154,12 +134,15 @@ export async function toggleShopActiveAction(
   id: string,
   nextActive: boolean
 ): Promise<ActionResult> {
-  const denied = await requireAdminLikeRole();
+  const { denied } = await requireRole(ROLES.shops);
   if (denied) return denied;
+
+  const shopId = parseId(id);
+  if (!shopId) return { ok: false, error: 'Invalid shop id' };
 
   try {
     await prisma.shop.update({
-      where: { id: BigInt(id) },
+      where: { id: shopId },
       data: { isActive: nextActive },
     });
   } catch (err) {
@@ -177,11 +160,14 @@ export async function toggleShopActiveAction(
 }
 
 export async function deleteShopAction(id: string): Promise<ActionResult> {
-  const denied = await requireAdminLikeRole();
+  const { denied } = await requireRole(ROLES.shops);
   if (denied) return denied;
 
+  const shopId = parseId(id);
+  if (!shopId) return { ok: false, error: 'Invalid shop id' };
+
   try {
-    await prisma.shop.delete({ where: { id: BigInt(id) } });
+    await prisma.shop.delete({ where: { id: shopId } });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === 'P2025') return { ok: false, error: 'Shop not found' };

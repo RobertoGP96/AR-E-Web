@@ -6,10 +6,10 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { hashDjangoPassword, verifyDjangoPassword } from '@/lib/password';
+import { zodFieldErrors, parseId } from '@/lib/action-helpers';
 
-export type ActionResult =
-  | { ok: true }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
+export type { ActionResult } from '@/lib/action-helpers';
+import type { ActionResult } from '@/lib/action-helpers';
 
 const profileSchema = z.object({
   name: z.string().trim().min(2, 'Min 2 characters').max(100),
@@ -38,23 +38,14 @@ const passwordSchema = z
     path: ['confirm'],
   });
 
-function zErrors(
-  issues: ReadonlyArray<{ path: PropertyKey[]; message: string }>
-): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const issue of issues) {
-    const key = issue.path.map(String).join('.');
-    if (!out[key]) out[key] = issue.message;
-  }
-  return out;
-}
-
 export async function updateProfileAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, error: 'Not authenticated' };
+  const userId = parseId(session.user.id);
+  if (!userId) return { ok: false, error: 'Invalid session' };
 
   const parsed = profileSchema.safeParse({
     name: formData.get('name'),
@@ -66,13 +57,13 @@ export async function updateProfileAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: zErrors(parsed.error.issues),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
 
   try {
     await prisma.customUser.update({
-      where: { id: BigInt(session.user.id) },
+      where: { id: userId },
       data: {
         name: parsed.data.name,
         lastName: parsed.data.lastName,
@@ -104,6 +95,8 @@ export async function changeOwnPasswordAction(
 ): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, error: 'Not authenticated' };
+  const userId = parseId(session.user.id);
+  if (!userId) return { ok: false, error: 'Invalid session' };
 
   const parsed = passwordSchema.safeParse({
     current: formData.get('current'),
@@ -114,12 +107,12 @@ export async function changeOwnPasswordAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: zErrors(parsed.error.issues),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
 
   const user = await prisma.customUser.findUnique({
-    where: { id: BigInt(session.user.id) },
+    where: { id: userId },
     select: { password: true },
   });
   if (!user) return { ok: false, error: 'User not found' };
@@ -133,7 +126,7 @@ export async function changeOwnPasswordAction(
   }
 
   await prisma.customUser.update({
-    where: { id: BigInt(session.user.id) },
+    where: { id: userId },
     data: { password: hashDjangoPassword(parsed.data.next) },
   });
 

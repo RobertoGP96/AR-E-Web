@@ -2,41 +2,24 @@
 
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
-import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { computePayStatus, round2 } from '@/lib/order-cost';
 import { recalculateClientBalance } from '@/lib/balance';
 import { recomputeProductAmounts } from '@/lib/product-status';
+import {
+  requireRole,
+  zodFieldErrors,
+  parseId,
+  ROLES,
+} from '@/lib/action-helpers';
 import {
   deliveryFormSchema,
   toDbDeliveryStatus,
   toDbPayStatus,
 } from './schema';
 
-export type ActionResult =
-  | { ok: true }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
-
-async function requireStaff(): Promise<ActionResult | null> {
-  const session = await auth();
-  if (!session?.user) return { ok: false, error: 'Not authenticated' };
-  const allowed = new Set(['admin', 'agent', 'accountant', 'logistical']);
-  if (!allowed.has(session.user.role)) {
-    return { ok: false, error: 'Forbidden' };
-  }
-  return null;
-}
-
-function zErrors(
-  issues: ReadonlyArray<{ path: PropertyKey[]; message: string }>
-): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const issue of issues) {
-    const key = issue.path.map(String).join('.');
-    if (!out[key]) out[key] = issue.message;
-  }
-  return out;
-}
+export type { ActionResult } from '@/lib/action-helpers';
+import type { ActionResult } from '@/lib/action-helpers';
 
 /**
  * weight_cost  = weight × Category.client_shipping_charge
@@ -87,7 +70,7 @@ export async function createDeliveryAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireStaff();
+  const { denied } = await requireRole(ROLES.delivery);
   if (denied) return denied;
 
   const parsed = parse(formData);
@@ -95,12 +78,16 @@ export async function createDeliveryAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: zErrors(parsed.error.issues),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
   const d = parsed.data;
-  const clientId = BigInt(d.clientId);
-  const categoryId = d.categoryId ? BigInt(d.categoryId) : null;
+  const clientId = parseId(d.clientId);
+  if (!clientId) return { ok: false, error: 'Invalid client id' };
+  const categoryId = d.categoryId ? parseId(d.categoryId) : null;
+  if (d.categoryId && !categoryId) {
+    return { ok: false, error: 'Invalid category id' };
+  }
   const { weightCost, managerProfit } = await deriveCosts(
     clientId,
     categoryId,
@@ -138,32 +125,34 @@ export async function updateDeliveryAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireStaff();
+  const { denied } = await requireRole(ROLES.delivery);
   if (denied) return denied;
 
-  const idRaw = formData.get('id');
-  if (typeof idRaw !== 'string' || !idRaw) {
-    return { ok: false, error: 'Missing id' };
-  }
+  const id = parseId(formData.get('id'));
+  if (!id) return { ok: false, error: 'Missing or invalid id' };
+
   const parsed = parse(formData);
   if (!parsed.success) {
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: zErrors(parsed.error.issues),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
   const d = parsed.data;
-  const id = BigInt(idRaw);
 
   const existing = await prisma.deliverReceip.findUnique({
     where: { id },
-    select: { clientId: true },
+    select: { clientId: true, paymentDate: true },
   });
   if (!existing) return { ok: false, error: 'Delivery not found' };
 
-  const clientId = BigInt(d.clientId);
-  const categoryId = d.categoryId ? BigInt(d.categoryId) : null;
+  const clientId = parseId(d.clientId);
+  if (!clientId) return { ok: false, error: 'Invalid client id' };
+  const categoryId = d.categoryId ? parseId(d.categoryId) : null;
+  if (d.categoryId && !categoryId) {
+    return { ok: false, error: 'Invalid category id' };
+  }
   const { weightCost, managerProfit } = await deriveCosts(
     clientId,
     categoryId,
@@ -185,7 +174,11 @@ export async function updateDeliveryAction(
       paymentStatus: toDbPayStatus(payStatus),
       paymentAmount: d.paymentAmount,
       balanceApplied: d.balanceApplied,
-      paymentDate: d.paymentAmount > 0 ? new Date() : null,
+      // Preserve the original payment date on edits; only stamp a new
+      // one when payment goes from 0 to > 0, and clear it back to null
+      // when payment is removed.
+      paymentDate:
+        d.paymentAmount > 0 ? (existing.paymentDate ?? new Date()) : null,
       deliverDate: new Date(d.deliverDate),
       deliverPicture: d.deliverPicture,
       weightCost,
@@ -194,7 +187,7 @@ export async function updateDeliveryAction(
   });
 
   await recalculateClientBalance(existing.clientId);
-  if (existing.clientId.toString() !== d.clientId) {
+  if (existing.clientId !== clientId) {
     await recalculateClientBalance(clientId);
   }
 
@@ -205,10 +198,11 @@ export async function updateDeliveryAction(
 export async function deleteDeliveryAction(
   id: string
 ): Promise<ActionResult> {
-  const denied = await requireStaff();
+  const { denied } = await requireRole(ROLES.delivery);
   if (denied) return denied;
 
-  const did = BigInt(id);
+  const did = parseId(id);
+  if (!did) return { ok: false, error: 'Invalid delivery id' };
   const existing = await prisma.deliverReceip.findUnique({
     where: { id: did },
     select: { clientId: true },
@@ -240,9 +234,11 @@ export async function addDeliveredProductAction(
   productId: string,
   amount: number
 ): Promise<ActionResult> {
-  const denied = await requireStaff();
+  const { denied } = await requireRole(ROLES.delivery);
   if (denied) return denied;
 
+  const did = parseId(deliveryId);
+  if (!did) return { ok: false, error: 'Invalid delivery id' };
   if (!Number.isInteger(amount) || amount <= 0) {
     return { ok: false, error: 'Amount must be a positive integer' };
   }
@@ -263,7 +259,7 @@ export async function addDeliveredProductAction(
 
   await prisma.productDelivery.create({
     data: {
-      deliverReceipId: BigInt(deliveryId),
+      deliverReceipId: did,
       originalProductId: productId,
       amountDelivered: amount,
     },
@@ -279,18 +275,19 @@ export async function removeDeliveredProductAction(
   deliveryId: string,
   productDeliveryId: string
 ): Promise<ActionResult> {
-  const denied = await requireStaff();
+  const { denied } = await requireRole(ROLES.delivery);
   if (denied) return denied;
 
+  const rowId = parseId(productDeliveryId);
+  if (!rowId) return { ok: false, error: 'Invalid row id' };
+
   const row = await prisma.productDelivery.findUnique({
-    where: { id: BigInt(productDeliveryId) },
+    where: { id: rowId },
     select: { originalProductId: true },
   });
   if (!row) return { ok: false, error: 'Delivered product not found' };
 
-  await prisma.productDelivery.delete({
-    where: { id: BigInt(productDeliveryId) },
-  });
+  await prisma.productDelivery.delete({ where: { id: rowId } });
   await recomputeProductAmounts(row.originalProductId);
 
   revalidatePath(`/delivery/${deliveryId}`);

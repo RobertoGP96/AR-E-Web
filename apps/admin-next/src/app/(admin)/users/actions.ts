@@ -2,39 +2,22 @@
 
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
-import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { hashDjangoPassword } from '@/lib/password';
+import {
+  requireRole,
+  zodFieldErrors,
+  parseId,
+  ROLES,
+} from '@/lib/action-helpers';
 import {
   createUserSchema,
   editUserSchema,
   changePasswordSchema,
 } from './schema';
 
-export type ActionResult =
-  | { ok: true }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
-
-/** Managing users (incl. roles) is admin-only in this app. */
-async function requireAdmin(): Promise<ActionResult | null> {
-  const session = await auth();
-  if (!session?.user) return { ok: false, error: 'Not authenticated' };
-  if (session.user.role !== 'admin') {
-    return { ok: false, error: 'Only admins can manage users' };
-  }
-  return null;
-}
-
-function zErrors(
-  issues: ReadonlyArray<{ path: PropertyKey[]; message: string }>
-): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const issue of issues) {
-    const key = issue.path.map(String).join('.');
-    if (!out[key]) out[key] = issue.message;
-  }
-  return out;
-}
+export type { ActionResult } from '@/lib/action-helpers';
+import type { ActionResult } from '@/lib/action-helpers';
 
 function uniqueError(
   err: Prisma.PrismaClientKnownRequestError
@@ -78,7 +61,7 @@ export async function createUserAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireAdmin();
+  const { denied } = await requireRole(ROLES.users);
   if (denied) return denied;
 
   const parsed = createUserSchema.safeParse({
@@ -89,7 +72,7 @@ export async function createUserAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: zErrors(parsed.error.issues),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
   const d = parsed.data;
@@ -108,7 +91,7 @@ export async function createUserAction(
         isActive: d.isActive,
         password: hashDjangoPassword(d.password),
         assignedAgentId: d.assignedAgentId
-          ? BigInt(d.assignedAgentId)
+          ? parseId(d.assignedAgentId)
           : null,
       },
     });
@@ -128,27 +111,25 @@ export async function updateUserAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireAdmin();
+  const { denied } = await requireRole(ROLES.users);
   if (denied) return denied;
 
-  const idRaw = formData.get('id');
-  if (typeof idRaw !== 'string' || !idRaw) {
-    return { ok: false, error: 'Missing id' };
-  }
+  const userId = parseId(formData.get('id'));
+  if (!userId) return { ok: false, error: 'Missing or invalid id' };
 
   const parsed = editUserSchema.safeParse(readForm(formData));
   if (!parsed.success) {
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: zErrors(parsed.error.issues),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
   const d = parsed.data;
 
   try {
     await prisma.customUser.update({
-      where: { id: BigInt(idRaw) },
+      where: { id: userId },
       data: {
         name: d.name,
         lastName: d.lastName,
@@ -160,7 +141,7 @@ export async function updateUserAction(
         balance: d.balance,
         isActive: d.isActive,
         assignedAgentId: d.assignedAgentId
-          ? BigInt(d.assignedAgentId)
+          ? parseId(d.assignedAgentId)
           : null,
       },
     });
@@ -181,13 +162,11 @@ export async function changePasswordAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const denied = await requireAdmin();
+  const { denied } = await requireRole(ROLES.users);
   if (denied) return denied;
 
-  const idRaw = formData.get('id');
-  if (typeof idRaw !== 'string' || !idRaw) {
-    return { ok: false, error: 'Missing id' };
-  }
+  const userId = parseId(formData.get('id'));
+  if (!userId) return { ok: false, error: 'Missing or invalid id' };
 
   const parsed = changePasswordSchema.safeParse({
     password: formData.get('password'),
@@ -197,13 +176,13 @@ export async function changePasswordAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: zErrors(parsed.error.issues),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
 
   try {
     await prisma.customUser.update({
-      where: { id: BigInt(idRaw) },
+      where: { id: userId },
       data: { password: hashDjangoPassword(parsed.data.password) },
     });
   } catch (err) {
@@ -224,12 +203,15 @@ export async function toggleUserActiveAction(
   id: string,
   nextActive: boolean
 ): Promise<ActionResult> {
-  const denied = await requireAdmin();
+  const { denied } = await requireRole(ROLES.users);
   if (denied) return denied;
+
+  const userId = parseId(id);
+  if (!userId) return { ok: false, error: 'Invalid user id' };
 
   try {
     await prisma.customUser.update({
-      where: { id: BigInt(id) },
+      where: { id: userId },
       data: { isActive: nextActive },
     });
   } catch (err) {
@@ -247,12 +229,15 @@ export async function toggleUserActiveAction(
 }
 
 export async function verifyUserAction(id: string): Promise<ActionResult> {
-  const denied = await requireAdmin();
+  const { denied } = await requireRole(ROLES.users);
   if (denied) return denied;
+
+  const userId = parseId(id);
+  if (!userId) return { ok: false, error: 'Invalid user id' };
 
   try {
     await prisma.customUser.update({
-      where: { id: BigInt(id) },
+      where: { id: userId },
       data: { isVerified: true, isActive: true },
     });
   } catch (err) {
@@ -270,17 +255,17 @@ export async function verifyUserAction(id: string): Promise<ActionResult> {
 }
 
 export async function deleteUserAction(id: string): Promise<ActionResult> {
-  const guard = await auth();
-  if (!guard?.user) return { ok: false, error: 'Not authenticated' };
-  if (guard.user.role !== 'admin') {
-    return { ok: false, error: 'Only admins can manage users' };
-  }
-  if (guard.user.id === id) {
+  const { denied, user } = await requireRole(ROLES.users);
+  if (denied) return denied;
+  if (user.id === id) {
     return { ok: false, error: 'You cannot delete your own account' };
   }
 
+  const userId = parseId(id);
+  if (!userId) return { ok: false, error: 'Invalid user id' };
+
   try {
-    await prisma.customUser.delete({ where: { id: BigInt(id) } });
+    await prisma.customUser.delete({ where: { id: userId } });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === 'P2025') return { ok: false, error: 'User not found' };

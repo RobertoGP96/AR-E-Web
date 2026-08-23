@@ -2,53 +2,24 @@
 
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
-import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import {
+  requireRole,
+  zodFieldErrors,
+  parseId,
+  ROLES,
+} from '@/lib/action-helpers';
 import { expenseFormSchema } from './schema';
 
-export type ActionResult =
-  | { ok: true }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
-
-type SessionUser = {
-  id: string;
-  role: string;
-  phoneNumber: string;
-  name: string;
-};
-
-async function requireAdminLikeRole(): Promise<
-  { denied: ActionResult } | { user: SessionUser }
-> {
-  const session = await auth();
-  if (!session?.user) {
-    return { denied: { ok: false, error: 'Not authenticated' } };
-  }
-  const allowed = new Set(['admin', 'agent', 'accountant', 'logistical']);
-  if (!allowed.has(session.user.role)) {
-    return { denied: { ok: false, error: 'Forbidden' } };
-  }
-  return { user: session.user };
-}
-
-function flattenZodErrors(
-  result: ReturnType<typeof expenseFormSchema.safeParse>
-): Record<string, string> {
-  if (result.success) return {};
-  const out: Record<string, string> = {};
-  for (const issue of result.error.issues) {
-    const key = issue.path.join('.');
-    if (!out[key]) out[key] = issue.message;
-  }
-  return out;
-}
+export type { ActionResult } from '@/lib/action-helpers';
+import type { ActionResult } from '@/lib/action-helpers';
 
 export async function createExpenseAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const guard = await requireAdminLikeRole();
-  if ('denied' in guard) return guard.denied;
+  const { denied, user } = await requireRole(ROLES.finance);
+  if (denied) return denied;
 
   const parsed = expenseFormSchema.safeParse({
     date: formData.get('date'),
@@ -60,7 +31,7 @@ export async function createExpenseAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: flattenZodErrors(parsed),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
 
@@ -70,7 +41,7 @@ export async function createExpenseAction(
       amount: parsed.data.amount,
       category: parsed.data.category,
       description: parsed.data.description,
-      createdById: BigInt(guard.user.id),
+      createdById: parseId(user.id),
     },
   });
 
@@ -82,13 +53,11 @@ export async function updateExpenseAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const guard = await requireAdminLikeRole();
-  if ('denied' in guard) return guard.denied;
+  const { denied } = await requireRole(ROLES.finance);
+  if (denied) return denied;
 
-  const idRaw = formData.get('id');
-  if (typeof idRaw !== 'string' || !idRaw) {
-    return { ok: false, error: 'Missing id' };
-  }
+  const expenseId = parseId(formData.get('id'));
+  if (!expenseId) return { ok: false, error: 'Missing or invalid id' };
 
   const parsed = expenseFormSchema.safeParse({
     date: formData.get('date'),
@@ -100,13 +69,13 @@ export async function updateExpenseAction(
     return {
       ok: false,
       error: 'Validation failed',
-      fieldErrors: flattenZodErrors(parsed),
+      fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
 
   try {
     await prisma.expense.update({
-      where: { id: BigInt(idRaw) },
+      where: { id: expenseId },
       data: {
         date: new Date(parsed.data.date),
         amount: parsed.data.amount,
@@ -129,11 +98,14 @@ export async function updateExpenseAction(
 }
 
 export async function deleteExpenseAction(id: string): Promise<ActionResult> {
-  const guard = await requireAdminLikeRole();
-  if ('denied' in guard) return guard.denied;
+  const { denied } = await requireRole(ROLES.finance);
+  if (denied) return denied;
+
+  const expenseId = parseId(id);
+  if (!expenseId) return { ok: false, error: 'Invalid expense id' };
 
   try {
-    await prisma.expense.delete({ where: { id: BigInt(id) } });
+    await prisma.expense.delete({ where: { id: expenseId } });
   } catch (err) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&

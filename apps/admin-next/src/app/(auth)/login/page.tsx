@@ -10,6 +10,14 @@ const HIGHLIGHTS = [
   { icon: ShieldCheck, text: 'Acceso por rol, sesión segura' },
 ];
 
+/** Only allow same-site relative paths — `next` comes from the URL. */
+function sanitizeNextPath(next: string | undefined): string {
+  if (!next || !next.startsWith('/') || next.startsWith('//')) {
+    return '/dashboard';
+  }
+  return next;
+}
+
 export default async function LoginPage({
   searchParams,
 }: {
@@ -79,7 +87,7 @@ export default async function LoginPage({
 
       {/* Right: form panel — white background */}
       <div className="flex items-center justify-center bg-white px-4 py-10 sm:px-6">
-        <LoginForm nextPath={next ?? '/dashboard'} initialError={error} />
+        <LoginForm nextPath={sanitizeNextPath(next)} initialError={error} />
       </div>
     </div>
   );

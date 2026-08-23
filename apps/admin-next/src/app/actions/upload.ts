@@ -1,7 +1,7 @@
 'use server';
 
-import { auth } from '@/auth';
 import { uploadToCloudinary, isCloudinaryConfigured } from '@/lib/cloudinary';
+import { requireStaff } from '@/lib/action-helpers';
 
 export type UploadResult =
   | { ok: true; url: string }
@@ -12,8 +12,8 @@ const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
 export async function uploadImageAction(
   formData: FormData
 ): Promise<UploadResult> {
-  const session = await auth();
-  if (!session?.user) return { ok: false, error: 'Not authenticated' };
+  const { denied } = await requireStaff();
+  if (denied) return { ok: false, error: denied.error };
 
   if (!isCloudinaryConfigured()) {
     return {
@@ -37,9 +37,8 @@ export async function uploadImageAction(
     const url = await uploadToCloudinary(file);
     return { ok: true, url };
   } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : 'Upload failed',
-    };
+    // Don't leak upstream (Cloudinary) error detail to the client.
+    console.error('Image upload failed:', err);
+    return { ok: false, error: 'Upload failed — try again' };
   }
 }

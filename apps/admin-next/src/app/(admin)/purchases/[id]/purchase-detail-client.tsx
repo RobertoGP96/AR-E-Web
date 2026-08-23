@@ -251,8 +251,11 @@ function RefundDialog({
   onSuccess: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [quantity, setQuantity] = useState(row.quantityRefuned || 1);
-  const [amount, setAmount] = useState(row.refundAmount || 0);
+  // Refunds accumulate server-side; this dialog records an ADDITIONAL
+  // refund, so it starts at 1/0 and caps at what is left to refund.
+  const refundable = Math.max(0, row.amountBuyed - row.quantityRefuned);
+  const [quantity, setQuantity] = useState(Math.min(1, refundable));
+  const [amount, setAmount] = useState(0);
   const [notes, setNotes] = useState('');
 
   function submit() {
@@ -283,22 +286,28 @@ function RefundDialog({
           Refund — {row.productName}
         </h2>
         <p className="text-xs text-zinc-500">
-          {row.amountBuyed} bought. Refunding reduces the product&apos;s
-          purchased amount and may change its status.
+          {row.amountBuyed} bought
+          {row.quantityRefuned > 0
+            ? `, ${row.quantityRefuned} already refunded`
+            : ''}
+          . Refunding reduces the product&apos;s purchased amount and may
+          change its status.
         </p>
         <label className="block space-y-1">
-          <span className="text-xs text-zinc-500">Quantity refunded</span>
+          <span className="text-xs text-zinc-500">
+            Quantity to refund (max {refundable})
+          </span>
           <input
             type="number"
             min={1}
-            max={row.amountBuyed}
+            max={refundable}
             value={quantity}
             onChange={(e) =>
               setQuantity(
                 Math.max(
                   1,
                   Math.min(
-                    row.amountBuyed,
+                    refundable,
                     Math.floor(Number(e.target.value) || 1)
                   )
                 )
@@ -339,7 +348,7 @@ function RefundDialog({
           <button
             type="button"
             onClick={submit}
-            disabled={isPending}
+            disabled={isPending || refundable === 0}
             className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-70 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
             {isPending ? 'Saving…' : 'Record refund'}
