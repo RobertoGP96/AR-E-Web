@@ -19,6 +19,16 @@ export default async function ShopsPage({ searchParams }: PageProps) {
           ],
         }
       : undefined,
+    include: {
+      buyingAccounts: {
+        select: {
+          id: true,
+          accountName: true,
+          _count: { select: { buys: true } },
+        },
+        orderBy: { accountName: 'asc' },
+      },
+    },
     orderBy: { name: 'asc' },
   });
 
@@ -30,6 +40,11 @@ export default async function ShopsPage({ searchParams }: PageProps) {
     taxRate: s.taxRate,
     createdAt: s.createdAt.toISOString(),
     updatedAt: s.updatedAt.toISOString(),
+    accounts: s.buyingAccounts.map((a) => ({
+      id: a.id.toString(),
+      accountName: a.accountName,
+      buysCount: a._count.buys,
+    })),
   }));
 
   return <ShopsClient initialRows={rows} initialQuery={search} />;

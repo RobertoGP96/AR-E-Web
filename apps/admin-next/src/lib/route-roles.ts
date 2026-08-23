@@ -12,6 +12,8 @@ const ROUTE_ROLES: Record<string, readonly string[]> = {
   categories: ROLES.categories,
   purchases: ROLES.purchases,
   orders: ROLES.orders,
+  products: ['admin', 'agent', 'logistical'],
+  'client-balances': ROLES.finance,
   // Agents can view deliveries (read-only actions server-side).
   delivery: ['admin', 'agent', 'logistical'],
   packages: ROLES.packages,

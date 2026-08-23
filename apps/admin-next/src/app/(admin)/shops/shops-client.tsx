@@ -9,10 +9,12 @@ import {
   Store,
   Search,
   ExternalLink,
+  KeyRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ShopDialog } from './shop-dialog';
 import { DeleteShopDialog } from './delete-dialog';
+import { AccountsDialog } from './accounts-dialog';
 import { toggleShopActiveAction } from './actions';
 import { formatDate } from '@/lib/format';
 import type { ShopRow } from './schema';
@@ -30,7 +32,13 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ShopRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ShopRow | null>(null);
+  const [accountsShopId, setAccountsShopId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  // Always hand the dialog the FRESH row (router.refresh() replaces
+  // initialRows) so newly added accounts appear without reopening.
+  const accountsShop =
+    initialRows.find((r) => r.id === accountsShopId) ?? null;
 
   function applyQuery(next: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -171,6 +179,15 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
                       <div className="inline-flex gap-1">
                         <button
                           type="button"
+                          onClick={() => setAccountsShopId(row.id)}
+                          aria-label={`Cuentas de ${row.name}`}
+                          title={`Cuentas de compra (${row.accounts.length})`}
+                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                        >
+                          <KeyRound className="h-4 w-4" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setEditTarget(row)}
                           aria-label={`Edit ${row.name}`}
                           className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
@@ -215,6 +232,14 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
                     </a>
                   </div>
                   <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setAccountsShopId(row.id)}
+                      aria-label={`Cuentas de ${row.name}`}
+                      className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    >
+                      <KeyRound className="h-4 w-4" aria-hidden />
+                    </button>
                     <button
                       type="button"
                       onClick={() => setEditTarget(row)}
@@ -295,6 +320,11 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
           toast.success('Shop deleted');
           router.refresh();
         }}
+      />
+
+      <AccountsDialog
+        shop={accountsShop}
+        onClose={() => setAccountsShopId(null)}
       />
     </div>
   );

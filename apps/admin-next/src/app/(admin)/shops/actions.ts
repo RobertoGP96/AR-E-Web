@@ -185,3 +185,93 @@ export async function deleteShopAction(id: string): Promise<ActionResult> {
   revalidatePath('/shops');
   return { ok: true };
 }
+
+/** Buying accounts (cuentas de compra) nested under a shop. */
+export async function addBuyingAccountAction(
+  shopId: string,
+  accountName: string
+): Promise<ActionResult> {
+  const { denied } = await requireRole(ROLES.shops);
+  if (denied) return denied;
+
+  const sid = parseId(shopId);
+  if (!sid) return { ok: false, error: 'Invalid shop id' };
+  const name = accountName.trim();
+  if (!name || name.length > 100) {
+    return { ok: false, error: 'Account name must be 1–100 characters' };
+  }
+
+  const shop = await prisma.shop.findUnique({
+    where: { id: sid },
+    select: { id: true },
+  });
+  if (!shop) return { ok: false, error: 'Shop not found' };
+
+  await prisma.buyingAccounts.create({
+    data: { shopId: sid, accountName: name },
+  });
+
+  revalidatePath('/shops');
+  return { ok: true };
+}
+
+export async function renameBuyingAccountAction(
+  accountId: string,
+  accountName: string
+): Promise<ActionResult> {
+  const { denied } = await requireRole(ROLES.shops);
+  if (denied) return denied;
+
+  const aid = parseId(accountId);
+  if (!aid) return { ok: false, error: 'Invalid account id' };
+  const name = accountName.trim();
+  if (!name || name.length > 100) {
+    return { ok: false, error: 'Account name must be 1–100 characters' };
+  }
+
+  try {
+    await prisma.buyingAccounts.update({
+      where: { id: aid },
+      data: { accountName: name },
+    });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === 'P2025'
+    ) {
+      return { ok: false, error: 'Account not found' };
+    }
+    throw err;
+  }
+
+  revalidatePath('/shops');
+  return { ok: true };
+}
+
+export async function deleteBuyingAccountAction(
+  accountId: string
+): Promise<ActionResult> {
+  const { denied } = await requireRole(ROLES.shops);
+  if (denied) return denied;
+
+  const aid = parseId(accountId);
+  if (!aid) return { ok: false, error: 'Invalid account id' };
+
+  const account = await prisma.buyingAccounts.findUnique({
+    where: { id: aid },
+    select: { _count: { select: { buys: true } } },
+  });
+  if (!account) return { ok: false, error: 'Account not found' };
+  // Deleting the account would cascade-delete its receipts — refuse.
+  if (account._count.buys > 0) {
+    return {
+      ok: false,
+      error: `Cannot delete: account has ${account._count.buys} purchase(s)`,
+    };
+  }
+
+  await prisma.buyingAccounts.delete({ where: { id: aid } });
+
+  revalidatePath('/shops');
+  return { ok: true };
+}

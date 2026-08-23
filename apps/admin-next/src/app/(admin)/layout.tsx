@@ -4,17 +4,20 @@ import { auth } from '@/auth';
 import { isStaff, visibleNavItems, type NavItem } from '@/lib/route-roles';
 import { SignOutButton } from './sign-out-button';
 import { MobileNav } from './mobile-nav';
+import { NotificationsBell } from './notifications-bell';
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/users', label: 'Users' },
   { href: '/shops', label: 'Shops' },
   { href: '/orders', label: 'Orders' },
+  { href: '/products', label: 'Products' },
   { href: '/delivery', label: 'Delivery' },
   { href: '/packages', label: 'Packages' },
   { href: '/purchases', label: 'Purchases' },
   { href: '/categories', label: 'Categories' },
   { href: '/balance', label: 'Balance' },
+  { href: '/client-balances', label: 'Client balances' },
   { href: '/analytics', label: 'Analytics' },
   { href: '/invoices', label: 'Invoices' },
   { href: '/expenses', label: 'Expenses' },
@@ -68,7 +71,10 @@ export default async function AdminLayout({
               </span>
             </div>
           </div>
-          <SignOutButton />
+          <div className="flex items-center gap-1.5">
+            <NotificationsBell />
+            <SignOutButton />
+          </div>
         </header>
         <main className="flex-1 bg-zinc-50 p-4 sm:p-6 dark:bg-zinc-900">
           {children}

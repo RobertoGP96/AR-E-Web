@@ -15,6 +15,12 @@ export const shopFormSchema = z.object({
 
 export type ShopFormInput = z.infer<typeof shopFormSchema>;
 
+export interface BuyingAccountRow {
+  id: string;
+  accountName: string;
+  buysCount: number;
+}
+
 export interface ShopRow {
   id: string;
   name: string;
@@ -23,4 +29,5 @@ export interface ShopRow {
   taxRate: number;
   createdAt: string;
   updatedAt: string;
+  accounts: BuyingAccountRow[];
 }
