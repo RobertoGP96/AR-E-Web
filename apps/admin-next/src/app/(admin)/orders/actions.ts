@@ -180,6 +180,82 @@ export async function updateOrderAction(
   return { ok: true };
 }
 
+/**
+ * Registro de pago — mirrors Order.add_received_value() in
+ * api/models/orders.py: the paid amount ACCUMULATES into
+ * received_value_of_client, the applied balance ACCUMULATES into
+ * balance_applied, and pay_status is recomputed from the new totals
+ * (or forced to Pagado when marked manually). Runs in a transaction
+ * with the client-balance recalculation.
+ */
+export async function confirmOrderPaymentAction(
+  id: string,
+  amount: number,
+  applyBalance: number,
+  markPaidManually: boolean
+): Promise<ActionResult> {
+  const { denied } = await requireRole(ROLES.orders);
+  if (denied) return denied;
+
+  const orderId = parseId(id);
+  if (!orderId) return { ok: false, error: 'Invalid order id' };
+  if (!Number.isFinite(amount) || amount < 0) {
+    return { ok: false, error: 'El monto no puede ser negativo' };
+  }
+  if (!Number.isFinite(applyBalance) || applyBalance < 0) {
+    return { ok: false, error: 'El saldo aplicado no puede ser negativo' };
+  }
+  if (amount === 0 && applyBalance === 0 && !markPaidManually) {
+    return { ok: false, error: 'Ingresa un monto o aplica saldo' };
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      select: {
+        totalCosts: true,
+        receivedValueOfClient: true,
+        balanceApplied: true,
+        clientId: true,
+        client: { select: { balance: true } },
+      },
+    });
+    if (!order) return { ok: false as const, error: 'Order not found' };
+
+    const available = Math.max(0, order.client.balance);
+    if (applyBalance > available) {
+      return {
+        ok: false as const,
+        error: `El cliente solo tiene ${round2(available).toFixed(2)} de saldo a favor`,
+      };
+    }
+
+    const newReceived = round2(order.receivedValueOfClient + amount);
+    const newApplied = round2(order.balanceApplied + applyBalance);
+    const payStatus = markPaidManually
+      ? 'Pagado'
+      : computePayStatus(order.totalCosts, newReceived, newApplied);
+
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        receivedValueOfClient: newReceived,
+        balanceApplied: newApplied,
+        payStatus: toDbPayStatus(payStatus),
+        paymentDate: new Date(),
+      },
+    });
+    await recalculateClientBalance(order.clientId, tx);
+    return { ok: true as const };
+  });
+
+  if (!result.ok) return result;
+
+  revalidatePath('/orders');
+  revalidatePath(`/orders/${id}`);
+  return { ok: true };
+}
+
 export async function deleteOrderAction(id: string): Promise<ActionResult> {
   const { denied } = await requireRole(ROLES.orders);
   if (denied) return denied;

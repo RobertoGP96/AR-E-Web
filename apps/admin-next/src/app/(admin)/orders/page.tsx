@@ -1,5 +1,8 @@
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { OrdersClient } from './orders-client';
+import { TablePagination } from '@/components/table-pagination';
+import { parsePagination } from '@/lib/pagination';
 import {
   ORDER_STATUSES,
   PAY_STATUSES,
@@ -13,11 +16,17 @@ import {
 } from './schema';
 
 interface PageProps {
-  searchParams: Promise<{ q?: string; status?: string; pay?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    pay?: string;
+    page?: string;
+    per?: string;
+  }>;
 }
 
 export default async function OrdersPage({ searchParams }: PageProps) {
-  const { q, status, pay } = await searchParams;
+  const { q, status, pay, page: pageParam, per } = await searchParams;
   const search = q?.trim() ?? '';
   const statusFilter =
     status && (ORDER_STATUSES as readonly string[]).includes(status)
@@ -28,28 +37,32 @@ export default async function OrdersPage({ searchParams }: PageProps) {
       ? (pay as PayStatus)
       : null;
 
-  const [orders, clients, managers] = await Promise.all([
-    prisma.order.findMany({
-      where: {
-        ...(statusFilter && { status: statusFilter }),
-        ...(payFilter && { payStatus: toDbPayStatus(payFilter) }),
-        ...(search && {
-          client: {
-            OR: [
-              { name: { contains: search, mode: 'insensitive' } },
-              { lastName: { contains: search, mode: 'insensitive' } },
-              { phoneNumber: { contains: search, mode: 'insensitive' } },
-            ],
-          },
-        }),
+  const { page, perPage, skip } = parsePagination({ page: pageParam, per });
+  const where: Prisma.OrderWhereInput = {
+    ...(statusFilter && { status: statusFilter }),
+    ...(payFilter && { payStatus: toDbPayStatus(payFilter) }),
+    ...(search && {
+      client: {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { lastName: { contains: search, mode: 'insensitive' } },
+          { phoneNumber: { contains: search, mode: 'insensitive' } },
+        ],
       },
+    }),
+  };
+
+  const [orders, clients, managers, totalCount] = await Promise.all([
+    prisma.order.findMany({
+      where,
       include: {
-        client: { select: { name: true, lastName: true } },
+        client: { select: { name: true, lastName: true, balance: true } },
         salesManager: { select: { name: true, lastName: true } },
         _count: { select: { products: true } },
       },
       orderBy: { createdAt: 'desc' },
-      take: 100,
+      skip,
+      take: perPage,
     }),
     prisma.customUser.findMany({
       where: { role: 'client' },
@@ -62,11 +75,13 @@ export default async function OrdersPage({ searchParams }: PageProps) {
       select: { id: true, name: true, lastName: true },
       orderBy: { name: 'asc' },
     }),
+    prisma.order.count({ where }),
   ]);
 
   const rows: OrderRow[] = orders.map((o) => ({
     id: o.id.toString(),
     clientId: o.clientId.toString(),
+    clientBalance: o.client.balance,
     clientName: `${o.client.name} ${o.client.lastName}`.trim(),
     salesManagerName: o.salesManager
       ? `${o.salesManager.name} ${o.salesManager.lastName}`.trim()
@@ -91,11 +106,14 @@ export default async function OrdersPage({ searchParams }: PageProps) {
   }));
 
   return (
-    <OrdersClient
-      initialRows={rows}
-      clientOptions={clientOptions}
-      managerOptions={managerOptions}
-      initialFilters={{ q: search, status: statusFilter, pay: payFilter }}
-    />
+    <>
+      <OrdersClient
+        initialRows={rows}
+        clientOptions={clientOptions}
+        managerOptions={managerOptions}
+        initialFilters={{ q: search, status: statusFilter, pay: payFilter }}
+      />
+      <TablePagination page={page} perPage={perPage} total={totalCount} />
+    </>
   );
 }

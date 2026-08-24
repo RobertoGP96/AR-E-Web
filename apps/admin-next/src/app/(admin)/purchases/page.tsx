@@ -1,4 +1,6 @@
 import { prisma } from '@/lib/prisma';
+import { TablePagination } from '@/components/table-pagination';
+import { parsePagination } from '@/lib/pagination';
 import { PurchasesClient } from './purchases-client';
 import {
   PAY_STATUSES,
@@ -11,28 +13,32 @@ import {
 } from './schema';
 
 interface PageProps {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; page?: string; per?: string }>;
 }
 
 export default async function PurchasesPage({ searchParams }: PageProps) {
-  const { status } = await searchParams;
+  const { status, page: pageParam, per } = await searchParams;
   const statusFilter =
     status && (PAY_STATUSES as readonly string[]).includes(status)
       ? (status as PayStatus)
       : null;
 
-  const [receipts, shops] = await Promise.all([
+  const { page, perPage, skip } = parsePagination({ page: pageParam, per });
+  const where = statusFilter
+    ? { statusOfShopping: toDbPayStatus(statusFilter) }
+    : undefined;
+
+  const [receipts, shops, totalCount] = await Promise.all([
     prisma.shoppingReceip.findMany({
-      where: statusFilter
-        ? { statusOfShopping: toDbPayStatus(statusFilter) }
-        : undefined,
+      where,
       include: {
         shopOfBuy: { select: { name: true } },
         shoppingAccount: { select: { accountName: true } },
         _count: { select: { buyedProducts: true } },
       },
       orderBy: { buyDate: 'desc' },
-      take: 100,
+      skip,
+      take: perPage,
     }),
     prisma.shop.findMany({
       where: { isActive: true },
@@ -43,6 +49,7 @@ export default async function PurchasesPage({ searchParams }: PageProps) {
       },
       orderBy: { name: 'asc' },
     }),
+    prisma.shoppingReceip.count({ where }),
   ]);
 
   const rows: PurchaseRow[] = receipts.map((r) => ({
@@ -70,10 +77,13 @@ export default async function PurchasesPage({ searchParams }: PageProps) {
   }));
 
   return (
-    <PurchasesClient
-      initialRows={rows}
-      shopOptions={shopOptions}
-      initialStatus={statusFilter}
-    />
+    <>
+      <PurchasesClient
+        initialRows={rows}
+        shopOptions={shopOptions}
+        initialStatus={statusFilter}
+      />
+      <TablePagination page={page} perPage={perPage} total={totalCount} />
+    </>
   );
 }

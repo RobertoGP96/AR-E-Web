@@ -1,4 +1,7 @@
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { TablePagination } from '@/components/table-pagination';
+import { parsePagination } from '@/lib/pagination';
 import { DeliveryClient } from './delivery-client';
 import {
   DELIVERY_STATUSES,
@@ -14,39 +17,48 @@ import {
 } from './schema';
 
 interface PageProps {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    page?: string;
+    per?: string;
+  }>;
 }
 
 export default async function DeliveryPage({ searchParams }: PageProps) {
-  const { q, status } = await searchParams;
+  const { q, status, page: pageParam, per } = await searchParams;
   const search = q?.trim() ?? '';
   const statusFilter =
     status && (DELIVERY_STATUSES as readonly string[]).includes(status)
       ? (status as DeliveryStatus)
       : null;
 
-  const [deliveries, clients, categories] = await Promise.all([
-    prisma.deliverReceip.findMany({
-      where: {
-        ...(statusFilter && {
-          status: toDbDeliveryStatus(statusFilter),
-        }),
-        ...(search && {
-          client: {
-            OR: [
-              { name: { contains: search, mode: 'insensitive' } },
-              { lastName: { contains: search, mode: 'insensitive' } },
-              { phoneNumber: { contains: search, mode: 'insensitive' } },
-            ],
-          },
-        }),
+  const { page, perPage, skip } = parsePagination({ page: pageParam, per });
+  const where: Prisma.DeliverReceipWhereInput = {
+    ...(statusFilter && {
+      status: toDbDeliveryStatus(statusFilter),
+    }),
+    ...(search && {
+      client: {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { lastName: { contains: search, mode: 'insensitive' } },
+          { phoneNumber: { contains: search, mode: 'insensitive' } },
+        ],
       },
+    }),
+  };
+
+  const [deliveries, clients, categories, totalCount] = await Promise.all([
+    prisma.deliverReceip.findMany({
+      where,
       include: {
         client: { select: { name: true, lastName: true } },
         category: { select: { name: true } },
       },
       orderBy: { deliverDate: 'desc' },
-      take: 100,
+      skip,
+      take: perPage,
     }),
     prisma.customUser.findMany({
       where: { role: 'client' },
@@ -58,6 +70,7 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
       select: { id: true, name: true, clientShippingCharge: true },
       orderBy: { name: 'asc' },
     }),
+    prisma.deliverReceip.count({ where }),
   ]);
 
   const rows: DeliveryRow[] = deliveries.map((d) => ({
@@ -88,11 +101,14 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
   }));
 
   return (
-    <DeliveryClient
-      initialRows={rows}
-      clientOptions={clientOptions}
-      categoryOptions={categoryOptions}
-      initialFilters={{ q: search, status: statusFilter }}
-    />
+    <>
+      <DeliveryClient
+        initialRows={rows}
+        clientOptions={clientOptions}
+        categoryOptions={categoryOptions}
+        initialFilters={{ q: search, status: statusFilter }}
+      />
+      <TablePagination page={page} perPage={perPage} total={totalCount} />
+    </>
   );
 }

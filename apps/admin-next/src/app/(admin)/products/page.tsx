@@ -1,5 +1,8 @@
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { ProductsClient } from './products-client';
+import { TablePagination } from '@/components/table-pagination';
+import { parsePagination } from '@/lib/pagination';
 
 const PRODUCT_STATUSES = [
   'Encargado',
@@ -10,11 +13,17 @@ const PRODUCT_STATUSES = [
 type ProductStatus = (typeof PRODUCT_STATUSES)[number];
 
 interface PageProps {
-  searchParams: Promise<{ q?: string; status?: string; shop?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    shop?: string;
+    page?: string;
+    per?: string;
+  }>;
 }
 
 export default async function ProductsPage({ searchParams }: PageProps) {
-  const { q, status, shop } = await searchParams;
+  const { q, status, shop, page: pageParam, per } = await searchParams;
   const search = q?.trim() ?? '';
   const statusFilter =
     status && (PRODUCT_STATUSES as readonly string[]).includes(status)
@@ -22,38 +31,31 @@ export default async function ProductsPage({ searchParams }: PageProps) {
       : null;
   const shopFilter = shop && /^\d+$/.test(shop) ? BigInt(shop) : null;
 
-  const [products, shops] = await Promise.all([
-    prisma.product.findMany({
-      where: {
-        ...(statusFilter && { status: statusFilter }),
-        ...(shopFilter && { shopId: shopFilter }),
-        ...(search && {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' as const } },
-            { sku: { contains: search, mode: 'insensitive' as const } },
-            {
-              order: {
-                client: {
-                  OR: [
-                    {
-                      name: {
-                        contains: search,
-                        mode: 'insensitive' as const,
-                      },
-                    },
-                    {
-                      lastName: {
-                        contains: search,
-                        mode: 'insensitive' as const,
-                      },
-                    },
-                  ],
-                },
-              },
+  const { page, perPage, skip } = parsePagination({ page: pageParam, per });
+  const where: Prisma.ProductWhereInput = {
+    ...(statusFilter && { status: statusFilter }),
+    ...(shopFilter && { shopId: shopFilter }),
+    ...(search && {
+      OR: [
+        { name: { contains: search, mode: 'insensitive' } },
+        { sku: { contains: search, mode: 'insensitive' } },
+        {
+          order: {
+            client: {
+              OR: [
+                { name: { contains: search, mode: 'insensitive' } },
+                { lastName: { contains: search, mode: 'insensitive' } },
+              ],
             },
-          ],
-        }),
-      },
+          },
+        },
+      ],
+    }),
+  };
+
+  const [products, shops, totalCount] = await Promise.all([
+    prisma.product.findMany({
+      where,
       include: {
         shop: { select: { name: true } },
         order: {
@@ -64,15 +66,18 @@ export default async function ProductsPage({ searchParams }: PageProps) {
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: 100,
+      skip,
+      take: perPage,
     }),
     prisma.shop.findMany({
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),
+    prisma.product.count({ where }),
   ]);
 
   return (
+    <>
     <ProductsClient
       initialRows={products.map((p) => ({
         id: p.id,
@@ -100,5 +105,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
         shop: shopFilter?.toString() ?? null,
       }}
     />
+    <TablePagination page={page} perPage={perPage} total={totalCount} />
+    </>
   );
 }
