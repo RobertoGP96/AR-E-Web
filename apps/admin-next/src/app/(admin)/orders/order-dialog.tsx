@@ -65,7 +65,7 @@ export function OrderDialog({
       <div className="flex max-h-full w-full max-w-lg flex-col rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex items-start justify-between gap-2 border-b border-zinc-200 p-5 dark:border-zinc-800">
           <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'New order' : 'Edit order'}
+            {mode === 'create' ? 'Nueva orden' : 'Editar orden'}
           </h2>
           <button
             type="button"
@@ -93,7 +93,7 @@ export function OrderDialog({
           />
 
           <Select
-            label="Sales manager (optional)"
+            label="Gestor de venta (opcional)"
             name="salesManagerId"
             options={managerOptions}
             defaultValue=""
@@ -123,14 +123,14 @@ export function OrderDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <NumberField
-              label="Received from client"
+              label="Recibido del cliente"
               name="receivedValueOfClient"
               prefix="$"
               defaultValue={order?.receivedValueOfClient.toString() ?? '0'}
               error={errors['receivedValueOfClient']}
             />
             <NumberField
-              label="Balance applied"
+              label="Saldo aplicado"
               name="balanceApplied"
               prefix="$"
               defaultValue={order?.balanceApplied.toString() ?? '0'}
@@ -166,14 +166,14 @@ export function OrderDialog({
               onClick={onClose}
               className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="submit"
               disabled={isPending}
               className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isPending ? 'Saving…' : 'Save'}
+              {isPending ? 'Guardando…' : 'Guardar'}
             </button>
           </div>
         </form>

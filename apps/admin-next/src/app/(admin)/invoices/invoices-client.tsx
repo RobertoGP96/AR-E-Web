@@ -22,16 +22,14 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
   return (
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <div className="rounded-md bg-zinc-100 p-2 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-            <FileText className="h-5 w-5" aria-hidden />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Facturas</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Invoices with weight-based or fixed-cost tags.
-            </p>
-          </div>
+        <div>
+          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+            <FileText className="h-8 w-8 text-orange-400" aria-hidden />
+            Costos de Envío
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Gestiona los costos de envío del sistema.
+          </p>
         </div>
         <button
           type="button"
@@ -39,7 +37,7 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
           className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
         >
           <Plus className="h-4 w-4" aria-hidden />
-          New invoice
+          Nueva factura
         </button>
       </header>
 
@@ -49,10 +47,10 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
             <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
                 <th className="px-4 py-3 font-medium">ID</th>
-                <th className="px-4 py-3 font-medium">Date</th>
+                <th className="px-4 py-3 font-medium">Fecha</th>
                 <th className="px-4 py-3 font-medium">Tags</th>
                 <th className="px-4 py-3 font-medium">Total</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -86,7 +84,7 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
                         <button
                           type="button"
                           onClick={() => setEditTarget(row)}
-                          aria-label="Edit invoice"
+                          aria-label="Editar factura"
                           className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
                         >
                           <Pencil className="h-4 w-4" aria-hidden />
@@ -94,7 +92,7 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(row)}
-                          aria-label="Delete invoice"
+                          aria-label="Eliminar factura"
                           className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
                         >
                           <Trash2 className="h-4 w-4" aria-hidden />
@@ -130,7 +128,7 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
                     <button
                       type="button"
                       onClick={() => setEditTarget(row)}
-                      aria-label="Edit invoice"
+                      aria-label="Editar factura"
                       className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
                     >
                       <Pencil className="h-4 w-4" aria-hidden />
@@ -138,7 +136,7 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
                     <button
                       type="button"
                       onClick={() => setDeleteTarget(row)}
-                      aria-label="Delete invoice"
+                      aria-label="Eliminar factura"
                       className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
                     >
                       <Trash2 className="h-4 w-4" aria-hidden />
@@ -160,7 +158,7 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Invoice created');
+          toast.success('Factura creada');
           router.refresh();
         }}
       />
@@ -172,7 +170,7 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Invoice updated');
+          toast.success('Factura actualizada');
           router.refresh();
         }}
       />
@@ -182,7 +180,7 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Invoice deleted');
+          toast.success('Factura eliminada');
           router.refresh();
         }}
       />

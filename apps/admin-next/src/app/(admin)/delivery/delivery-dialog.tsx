@@ -96,7 +96,7 @@ export function DeliveryDialog({
       <div className="flex max-h-full w-full max-w-lg flex-col rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex items-start justify-between gap-2 border-b border-zinc-200 p-5 dark:border-zinc-800">
           <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'New delivery' : 'Edit delivery'}
+            {mode === 'create' ? 'Nueva entrega' : 'Editar entrega'}
           </h2>
           <button
             type="button"
@@ -215,7 +215,7 @@ export function DeliveryDialog({
               </select>
             </div>
             <Field
-              label="Delivery date"
+              label="Fecha de entrega"
               name="deliverDate"
               type="date"
               defaultValue={isoToDateInput(delivery?.deliverDate)}
@@ -226,7 +226,7 @@ export function DeliveryDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <Field
-              label="Payment amount"
+              label="Monto pagado"
               name="paymentAmount"
               type="number"
               prefix="$"
@@ -234,7 +234,7 @@ export function DeliveryDialog({
               error={errors['paymentAmount']}
             />
             <Field
-              label="Balance applied"
+              label="Saldo aplicado"
               name="balanceApplied"
               type="number"
               prefix="$"
@@ -245,7 +245,7 @@ export function DeliveryDialog({
 
           <ImageUploadField
             name="deliverPicture"
-            label="Delivery picture (optional)"
+            label="Foto de la entrega (opcional)"
             defaultUrl={delivery?.deliverPicture}
           />
 
@@ -270,14 +270,14 @@ export function DeliveryDialog({
               onClick={onClose}
               className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="submit"
               disabled={isPending}
               className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isPending ? 'Saving…' : 'Save'}
+              {isPending ? 'Guardando…' : 'Guardar'}
             </button>
           </div>
         </form>

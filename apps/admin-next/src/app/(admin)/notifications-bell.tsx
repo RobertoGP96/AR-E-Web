@@ -71,13 +71,21 @@ export function NotificationsBell() {
           unread > 0 ? `Notificaciones (${unread} sin leer)` : 'Notificaciones'
         }
         aria-expanded={open}
-        className="relative rounded-md p-2 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
+        className="group relative rounded-xl p-3 text-gray-500 transition-all duration-200 hover:bg-orange-50 hover:text-orange-600"
       >
-        <Bell className="h-5 w-5" aria-hidden />
+        <Bell
+          className="h-5 w-5 transition-transform group-hover:scale-110"
+          aria-hidden
+        />
         {unread > 0 ? (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-            {unread > 99 ? '99+' : unread}
-          </span>
+          <>
+            <span className="absolute -right-1 -top-1 h-5 w-5 animate-ping rounded-full bg-orange-500 opacity-75" />
+            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-amber-500 ring-2 ring-white">
+              <span className="text-xs font-bold text-white">
+                {unread > 9 ? '9+' : unread}
+              </span>
+            </span>
+          </>
         ) : null}
       </button>
 

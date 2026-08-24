@@ -75,7 +75,7 @@ export function AnalyticsCharts({
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-      <Card title="Revenue vs. cost vs. expenses (monthly)">
+      <Card title="Ingresos vs. costos vs. gastos (mensual)">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={monthly}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
@@ -108,7 +108,7 @@ export function AnalyticsCharts({
         </ResponsiveContainer>
       </Card>
 
-      <Card title="Orders by status">
+      <Card title="Órdenes por estado">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -128,7 +128,7 @@ export function AnalyticsCharts({
         </ResponsiveContainer>
       </Card>
 
-      <Card title="Top shops by product cost">
+      <Card title="Top tiendas por costo de productos">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={shopData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
@@ -142,7 +142,7 @@ export function AnalyticsCharts({
         </ResponsiveContainer>
       </Card>
 
-      <Card title="Expenses by category">
+      <Card title="Gastos por categoría">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

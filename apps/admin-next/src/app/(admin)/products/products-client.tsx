@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Package2, Search, ExternalLink } from 'lucide-react';
 import { formatCurrency } from '@/lib/format';
+import { ProductStatusBadge } from '@/components/status-badges';
 
 const PRODUCT_STATUSES = [
   'Encargado',
@@ -13,15 +14,6 @@ const PRODUCT_STATUSES = [
   'Entregado',
 ] as const;
 type ProductStatus = (typeof PRODUCT_STATUSES)[number];
-
-const STATUS_STYLES: Record<ProductStatus, string> = {
-  Encargado: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
-  Comprado: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
-  Recibido:
-    'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
-  Entregado:
-    'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-};
 
 export interface ProductRow {
   id: string;
@@ -83,17 +75,14 @@ export function ProductsClient({
 
   return (
     <div className="space-y-6">
-      <header className="flex items-start gap-3">
-        <div className="rounded-md bg-zinc-100 p-2 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-          <Package2 className="h-5 w-5" aria-hidden />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Productos</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Todos los productos del sistema, en cualquier orden. Para
-            editarlos, entra a su orden.
-          </p>
-        </div>
+      <header>
+        <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+          <Package2 className="h-8 w-8 text-orange-400" aria-hidden />
+          Productos
+        </h1>
+        <p className="mt-2 text-gray-600">
+          Gestiona el inventario y catálogo de productos
+        </p>
       </header>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -203,11 +192,7 @@ export function ProductsClient({
                     <td className="px-4 py-3">{row.clientName}</td>
                     <td className="px-4 py-3">{row.shopName}</td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[row.status]}`}
-                      >
-                        {row.status}
-                      </span>
+                      <ProductStatusBadge status={row.status} />
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
                       {row.amountRequested} / {row.amountPurchased} /{' '}
@@ -249,10 +234,8 @@ export function ProductsClient({
                       {row.clientName} · {row.shopName}
                     </div>
                   </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[row.status]}`}
-                  >
-                    {row.status}
+                  <span className="shrink-0">
+                    <ProductStatusBadge status={row.status} />
                   </span>
                 </div>
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">

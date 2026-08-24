@@ -67,16 +67,14 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-start gap-3">
-        <div className="rounded-md bg-zinc-100 p-2 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-          <Store className="h-5 w-5" aria-hidden />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tiendas</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Manage shops that products are sourced from.
-          </p>
-        </div>
+      <header>
+        <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+          <Store className="h-8 w-8 text-orange-400" aria-hidden />
+          Tiendas & Cuentas
+        </h1>
+        <p className="mt-2 text-gray-600">
+          Gestiona las tiendas y sus cuentas de compra
+        </p>
       </header>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -88,7 +86,7 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
           <input
             type="search"
             value={query}
-            placeholder="Search by name or link…"
+            placeholder="Buscar por nombre o enlace…"
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') applyQuery(query);
@@ -105,7 +103,7 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
           className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
         >
           <Plus className="h-4 w-4" aria-hidden />
-          New shop
+          Nueva tienda
         </button>
       </div>
 
@@ -114,12 +112,12 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
           <table className="w-full text-left text-sm">
             <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Link</th>
-                <th className="px-4 py-3 font-medium">Tax rate</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Created</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 font-medium">Nombre</th>
+                <th className="px-4 py-3 font-medium">Enlace</th>
+                <th className="px-4 py-3 font-medium">Tasa de impuesto</th>
+                <th className="px-4 py-3 font-medium">Estado</th>
+                <th className="px-4 py-3 font-medium">Creado</th>
+                <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -129,7 +127,7 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
                     colSpan={6}
                     className="px-4 py-8 text-center text-sm text-zinc-500"
                   >
-                    {isPending ? 'Cargando…' : 'No shops found.'}
+                    {isPending ? 'Cargando…' : 'No hay tiendas.'}
                   </td>
                 </tr>
               ) : (
@@ -214,7 +212,7 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
         <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
           {initialRows.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-zinc-500">
-              {isPending ? 'Cargando…' : 'No shops found.'}
+              {isPending ? 'Cargando…' : 'No hay tiendas.'}
             </li>
           ) : (
             initialRows.map((row) => (
@@ -259,11 +257,11 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
                   </div>
                 </div>
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  <dt>Tax rate</dt>
+                  <dt>Tasa de impuesto</dt>
                   <dd className="text-right tabular-nums text-zinc-900 dark:text-zinc-100">
                     {row.taxRate.toFixed(2)} %
                   </dd>
-                  <dt>Status</dt>
+                  <dt>Estado</dt>
                   <dd className="text-right">
                     <button
                       type="button"
@@ -278,7 +276,7 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
                       {row.isActive ? 'Activa' : 'Inactiva'}
                     </button>
                   </dd>
-                  <dt>Created</dt>
+                  <dt>Creado</dt>
                   <dd className="text-right text-zinc-900 dark:text-zinc-100">
                     {formatDate(row.createdAt)}
                   </dd>
@@ -295,7 +293,7 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Shop created');
+          toast.success('Tienda creada');
           router.refresh();
         }}
       />
@@ -307,7 +305,7 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Shop updated');
+          toast.success('Tienda actualizada');
           router.refresh();
         }}
       />
@@ -317,7 +315,7 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Shop deleted');
+          toast.success('Tienda eliminada');
           router.refresh();
         }}
       />

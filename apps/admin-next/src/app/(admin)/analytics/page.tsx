@@ -103,10 +103,11 @@ export default async function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Last 12 months — revenue vs. cost, order mix, top shops, and
-          expense breakdown.
+        <h1 className="text-3xl font-bold text-gray-900">
+          Reportes de Ganancias
+        </h1>
+        <p className="mt-2 text-gray-600">
+          Evolución de ingresos, costos y ganancias de los últimos 12 meses
         </p>
       </header>
       <AnalyticsCharts

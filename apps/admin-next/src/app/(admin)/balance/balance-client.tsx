@@ -26,17 +26,14 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
   return (
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <div className="rounded-md bg-zinc-100 p-2 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-            <Scale className="h-5 w-5" aria-hidden />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Balance</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Period-based reconciliation of revenue, costs, weight and
-              expenses.
-            </p>
-          </div>
+        <div>
+          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+            <Scale className="h-8 w-8 text-orange-400" aria-hidden />
+            Balances
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Compara costos de envío y ganancias esperadas
+          </p>
         </div>
         <button
           type="button"
@@ -44,7 +41,7 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
           className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
         >
           <Plus className="h-4 w-4" aria-hidden />
-          New balance
+          Nuevo balance
         </button>
       </header>
 
@@ -53,14 +50,14 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
           <table className="w-full text-left text-sm">
             <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
-                <th className="px-4 py-3 font-medium">Period</th>
+                <th className="px-4 py-3 font-medium">Período</th>
                 <th className="px-4 py-3 font-medium">Weight (sys / reg)</th>
-                <th className="px-4 py-3 font-medium">Revenue</th>
+                <th className="px-4 py-3 font-medium">Ingresos</th>
                 <th className="px-4 py-3 font-medium">Buys</th>
                 <th className="px-4 py-3 font-medium">Costs</th>
-                <th className="px-4 py-3 font-medium">Expenses</th>
-                <th className="px-4 py-3 font-medium">Profit</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 font-medium">Gastos</th>
+                <th className="px-4 py-3 font-medium">Ganancia</th>
+                <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -119,7 +116,7 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
                           <button
                             type="button"
                             onClick={() => setEditTarget(row)}
-                            aria-label="Edit balance"
+                            aria-label="Editar balance"
                             className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
                           >
                             <Pencil className="h-4 w-4" aria-hidden />
@@ -127,7 +124,7 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
                           <button
                             type="button"
                             onClick={() => setDeleteTarget(row)}
-                            aria-label="Delete balance"
+                            aria-label="Eliminar balance"
                             className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
                           >
                             <Trash2 className="h-4 w-4" aria-hidden />
@@ -165,7 +162,7 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
                       <button
                         type="button"
                         onClick={() => setEditTarget(row)}
-                        aria-label="Edit balance"
+                        aria-label="Editar balance"
                         className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
                       >
                         <Pencil className="h-4 w-4" aria-hidden />
@@ -173,7 +170,7 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
                       <button
                         type="button"
                         onClick={() => setDeleteTarget(row)}
-                        aria-label="Delete balance"
+                        aria-label="Eliminar balance"
                         className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
                       >
                         <Trash2 className="h-4 w-4" aria-hidden />
@@ -181,11 +178,11 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
                     </div>
                   </div>
                   <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
-                    <dt>Revenue</dt>
+                    <dt>Ingresos</dt>
                     <dd className="text-right tabular-nums text-zinc-900 dark:text-zinc-100">
                       {formatCurrency(row.revenues)}
                     </dd>
-                    <dt>Profit</dt>
+                    <dt>Ganancia</dt>
                     <dd
                       className={`text-right tabular-nums font-medium ${
                         p >= 0
@@ -209,7 +206,7 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Balance created');
+          toast.success('Balance creado');
           router.refresh();
         }}
       />
@@ -221,7 +218,7 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Balance updated');
+          toast.success('Balance actualizado');
           router.refresh();
         }}
       />
@@ -231,7 +228,7 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Balance deleted');
+          toast.success('Balance eliminado');
           router.refresh();
         }}
       />

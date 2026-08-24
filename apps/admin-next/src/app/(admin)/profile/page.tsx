@@ -24,10 +24,9 @@ export default async function ProfilePage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Profile</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Your account ({user.role}) · {user.phoneNumber} · balance{' '}
-          {user.balance.toFixed(2)}
+        <h1 className="text-3xl font-bold text-gray-900">Mi Perfil</h1>
+        <p className="mt-2 text-gray-600">
+          Gestiona tu información personal y configuración de cuenta
         </p>
       </header>
       <ProfileForms

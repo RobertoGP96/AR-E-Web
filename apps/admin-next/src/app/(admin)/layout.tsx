@@ -6,6 +6,7 @@ import { SignOutButton } from './sign-out-button';
 import { MobileNav } from './mobile-nav';
 import { NotificationsBell } from './notifications-bell';
 import { AdminNav } from './admin-nav';
+import { Breadcrumbs } from './breadcrumbs';
 
 export default async function AdminLayout({
   children,
@@ -61,22 +62,19 @@ export default async function AdminLayout({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2">
-            <MobileNav role={role} />
-            <div className="flex items-center gap-2 text-sm md:hidden">
-              <span className="max-w-[35vw] truncate font-medium">{name}</span>
-              <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
-                {role}
-              </span>
-            </div>
+        <header className="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-background/95 px-4 shadow-sm backdrop-blur-sm sm:h-20 sm:px-6">
+          <MobileNav role={role} />
+          <div className="flex min-w-0 flex-1 items-center">
+            <Breadcrumbs />
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-2">
             <NotificationsBell />
             <SignOutButton />
           </div>
         </header>
-        <main className="flex-1 bg-background p-4 sm:p-6">{children}</main>
+        <main className="min-h-0 flex-1 overflow-auto bg-background p-3 sm:p-6 xl:p-10">
+          {children}
+        </main>
       </div>
     </div>
   );

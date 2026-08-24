@@ -18,7 +18,7 @@ export function SettingsForm({ defaults }: SettingsFormProps) {
   useEffect(() => {
     if (!state || state === ref.current) return;
     ref.current = state;
-    if (state.ok) toast.success('Settings saved');
+    if (state.ok) toast.success('Ajustes guardados');
     else if (!state.fieldErrors) toast.error(state.error);
   }, [state]);
 
@@ -37,18 +37,18 @@ export function SettingsForm({ defaults }: SettingsFormProps) {
         hint="Currency conversion rate used across the system."
       />
       <Field
-        label="Cost per pound (USD)"
+        label="Costo por libra (USD)"
         name="costPerPound"
         defaultValue={defaults.costPerPound.toString()}
         error={errors['costPerPound']}
-        hint="Base shipping cost per pound."
+        hint="Costo base de envío por libra."
       />
       <button
         type="submit"
         disabled={isPending}
         className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-70"
       >
-        {isPending ? 'Saving…' : 'Save settings'}
+        {isPending ? 'Guardando…' : 'Guardar ajustes'}
       </button>
     </form>
   );

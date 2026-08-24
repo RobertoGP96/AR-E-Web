@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { DeliveryDialog } from './delivery-dialog';
 import { DeleteDeliveryDialog } from './delete-dialog';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { DeliveryStatusBadge, PayStatusBadge } from '@/components/status-badges';
 import {
   DELIVERY_STATUSES,
   type CategoryOption,
@@ -22,16 +23,6 @@ interface DeliveryClientProps {
   categoryOptions: CategoryOption[];
   initialFilters: { q: string; status: DeliveryStatus | null };
 }
-
-const STATUS_STYLES: Record<DeliveryStatus, string> = {
-  Pendiente:
-    'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
-  'En transito':
-    'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
-  Entregado:
-    'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-  Fallida: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
-};
 
 export function DeliveryClient({
   initialRows,
@@ -59,16 +50,14 @@ export function DeliveryClient({
   return (
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <div className="rounded-md bg-zinc-100 p-2 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-            <Truck className="h-5 w-5" aria-hidden />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Entregas</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Delivery receipts, weight cost and payment status.
-            </p>
-          </div>
+        <div>
+          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+            <Truck className="h-8 w-8 text-orange-400" aria-hidden />
+            Entrega
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Gestiona las rutas de entrega y conductores
+          </p>
         </div>
         <button
           type="button"
@@ -76,7 +65,7 @@ export function DeliveryClient({
           className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
         >
           <Plus className="h-4 w-4" aria-hidden />
-          New delivery
+          Nueva entrega
         </button>
       </header>
 
@@ -89,7 +78,7 @@ export function DeliveryClient({
           <input
             type="search"
             value={query}
-            placeholder="Search client…"
+            placeholder="Buscar cliente…"
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') setParam('q', query || null);
@@ -105,7 +94,7 @@ export function DeliveryClient({
           onChange={(e) => setParam('status', e.target.value || null)}
           className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
         >
-          <option value="">All statuses</option>
+          <option value="">Todos los estados</option>
           {DELIVERY_STATUSES.map((s) => (
             <option key={s} value={s}>
               {s}
@@ -119,15 +108,15 @@ export function DeliveryClient({
           <table className="w-full text-left text-sm">
             <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
-                <th className="px-4 py-3 font-medium">Client</th>
-                <th className="px-4 py-3 font-medium">Category</th>
-                <th className="px-4 py-3 font-medium">Weight</th>
+                <th className="px-4 py-3 font-medium">Cliente</th>
+                <th className="px-4 py-3 font-medium">Categoría</th>
+                <th className="px-4 py-3 font-medium">Peso</th>
                 <th className="px-4 py-3 font-medium">Cost</th>
-                <th className="px-4 py-3 font-medium">Profit</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Ganancia</th>
+                <th className="px-4 py-3 font-medium">Estado</th>
                 <th className="px-4 py-3 font-medium">Pay</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 font-medium">Fecha</th>
+                <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -137,7 +126,7 @@ export function DeliveryClient({
                     colSpan={9}
                     className="px-4 py-8 text-center text-sm text-zinc-500"
                   >
-                    {isPending ? 'Cargando…' : 'No deliveries found.'}
+                    {isPending ? 'Cargando…' : 'No hay entregas.'}
                   </td>
                 </tr>
               ) : (
@@ -166,14 +155,10 @@ export function DeliveryClient({
                       {formatCurrency(row.managerProfit)}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[row.status]}`}
-                      >
-                        {row.status}
-                      </span>
+                      <DeliveryStatusBadge status={row.status} />
                     </td>
-                    <td className="px-4 py-3 text-zinc-500">
-                      {row.paymentStatus}
+                    <td className="px-4 py-3">
+                      <PayStatusBadge status={row.paymentStatus} />
                     </td>
                     <td className="px-4 py-3 text-zinc-500">
                       {formatDate(row.deliverDate)}
@@ -189,7 +174,7 @@ export function DeliveryClient({
                         <button
                           type="button"
                           onClick={() => setEditTarget(row)}
-                          aria-label="Edit delivery"
+                          aria-label="Editar entrega"
                           className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
                         >
                           <Pencil className="h-4 w-4" aria-hidden />
@@ -197,7 +182,7 @@ export function DeliveryClient({
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(row)}
-                          aria-label="Delete delivery"
+                          aria-label="Eliminar entrega"
                           className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
                         >
                           <Trash2 className="h-4 w-4" aria-hidden />
@@ -214,7 +199,7 @@ export function DeliveryClient({
         <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
           {initialRows.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-zinc-500">
-              {isPending ? 'Cargando…' : 'No deliveries found.'}
+              {isPending ? 'Cargando…' : 'No hay entregas.'}
             </li>
           ) : (
             initialRows.map((row) => (
@@ -231,15 +216,9 @@ export function DeliveryClient({
                     {formatCurrency(row.weightCost)}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-1 text-xs">
-                  <span
-                    className={`rounded-full px-2 py-0.5 font-medium ${STATUS_STYLES[row.status]}`}
-                  >
-                    {row.status}
-                  </span>
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                    {row.paymentStatus}
-                  </span>
+                <div className="flex flex-wrap items-center gap-1 text-xs">
+                  <DeliveryStatusBadge status={row.status} />
+                  <PayStatusBadge status={row.paymentStatus} />
                 </div>
                 <div className="flex gap-2 pt-1">
                   <button
@@ -271,7 +250,7 @@ export function DeliveryClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Delivery created');
+          toast.success('Entrega creada');
           router.refresh();
         }}
       />
@@ -285,7 +264,7 @@ export function DeliveryClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Delivery updated');
+          toast.success('Entrega actualizada');
           router.refresh();
         }}
       />
@@ -295,7 +274,7 @@ export function DeliveryClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Delivery deleted');
+          toast.success('Entrega eliminada');
           router.refresh();
         }}
       />

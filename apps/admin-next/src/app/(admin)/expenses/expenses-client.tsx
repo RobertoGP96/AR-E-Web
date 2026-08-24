@@ -48,17 +48,14 @@ export function ExpensesClient({
   return (
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <div className="rounded-md bg-zinc-100 p-2 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-            <Receipt className="h-5 w-5" aria-hidden />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Gastos</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Operating expenses, shipping, salaries, advertising, and other
-              outflows.
-            </p>
-          </div>
+        <div>
+          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+            <Receipt className="h-8 w-8 text-orange-400" aria-hidden />
+            Gastos
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Gestiona los gastos del sistema.
+          </p>
         </div>
         <div className="hidden text-right sm:block">
           <p className="text-xs uppercase tracking-wide text-zinc-500">
@@ -80,7 +77,7 @@ export function ExpensesClient({
             <input
               type="search"
               value={query}
-              placeholder="Search description…"
+              placeholder="Buscar por descripción…"
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') applyParams(query, initialCategory);
@@ -99,7 +96,7 @@ export function ExpensesClient({
             }}
             className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
           >
-            <option value="">All categories</option>
+            <option value="">Todas las categorías</option>
             {EXPENSE_CATEGORIES.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -113,7 +110,7 @@ export function ExpensesClient({
           className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
         >
           <Plus className="h-4 w-4" aria-hidden />
-          New expense
+          Nuevo gasto
         </button>
       </div>
 
@@ -122,12 +119,12 @@ export function ExpensesClient({
           <table className="w-full text-left text-sm">
             <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium">Category</th>
-                <th className="px-4 py-3 font-medium">Description</th>
+                <th className="px-4 py-3 font-medium">Fecha</th>
+                <th className="px-4 py-3 font-medium">Categoría</th>
+                <th className="px-4 py-3 font-medium">Descripción</th>
                 <th className="px-4 py-3 font-medium">Created by</th>
-                <th className="px-4 py-3 font-medium">Amount</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 font-medium">Monto</th>
+                <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -137,7 +134,7 @@ export function ExpensesClient({
                     colSpan={6}
                     className="px-4 py-8 text-center text-sm text-zinc-500"
                   >
-                    {isPending ? 'Cargando…' : 'No expenses found.'}
+                    {isPending ? 'Cargando…' : 'No hay gastos.'}
                   </td>
                 </tr>
               ) : (
@@ -169,7 +166,7 @@ export function ExpensesClient({
                         <button
                           type="button"
                           onClick={() => setEditTarget(row)}
-                          aria-label="Edit expense"
+                          aria-label="Editar gasto"
                           className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
                         >
                           <Pencil className="h-4 w-4" aria-hidden />
@@ -177,7 +174,7 @@ export function ExpensesClient({
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(row)}
-                          aria-label="Delete expense"
+                          aria-label="Eliminar gasto"
                           className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
                         >
                           <Trash2 className="h-4 w-4" aria-hidden />
@@ -194,7 +191,7 @@ export function ExpensesClient({
         <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
           {initialRows.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-zinc-500">
-              {isPending ? 'Cargando…' : 'No expenses found.'}
+              {isPending ? 'Cargando…' : 'No hay gastos.'}
             </li>
           ) : (
             initialRows.map((row) => (
@@ -212,7 +209,7 @@ export function ExpensesClient({
                     <button
                       type="button"
                       onClick={() => setEditTarget(row)}
-                      aria-label="Edit expense"
+                      aria-label="Editar gasto"
                       className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
                     >
                       <Pencil className="h-4 w-4" aria-hidden />
@@ -220,7 +217,7 @@ export function ExpensesClient({
                     <button
                       type="button"
                       onClick={() => setDeleteTarget(row)}
-                      aria-label="Delete expense"
+                      aria-label="Eliminar gasto"
                       className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
                     >
                       <Trash2 className="h-4 w-4" aria-hidden />
@@ -254,7 +251,7 @@ export function ExpensesClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Expense created');
+          toast.success('Gasto creado');
           router.refresh();
         }}
       />
@@ -266,7 +263,7 @@ export function ExpensesClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Expense updated');
+          toast.success('Gasto actualizado');
           router.refresh();
         }}
       />
@@ -276,7 +273,7 @@ export function ExpensesClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Expense deleted');
+          toast.success('Gasto eliminado');
           router.refresh();
         }}
       />

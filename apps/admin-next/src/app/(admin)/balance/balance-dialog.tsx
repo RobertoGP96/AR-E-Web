@@ -67,7 +67,7 @@ export function BalanceDialog({
       <div className="w-full max-w-xl rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
         <div className="mb-4 flex items-start justify-between gap-2">
           <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'New balance' : 'Edit balance'}
+            {mode === 'create' ? 'Nuevo balance' : 'Editar balance'}
           </h2>
           <button
             type="button"
@@ -86,7 +86,7 @@ export function BalanceDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <Field
-              label="Start date"
+              label="Fecha inicio"
               name="startDate"
               type="date"
               defaultValue={isoToDateInput(balance?.startDate)}
@@ -94,7 +94,7 @@ export function BalanceDialog({
               required
             />
             <Field
-              label="End date"
+              label="Fecha fin"
               name="endDate"
               type="date"
               defaultValue={isoToDateInput(balance?.endDate)}
@@ -105,7 +105,7 @@ export function BalanceDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <Field
-              label="System weight"
+              label="Peso del sistema"
               name="systemWeight"
               type="number"
               step="0.01"
@@ -115,7 +115,7 @@ export function BalanceDialog({
               required
             />
             <Field
-              label="Registered weight"
+              label="Peso registrado"
               name="registeredWeight"
               type="number"
               step="0.01"
@@ -139,7 +139,7 @@ export function BalanceDialog({
               required
             />
             <Field
-              label="Buys costs"
+              label="Costos de compras"
               name="buysCosts"
               type="number"
               step="0.01"
@@ -203,14 +203,14 @@ export function BalanceDialog({
               onClick={onClose}
               className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="submit"
               disabled={isPending}
               className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isPending ? 'Saving…' : 'Save'}
+              {isPending ? 'Guardando…' : 'Guardar'}
             </button>
           </div>
         </form>

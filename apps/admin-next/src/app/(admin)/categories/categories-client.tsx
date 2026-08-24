@@ -37,16 +37,14 @@ export function CategoriesClient({
 
   return (
     <div className="space-y-6">
-      <header className="flex items-start gap-3">
-        <div className="rounded-md bg-zinc-100 p-2 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-          <Tag className="h-5 w-5" aria-hidden />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Categorías</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Manage categories used for products and deliveries.
-          </p>
-        </div>
+      <header>
+        <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+          <Tag className="h-8 w-8 text-orange-400" aria-hidden />
+          Categorías
+        </h1>
+        <p className="mt-2 text-gray-600">
+          Gestiona las categorías de productos y su costo de envío por libra
+        </p>
       </header>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -58,7 +56,7 @@ export function CategoriesClient({
           <input
             type="search"
             value={query}
-            placeholder="Search by name…"
+            placeholder="Buscar por nombre…"
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') applyQuery(query);
@@ -75,7 +73,7 @@ export function CategoriesClient({
           className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
         >
           <Plus className="h-4 w-4" aria-hidden />
-          New category
+          Nueva categoría
         </button>
       </div>
 
@@ -85,11 +83,11 @@ export function CategoriesClient({
             <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
                 <th className="px-4 py-3 font-medium">#</th>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Cost / lb</th>
-                <th className="px-4 py-3 font-medium">Client charge / lb</th>
-                <th className="px-4 py-3 font-medium">Created</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 font-medium">Nombre</th>
+                <th className="px-4 py-3 font-medium">Costo / lb</th>
+                <th className="px-4 py-3 font-medium">Cargo al cliente / lb</th>
+                <th className="px-4 py-3 font-medium">Creado</th>
+                <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -99,7 +97,7 @@ export function CategoriesClient({
                     colSpan={6}
                     className="px-4 py-8 text-center text-sm text-zinc-500"
                   >
-                    {isPending ? 'Cargando…' : 'No categories found.'}
+                    {isPending ? 'Cargando…' : 'No hay categorías.'}
                   </td>
                 </tr>
               ) : (
@@ -146,7 +144,7 @@ export function CategoriesClient({
         <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
           {initialRows.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-zinc-500">
-              {isPending ? 'Cargando…' : 'No categories found.'}
+              {isPending ? 'Cargando…' : 'No hay categorías.'}
             </li>
           ) : (
             initialRows.map((row) => (
@@ -173,15 +171,15 @@ export function CategoriesClient({
                   </div>
                 </div>
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  <dt>Cost / lb</dt>
+                  <dt>Costo / lb</dt>
                   <dd className="text-right tabular-nums text-zinc-900 dark:text-zinc-100">
                     {formatCurrency(row.shippingCostPerPound)}
                   </dd>
-                  <dt>Client charge / lb</dt>
+                  <dt>Cargo al cliente / lb</dt>
                   <dd className="text-right tabular-nums text-zinc-900 dark:text-zinc-100">
                     {formatCurrency(row.clientShippingCharge)}
                   </dd>
-                  <dt>Created</dt>
+                  <dt>Creado</dt>
                   <dd className="text-right text-zinc-900 dark:text-zinc-100">
                     {formatDate(row.createdAt)}
                   </dd>
@@ -198,7 +196,7 @@ export function CategoriesClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Category created');
+          toast.success('Categoría creada');
           router.refresh();
         }}
       />
@@ -210,7 +208,7 @@ export function CategoriesClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Category updated');
+          toast.success('Categoría actualizada');
           router.refresh();
         }}
       />
@@ -220,7 +218,7 @@ export function CategoriesClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Category deleted');
+          toast.success('Categoría eliminada');
           router.refresh();
         }}
       />

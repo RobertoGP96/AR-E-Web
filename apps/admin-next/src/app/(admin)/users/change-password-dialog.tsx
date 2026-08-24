@@ -125,14 +125,14 @@ export function ChangePasswordDialog({
               onClick={onClose}
               className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="submit"
               disabled={isPending}
               className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isPending ? 'Saving…' : 'Update password'}
+              {isPending ? 'Guardando…' : 'Actualizar contraseña'}
             </button>
           </div>
         </form>

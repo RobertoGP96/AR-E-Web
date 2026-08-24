@@ -68,16 +68,14 @@ export function PackagesClient({
 
   return (
     <div className="space-y-6">
-      <header className="flex items-start gap-3">
-        <div className="rounded-md bg-zinc-100 p-2 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-          <Box className="h-5 w-5" aria-hidden />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Paquetes</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Track incoming packages from shipping agencies.
-          </p>
-        </div>
+      <header>
+        <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+          <Box className="h-8 w-8 text-orange-400" aria-hidden />
+          Paquetes
+        </h1>
+        <p className="mt-2 text-gray-600">
+          Gestiona todos los paquetes en tránsito y entregados
+        </p>
       </header>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -90,7 +88,7 @@ export function PackagesClient({
             <input
               type="search"
               value={query}
-              placeholder="Search agency or tracking…"
+              placeholder="Buscar por agencia o tracking…"
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') applyParams(query, initialStatus);
@@ -109,7 +107,7 @@ export function PackagesClient({
             }}
             className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
           >
-            <option value="">All statuses</option>
+            <option value="">Todos los estados</option>
             {PACKAGE_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -123,7 +121,7 @@ export function PackagesClient({
           className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
         >
           <Plus className="h-4 w-4" aria-hidden />
-          New package
+          Nuevo paquete
         </button>
       </div>
 
@@ -134,9 +132,9 @@ export function PackagesClient({
               <tr>
                 <th className="px-4 py-3 font-medium">Tracking</th>
                 <th className="px-4 py-3 font-medium">Agency</th>
-                <th className="px-4 py-3 font-medium">Arrival</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 font-medium">Llegada</th>
+                <th className="px-4 py-3 font-medium">Estado</th>
+                <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -146,7 +144,7 @@ export function PackagesClient({
                     colSpan={5}
                     className="px-4 py-8 text-center text-sm text-zinc-500"
                   >
-                    {isPending ? 'Cargando…' : 'No packages found.'}
+                    {isPending ? 'Cargando…' : 'No hay paquetes.'}
                   </td>
                 </tr>
               ) : (
@@ -220,7 +218,7 @@ export function PackagesClient({
         <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
           {initialRows.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-zinc-500">
-              {isPending ? 'Cargando…' : 'No packages found.'}
+              {isPending ? 'Cargando…' : 'No hay paquetes.'}
             </li>
           ) : (
             initialRows.map((row) => (
@@ -262,11 +260,11 @@ export function PackagesClient({
                   </div>
                 </div>
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  <dt>Arrival</dt>
+                  <dt>Llegada</dt>
                   <dd className="text-right text-zinc-900 dark:text-zinc-100">
                     {formatDate(row.arrivalDate)}
                   </dd>
-                  <dt>Status</dt>
+                  <dt>Estado</dt>
                   <dd className="text-right">
                     <select
                       value={row.statusOfProcessing}
@@ -296,7 +294,7 @@ export function PackagesClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Package created');
+          toast.success('Paquete creado');
           router.refresh();
         }}
       />
@@ -308,7 +306,7 @@ export function PackagesClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Package updated');
+          toast.success('Paquete actualizado');
           router.refresh();
         }}
       />
@@ -318,7 +316,7 @@ export function PackagesClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Package deleted');
+          toast.success('Paquete eliminado');
           router.refresh();
         }}
       />

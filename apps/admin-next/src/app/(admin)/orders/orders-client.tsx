@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { OrderDialog } from './order-dialog';
 import { DeleteOrderDialog } from './delete-dialog';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { OrderStatusBadge, PayStatusBadge } from '@/components/status-badges';
 import {
   ORDER_STATUSES,
   PAY_STATUSES,
@@ -27,15 +28,6 @@ interface OrdersClientProps {
     pay: PayStatus | null;
   };
 }
-
-const PAY_STYLES: Record<PayStatus, string> = {
-  Pagado:
-    'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-  Parcial:
-    'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
-  'No pagado':
-    'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
-};
 
 export function OrdersClient({
   initialRows,
@@ -63,16 +55,14 @@ export function OrdersClient({
   return (
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <div className="rounded-md bg-zinc-100 p-2 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-            <ShoppingCart className="h-5 w-5" aria-hidden />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Pedidos</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Orders, their products and payment status.
-            </p>
-          </div>
+        <div>
+          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+            <ShoppingCart className="h-8 w-8 text-orange-400" aria-hidden />
+            Órdenes
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Gestión de todas las órdenes del sistema
+          </p>
         </div>
         <button
           type="button"
@@ -80,7 +70,7 @@ export function OrdersClient({
           className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
         >
           <Plus className="h-4 w-4" aria-hidden />
-          New order
+          Nueva orden
         </button>
       </header>
 
@@ -93,7 +83,7 @@ export function OrdersClient({
           <input
             type="search"
             value={query}
-            placeholder="Search client name or phone…"
+            placeholder="Buscar por cliente o teléfono…"
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') setParam('q', query || null);
@@ -109,7 +99,7 @@ export function OrdersClient({
           onChange={(e) => setParam('status', e.target.value || null)}
           className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
         >
-          <option value="">All statuses</option>
+          <option value="">Todos los estados</option>
           {ORDER_STATUSES.map((s) => (
             <option key={s} value={s}>
               {s}
@@ -121,7 +111,7 @@ export function OrdersClient({
           onChange={(e) => setParam('pay', e.target.value || null)}
           className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
         >
-          <option value="">All payment states</option>
+          <option value="">Todos los pagos</option>
           {PAY_STATUSES.map((s) => (
             <option key={s} value={s}>
               {s}
@@ -135,14 +125,14 @@ export function OrdersClient({
           <table className="w-full text-left text-sm">
             <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
-                <th className="px-4 py-3 font-medium">Client</th>
-                <th className="px-4 py-3 font-medium">Manager</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Cliente</th>
+                <th className="px-4 py-3 font-medium">Gestor</th>
+                <th className="px-4 py-3 font-medium">Estado</th>
                 <th className="px-4 py-3 font-medium">Pay</th>
-                <th className="px-4 py-3 font-medium">Products</th>
+                <th className="px-4 py-3 font-medium">Productos</th>
                 <th className="px-4 py-3 font-medium">Total</th>
-                <th className="px-4 py-3 font-medium">Created</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 font-medium">Creado</th>
+                <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -152,7 +142,7 @@ export function OrdersClient({
                     colSpan={8}
                     className="px-4 py-8 text-center text-sm text-zinc-500"
                   >
-                    {isPending ? 'Cargando…' : 'No orders found.'}
+                    {isPending ? 'Cargando…' : 'No hay órdenes.'}
                   </td>
                 </tr>
               ) : (
@@ -172,16 +162,10 @@ export function OrdersClient({
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                        {row.status}
-                      </span>
+                      <OrderStatusBadge status={row.status} />
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${PAY_STYLES[row.payStatus]}`}
-                      >
-                        {row.payStatus}
-                      </span>
+                      <PayStatusBadge status={row.payStatus} />
                     </td>
                     <td className="px-4 py-3 text-zinc-500">
                       {row.productCount}
@@ -203,7 +187,7 @@ export function OrdersClient({
                         <button
                           type="button"
                           onClick={() => setEditTarget(row)}
-                          aria-label="Edit order"
+                          aria-label="Editar orden"
                           className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
                         >
                           <Pencil className="h-4 w-4" aria-hidden />
@@ -211,7 +195,7 @@ export function OrdersClient({
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(row)}
-                          aria-label="Delete order"
+                          aria-label="Eliminar orden"
                           className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
                         >
                           <Trash2 className="h-4 w-4" aria-hidden />
@@ -228,7 +212,7 @@ export function OrdersClient({
         <ul className="divide-y divide-zinc-200 lg:hidden dark:divide-zinc-800">
           {initialRows.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-zinc-500">
-              {isPending ? 'Cargando…' : 'No orders found.'}
+              {isPending ? 'Cargando…' : 'No hay órdenes.'}
             </li>
           ) : (
             initialRows.map((row) => (
@@ -244,17 +228,11 @@ export function OrdersClient({
                     {formatCurrency(row.totalCosts)}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-1 text-xs">
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                    {row.status}
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 font-medium ${PAY_STYLES[row.payStatus]}`}
-                  >
-                    {row.payStatus}
-                  </span>
+                <div className="flex flex-wrap items-center gap-1 text-xs">
+                  <OrderStatusBadge status={row.status} />
+                  <PayStatusBadge status={row.payStatus} />
                   <span className="text-zinc-500">
-                    {row.productCount} product(s)
+                    {row.productCount} producto(s)
                   </span>
                 </div>
                 <div className="flex gap-2 pt-1">
@@ -293,7 +271,7 @@ export function OrdersClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={(newId) => {
           setCreateOpen(false);
-          toast.success('Order created');
+          toast.success('Orden creada');
           if (newId) router.push(`/orders/${newId}`);
           else router.refresh();
         }}
@@ -308,7 +286,7 @@ export function OrdersClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Order updated');
+          toast.success('Orden actualizada');
           router.refresh();
         }}
       />
@@ -318,7 +296,7 @@ export function OrdersClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Order deleted');
+          toast.success('Orden eliminada');
           router.refresh();
         }}
       />

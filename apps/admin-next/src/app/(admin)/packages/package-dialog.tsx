@@ -68,7 +68,7 @@ export function PackageDialog({
       <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
         <div className="mb-4 flex items-start justify-between gap-2">
           <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'New package' : 'Edit package'}
+            {mode === 'create' ? 'Nuevo paquete' : 'Editar paquete'}
           </h2>
           <button
             type="button"
@@ -86,7 +86,7 @@ export function PackageDialog({
           ) : null}
 
           <Field
-            label="Tracking number"
+            label="Número de tracking"
             name="numberOfTracking"
             type="text"
             defaultValue={pkg?.numberOfTracking ?? ''}
@@ -96,7 +96,7 @@ export function PackageDialog({
           />
 
           <Field
-            label="Agency name"
+            label="Nombre de la agencia"
             name="agencyName"
             type="text"
             defaultValue={pkg?.agencyName ?? ''}
@@ -137,7 +137,7 @@ export function PackageDialog({
           </div>
 
           <Field
-            label="Arrival date"
+            label="Fecha de llegada"
             name="arrivalDate"
             type="date"
             defaultValue={isoToDateInput(pkg?.arrivalDate)}
@@ -147,7 +147,7 @@ export function PackageDialog({
 
           <ImageUploadField
             name="packagePicture"
-            label="Package picture (optional)"
+            label="Foto del paquete (opcional)"
             defaultUrl={pkg?.packagePicture}
           />
 
@@ -157,14 +157,14 @@ export function PackageDialog({
               onClick={onClose}
               className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="submit"
               disabled={isPending}
               className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isPending ? 'Saving…' : 'Save'}
+              {isPending ? 'Guardando…' : 'Guardar'}
             </button>
           </div>
         </form>

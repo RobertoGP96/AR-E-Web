@@ -53,7 +53,7 @@ export function PurchaseDetailClient({
 
   function handleAdd() {
     if (!productId) {
-      toast.error('Select a product');
+      toast.error('Selecciona un producto');
       return;
     }
     startTransition(async () => {
@@ -63,7 +63,7 @@ export function PurchaseDetailClient({
         amount
       );
       if (result.ok) {
-        toast.success('Product added to purchase');
+        toast.success('Producto añadido a la compra');
         setProductId('');
         setAmount(1);
         router.refresh();
@@ -77,7 +77,7 @@ export function PurchaseDetailClient({
     startTransition(async () => {
       const result = await removeBuyedProductAction(purchaseId, rowId);
       if (result.ok) {
-        toast.success('Product removed');
+        toast.success('Producto quitado');
         router.refresh();
       } else {
         toast.error(result.error);
@@ -92,7 +92,7 @@ export function PurchaseDetailClient({
         className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
-        Back to purchases
+        Volver a compras
       </Link>
 
       <header className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
@@ -116,16 +116,16 @@ export function PurchaseDetailClient({
 
       <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
         <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Add a product bought in this purchase
+          Añadir un producto comprado en esta compra
         </h2>
         {candidates.length === 0 ? (
           <p className="text-sm text-zinc-500">
-            No products from this shop available.
+            No hay productos disponibles de esta tienda.
           </p>
         ) : (
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
             <label className="flex-1 space-y-1">
-              <span className="text-xs text-zinc-500">Product</span>
+              <span className="text-xs text-zinc-500">Producto</span>
               <select
                 value={productId}
                 onChange={(e) => setProductId(e.target.value)}
@@ -141,7 +141,7 @@ export function PurchaseDetailClient({
               </select>
             </label>
             <label className="space-y-1">
-              <span className="text-xs text-zinc-500">Amount</span>
+              <span className="text-xs text-zinc-500">Monto</span>
               <input
                 type="number"
                 min={1}
@@ -169,10 +169,10 @@ export function PurchaseDetailClient({
         <table className="w-full text-left text-sm">
           <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
             <tr>
-              <th className="px-4 py-3 font-medium">Product</th>
+              <th className="px-4 py-3 font-medium">Producto</th>
               <th className="px-4 py-3 font-medium">Bought</th>
-              <th className="px-4 py-3 font-medium">Refunded</th>
-              <th className="px-4 py-3 text-right font-medium">Actions</th>
+              <th className="px-4 py-3 font-medium">Reembolsado</th>
+              <th className="px-4 py-3 text-right font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -182,7 +182,7 @@ export function PurchaseDetailClient({
                   colSpan={4}
                   className="px-4 py-8 text-center text-sm text-zinc-500"
                 >
-                  No products bought in this purchase yet.
+                  Aún no hay productos comprados en esta compra.
                 </td>
               </tr>
             ) : (
@@ -230,7 +230,7 @@ export function PurchaseDetailClient({
           onClose={() => setRefundTarget(null)}
           onSuccess={() => {
             setRefundTarget(null);
-            toast.success('Refund recorded');
+            toast.success('Reembolso registrado');
             router.refresh();
           }}
         />
@@ -343,7 +343,7 @@ function RefundDialog({
             disabled={isPending}
             className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-70 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
           >
-            Cancel
+            Cancelar
           </button>
           <button
             type="button"
@@ -351,7 +351,7 @@ function RefundDialog({
             disabled={isPending || refundable === 0}
             className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-70"
           >
-            {isPending ? 'Saving…' : 'Record refund'}
+            {isPending ? 'Guardando…' : 'Registrar reembolso'}
           </button>
         </div>
       </div>

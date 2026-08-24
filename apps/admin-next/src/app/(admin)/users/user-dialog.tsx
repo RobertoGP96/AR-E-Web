@@ -74,7 +74,7 @@ export function UserDialog({
       <div className="flex max-h-full w-full max-w-lg flex-col rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex items-start justify-between gap-2 border-b border-zinc-200 p-5 dark:border-zinc-800">
           <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'New user' : 'Edit user'}
+            {mode === 'create' ? 'Nuevo usuario' : 'Editar usuario'}
           </h2>
           <button
             type="button"
@@ -103,7 +103,7 @@ export function UserDialog({
               required
             />
             <Field
-              label="Last name"
+              label="Apellidos"
               name="lastName"
               defaultValue={user?.lastName ?? ''}
               error={errors['lastName']}
@@ -113,7 +113,7 @@ export function UserDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <Field
-              label="Phone number"
+              label="Teléfono"
               name="phoneNumber"
               defaultValue={user?.phoneNumber ?? ''}
               error={errors['phoneNumber']}
@@ -129,7 +129,7 @@ export function UserDialog({
           </div>
 
           <Field
-            label="Home address"
+            label="Dirección"
             name="homeAddress"
             defaultValue={user?.homeAddress ?? ''}
             error={errors['homeAddress']}
@@ -137,7 +137,7 @@ export function UserDialog({
 
           {mode === 'create' ? (
             <Field
-              label="Password"
+              label="Contraseña"
               name="password"
               type="password"
               error={errors['password']}
@@ -230,7 +230,7 @@ export function UserDialog({
                 defaultChecked={user ? user.isActive : true}
                 className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:border-zinc-700"
               />
-              <span className="text-zinc-700 dark:text-zinc-300">Active</span>
+              <span className="text-zinc-700 dark:text-zinc-300">Activo</span>
             </label>
           </div>
 
@@ -240,14 +240,14 @@ export function UserDialog({
               onClick={onClose}
               className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="submit"
               disabled={isPending}
               className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isPending ? 'Saving…' : 'Save'}
+              {isPending ? 'Guardando…' : 'Guardar'}
             </button>
           </div>
         </form>

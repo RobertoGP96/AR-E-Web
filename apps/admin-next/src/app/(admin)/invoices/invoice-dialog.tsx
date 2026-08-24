@@ -150,7 +150,7 @@ export function InvoiceDialog({
       <div className="flex max-h-full w-full max-w-2xl flex-col rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex items-start justify-between gap-2 border-b border-zinc-200 p-5 dark:border-zinc-800">
           <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'New invoice' : 'Edit invoice'}
+            {mode === 'create' ? 'Nueva factura' : 'Editar factura'}
           </h2>
           <button
             type="button"
@@ -224,7 +224,7 @@ export function InvoiceDialog({
                         )
                       }
                       disabled={tags.length === 1}
-                      aria-label="Remove tag"
+                      aria-label="Quitar tag"
                       className="rounded-md p-1 text-zinc-500 transition hover:bg-zinc-100 hover:text-red-600 disabled:opacity-40 dark:hover:bg-zinc-800"
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden />
@@ -233,7 +233,7 @@ export function InvoiceDialog({
 
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     <label className="space-y-1">
-                      <span className="text-xs text-zinc-500">Type</span>
+                      <span className="text-xs text-zinc-500">Tipo</span>
                       <select
                         value={tag.type}
                         onChange={(e) =>
@@ -254,13 +254,13 @@ export function InvoiceDialog({
                     {tag.type === 'pesaje' ? (
                       <>
                         <NumberCell
-                          label="Weight (lb)"
+                          label="Peso (lb)"
                           value={tag.weight}
                           onChange={(v) => updateTag(tag.key, { weight: v })}
                           error={errors[`tags.${index}.weight`]}
                         />
                         <NumberCell
-                          label="Cost / lb"
+                          label="Costo / lb"
                           value={tag.costPerLb}
                           onChange={(v) =>
                             updateTag(tag.key, { costPerLb: v })
@@ -268,7 +268,7 @@ export function InvoiceDialog({
                           error={errors[`tags.${index}.costPerLb`]}
                         />
                         <NumberCell
-                          label="Fixed cost"
+                          label="Costo fijo"
                           value={tag.fixedCost}
                           onChange={(v) =>
                             updateTag(tag.key, { fixedCost: v })
@@ -278,7 +278,7 @@ export function InvoiceDialog({
                       </>
                     ) : (
                       <NumberCell
-                        label="Fixed cost"
+                        label="Costo fijo"
                         value={tag.fixedCost}
                         onChange={(v) =>
                           updateTag(tag.key, { fixedCost: v })
@@ -313,7 +313,7 @@ export function InvoiceDialog({
               onClick={onClose}
               className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="button"
@@ -321,7 +321,7 @@ export function InvoiceDialog({
               disabled={isPending}
               className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isPending ? 'Saving…' : 'Save'}
+              {isPending ? 'Guardando…' : 'Guardar'}
             </button>
           </div>
         </div>

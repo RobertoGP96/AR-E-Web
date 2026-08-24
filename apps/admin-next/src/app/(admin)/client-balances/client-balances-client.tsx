@@ -42,7 +42,7 @@ function BalanceBadge({ balance }: { balance: number }) {
     );
   }
   return (
-    <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+    <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">
       AL DÍA
     </span>
   );
@@ -71,18 +71,14 @@ export function ClientBalancesClient({
 
   return (
     <div className="space-y-6">
-      <header className="flex items-start gap-3">
-        <div className="rounded-md bg-zinc-100 p-2 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-          <Wallet className="h-5 w-5" aria-hidden />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Saldos de clientes
-          </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Balance por cliente: cobrado menos costo de órdenes y entregas.
-          </p>
-        </div>
+      <header>
+        <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+          <Wallet className="h-8 w-8 text-orange-400" aria-hidden />
+          Balance de Clientes
+        </h1>
+        <p className="mt-2 text-gray-600">
+          Balance por cliente: cobrado menos costo de órdenes y entregas.
+        </p>
       </header>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

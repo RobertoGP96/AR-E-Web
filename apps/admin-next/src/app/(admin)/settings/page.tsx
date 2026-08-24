@@ -15,10 +15,9 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Global system parameters (CommonInformation). These feed pricing
-          and shipping calculations.
+        <h1 className="text-3xl font-bold text-gray-900">Configuración</h1>
+        <p className="mt-2 text-gray-600">
+          Personaliza la configuración de tu panel de administración
         </p>
       </header>
 

@@ -49,7 +49,7 @@ function ProfileCard({ defaults }: ProfileFormsProps) {
     ActionResult | undefined,
     FormData
   >(updateProfileAction, undefined);
-  useHandled(state, 'Profile updated');
+  useHandled(state, 'Perfil actualizado');
   const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
 
   return (
@@ -65,7 +65,7 @@ function ProfileCard({ defaults }: ProfileFormsProps) {
           error={errors['name']}
         />
         <Field
-          label="Last name"
+          label="Apellidos"
           name="lastName"
           defaultValue={defaults.lastName}
           error={errors['lastName']}
@@ -78,7 +78,7 @@ function ProfileCard({ defaults }: ProfileFormsProps) {
           error={errors['email']}
         />
         <Field
-          label="Home address"
+          label="Dirección"
           name="homeAddress"
           defaultValue={defaults.homeAddress}
           error={errors['homeAddress']}
@@ -88,7 +88,7 @@ function ProfileCard({ defaults }: ProfileFormsProps) {
           disabled={isPending}
           className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-70"
         >
-          {isPending ? 'Saving…' : 'Save changes'}
+          {isPending ? 'Guardando…' : 'Save changes'}
         </button>
       </form>
     </div>
@@ -101,7 +101,7 @@ function PasswordCard() {
     FormData
   >(changeOwnPasswordAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
-  useHandled(state, 'Password changed', () => formRef.current?.reset());
+  useHandled(state, 'Contraseña cambiada', () => formRef.current?.reset());
   const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
 
   return (
@@ -111,19 +111,19 @@ function PasswordCard() {
       </h2>
       <form ref={formRef} action={formAction} className="space-y-4">
         <Field
-          label="Current password"
+          label="Contraseña actual"
           name="current"
           type="password"
           error={errors['current']}
         />
         <Field
-          label="New password"
+          label="Nueva contraseña"
           name="next"
           type="password"
           error={errors['next']}
         />
         <Field
-          label="Confirm new password"
+          label="Confirmar nueva contraseña"
           name="confirm"
           type="password"
           error={errors['confirm']}
@@ -133,7 +133,7 @@ function PasswordCard() {
           disabled={isPending}
           className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-70"
         >
-          {isPending ? 'Saving…' : 'Update password'}
+          {isPending ? 'Guardando…' : 'Actualizar contraseña'}
         </button>
       </form>
     </div>

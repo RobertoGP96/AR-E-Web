@@ -67,7 +67,7 @@ export function CategoryDialog({
       <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
         <div className="mb-4 flex items-start justify-between gap-2">
           <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'New category' : 'Edit category'}
+            {mode === 'create' ? 'Nueva categoría' : 'Editar categoría'}
           </h2>
           <button
             type="button"
@@ -94,7 +94,7 @@ export function CategoryDialog({
           />
 
           <Field
-            label="Shipping cost per lb"
+            label="Costo de envío por lb"
             name="shippingCostPerPound"
             type="number"
             step="0.01"
@@ -107,7 +107,7 @@ export function CategoryDialog({
           />
 
           <Field
-            label="Client charge per lb"
+            label="Cargo al cliente por lb"
             name="clientShippingCharge"
             type="number"
             step="0.01"
@@ -125,14 +125,14 @@ export function CategoryDialog({
               onClick={onClose}
               className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="submit"
               disabled={isPending}
               className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isPending ? 'Saving…' : 'Save'}
+              {isPending ? 'Guardando…' : 'Guardar'}
             </button>
           </div>
         </form>

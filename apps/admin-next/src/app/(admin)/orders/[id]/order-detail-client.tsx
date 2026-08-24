@@ -53,7 +53,7 @@ export function OrderDetailClient({
           className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back to orders
+          Volver a órdenes
         </Link>
       </div>
 
@@ -92,7 +92,7 @@ export function OrderDetailClient({
             value={formatCurrency(header.receivedValueOfClient)}
           />
           <Stat
-            label="Balance applied"
+            label="Saldo aplicado"
             value={formatCurrency(header.balanceApplied)}
           />
           <Stat
@@ -104,7 +104,7 @@ export function OrderDetailClient({
       </header>
 
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold tracking-tight">Products</h2>
+        <h2 className="text-lg font-semibold tracking-tight">Productos</h2>
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
@@ -120,13 +120,13 @@ export function OrderDetailClient({
           <table className="w-full text-left text-sm">
             <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Shop</th>
+                <th className="px-4 py-3 font-medium">Nombre</th>
+                <th className="px-4 py-3 font-medium">Tienda</th>
                 <th className="px-4 py-3 font-medium">Qty</th>
-                <th className="px-4 py-3 font-medium">Unit</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Total cost</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 font-medium">Unidad</th>
+                <th className="px-4 py-3 font-medium">Estado</th>
+                <th className="px-4 py-3 font-medium">Costo total</th>
+                <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -136,7 +136,7 @@ export function OrderDetailClient({
                     colSpan={7}
                     className="px-4 py-8 text-center text-sm text-zinc-500"
                   >
-                    No products yet. Add the first one.
+                    Aún no hay productos. Añade el primero.
                   </td>
                 </tr>
               ) : (
@@ -215,7 +215,7 @@ export function OrderDetailClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Product added');
+          toast.success('Producto añadido');
           router.refresh();
         }}
       />
@@ -230,7 +230,7 @@ export function OrderDetailClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Product updated');
+          toast.success('Producto actualizado');
           router.refresh();
         }}
       />
@@ -241,7 +241,7 @@ export function OrderDetailClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Product deleted');
+          toast.success('Producto eliminado');
           router.refresh();
         }}
       />
