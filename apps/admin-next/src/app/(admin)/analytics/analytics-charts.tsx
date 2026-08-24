@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@heroui/react';
 import {
   Area,
   AreaChart,
@@ -38,47 +39,46 @@ interface ShopRow {
   cost: number;
 }
 
-// Series colors ported verbatim from the Vite Analytics chart config.
+// Series colors come from the theme's chart scale (globals.css).
 const SERIES = [
-  { key: 'revenue', label: 'Ingresos', color: 'hsl(33 100% 50%)' },
-  {
-    key: 'system_profit',
-    label: 'Ganancia Sistema',
-    color: 'hsl(25 95% 53%)',
-  },
-  {
-    key: 'agent_profits',
-    label: 'Ganancia Agentes',
-    color: 'hsl(39 100% 57%)',
-  },
+  { key: 'revenue', label: 'Ingresos', color: 'var(--chart-1)' },
+  { key: 'system_profit', label: 'Ganancia Sistema', color: 'var(--chart-2)' },
+  { key: 'agent_profits', label: 'Ganancia Agentes', color: 'var(--chart-3)' },
   {
     key: 'product_expenses',
     label: 'Gastos Productos',
-    color: 'hsl(16 90% 48%)',
+    color: 'var(--chart-4)',
   },
   {
     key: 'delivery_expenses',
     label: 'Gastos Entrega',
-    color: 'hsl(27 87% 67%)',
+    color: 'var(--chart-5)',
   },
 ] as const;
 
-// All-orange cycle from the Vite DashboardCharts palette.
+// Categorical cycle for the pies — the same theme scale, in order.
 const PIE_COLORS = [
-  'hsl(25, 88%, 55%)',
-  'hsl(36, 100%, 50%)',
-  'hsl(24, 94%, 50%)',
-  'hsl(20, 85%, 45%)',
-  'hsl(28, 95%, 48%)',
-  'hsl(16, 100%, 50%)',
-  'hsl(39, 100%, 50%)',
-  'hsl(22, 90%, 52%)',
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
 ];
 
+// Shared Recharts tooltip surface, aligned with the overlay tokens.
+const TOOLTIP_STYLE = {
+  backgroundColor: 'var(--overlay)',
+  border: '1px solid var(--border)',
+  borderRadius: '12px',
+  color: 'var(--foreground)',
+} as const;
+
+const AXIS_TICK = { fill: 'var(--muted)', fontSize: 12 } as const;
+
 const RANGES = [
-  { value: '12m', label: 'Últimos 12 meses', slice: 12 },
-  { value: '6m', label: 'Últimos 6 meses', slice: 6 },
-  { value: '3m', label: 'Últimos 3 meses', slice: 3 },
+  { value: '12m', label: '12 meses', slice: 12 },
+  { value: '6m', label: '6 meses', slice: 6 },
+  { value: '3m', label: '3 meses', slice: 3 },
 ] as const;
 
 function formatUSD(n: number): string {
@@ -104,13 +104,13 @@ function Card({
 }) {
   return (
     <div
-      className={`rounded-xl border-2 border-border bg-white shadow-sm transition-shadow duration-300 hover:shadow-lg ${className ?? ''}`}
+      className={`surface-card transition-shadow duration-300 hover:shadow-md ${className ?? ''}`}
     >
-      <div className="flex flex-col gap-2 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 border-b border-separator px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-gray-800">{title}</h2>
+          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
           {subtitle ? (
-            <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>
+            <p className="mt-0.5 text-xs text-muted">{subtitle}</p>
           ) : null}
         </div>
         {action}
@@ -138,23 +138,27 @@ export function AnalyticsCharts({
   return (
     <div className="space-y-6">
       <Card
+        className="animate-in fade-in slide-in-from-bottom-2 duration-500"
         title="Vista General de Reportes Financieros"
         subtitle="Evolución completa de ingresos, costos y ganancias"
         action={
-          <select
-            value={range}
+          <div
+            role="group"
             aria-label="Seleccionar período"
-            onChange={(e) =>
-              setRange(e.target.value as (typeof RANGES)[number]['value'])
-            }
-            className="w-[160px] rounded-lg border border-input bg-white px-3 py-1.5 text-sm"
+            className="flex items-center gap-1.5"
           >
             {RANGES.map((r) => (
-              <option key={r.value} value={r.value}>
+              <Button
+                key={r.value}
+                size="sm"
+                variant={range === r.value ? 'primary' : 'outline'}
+                aria-pressed={range === r.value}
+                onPress={() => setRange(r.value)}
+              >
                 {r.label}
-              </option>
+              </Button>
             ))}
-          </select>
+          </div>
         }
       >
         <div className="h-[250px] w-full md:h-[400px]">
@@ -178,23 +182,28 @@ export function AnalyticsCharts({
                   </linearGradient>
                 ))}
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="var(--separator)"
+              />
               <XAxis
                 dataKey="month_short"
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                fontSize={12}
+                tick={AXIS_TICK}
               />
               <YAxis
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                fontSize={12}
+                tick={AXIS_TICK}
                 tickFormatter={(v: number) => formatUSD(v)}
               />
               <Tooltip
+                contentStyle={TOOLTIP_STYLE}
                 labelFormatter={(v) => `Mes: ${v}`}
                 formatter={(value: number | string, name: string) => [
                   formatUSD(Number(value)),
@@ -222,7 +231,7 @@ export function AnalyticsCharts({
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <div className="stagger-children grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card title="Órdenes por estado">
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -233,6 +242,7 @@ export function AnalyticsCharts({
                   nameKey="name"
                   innerRadius={70}
                   outerRadius={100}
+                  stroke="var(--surface)"
                   strokeWidth={5}
                   paddingAngle={2}
                   label
@@ -244,7 +254,7 @@ export function AnalyticsCharts({
                     />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={TOOLTIP_STYLE} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -255,21 +265,33 @@ export function AnalyticsCharts({
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={shopData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" fontSize={11} tickLine={false} />
-                <YAxis fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="var(--separator)"
+                />
+                <XAxis
+                  dataKey="name"
+                  tickLine={false}
+                  tick={{ fill: 'var(--muted)', fontSize: 11 }}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: 'var(--muted)', fontSize: 11 }}
+                />
+                <Tooltip contentStyle={TOOLTIP_STYLE} />
                 <Legend />
                 <Bar
                   dataKey="cost"
                   name="Costo"
-                  fill="hsl(25 95% 53%)"
+                  fill="var(--chart-1)"
                   radius={4}
                 />
                 <Bar
                   dataKey="products"
                   name="Productos"
-                  fill="hsl(39 100% 57%)"
+                  fill="var(--chart-4)"
                   radius={4}
                 />
               </BarChart>
@@ -287,6 +309,7 @@ export function AnalyticsCharts({
                   nameKey="name"
                   innerRadius={70}
                   outerRadius={100}
+                  stroke="var(--surface)"
                   strokeWidth={5}
                   paddingAngle={2}
                   label
@@ -298,7 +321,7 @@ export function AnalyticsCharts({
                     />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={TOOLTIP_STYLE} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useTransition } from 'react';
-import { Upload, X } from 'lucide-react';
+import { Loader2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { uploadImageAction } from '@/app/actions/upload';
 
@@ -14,8 +14,7 @@ interface ImageUploadFieldProps {
 
 /**
  * Uploads to Cloudinary via a server action and stores the resulting
- * secure_url in a hidden input so it submits with the surrounding form
- * (same shape the previous plain-URL field used).
+ * secure_url in a hidden input so it submits with the surrounding form.
  */
 export function ImageUploadField({
   name,
@@ -33,7 +32,7 @@ export function ImageUploadField({
       const result = await uploadImageAction(fd);
       if (result.ok) {
         setUrl(result.url);
-        toast.success('Image uploaded');
+        toast.success('Imagen subida');
       } else {
         toast.error(result.error);
       }
@@ -41,28 +40,24 @@ export function ImageUploadField({
   }
 
   return (
-    <div className="space-y-1">
-      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-        {label}
-      </span>
+    <div className="space-y-1.5">
+      <span className="field-label">{label}</span>
       <input type="hidden" name={name} value={url} readOnly />
 
       {url ? (
-        <div className="flex items-center gap-3 rounded-md border border-zinc-200 p-2 dark:border-zinc-800">
+        <div className="animate-in fade-in flex items-center gap-3 rounded-lg border border-border bg-surface p-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={url}
-            alt="Uploaded"
-            className="h-14 w-14 rounded object-cover"
+            alt="Imagen subida"
+            className="h-14 w-14 rounded-md object-cover"
           />
-          <span className="flex-1 truncate text-xs text-zinc-500">
-            {url}
-          </span>
+          <span className="flex-1 truncate text-xs text-muted">{url}</span>
           <button
             type="button"
             onClick={() => setUrl('')}
-            aria-label="Remove image"
-            className="rounded-md p-1 text-zinc-500 transition hover:bg-zinc-100 hover:text-red-600 dark:hover:bg-zinc-800"
+            aria-label="Quitar imagen"
+            className="rounded-md p-1.5 text-muted transition-colors hover:bg-danger-soft hover:text-danger"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>
@@ -72,10 +67,19 @@ export function ImageUploadField({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={isPending}
-          className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-zinc-300 px-3 py-4 text-sm text-zinc-500 transition hover:border-zinc-400 hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-sm text-muted transition-colors hover:border-accent/60 hover:bg-accent-soft/40 hover:text-accent-soft-foreground disabled:opacity-60"
         >
-          <Upload className="h-4 w-4" aria-hidden />
-          {isPending ? 'Uploading…' : 'Upload an image'}
+          {isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              Subiendo…
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4" aria-hidden />
+              Subir una imagen
+            </>
+          )}
         </button>
       )}
 

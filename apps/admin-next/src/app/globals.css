@@ -1,55 +1,117 @@
-@import "tailwindcss";
-
 /*
- * Design tokens ported from the Vite admin (apps/admin/src/index.css)
- * so both panels share the same look: orange primary, light gray
- * surfaces, near-black sidebar with orange accents, Inter, 0.75rem
- * radius. The Vite admin is a light-theme app — this one follows it.
+ * AR-E Admin — Design system base (HeroUI v3 + Tailwind v4)
+ *
+ * Identity: black / orange / white.
+ *  - HeroUI v3 provides the component styles and the token architecture
+ *    (accent, surface, overlay, field-*, status colors…).
+ *  - The AR-E brand orange is mapped to HeroUI's `--accent`, which cascades
+ *    into every component (buttons, focus rings, links, soft variants…).
+ *  - The near-black sidebar keeps its own token group (`--sidebar*`).
+ *  - A legacy bridge keeps the pre-redesign utility names working
+ *    (bg-brand, text-primary, border-border…) while pages are migrated.
+ *
+ * @heroui/styles already imports `tailwindcss` and `tw-animate-css`
+ * internally (layered: theme, base, components, utilities), so the
+ * animate-in/fade-in entrance utilities are real from now on.
  */
+@import "tailwindcss";
+@import "@heroui/styles";
+
+/* ---------------------------------------------------------------- */
+/* Theme overrides (unlayered on purpose: they win over @layer base) */
+/* ---------------------------------------------------------------- */
 :root {
+  color-scheme: light;
+
+  /* Geometry */
   --radius: 0.75rem;
+  --field-radius: 0.625rem;
+  --field-border-width: 1px;
 
-  /* Base surfaces */
-  --background: oklch(99% 0 0);
-  --foreground: oklch(25% 0.01 270);
-  --card: oklch(100% 0 0);
-  --card-foreground: oklch(25% 0.01 270);
+  /* Base surfaces — white content over a very light warm gray canvas */
+  --background: oklch(97.8% 0.004 84);
+  --foreground: oklch(21% 0.008 280);
+  --surface: oklch(100% 0 0);
+  --surface-foreground: var(--foreground);
+  --overlay: oklch(100% 0 0);
+  --overlay-foreground: var(--foreground);
 
-  /* Primary — AR-E brand orange (same value the login already used) */
-  --primary: oklch(71.065% 0.15929 64.92);
-  --primary-foreground: oklch(100% 0 0);
-  --brand: var(--primary);
-  --brand-strong: oklch(64% 0.17 60);
+  /* Brand — AR-E orange drives every interactive element */
+  --accent: oklch(71.065% 0.15929 64.92);
+  --accent-foreground: oklch(100% 0 0);
+  --focus: var(--accent);
+  --link: oklch(63% 0.17 55);
 
-  --secondary: oklch(92% 0.005 270);
-  --secondary-foreground: oklch(30% 0.01 270);
-  --muted: oklch(95% 0.005 270);
-  --muted-foreground: oklch(50% 0.01 270);
-  --accent: oklch(88% 0.08 45);
-  --accent-foreground: oklch(43.128% 0.00005 271.152);
-  --destructive: oklch(58% 0.2 25);
-  --destructive-foreground: oklch(100% 0 0);
+  /* Neutrals */
+  --muted: oklch(52% 0.012 280);
+  --default: oklch(94.5% 0.004 84);
+  --default-foreground: oklch(28% 0.01 280);
 
-  --border: oklch(87% 0.005 270);
-  --input: oklch(96% 0.005 270);
-  --ring: oklch(62% 0.2 40);
+  /* Form fields: bordered, calm, orange on focus */
+  --field-background: oklch(100% 0 0);
+  --field-foreground: var(--foreground);
+  --field-border: oklch(88.5% 0.006 84);
+  --field-shadow: 0 1px 2px 0 rgba(17, 12, 4, 0.04);
 
-  /* Charts */
-  --chart-1: oklch(62% 0.2 40);
-  --chart-2: oklch(55% 0.18 30);
-  --chart-3: oklch(70% 0.15 50);
-  --chart-4: oklch(55% 0.01 270);
-  --chart-5: oklch(75% 0.12 60);
+  /* Status */
+  --success: oklch(0.6923 0.1637 151.06);
+  --success-foreground: oklch(100% 0 0);
+  --warning: oklch(0.7819 0.1585 72.33);
+  --warning-foreground: oklch(24% 0.02 72);
+  --danger: oklch(0.6132 0.2158 25.74);
+  --danger-foreground: oklch(100% 0 0);
 
-  /* Sidebar — near-black with orange accents */
-  --sidebar: hsl(240 5.9% 10%);
-  --sidebar-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-primary: hsla(0, 0%, 41%, 0.679);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(31, 81%, 54%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(29, 95%, 64%);
+  /* Misc */
+  --border: oklch(90% 0.005 84);
+  --separator: oklch(92.5% 0.004 84);
+  --backdrop: rgba(12, 10, 6, 0.55);
+
+  /* Scrollbar — subtle brand tint */
+  --scrollbar-thumb: color-mix(in oklch, var(--accent) 45%, transparent);
+
+  /* Shadows — soft, warm-neutral */
+  --surface-shadow:
+    0 1px 2px 0 rgba(17, 12, 4, 0.05),
+    0 2px 8px -2px rgba(17, 12, 4, 0.06);
+  --overlay-shadow:
+    0 2px 8px 0 rgba(17, 12, 4, 0.06),
+    0 12px 32px -4px rgba(17, 12, 4, 0.14);
+
+  --tooltip-delay: 400ms;
+  --tooltip-close-delay: 150ms;
+
+  /* ---------------- Legacy bridge (pre-redesign utilities) -------- */
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-foreground);
+  --brand: var(--accent);
+  --brand-strong: oklch(63% 0.17 55);
+  --card: var(--surface);
+  --card-foreground: var(--surface-foreground);
+  --secondary: oklch(93.5% 0.004 84);
+  --secondary-foreground: oklch(30% 0.01 280);
+  --muted-foreground: oklch(50% 0.012 280);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--danger-foreground);
+  --input: oklch(96% 0.004 84);
+  --ring: var(--accent);
+
+  /* Charts — orange-led palette consumed by Recharts via CSS vars */
+  --chart-1: oklch(71% 0.16 65);
+  --chart-2: oklch(63% 0.17 55);
+  --chart-3: oklch(80% 0.12 75);
+  --chart-4: oklch(45% 0.01 280);
+  --chart-5: oklch(87% 0.08 80);
+
+  /* Sidebar — the black third of the identity */
+  --sidebar: oklch(16.5% 0.008 280);
+  --sidebar-foreground: oklch(94% 0.004 84);
+  --sidebar-primary: oklch(41% 0 0 / 0.68);
+  --sidebar-primary-foreground: oklch(100% 0 0);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: oklch(100% 0 0);
+  --sidebar-border: oklch(24% 0.01 280);
+  --sidebar-ring: oklch(75% 0.14 60);
+  --sidebar-hover: oklch(100% 0 0 / 0.06);
 }
 
 @theme inline {
@@ -58,6 +120,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
+  /* Legacy color utilities (bg-brand, text-primary, border-border, …) */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -68,13 +131,9 @@
   --color-brand-strong: var(--brand-strong);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-chart-1: var(--chart-1);
@@ -90,6 +149,7 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-hover: var(--sidebar-hover);
 
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
@@ -101,36 +161,169 @@ body {
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
-/* Orange scrollbar, same as the Vite admin */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+::selection {
+  background: color-mix(in oklch, var(--accent) 25%, transparent);
 }
 
-::-webkit-scrollbar-track {
-  background: var(--background);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--primary);
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
-}
-
-::-webkit-scrollbar-corner {
-  background: var(--background);
-}
-
-/* Sonner toasts in Inter, matching the Vite admin */
+/* Sonner toasts follow the design system */
 [data-sonner-toast] {
   font-family: var(--font-inter), system-ui, sans-serif !important;
+  border-radius: var(--radius) !important;
 }
 
 [data-sonner-toast] [data-title] {
   font-weight: 600 !important;
+}
+
+/* ---------------------------------------------------------------- */
+/* App component classes (form fields, data tables, surfaces)        */
+/* ---------------------------------------------------------------- */
+@layer components {
+  /* Native form fields with the HeroUI field token treatment. Kept as
+     plain input/select/textarea so FormData + server actions submit
+     unchanged. */
+  .field-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: color-mix(in oklab, var(--foreground) 78%, transparent);
+  }
+
+  .field-input {
+    width: 100%;
+    border-radius: var(--field-radius);
+    border: var(--field-border-width) solid var(--field-border);
+    background: var(--field-background);
+    color: var(--field-foreground);
+    box-shadow: var(--field-shadow);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.35;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .field-input::placeholder {
+    color: var(--field-placeholder);
+  }
+
+  .field-input:hover:not(:disabled):not(:focus) {
+    border-color: var(--field-border-hover);
+  }
+
+  .field-input:focus,
+  .field-input:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 22%, transparent);
+  }
+
+  .field-input:disabled {
+    opacity: var(--disabled-opacity);
+    cursor: var(--cursor-disabled);
+  }
+
+  .field-input[aria-invalid='true'],
+  .field-input.field-invalid {
+    border-color: var(--danger);
+  }
+
+  .field-input[aria-invalid='true']:focus,
+  .field-input.field-invalid:focus {
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--danger) 20%, transparent);
+  }
+
+  select.field-input {
+    appearance: none;
+    padding-right: 2.25rem;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23777' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.65rem center;
+  }
+
+  /* Standard data table look */
+  .data-table {
+    width: 100%;
+    font-size: 0.875rem;
+    border-collapse: collapse;
+  }
+
+  .data-table thead th {
+    background: color-mix(in oklab, var(--background) 55%, var(--surface) 45%);
+    color: var(--muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: left;
+    padding: 0.625rem 1rem;
+    white-space: nowrap;
+  }
+
+  .data-table tbody td {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--separator);
+    vertical-align: middle;
+  }
+
+  .data-table tbody tr {
+    transition: background-color 0.15s ease;
+  }
+
+  .data-table tbody tr:hover {
+    background: color-mix(in oklab, var(--surface) 96%, var(--accent) 4%);
+  }
+
+  .data-table tfoot td {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--separator);
+    font-weight: 600;
+  }
+
+  /* White rounded container for tables and panels */
+  .surface-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--surface-shadow);
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Motion primitives                                                 */
+/* ---------------------------------------------------------------- */
+
+/* Staggered entrance for lists/grids: apply .stagger-children to the
+   parent; direct children fade-slide in with an incremental delay. */
+@keyframes ar-e-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-children > * {
+  animation: ar-e-rise 0.35s cubic-bezier(0.21, 0.9, 0.35, 1) backwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 280ms; }
+.stagger-children > *:nth-child(n + 9) { animation-delay: 320ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger-children > * {
+    animation: none;
+  }
 }

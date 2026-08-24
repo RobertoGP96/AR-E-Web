@@ -1,14 +1,57 @@
 'use client';
 
-import { useActionState, useEffect, useId, useRef } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
+import { Settings, SlidersHorizontal, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { updateCommonInfoAction, type ActionResult } from './actions';
+import { Field, TextInput, SubmitButton, PageHeader } from '@/components/ui';
 
 interface SettingsFormProps {
   defaults: { changeRate: number; costPerPound: number };
+  canEdit: boolean;
 }
 
-export function SettingsForm({ defaults }: SettingsFormProps) {
+export function SettingsForm({ defaults, canEdit }: SettingsFormProps) {
+  return (
+    <div>
+      <PageHeader
+        icon={Settings}
+        title="Configuración"
+        subtitle="Personaliza la configuración de tu panel de administración"
+      />
+      {canEdit ? (
+        <EditableSettingsCard defaults={defaults} />
+      ) : (
+        <ReadOnlySettingsCard defaults={defaults} />
+      )}
+    </div>
+  );
+}
+
+function SectionHeading({
+  icon: Icon,
+  title,
+}: {
+  icon: typeof Settings;
+  title: string;
+}) {
+  return (
+    <div className="animate-in fade-in slide-in-from-top-2 duration-300 flex items-center gap-2.5 border-b border-separator pb-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+        <Icon className="h-4 w-4" aria-hidden />
+      </span>
+      <h2 className="text-base font-semibold tracking-tight text-foreground">
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+function EditableSettingsCard({
+  defaults,
+}: {
+  defaults: SettingsFormProps['defaults'];
+}) {
   const [state, formAction, isPending] = useActionState<
     ActionResult | undefined,
     FormData
@@ -22,73 +65,73 @@ export function SettingsForm({ defaults }: SettingsFormProps) {
     else if (!state.fieldErrors) toast.error(state.error);
   }, [state]);
 
-  const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
+  const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
 
   return (
-    <form
-      action={formAction}
-      className="max-w-md space-y-4 rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
-    >
-      <Field
-        label="Change rate"
-        name="changeRate"
-        defaultValue={defaults.changeRate.toString()}
-        error={errors['changeRate']}
-        hint="Currency conversion rate used across the system."
-      />
-      <Field
-        label="Costo por libra (USD)"
-        name="costPerPound"
-        defaultValue={defaults.costPerPound.toString()}
-        error={errors['costPerPound']}
-        hint="Costo base de envío por libra."
-      />
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-70"
-      >
-        {isPending ? 'Guardando…' : 'Guardar ajustes'}
-      </button>
-    </form>
+    <div className="surface-card max-w-md p-5">
+      <SectionHeading icon={SlidersHorizontal} title="Parámetros del sistema" />
+      <form action={formAction} className="mt-4 space-y-4">
+        <Field
+          label="Tasa de cambio"
+          error={errors['changeRate']}
+          hint="Tasa de conversión de moneda usada en todo el sistema."
+        >
+          <TextInput
+            name="changeRate"
+            type="number"
+            step="0.01"
+            min="0"
+            defaultValue={defaults.changeRate.toString()}
+            invalid={!!errors['changeRate']}
+          />
+        </Field>
+        <Field
+          label="Costo por libra (USD)"
+          error={errors['costPerPound']}
+          hint="Costo base de envío por libra."
+        >
+          <TextInput
+            name="costPerPound"
+            type="number"
+            step="0.01"
+            min="0"
+            defaultValue={defaults.costPerPound.toString()}
+            invalid={!!errors['costPerPound']}
+          />
+        </Field>
+        <div className="flex justify-end pt-1">
+          <SubmitButton isPending={isPending}>Guardar ajustes</SubmitButton>
+        </div>
+      </form>
+    </div>
   );
 }
 
-function Field({
-  label,
-  name,
-  defaultValue,
-  error,
-  hint,
+function ReadOnlySettingsCard({
+  defaults,
 }: {
-  label: string;
-  name: string;
-  defaultValue?: string;
-  error?: string;
-  hint?: string;
+  defaults: SettingsFormProps['defaults'];
 }) {
-  const id = useId();
   return (
-    <div className="space-y-1">
-      <label
-        htmlFor={id}
-        className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-      >
-        {label}
-      </label>
-      <input
-        id={id}
-        name={name}
-        type="number"
-        step="0.01"
-        min="0"
-        defaultValue={defaultValue}
-        className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-brand dark:bg-zinc-950 ${
-          error ? 'border-red-500' : 'border-zinc-300 dark:border-zinc-700'
-        }`}
-      />
-      {hint ? <p className="text-xs text-zinc-500">{hint}</p> : null}
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
+    <div className="surface-card max-w-md p-5">
+      <SectionHeading icon={Lock} title="Parámetros del sistema" />
+      <dl className="mt-4 space-y-3 text-sm">
+        <div className="flex items-center justify-between gap-3">
+          <dt className="text-muted">Tasa de cambio</dt>
+          <dd className="font-semibold tabular-nums text-foreground">
+            {defaults.changeRate.toFixed(2)}
+          </dd>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <dt className="text-muted">Costo por libra (USD)</dt>
+          <dd className="font-semibold tabular-nums text-foreground">
+            {defaults.costPerPound.toFixed(2)}
+          </dd>
+        </div>
+      </dl>
+      <p className="mt-4 rounded-lg bg-default px-3 py-2 text-xs text-muted">
+        Solo los roles administrador o contador pueden modificar estos valores.
+      </p>
     </div>
   );
 }

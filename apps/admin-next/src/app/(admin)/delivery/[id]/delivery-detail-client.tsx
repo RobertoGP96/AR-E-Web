@@ -3,13 +3,38 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  Scale,
+  Receipt,
+  TrendingUp,
+  CreditCard,
+  PackagePlus,
+  PackageSearch,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { Button, Tooltip } from '@heroui/react';
 import {
   addDeliveredProductAction,
   removeDeliveredProductAction,
 } from '../actions';
 import { formatCurrency } from '@/lib/format';
+import {
+  DeliveryStatusBadge,
+  PayStatusBadge,
+} from '@/components/status-badges';
+import {
+  StatCard,
+  Field,
+  NativeSelect,
+  TextInput,
+  ResponsiveTable,
+  MobileCard,
+  TableEmpty,
+  type StatTone,
+} from '@/components/ui';
 
 interface DeliveredProduct {
   id: string;
@@ -36,6 +61,12 @@ interface DeliveryDetailClientProps {
   };
   deliveredProducts: DeliveredProduct[];
   candidates: Candidate[];
+}
+
+function payTone(paymentStatus: string): StatTone {
+  if (paymentStatus === 'Pagado') return 'success';
+  if (paymentStatus === 'Parcial') return 'warning';
+  return 'danger';
 }
 
 export function DeliveryDetailClient({
@@ -86,87 +117,104 @@ export function DeliveryDetailClient({
     });
   }
 
+  const removeAction = (dp: DeliveredProduct) => (
+    <Tooltip delay={500}>
+      <Button
+        variant="ghost"
+        size="sm"
+        isIconOnly
+        aria-label={`Quitar ${dp.productName}`}
+        onPress={() => handleRemove(dp.id)}
+        isDisabled={isPending}
+        className="hover:bg-danger-soft hover:text-danger"
+      >
+        <Trash2 className="h-4 w-4" aria-hidden />
+      </Button>
+      <Tooltip.Content>Quitar de la entrega</Tooltip.Content>
+    </Tooltip>
+  );
+
   return (
     <div className="space-y-6">
-      <Link
-        href="/delivery"
-        className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Volver a entregas
-      </Link>
+      <div className="animate-in fade-in slide-in-from-top-1 duration-300">
+        <Link
+          href="/delivery"
+          className="inline-flex items-center gap-1 rounded-md text-sm text-muted transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Volver a entregas
+        </Link>
+      </div>
 
-      <header className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+      <header className="surface-card animate-in fade-in slide-in-from-top-2 duration-300 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
               {header.clientName}
             </h1>
-            <p className="text-sm text-zinc-500">
+            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted">
+              <Scale className="h-3.5 w-3.5" aria-hidden />
               {header.weight.toFixed(2)} lb
               {header.categoryName ? ` · ${header.categoryName}` : ''}
             </p>
           </div>
           <div className="flex gap-2">
-            <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-              {header.status}
-            </span>
-            <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-              {header.paymentStatus}
-            </span>
+            <DeliveryStatusBadge status={header.status} />
+            <PayStatusBadge status={header.paymentStatus} />
           </div>
         </div>
-        <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-zinc-500">
-              Weight cost
-            </dt>
-            <dd className="text-lg font-semibold tabular-nums">
-              {formatCurrency(header.weightCost)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-zinc-500">
-              Manager profit
-            </dt>
-            <dd className="text-lg font-semibold tabular-nums">
-              {formatCurrency(header.managerProfit)}
-            </dd>
-          </div>
-        </dl>
+
+        <div className="stagger-children mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <StatCard
+            icon={Receipt}
+            label="Costo por peso"
+            value={formatCurrency(header.weightCost)}
+            tone="accent"
+          />
+          <StatCard
+            icon={TrendingUp}
+            label="Ganancia del gestor"
+            value={formatCurrency(header.managerProfit)}
+            tone="success"
+          />
+          <StatCard
+            icon={CreditCard}
+            label="Estado de pago"
+            value={header.paymentStatus}
+            tone={payTone(header.paymentStatus)}
+          />
+        </div>
       </header>
 
-      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+      <section className="surface-card animate-in fade-in slide-in-from-top-2 duration-300 p-4">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+          <PackagePlus className="h-4 w-4 text-accent" aria-hidden />
           Añadir un producto recibido a esta entrega
         </h2>
         {candidates.length === 0 ? (
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted">
             No hay productos recibidos pendientes de entregar para este cliente.
           </p>
         ) : (
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-            <label className="flex-1 space-y-1">
-              <span className="text-xs text-zinc-500">Producto</span>
-              <select
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <Field label="Producto" className="flex-1">
+              <NativeSelect
                 value={productId}
                 onChange={(e) => {
                   setProductId(e.target.value);
                   setAmount(1);
                 }}
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
               >
-                <option value="">— Select —</option>
+                <option value="">— Selecciona —</option>
                 {candidates.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} ({c.remaining} available)
+                    {c.name} ({c.remaining} disponibles)
                   </option>
                 ))}
-              </select>
-            </label>
-            <label className="space-y-1">
-              <span className="text-xs text-zinc-500">Monto</span>
-              <input
+              </NativeSelect>
+            </Field>
+            <Field label="Cantidad" className="sm:w-28">
+              <TextInput
                 type="number"
                 min={1}
                 max={maxAmount || 1}
@@ -182,65 +230,84 @@ export function DeliveryDetailClient({
                     )
                   )
                 }
-                className="w-24 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
               />
-            </label>
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={isPending || !productId}
-              className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-60"
+            </Field>
+            <Button
+              variant="primary"
+              onPress={handleAdd}
+              isDisabled={isPending || !productId}
             >
               <Plus className="h-4 w-4" aria-hidden />
-              Add
-            </button>
+              Añadir
+            </Button>
           </div>
         )}
+      </section>
+
+      <div className="animate-in fade-in slide-in-from-top-2 duration-300 flex items-center justify-between">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+          Productos entregados
+        </h2>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
-            <tr>
-              <th className="px-4 py-3 font-medium">Producto</th>
-              <th className="px-4 py-3 font-medium">Entregado</th>
-              <th className="px-4 py-3 text-right font-medium">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {deliveredProducts.length === 0 ? (
+      <ResponsiveTable
+        table={
+          <table className="data-table">
+            <thead>
               <tr>
-                <td
-                  colSpan={3}
-                  className="px-4 py-8 text-center text-sm text-zinc-500"
-                >
-                  Aún no hay productos entregados en este recibo.
-                </td>
+                <th>Producto</th>
+                <th>Entregado</th>
+                <th className="text-right">Acciones</th>
               </tr>
-            ) : (
-              deliveredProducts.map((dp) => (
-                <tr key={dp.id} className="text-zinc-800 dark:text-zinc-200">
-                  <td className="px-4 py-3 font-medium">{dp.productName}</td>
-                  <td className="px-4 py-3 tabular-nums">
-                    {dp.amountDelivered}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => handleRemove(dp.id)}
-                      disabled={isPending}
-                      aria-label="Remove"
-                      className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 disabled:opacity-60 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {deliveredProducts.length === 0 ? (
+                <TableEmpty
+                  colSpan={3}
+                  icon={PackageSearch}
+                  message="Aún no hay productos entregados en este recibo."
+                />
+              ) : (
+                deliveredProducts.map((dp) => (
+                  <tr key={dp.id}>
+                    <td className="font-medium text-foreground">
+                      {dp.productName}
+                    </td>
+                    <td className="tabular-nums">{dp.amountDelivered}</td>
+                    <td className="text-right">
+                      <div className="inline-flex gap-0.5">
+                        {removeAction(dp)}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        }
+        cards={
+          deliveredProducts.length === 0 ? (
+            <div className="surface-card p-8 text-center text-sm text-muted">
+              Aún no hay productos entregados en este recibo.
+            </div>
+          ) : (
+            deliveredProducts.map((dp) => (
+              <MobileCard
+                key={dp.id}
+                title={dp.productName}
+                rows={[
+                  {
+                    icon: PackageSearch,
+                    label: 'Entregado',
+                    value: dp.amountDelivered,
+                  },
+                ]}
+                actions={removeAction(dp)}
+              />
+            ))
+          )
+        }
+      />
     </div>
   );
 }

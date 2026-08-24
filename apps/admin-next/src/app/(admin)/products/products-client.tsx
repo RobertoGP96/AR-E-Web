@@ -1,18 +1,34 @@
 'use client';
 
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Package2,
-  Search,
+  PackageSearch,
   ExternalLink,
   Columns3,
   ChevronDown,
+  ClipboardList,
+  ShoppingBag,
+  PackageCheck,
+  Truck,
+  DollarSign,
 } from 'lucide-react';
+import { Button, Popover, Tooltip } from '@heroui/react';
 import { formatCurrency } from '@/lib/format';
 import { ProductStatusBadge } from '@/components/status-badges';
 import { QRLink } from '@/components/qr-link';
+import { FilterPopover } from '@/components/filter-popover';
+import {
+  PageHeader,
+  SearchInput,
+  Field,
+  NativeSelect,
+  ResponsiveTable,
+  MobileCard,
+  TableEmpty,
+} from '@/components/ui';
 
 const PRODUCT_STATUSES = [
   'Encargado',
@@ -59,7 +75,7 @@ const COLUMNS = [
   { key: 'shop', label: 'Tienda' },
   { key: 'status', label: 'Estado' },
   { key: 'amounts', label: 'Cantidades' },
-  { key: 'cost', label: 'Costo Total' },
+  { key: 'cost', label: 'Costo total' },
   { key: 'order', label: 'Orden' },
 ] as const;
 type ColumnKey = (typeof COLUMNS)[number]['key'];
@@ -74,6 +90,7 @@ const DEFAULT_VISIBLE: ColumnKey[] = [
 ];
 const STORAGE_KEY = 'admin-next:products:columns';
 
+/** Column visibility selector (persisted preference), as a HeroUI popover. */
 function ColumnsSelector({
   visible,
   onChange,
@@ -82,38 +99,29 @@ function ColumnsSelector({
   onChange: (next: Set<ColumnKey>) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onPointerDown(e: PointerEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, [open]);
 
   return (
-    <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="inline-flex items-center gap-1.5 rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm transition hover:bg-gray-50"
-      >
+    <Popover isOpen={open} onOpenChange={setOpen}>
+      <Button variant="outline" aria-label="Seleccionar columnas visibles">
         <Columns3 className="h-4 w-4" aria-hidden />
         Columnas
         <ChevronDown className="h-3.5 w-3.5" aria-hidden />
-      </button>
-      {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-64 rounded-xl border border-border bg-white p-3 shadow-xl">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+      </Button>
+      <Popover.Content
+        placement="bottom end"
+        className="w-[min(260px,calc(100vw-2rem))]"
+      >
+        <Popover.Dialog className="p-4">
+          <Popover.Heading className="text-sm font-semibold text-foreground">
             Columnas visibles
+          </Popover.Heading>
+          <p className="mt-0.5 text-xs text-muted">
+            Elige qué columnas mostrar en la tabla
           </p>
-          <ul className="space-y-1.5">
+          <ul className="mt-3 space-y-2">
             {COLUMNS.map((col) => (
               <li key={col.key}>
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
                   <input
                     type="checkbox"
                     checked={visible.has(col.key)}
@@ -123,31 +131,90 @@ function ColumnsSelector({
                       else next.delete(col.key);
                       onChange(next);
                     }}
-                    className="h-4 w-4 rounded border-gray-300 accent-[oklch(71.065%_0.15929_64.92)]"
+                    className="h-4 w-4 accent-accent"
                   />
                   {col.label}
                 </label>
               </li>
             ))}
           </ul>
-          <div className="mt-3 flex justify-between border-t border-border pt-2">
-            <button
-              type="button"
-              onClick={() => onChange(new Set(DEFAULT_VISIBLE))}
-              className="text-xs font-medium text-gray-500 hover:text-gray-800"
+          <div className="mt-4 flex justify-between gap-2 border-t border-separator pt-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onPress={() => onChange(new Set(DEFAULT_VISIBLE))}
             >
               Por defecto
-            </button>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="text-xs font-medium text-orange-600 hover:text-orange-700"
-            >
-              Cerrar
-            </button>
+            </Button>
+            <Button variant="primary" size="sm" onPress={() => setOpen(false)}>
+              Listo
+            </Button>
           </div>
-        </div>
-      ) : null}
+        </Popover.Dialog>
+      </Popover.Content>
+    </Popover>
+  );
+}
+
+/** Mini progress bar + "x/y" figure for one pipeline stage. */
+function AmountBar({ value, total }: { value: number; total: number }) {
+  const pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="h-1.5 w-16 overflow-hidden rounded-full bg-default">
+        <span
+          className="block h-full rounded-full bg-accent"
+          style={{ width: `${pct}%` }}
+        />
+      </span>
+      <span className="tabular-nums">
+        {value}/{total}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Compact per-stage progress for the table cell: three mini-bars
+ * (Comprado / Recibido / Entregado) over the requested amount.
+ */
+function AmountsProgress({ row }: { row: ProductRow }) {
+  const stages = [
+    { short: 'C', label: 'Comprado', value: row.amountPurchased },
+    { short: 'R', label: 'Recibido', value: row.amountReceived },
+    { short: 'E', label: 'Entregado', value: row.amountDelivered },
+  ];
+  return (
+    <div className="flex items-center justify-end gap-3">
+      {stages.map((stage) => {
+        const pct =
+          row.amountRequested > 0
+            ? Math.min(
+                100,
+                Math.round((stage.value / row.amountRequested) * 100)
+              )
+            : 0;
+        return (
+          <div
+            key={stage.short}
+            className="w-14"
+            title={`${stage.label}: ${stage.value} de ${row.amountRequested} pedidos`}
+          >
+            <div className="flex items-center justify-between text-[10px] leading-4">
+              <span className="font-medium text-muted">{stage.short}</span>
+              <span className="tabular-nums text-foreground">
+                {stage.value}/{row.amountRequested}
+              </span>
+            </div>
+            <div className="h-1 overflow-hidden rounded-full bg-default">
+              <div
+                className="h-full rounded-full bg-accent"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -160,7 +227,6 @@ export function ProductsClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [query, setQuery] = useState(initialFilters.q);
   const [visible, setVisible] = useState<Set<ColumnKey>>(
     () => new Set(DEFAULT_VISIBLE)
   );
@@ -197,187 +263,198 @@ export function ProductsClient({
   const show = (key: ColumnKey) => visible.has(key);
   const colCount = 1 + COLUMNS.filter((c) => visible.has(c.key)).length;
 
-  function applyParams(
-    nextQuery: string,
-    nextStatus: ProductStatus | null,
-    nextShop: string | null
-  ) {
+  function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
-    if (nextQuery) params.set('q', nextQuery);
-    else params.delete('q');
-    if (nextStatus) params.set('status', nextStatus);
-    else params.delete('status');
-    if (nextShop) params.set('shop', nextShop);
-    else params.delete('shop');
+    if (value) params.set(key, value);
+    else params.delete(key);
     params.delete('page');
     startTransition(() => {
       router.replace(`/products?${params.toString()}`);
     });
   }
 
-  return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
-          <Package2 className="h-8 w-8 text-orange-400" aria-hidden />
-          Productos
-        </h1>
-        <p className="mt-2 text-gray-600">
-          Gestiona el inventario y catálogo de productos
-        </p>
-      </header>
+  const activeShopLabel = initialFilters.shop
+    ? (shopOptions.find((s) => s.id === initialFilters.shop)?.label ??
+      initialFilters.shop)
+    : null;
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <label className="relative flex-1 sm:max-w-sm">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
-            aria-hidden
-          />
-          <input
-            type="search"
-            value={query}
-            placeholder="Buscar por nombre, SKU o cliente…"
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter')
-                applyParams(query, initialFilters.status, initialFilters.shop);
-            }}
-            onBlur={() => {
-              if (query !== initialFilters.q)
-                applyParams(query, initialFilters.status, initialFilters.shop);
-            }}
-            className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
-          />
-        </label>
-        <select
-          value={initialFilters.status ?? ''}
-          onChange={(e) => {
-            const next = e.target.value as ProductStatus | '';
-            applyParams(query, next === '' ? null : next, initialFilters.shop);
+  const rowActions = (row: ProductRow) => (
+    <>
+      <QRLink url={row.link} name={row.name} />
+      {row.link ? (
+        <Tooltip delay={500}>
+          <Button
+            variant="ghost"
+            size="sm"
+            isIconOnly
+            aria-label="Abrir enlace del producto"
+            onPress={() =>
+              window.open(row.link ?? undefined, '_blank', 'noopener,noreferrer')
+            }
+          >
+            <ExternalLink className="h-4 w-4" aria-hidden />
+          </Button>
+          <Tooltip.Content>Abrir enlace</Tooltip.Content>
+        </Tooltip>
+      ) : null}
+    </>
+  );
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        icon={Package2}
+        title="Productos"
+        subtitle="Catálogo global de productos del sistema"
+      />
+
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+        <SearchInput
+          initialValue={initialFilters.q}
+          placeholder="Buscar por nombre, SKU o cliente…"
+          onApply={(v) => setParam('q', v)}
+        />
+        <FilterPopover
+          title="Filtros de productos"
+          subtitle="Filtra productos por estado y tienda"
+          activeFilters={[
+            ...(initialFilters.status
+              ? [
+                  {
+                    key: 'status',
+                    label: initialFilters.status,
+                    onRemove: () => setParam('status', null),
+                  },
+                ]
+              : []),
+            ...(activeShopLabel
+              ? [
+                  {
+                    key: 'shop',
+                    label: activeShopLabel,
+                    onRemove: () => setParam('shop', null),
+                  },
+                ]
+              : []),
+          ]}
+          onClear={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete('status');
+            params.delete('shop');
+            params.delete('page');
+            startTransition(() => {
+              router.replace(`/products?${params.toString()}`);
+            });
           }}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
         >
-          <option value="">Todos los estados</option>
-          {PRODUCT_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <select
-          value={initialFilters.shop ?? ''}
-          onChange={(e) =>
-            applyParams(
-              query,
-              initialFilters.status,
-              e.target.value === '' ? null : e.target.value
-            )
-          }
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
-        >
-          <option value="">Todas las tiendas</option>
-          {shopOptions.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+          <Field label="Estado">
+            <NativeSelect
+              value={initialFilters.status ?? ''}
+              onChange={(e) => setParam('status', e.target.value || null)}
+            >
+              <option value="">Todos los estados</option>
+              {PRODUCT_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+          <Field label="Tienda">
+            <NativeSelect
+              value={initialFilters.shop ?? ''}
+              onChange={(e) => setParam('shop', e.target.value || null)}
+            >
+              <option value="">Todas las tiendas</option>
+              {shopOptions.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+        </FilterPopover>
         <div className="hidden md:block">
           <ColumnsSelector visible={visible} onChange={updateColumns} />
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        {/* Desktop table */}
-        <div className="hidden md:block">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+      <ResponsiveTable
+        table={
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-medium">Producto</th>
-                {show('client') ? (
-                  <th className="px-4 py-3 font-medium">Cliente</th>
-                ) : null}
-                {show('shop') ? (
-                  <th className="px-4 py-3 font-medium">Tienda</th>
-                ) : null}
-                {show('status') ? (
-                  <th className="px-4 py-3 font-medium">Estado</th>
-                ) : null}
+                <th>Producto</th>
+                {show('client') ? <th>Cliente</th> : null}
+                {show('shop') ? <th>Tienda</th> : null}
+                {show('status') ? <th>Estado</th> : null}
                 {show('amounts') ? (
-                  <th className="px-4 py-3 text-right font-medium">
-                    Ped / Comp / Rec / Ent
-                  </th>
+                  <th className="text-right">Cantidades</th>
                 ) : null}
-                {show('cost') ? (
-                  <th className="px-4 py-3 text-right font-medium">Costo</th>
-                ) : null}
-                {show('order') ? (
-                  <th className="px-4 py-3 text-right font-medium">Orden</th>
-                ) : null}
+                {show('cost') ? <th className="text-right">Costo</th> : null}
+                {show('order') ? <th className="text-right">Orden</th> : null}
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody>
               {initialRows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={colCount}
-                    className="px-4 py-8 text-center text-sm text-zinc-500"
-                  >
-                    {isPending ? 'Cargando…' : 'No hay productos.'}
-                  </td>
-                </tr>
+                <TableEmpty
+                  colSpan={colCount}
+                  icon={PackageSearch}
+                  message={isPending ? 'Cargando…' : 'No hay productos.'}
+                />
               ) : (
                 initialRows.map((row) => (
-                  <tr key={row.id} className="text-zinc-800 dark:text-zinc-200">
-                    <td className="max-w-[260px] px-4 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate font-medium capitalize">
+                  <tr key={row.id}>
+                    <td className="max-w-[260px]">
+                      <div className="flex items-center gap-1">
+                        <span className="truncate font-medium capitalize text-foreground">
                           {row.name}
                         </span>
                         <QRLink url={row.link} name={row.name} />
                       </div>
-                      <div className="truncate text-xs text-zinc-500">
-                        {row.sku ?? ''}
+                      <div className="flex items-center gap-1.5 text-xs text-muted">
+                        {row.sku ? (
+                          <span className="truncate">{row.sku}</span>
+                        ) : null}
                         {row.link ? (
                           <a
                             href={row.link}
                             target="_blank"
                             rel="noreferrer"
-                            className="ml-1 inline-flex items-center gap-0.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                            className="inline-flex shrink-0 items-center gap-0.5 transition-colors hover:text-accent"
                           >
                             <ExternalLink className="h-3 w-3" aria-hidden />
-                            link
+                            enlace
                           </a>
                         ) : null}
                       </div>
                     </td>
                     {show('client') ? (
-                      <td className="px-4 py-3">{row.clientName}</td>
+                      <td className="text-muted">{row.clientName}</td>
                     ) : null}
                     {show('shop') ? (
-                      <td className="px-4 py-3">{row.shopName}</td>
+                      <td className="text-muted">{row.shopName}</td>
                     ) : null}
                     {show('status') ? (
-                      <td className="px-4 py-3">
+                      <td>
                         <ProductStatusBadge status={row.status} />
                       </td>
                     ) : null}
                     {show('amounts') ? (
-                      <td className="px-4 py-3 text-right tabular-nums">
-                        {row.amountRequested} / {row.amountPurchased} /{' '}
-                        {row.amountReceived} / {row.amountDelivered}
+                      <td>
+                        <AmountsProgress row={row} />
                       </td>
                     ) : null}
                     {show('cost') ? (
-                      <td className="px-4 py-3 text-right tabular-nums">
+                      <td className="text-right font-semibold tabular-nums">
                         {formatCurrency(row.totalCost)}
                       </td>
                     ) : null}
                     {show('order') ? (
-                      <td className="px-4 py-3 text-right">
+                      <td className="text-right">
                         <Link
                           href={`/orders/${row.orderId}`}
-                          className="text-sm font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                          className="font-medium text-foreground transition-colors hover:text-accent"
                         >
                           #{row.orderId}
                         </Link>
@@ -388,55 +465,76 @@ export function ProductsClient({
               )}
             </tbody>
           </table>
-        </div>
-
-        {/* Mobile cards */}
-        <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
-          {initialRows.length === 0 ? (
-            <li className="px-4 py-8 text-center text-sm text-zinc-500">
+        }
+        cards={
+          initialRows.length === 0 ? (
+            <div className="surface-card p-8 text-center text-sm text-muted">
               {isPending ? 'Cargando…' : 'No hay productos.'}
-            </li>
+            </div>
           ) : (
             initialRows.map((row) => (
-              <li key={row.id} className="space-y-2 px-4 py-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium">
-                      {row.name}
-                    </div>
-                    <div className="truncate text-xs text-zinc-500">
-                      {row.clientName} · {row.shopName}
-                    </div>
-                  </div>
-                  <span className="shrink-0">
-                    <ProductStatusBadge status={row.status} />
-                  </span>
-                </div>
-                <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  <dt>Ped / Comp / Rec / Ent</dt>
-                  <dd className="text-right tabular-nums text-zinc-900 dark:text-zinc-100">
-                    {row.amountRequested} / {row.amountPurchased} /{' '}
-                    {row.amountReceived} / {row.amountDelivered}
-                  </dd>
-                  <dt>Costo</dt>
-                  <dd className="text-right tabular-nums text-zinc-900 dark:text-zinc-100">
-                    {formatCurrency(row.totalCost)}
-                  </dd>
-                  <dt>Orden</dt>
-                  <dd className="text-right">
-                    <Link
-                      href={`/orders/${row.orderId}`}
-                      className="font-medium text-zinc-700 hover:underline dark:text-zinc-300"
-                    >
-                      #{row.orderId}
-                    </Link>
-                  </dd>
-                </dl>
-              </li>
+              <MobileCard
+                key={row.id}
+                title={<span className="capitalize">{row.name}</span>}
+                subtitle={
+                  row.sku
+                    ? `${row.clientName} · ${row.shopName} · ${row.sku}`
+                    : `${row.clientName} · ${row.shopName}`
+                }
+                badges={<ProductStatusBadge status={row.status} />}
+                rows={[
+                  {
+                    icon: ClipboardList,
+                    label: 'Pedido',
+                    value: row.amountRequested,
+                  },
+                  {
+                    icon: ShoppingBag,
+                    label: 'Comprado',
+                    value: (
+                      <AmountBar
+                        value={row.amountPurchased}
+                        total={row.amountRequested}
+                      />
+                    ),
+                  },
+                  {
+                    icon: PackageCheck,
+                    label: 'Recibido',
+                    value: (
+                      <AmountBar
+                        value={row.amountReceived}
+                        total={row.amountRequested}
+                      />
+                    ),
+                  },
+                  {
+                    icon: Truck,
+                    label: 'Entregado',
+                    value: (
+                      <AmountBar
+                        value={row.amountDelivered}
+                        total={row.amountRequested}
+                      />
+                    ),
+                  },
+                  {
+                    icon: DollarSign,
+                    label: 'Costo',
+                    value: (
+                      <span className="font-semibold">
+                        {formatCurrency(row.totalCost)}
+                      </span>
+                    ),
+                  },
+                ]}
+                actions={rowActions(row)}
+                onClick={() => router.push(`/orders/${row.orderId}`)}
+              />
             ))
-          )}
-        </ul>
-      </div>
+          )
+        }
+      />
     </div>
   );
 }

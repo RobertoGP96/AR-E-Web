@@ -2,6 +2,8 @@
 
 import { useTransition } from 'react';
 import { signOut } from 'next-auth/react';
+import { Loader2, LogOut } from 'lucide-react';
+import { Button, Tooltip } from '@heroui/react';
 
 export function SignOutButton() {
   const [isPending, startTransition] = useTransition();
@@ -13,13 +15,23 @@ export function SignOutButton() {
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleSignOut}
-      disabled={isPending}
-      className="rounded-md border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-70 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
-    >
-      {isPending ? 'Cerrando sesión…' : 'Cerrar sesión'}
-    </button>
+    <Tooltip delay={600}>
+      <Button
+        variant="outline"
+        onPress={handleSignOut}
+        isDisabled={isPending}
+        aria-label="Cerrar sesión"
+      >
+        {isPending ? (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        ) : (
+          <LogOut className="h-4 w-4" aria-hidden />
+        )}
+        <span className="hidden sm:inline">
+          {isPending ? 'Cerrando…' : 'Cerrar sesión'}
+        </span>
+      </Button>
+      <Tooltip.Content className="sm:hidden">Cerrar sesión</Tooltip.Content>
+    </Tooltip>
   );
 }

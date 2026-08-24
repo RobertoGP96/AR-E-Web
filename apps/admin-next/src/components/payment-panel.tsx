@@ -1,8 +1,11 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { User, Wallet } from 'lucide-react';
+import { Loader2, User, Wallet } from 'lucide-react';
+import { Button } from '@heroui/react';
 import { formatCurrency } from '@/lib/format';
+import { AppModal } from '@/components/ui/app-modal';
+import { Field, TextInput, NativeSelect, FormError } from '@/components/ui/form';
 
 export interface PaymentSubmitResult {
   ok: boolean;
@@ -10,10 +13,9 @@ export interface PaymentSubmitResult {
 }
 
 /**
- * "Registro de pago" panel, ported from the Vite admin's
- * ConfirmPaymentDialog and shared by orders and deliveries: amount +
- * optional client-balance application with a live summary of coverage,
- * remainder, and resulting balance.
+ * "Registro de pago" modal, shared by orders and deliveries: cash
+ * amount + optional client-balance application with a live summary of
+ * coverage, remainder, and resulting balance.
  */
 export function PaymentPanel({
   clientName,
@@ -71,94 +73,106 @@ export function PaymentPanel({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Panel de Pago"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+    <AppModal
+      isOpen
+      onClose={() => {
+        if (!isPending) onClose();
       }}
+      title="Registro de pago"
+      description={
+        <span className="inline-flex items-center gap-1.5">
+          <User className="h-4 w-4" aria-hidden />
+          {clientName}
+        </span>
+      }
+      size="md"
+      footer={
+        <>
+          <Button variant="tertiary" onPress={onClose} isDisabled={isPending}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            onPress={submit}
+            isDisabled={
+              isPending || (amount === 0 && applied === 0 && !manualPaid)
+            }
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Procesando…
+              </>
+            ) : (
+              'Confirmar Pago'
+            )}
+          </Button>
+        </>
+      }
     >
-      <div className="max-h-[92vh] w-full max-w-md space-y-4 overflow-y-auto rounded-xl border border-border bg-white p-5 shadow-xl sm:p-6">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">
-            Registro de pago
-          </h2>
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-gray-500">
-            <User className="h-4 w-4" aria-hidden />
-            {clientName}
-          </p>
-        </div>
-
+      <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-lg border border-border bg-gray-50 p-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+          <div className="rounded-lg border border-border bg-background p-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted">
               Costo pendiente
             </p>
-            <p className="text-xl font-bold tabular-nums text-gray-900">
+            <p className="text-xl font-bold tabular-nums text-foreground">
               {formatCurrency(pendingCost)}
             </p>
-            <p className="text-[10px] text-gray-400">USD</p>
+            <p className="text-[10px] text-muted">USD</p>
           </div>
-          <div className="rounded-lg border border-border bg-gray-50 p-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+          <div className="rounded-lg border border-border bg-background p-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted">
               Saldo Disponible
             </p>
-            <p className="text-xl font-bold tabular-nums text-emerald-600">
+            <p className="text-xl font-bold tabular-nums text-success-soft-foreground">
               {formatCurrency(available)}
             </p>
-            <p className="text-[10px] text-gray-400">USD</p>
+            <p className="text-[10px] text-muted">USD</p>
           </div>
         </div>
 
-        <label className="block space-y-1">
-          <span className="text-xs font-medium text-gray-600">
-            Monto que paga el cliente
-          </span>
+        <Field label="Monto que paga el cliente">
           <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
               $
             </span>
-            <input
+            <TextInput
               type="number"
               min={0}
               step="0.01"
               value={amountStr}
               placeholder="0.00"
               onChange={(e) => setAmountStr(e.target.value)}
-              className="w-full rounded-md border border-input bg-white py-2 pl-7 pr-3 text-sm focus:border-brand focus:outline-none"
+              className="pl-7"
             />
           </div>
-        </label>
+        </Field>
 
         <button
           type="button"
           disabled={balanceToggleDisabled}
           onClick={() => setApplyBalance((v) => !v)}
-          className={`flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition ${
+          aria-pressed={applyBalance}
+          className={`flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-all duration-150 ${
             applyBalance
-              ? 'border-orange-300 bg-orange-50 text-orange-700'
-              : 'border-border bg-white text-gray-600 hover:bg-gray-50'
+              ? 'border-accent/50 bg-accent-soft text-accent-soft-foreground shadow-sm'
+              : 'border-border bg-surface text-muted hover:bg-surface-hover'
           } disabled:cursor-not-allowed disabled:opacity-50`}
         >
-          <span className="flex items-center gap-2">
+          <span className="flex items-center gap-2 font-medium">
             <Wallet className="h-4 w-4" aria-hidden />
             Aplicar saldo del cliente al pago
           </span>
-          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+          <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs font-semibold text-success-soft-foreground">
             {formatCurrency(available)}
           </span>
         </button>
 
-        <label className="block space-y-1">
-          <span className="text-xs font-medium text-gray-600">
-            Estado de pago
-          </span>
-          <select
+        <Field label="Estado de pago">
+          <NativeSelect
             value={manualPaid ? 'manual' : 'auto'}
             onChange={(e) => setManualPaid(e.target.value === 'manual')}
-            className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:border-brand focus:outline-none"
           >
             <option value="auto">
               Automático (
@@ -170,33 +184,33 @@ export function PaymentPanel({
               )
             </option>
             <option value="manual">✓ Marcar manualmente como Pagado</option>
-          </select>
-        </label>
+          </NativeSelect>
+        </Field>
 
-        <div className="space-y-2 rounded-lg border border-border bg-gray-50 p-3 text-sm">
+        <div className="space-y-2 rounded-lg border border-border bg-background p-3 text-sm">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-gray-700">Resumen</span>
-            <span className="tabular-nums text-xs text-gray-500">
+            <span className="font-semibold text-foreground">Resumen</span>
+            <span className="tabular-nums text-xs text-muted">
               {progress.toFixed(0)}%
             </span>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
+          <div className="h-1.5 overflow-hidden rounded-full bg-default">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-orange-400 to-amber-500 transition-all"
+              className="h-full rounded-full bg-gradient-to-r from-accent to-warning transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
           <dl className="space-y-1 pt-1 text-xs">
             <div className="flex justify-between">
-              <dt className="text-gray-500">Costo pendiente</dt>
+              <dt className="text-muted">Costo pendiente</dt>
               <dd className="tabular-nums">{formatCurrency(pendingCost)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">Pago del cliente</dt>
+              <dt className="text-muted">Pago del cliente</dt>
               <dd className="tabular-nums">{formatCurrency(amount)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">Saldo aplicado</dt>
+              <dt className="text-muted">Saldo aplicado</dt>
               <dd className="tabular-nums">
                 {applied > 0
                   ? `− ${formatCurrency(applied)}`
@@ -204,26 +218,28 @@ export function PaymentPanel({
               </dd>
             </div>
             <div className="flex justify-between font-medium">
-              <dt className="text-gray-700">Total cubierto</dt>
+              <dt className="text-foreground">Total cubierto</dt>
               <dd className="tabular-nums">{formatCurrency(covered)}</dd>
             </div>
             {remaining > 0 ? (
-              <div className="flex justify-between font-medium text-red-600">
+              <div className="flex justify-between font-medium text-danger">
                 <dt>Faltará abonar</dt>
                 <dd className="tabular-nums">{formatCurrency(remaining)}</dd>
               </div>
             ) : null}
             {surplus > 0 ? (
-              <div className="flex justify-between font-medium text-emerald-600">
+              <div className="flex justify-between font-medium text-success-soft-foreground">
                 <dt>Excedente al saldo</dt>
                 <dd className="tabular-nums">+ {formatCurrency(surplus)}</dd>
               </div>
             ) : null}
-            <div className="flex justify-between border-t border-border pt-1">
-              <dt className="text-gray-500">Saldo resultante cliente</dt>
+            <div className="flex justify-between border-t border-separator pt-1">
+              <dt className="text-muted">Saldo resultante cliente</dt>
               <dd
                 className={`tabular-nums font-medium ${
-                  resultingBalance < 0 ? 'text-red-600' : 'text-emerald-600'
+                  resultingBalance < 0
+                    ? 'text-danger'
+                    : 'text-success-soft-foreground'
                 }`}
               >
                 {formatCurrency(resultingBalance)}
@@ -231,39 +247,14 @@ export function PaymentPanel({
             </div>
           </dl>
           {fullyPaid ? (
-            <div className="rounded-md bg-emerald-50 px-2 py-1.5 text-xs font-medium text-emerald-700">
+            <div className="animate-in fade-in zoom-in-95 rounded-md bg-success-soft px-2 py-1.5 text-xs font-medium text-success-soft-foreground">
               ✅ Completamente pagado
             </div>
           ) : null}
         </div>
 
-        {error ? (
-          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </div>
-        ) : null}
-
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isPending}
-            className="rounded-md border border-border px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-70"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={
-              isPending || (amount === 0 && applied === 0 && !manualPaid)
-            }
-            className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-60"
-          >
-            {isPending ? 'Procesando...' : 'Confirmar Pago'}
-          </button>
-        </div>
+        <FormError message={error} />
       </div>
-    </div>
+    </AppModal>
   );
 }

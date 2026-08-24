@@ -1,4 +1,6 @@
+import { LineChart } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
+import { PageHeader } from '@/components/ui';
 import { AnalyticsCharts } from './analytics-charts';
 
 function monthKey(d: Date): string {
@@ -153,14 +155,11 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Reportes de Ganancias
-        </h1>
-        <p className="mt-2 text-gray-600">
-          Evolución de ingresos, costos y ganancias de los últimos 12 meses
-        </p>
-      </header>
+      <PageHeader
+        icon={LineChart}
+        title="Reportes de Ganancias"
+        subtitle="Evolución de ingresos, costos y ganancias de los últimos 12 meses"
+      />
       <AnalyticsCharts
         monthly={monthly}
         statusData={statusData}

@@ -87,6 +87,7 @@ export interface OrderRow {
   clientName: string;
   clientId: string;
   clientBalance: number;
+  salesManagerId: string | null;
   salesManagerName: string | null;
   status: OrderStatus;
   payStatus: PayStatus;

@@ -3,13 +3,32 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, Pencil, Trash2, Box, Search, PackageCheck } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Box,
+  PackageCheck,
+  PackageSearch,
+  CalendarDays,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { Button, Tooltip } from '@heroui/react';
 import { PackageDialog } from './package-dialog';
 import { DeletePackageDialog } from './delete-dialog';
 import { setPackageStatusAction } from './actions';
 import { formatDate } from '@/lib/format';
 import { PictureHover } from '@/components/picture-hover';
+import { FilterPopover } from '@/components/filter-popover';
+import {
+  PageHeader,
+  SearchInput,
+  Field,
+  NativeSelect,
+  ResponsiveTable,
+  MobileCard,
+  TableEmpty,
+} from '@/components/ui';
 import { PACKAGE_STATUSES, type PackageRow, type PackageStatus } from './schema';
 
 interface PackagesClientProps {
@@ -19,12 +38,9 @@ interface PackagesClientProps {
 }
 
 const STATUS_STYLES: Record<PackageStatus, string> = {
-  Enviado:
-    'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
-  Recibido:
-    'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
-  Procesado:
-    'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+  Enviado: 'bg-accent-soft text-accent-soft-foreground',
+  Recibido: 'bg-warning-soft text-warning-soft-foreground',
+  Procesado: 'bg-success-soft text-success-soft-foreground',
 };
 
 export function PackagesClient({
@@ -35,18 +51,16 @@ export function PackagesClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [query, setQuery] = useState(initialQuery);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<PackageRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PackageRow | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  function applyParams(nextQuery: string, nextStatus: PackageStatus | null) {
+  function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
-    if (nextQuery) params.set('q', nextQuery);
-    else params.delete('q');
-    if (nextStatus) params.set('status', nextStatus);
-    else params.delete('status');
+    if (value) params.set(key, value);
+    else params.delete(key);
+    params.delete('page');
     startTransition(() => {
       router.replace(`/packages?${params.toString()}`);
     });
@@ -67,234 +81,206 @@ export function PackagesClient({
     });
   }
 
-  return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
-          <Box className="h-8 w-8 text-orange-400" aria-hidden />
-          Paquetes
-        </h1>
-        <p className="mt-2 text-gray-600">
-          Gestiona todos los paquetes en tránsito y entregados
-        </p>
-      </header>
+  const statusSelect = (row: PackageRow) => (
+    <select
+      value={row.statusOfProcessing}
+      onChange={(e) => handleStatusChange(row, e.target.value as PackageStatus)}
+      disabled={updatingId === row.id}
+      aria-label={`Estado del paquete ${row.numberOfTracking}`}
+      className={`cursor-pointer rounded-full px-2.5 py-1 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-60 ${STATUS_STYLES[row.statusOfProcessing]}`}
+    >
+      {PACKAGE_STATUSES.map((s) => (
+        <option key={s} value={s}>
+          {s}
+        </option>
+      ))}
+    </select>
+  );
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-          <label className="relative flex-1 sm:max-w-sm">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
-              aria-hidden
-            />
-            <input
-              type="search"
-              value={query}
-              placeholder="Buscar por agencia o tracking…"
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') applyParams(query, initialStatus);
-              }}
-              onBlur={() => {
-                if (query !== initialQuery) applyParams(query, initialStatus);
-              }}
-              className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
-            />
-          </label>
-          <select
-            value={initialStatus ?? ''}
-            onChange={(e) => {
-              const next = e.target.value as PackageStatus | '';
-              applyParams(query, next === '' ? null : next);
-            }}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
-          >
-            <option value="">Todos los estados</option>
-            {PACKAGE_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
+  const rowActions = (row: PackageRow) => (
+    <>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label={`Recepción de ${row.numberOfTracking}`}
+          onPress={() => router.push(`/packages/${row.id}`)}
         >
-          <Plus className="h-4 w-4" aria-hidden />
-          Nuevo paquete
-        </button>
+          <PackageCheck className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Recepción de productos</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label={`Editar ${row.numberOfTracking}`}
+          onPress={() => setEditTarget(row)}
+        >
+          <Pencil className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Editar</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label={`Eliminar ${row.numberOfTracking}`}
+          onPress={() => setDeleteTarget(row)}
+          className="hover:bg-danger-soft hover:text-danger"
+        >
+          <Trash2 className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Eliminar</Tooltip.Content>
+      </Tooltip>
+    </>
+  );
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        icon={Box}
+        title="Paquetes"
+        subtitle="Gestiona todos los paquetes en tránsito y entregados"
+        actions={
+          <Button variant="primary" onPress={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
+            Nuevo paquete
+          </Button>
+        }
+      />
+
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+        <SearchInput
+          initialValue={initialQuery}
+          placeholder="Buscar por agencia o tracking…"
+          onApply={(v) => setParam('q', v)}
+        />
+        <FilterPopover
+          title="Filtros de paquetes"
+          subtitle="Filtra paquetes por estado de procesamiento"
+          activeFilters={
+            initialStatus
+              ? [
+                  {
+                    key: 'status',
+                    label: initialStatus,
+                    onRemove: () => setParam('status', null),
+                  },
+                ]
+              : []
+          }
+          onClear={() => setParam('status', null)}
+        >
+          <Field label="Estado">
+            <NativeSelect
+              value={initialStatus ?? ''}
+              onChange={(e) => setParam('status', e.target.value || null)}
+            >
+              <option value="">Todos los estados</option>
+              {PACKAGE_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+        </FilterPopover>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="hidden md:block">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+      <ResponsiveTable
+        table={
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-medium">Tracking</th>
-                <th className="px-4 py-3 font-medium">Agencia</th>
-                <th className="px-4 py-3 font-medium">Llegada</th>
-                <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium">Captura</th>
-                <th className="px-4 py-3 text-right font-medium">Acciones</th>
+                <th>Tracking</th>
+                <th>Agencia</th>
+                <th>Llegada</th>
+                <th>Estado</th>
+                <th>Captura</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody>
               {initialRows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-8 text-center text-sm text-zinc-500"
-                  >
-                    {isPending ? 'Cargando…' : 'No hay paquetes.'}
-                  </td>
-                </tr>
+                <TableEmpty
+                  colSpan={6}
+                  icon={PackageSearch}
+                  message={isPending ? 'Cargando…' : 'No hay paquetes.'}
+                />
               ) : (
                 initialRows.map((row) => (
-                  <tr key={row.id} className="text-zinc-800 dark:text-zinc-200">
-                    <td className="px-4 py-3 font-mono text-xs">
+                  <tr key={row.id}>
+                    <td>
                       <Link
                         href={`/packages/${row.id}`}
-                        className="hover:underline"
+                        className="font-mono text-xs font-medium text-foreground transition-colors hover:text-accent"
                       >
                         {row.numberOfTracking}
                       </Link>
                     </td>
-                    <td className="px-4 py-3">{row.agencyName}</td>
-                    <td className="px-4 py-3 text-zinc-500">
-                      {formatDate(row.arrivalDate)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <select
-                        value={row.statusOfProcessing}
-                        onChange={(e) =>
-                          handleStatusChange(
-                            row,
-                            e.target.value as PackageStatus
-                          )
-                        }
-                        disabled={updatingId === row.id}
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium disabled:opacity-60 ${STATUS_STYLES[row.statusOfProcessing]}`}
-                      >
-                        {PACKAGE_STATUSES.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-4 py-3">
+                    <td className="text-foreground">{row.agencyName}</td>
+                    <td className="text-muted">{formatDate(row.arrivalDate)}</td>
+                    <td>{statusSelect(row)}</td>
+                    <td>
                       <PictureHover
                         url={row.packagePicture}
                         alt={`Captura de ${row.numberOfTracking}`}
                       />
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="inline-flex gap-1">
-                        <Link
-                          href={`/packages/${row.id}`}
-                          aria-label={`Recepción de ${row.numberOfTracking}`}
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                          <PackageCheck className="h-4 w-4" aria-hidden />
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => setEditTarget(row)}
-                          aria-label={`Edit ${row.numberOfTracking}`}
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                          <Pencil className="h-4 w-4" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(row)}
-                          aria-label={`Delete ${row.numberOfTracking}`}
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
-                        >
-                          <Trash2 className="h-4 w-4" aria-hidden />
-                        </button>
-                      </div>
+                    <td className="text-right">
+                      <div className="inline-flex gap-0.5">{rowActions(row)}</div>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </div>
-
-        <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
-          {initialRows.length === 0 ? (
-            <li className="px-4 py-8 text-center text-sm text-zinc-500">
+        }
+        cards={
+          initialRows.length === 0 ? (
+            <div className="surface-card p-8 text-center text-sm text-muted">
               {isPending ? 'Cargando…' : 'No hay paquetes.'}
-            </li>
+            </div>
           ) : (
             initialRows.map((row) => (
-              <li key={row.id} className="space-y-2 px-4 py-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <Link
-                      href={`/packages/${row.id}`}
-                      className="font-mono text-xs hover:underline"
-                    >
-                      {row.numberOfTracking}
-                    </Link>
-                    <div className="text-sm font-medium">{row.agencyName}</div>
-                  </div>
-                  <div className="flex gap-1">
-                    <Link
-                      href={`/packages/${row.id}`}
-                      aria-label={`Recepción de ${row.numberOfTracking}`}
-                      className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                    >
-                      <PackageCheck className="h-4 w-4" aria-hidden />
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => setEditTarget(row)}
-                      aria-label={`Edit ${row.numberOfTracking}`}
-                      className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                    >
-                      <Pencil className="h-4 w-4" aria-hidden />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteTarget(row)}
-                      aria-label={`Delete ${row.numberOfTracking}`}
-                      className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden />
-                    </button>
-                  </div>
-                </div>
-                <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  <dt>Llegada</dt>
-                  <dd className="text-right text-zinc-900 dark:text-zinc-100">
-                    {formatDate(row.arrivalDate)}
-                  </dd>
-                  <dt>Estado</dt>
-                  <dd className="text-right">
-                    <select
-                      value={row.statusOfProcessing}
-                      onChange={(e) =>
-                        handleStatusChange(row, e.target.value as PackageStatus)
-                      }
-                      disabled={updatingId === row.id}
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium disabled:opacity-60 ${STATUS_STYLES[row.statusOfProcessing]}`}
-                    >
-                      {PACKAGE_STATUSES.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </dd>
-                </dl>
-              </li>
+              <MobileCard
+                key={row.id}
+                title={row.agencyName}
+                subtitle={
+                  <span className="font-mono">{row.numberOfTracking}</span>
+                }
+                media={
+                  <PictureHover
+                    url={row.packagePicture}
+                    alt={`Captura de ${row.numberOfTracking}`}
+                  />
+                }
+                rows={[
+                  {
+                    icon: CalendarDays,
+                    label: 'Llegada',
+                    value: formatDate(row.arrivalDate),
+                  },
+                  {
+                    label: 'Estado',
+                    value: (
+                      <span onClick={(e) => e.stopPropagation()}>
+                        {statusSelect(row)}
+                      </span>
+                    ),
+                  },
+                ]}
+                actions={rowActions(row)}
+                onClick={() => router.push(`/packages/${row.id}`)}
+              />
             ))
-          )}
-        </ul>
-      </div>
+          )
+        }
+      />
 
       <PackageDialog
         open={createOpen}

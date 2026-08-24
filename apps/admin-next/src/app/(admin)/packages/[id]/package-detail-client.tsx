@@ -4,13 +4,35 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Plus, Trash2, PackageCheck } from 'lucide-react';
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  PackageCheck,
+  PackageSearch,
+  CalendarDays,
+  Boxes,
+  Clock,
+  UserRound,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { Button, Tooltip } from '@heroui/react';
 import {
   addReceivedProductAction,
   removeReceivedProductAction,
 } from '../actions';
 import { formatDate } from '@/lib/format';
+import { PackageStatusBadge } from '@/components/status-badges';
+import {
+  StatCard,
+  ConfirmModal,
+  Field,
+  NativeSelect,
+  TextInput,
+  ResponsiveTable,
+  MobileCard,
+  TableEmpty,
+} from '@/components/ui';
 
 interface ReceivedProduct {
   id: string;
@@ -51,9 +73,18 @@ export function PackageDetailClient({
   const [productId, setProductId] = useState('');
   const [amount, setAmount] = useState(1);
   const [observation, setObservation] = useState('');
+  const [removeTarget, setRemoveTarget] = useState<ReceivedProduct | null>(
+    null
+  );
 
   const selected = candidates.find((c) => c.id === productId);
   const maxAmount = selected?.remaining ?? 0;
+
+  const unitsReceived = receivedProducts.reduce(
+    (sum, rp) => sum + rp.amountReceived,
+    0
+  );
+  const unitsPending = candidates.reduce((sum, c) => sum + c.remaining, 0);
 
   function handleAdd() {
     if (!productId) {
@@ -79,79 +110,106 @@ export function PackageDetailClient({
     });
   }
 
-  function handleRemove(rowId: string) {
-    startTransition(async () => {
-      const result = await removeReceivedProductAction(packageId, rowId);
-      if (result.ok) {
-        toast.success('Recepción eliminada');
-        router.refresh();
-      } else {
-        toast.error(result.error);
-      }
-    });
-  }
+  const receptionActions = (rp: ReceivedProduct) => (
+    <Tooltip delay={500}>
+      <Button
+        variant="ghost"
+        size="sm"
+        isIconOnly
+        aria-label={`Eliminar recepción de ${rp.productName}`}
+        onPress={() => setRemoveTarget(rp)}
+        className="hover:bg-danger-soft hover:text-danger"
+      >
+        <Trash2 className="h-4 w-4" aria-hidden />
+      </Button>
+      <Tooltip.Content>Eliminar recepción</Tooltip.Content>
+    </Tooltip>
+  );
 
   return (
     <div className="space-y-6">
-      <Link
-        href="/packages"
-        className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Volver a paquetes
-      </Link>
+      <div className="animate-in fade-in slide-in-from-top-1 duration-300">
+        <Link
+          href="/packages"
+          className="inline-flex items-center gap-1 rounded-md text-sm text-muted transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Volver a paquetes
+        </Link>
+      </div>
 
-      <header className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5 dark:border-zinc-800 dark:bg-zinc-950">
+      <header className="surface-card animate-in fade-in slide-in-from-top-2 duration-300 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
               {header.agencyName}
             </h1>
-            <p className="break-all text-sm text-zinc-500">
-              Tracking: {header.numberOfTracking}
+            <p className="mt-0.5 break-all font-mono text-sm text-muted">
+              {header.numberOfTracking}
             </p>
-            <p className="text-sm text-zinc-500">
-              Llegada: {formatDate(new Date(header.arrivalDate))}
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
+              <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+              Llegada: {formatDate(header.arrivalDate)}
             </p>
           </div>
-          <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-            {header.status}
-          </span>
+          <PackageStatusBadge status={header.status} />
         </div>
+
         {header.packagePicture ? (
           <div className="mt-4">
             <Image
               src={header.packagePicture}
-              alt="Foto del paquete"
+              alt={`Foto del paquete ${header.numberOfTracking}`}
               width={320}
               height={240}
-              className="h-auto w-full max-w-xs rounded-md border border-zinc-200 object-cover dark:border-zinc-800"
+              className="h-auto w-full max-w-xs rounded-lg border border-border object-cover"
             />
           </div>
         ) : null}
+
+        <div className="stagger-children mt-5 grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <StatCard
+            icon={PackageCheck}
+            label="Recepciones"
+            value={receivedProducts.length}
+            tone="accent"
+          />
+          <StatCard
+            icon={Boxes}
+            label="Unidades recibidas"
+            value={unitsReceived}
+            tone="success"
+          />
+          <StatCard
+            icon={Clock}
+            label="Por recibir"
+            value={unitsPending}
+            hint="Compradas sin recepción"
+            tone={unitsPending > 0 ? 'warning' : 'default'}
+            className="col-span-2 lg:col-span-1"
+          />
+        </div>
       </header>
 
-      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          <PackageCheck className="h-4 w-4" aria-hidden />
+      <section className="surface-card animate-in fade-in slide-in-from-top-2 duration-300 p-4 sm:p-5">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+          <PackageCheck className="h-4 w-4 text-accent" aria-hidden />
           Registrar producto recibido en este paquete
         </h2>
         {candidates.length === 0 ? (
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted">
             No hay productos comprados pendientes de recibir.
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <label className="flex-1 space-y-1">
-                <span className="text-xs text-zinc-500">Producto</span>
-                <select
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+              <Field label="Producto" className="flex-1">
+                <NativeSelect
                   value={productId}
                   onChange={(e) => {
                     setProductId(e.target.value);
                     setAmount(1);
                   }}
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
                 >
                   <option value="">— Seleccionar —</option>
                   {candidates.map((c) => (
@@ -160,11 +218,14 @@ export function PackageDetailClient({
                       {c.remaining === 1 ? '' : 's'})
                     </option>
                   ))}
-                </select>
-              </label>
-              <label className="space-y-1">
-                <span className="text-xs text-zinc-500">Cantidad</span>
-                <input
+                </NativeSelect>
+              </Field>
+              <Field
+                label="Cantidad"
+                hint={selected ? `Máx. ${maxAmount}` : undefined}
+                className="sm:w-28"
+              >
+                <TextInput
                   type="number"
                   min={1}
                   max={maxAmount || 1}
@@ -180,89 +241,141 @@ export function PackageDetailClient({
                       )
                     )
                   }
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm sm:w-24 dark:border-zinc-700 dark:bg-zinc-950"
                 />
-              </label>
+              </Field>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <label className="flex-1 space-y-1">
-                <span className="text-xs text-zinc-500">
-                  Observación (opcional)
-                </span>
-                <input
+              <Field label="Observación (opcional)" className="flex-1">
+                <TextInput
                   type="text"
                   maxLength={200}
                   value={observation}
                   onChange={(e) => setObservation(e.target.value)}
                   placeholder="Ej: caja dañada, falta accesorio…"
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
                 />
-              </label>
-              <button
-                type="button"
-                onClick={handleAdd}
-                disabled={isPending || !productId}
-                className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-60"
+              </Field>
+              <Button
+                variant="primary"
+                onPress={handleAdd}
+                isDisabled={isPending || !productId}
+                className="sm:mb-0.5"
               >
                 <Plus className="h-4 w-4" aria-hidden />
                 Registrar
-              </button>
+              </Button>
             </div>
           </div>
         )}
+      </section>
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+          Productos recibidos
+        </h2>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[520px] text-left text-sm">
-            <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+      <ResponsiveTable
+        table={
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-medium">Producto</th>
-                <th className="px-4 py-3 font-medium">Cliente</th>
-                <th className="px-4 py-3 font-medium">Recibido</th>
-                <th className="px-4 py-3 font-medium">Observación</th>
-                <th className="px-4 py-3 text-right font-medium">Acciones</th>
+                <th>Producto</th>
+                <th>Cliente</th>
+                <th>Recibido</th>
+                <th>Observación</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody>
               {receivedProducts.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-8 text-center text-sm text-zinc-500"
-                  >
-                    Aún no hay productos recibidos en este paquete.
-                  </td>
-                </tr>
+                <TableEmpty
+                  colSpan={5}
+                  icon={PackageSearch}
+                  message="Aún no hay productos recibidos en este paquete."
+                />
               ) : (
                 receivedProducts.map((rp) => (
-                  <tr key={rp.id} className="text-zinc-800 dark:text-zinc-200">
-                    <td className="px-4 py-3 font-medium">{rp.productName}</td>
-                    <td className="px-4 py-3">{rp.clientName}</td>
-                    <td className="px-4 py-3 tabular-nums">
-                      {rp.amountReceived}
+                  <tr key={rp.id}>
+                    <td className="font-medium text-foreground">
+                      {rp.productName}
                     </td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-zinc-500">
-                      {rp.observation ?? '—'}
+                    <td className="text-muted">{rp.clientName}</td>
+                    <td className="tabular-nums">{rp.amountReceived}</td>
+                    <td className="max-w-[200px] truncate text-muted">
+                      {rp.observation ?? (
+                        <span className="italic text-muted/60">—</span>
+                      )}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(rp.id)}
-                        disabled={isPending}
-                        aria-label="Eliminar recepción"
-                        className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 disabled:opacity-60 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                      >
-                        <Trash2 className="h-4 w-4" aria-hidden />
-                      </button>
+                    <td className="text-right">
+                      <div className="inline-flex gap-0.5">
+                        {receptionActions(rp)}
+                      </div>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </div>
-      </div>
+        }
+        cards={
+          receivedProducts.length === 0 ? (
+            <div className="surface-card p-8 text-center text-sm text-muted">
+              Aún no hay productos recibidos en este paquete.
+            </div>
+          ) : (
+            receivedProducts.map((rp) => (
+              <MobileCard
+                key={rp.id}
+                title={rp.productName}
+                subtitle={rp.observation ?? undefined}
+                rows={[
+                  { icon: UserRound, label: 'Cliente', value: rp.clientName },
+                  { icon: Boxes, label: 'Recibido', value: rp.amountReceived },
+                ]}
+                actions={receptionActions(rp)}
+              />
+            ))
+          )
+        }
+      />
+
+      <ConfirmModal
+        isOpen={removeTarget !== null}
+        onClose={() => setRemoveTarget(null)}
+        title="¿Eliminar recepción?"
+        description={
+          removeTarget ? (
+            <>
+              Se eliminará la recepción de{' '}
+              <strong className="text-foreground">
+                {removeTarget.amountReceived} unidad
+                {removeTarget.amountReceived === 1 ? '' : 'es'}
+              </strong>{' '}
+              de{' '}
+              <strong className="text-foreground">
+                {removeTarget.productName}
+              </strong>{' '}
+              ({removeTarget.clientName}). El estado del producto se
+              recalculará.
+            </>
+          ) : null
+        }
+        confirmLabel="Eliminar"
+        onConfirm={async () => {
+          if (!removeTarget)
+            return { ok: false, error: 'Recepción no encontrada' };
+          const result = await removeReceivedProductAction(
+            packageId,
+            removeTarget.id
+          );
+          if (result.ok) {
+            setRemoveTarget(null);
+            toast.success('Recepción eliminada');
+            router.refresh();
+          }
+          return result;
+        }}
+      />
     </div>
   );
 }

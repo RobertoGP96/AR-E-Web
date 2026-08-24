@@ -8,10 +8,16 @@ import {
   Pencil,
   Trash2,
   Truck,
-  Search,
   DollarSign,
+  ExternalLink,
+  Tag,
+  Weight,
+  TrendingUp,
+  CalendarDays,
+  PackageSearch,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button, Tooltip } from '@heroui/react';
 import { DeliveryDialog } from './delivery-dialog';
 import { DeleteDeliveryDialog } from './delete-dialog';
 import { ConfirmDeliveryPaymentDialog } from './confirm-payment-dialog';
@@ -19,6 +25,15 @@ import { formatCurrency, formatDate } from '@/lib/format';
 import { DeliveryStatusBadge, PayStatusBadge } from '@/components/status-badges';
 import { PictureHover } from '@/components/picture-hover';
 import { FilterPopover } from '@/components/filter-popover';
+import {
+  PageHeader,
+  SearchInput,
+  Field,
+  NativeSelect,
+  ResponsiveTable,
+  MobileCard,
+  TableEmpty,
+} from '@/components/ui';
 import {
   DELIVERY_STATUSES,
   type CategoryOption,
@@ -43,7 +58,6 @@ export function DeliveryClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [query, setQuery] = useState(initialFilters.q);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<DeliveryRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeliveryRow | null>(null);
@@ -53,53 +67,99 @@ export function DeliveryClient({
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
+    params.delete('page');
     startTransition(() => {
       router.replace(`/delivery?${params.toString()}`);
     });
   }
 
-  return (
-    <div className="space-y-6">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
-            <Truck className="h-8 w-8 text-orange-400" aria-hidden />
-            Entrega
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Gestiona las rutas de entrega y conductores
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
-        >
-          <Plus className="h-4 w-4" aria-hidden />
-          Nueva entrega
-        </button>
-      </header>
+  function openPayment(row: DeliveryRow) {
+    if (row.paymentStatus === 'Pagado') {
+      toast.info(`La entrega #${row.id} ya está marcada como Pagada`);
+      return;
+    }
+    setPaymentTarget(row);
+  }
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <label className="relative flex-1 sm:max-w-sm">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
-            aria-hidden
-          />
-          <input
-            type="search"
-            value={query}
-            placeholder="Buscar por cliente…"
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') setParam('q', query || null);
-            }}
-            onBlur={() => {
-              if (query !== initialFilters.q) setParam('q', query || null);
-            }}
-            className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
-          />
-        </label>
+  const rowActions = (row: DeliveryRow) => (
+    <>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Confirmar pago"
+          onPress={() => openPayment(row)}
+          className={
+            row.paymentStatus === 'Pagado'
+              ? 'text-muted/40'
+              : 'text-success-soft-foreground hover:bg-success-soft'
+          }
+        >
+          <DollarSign className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Confirmar pago</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Abrir entrega"
+          onPress={() => router.push(`/delivery/${row.id}`)}
+        >
+          <ExternalLink className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Ver detalles</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Editar entrega"
+          onPress={() => setEditTarget(row)}
+        >
+          <Pencil className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Editar</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Eliminar entrega"
+          onPress={() => setDeleteTarget(row)}
+          className="hover:bg-danger-soft hover:text-danger"
+        >
+          <Trash2 className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Eliminar</Tooltip.Content>
+      </Tooltip>
+    </>
+  );
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        icon={Truck}
+        title="Entregas"
+        subtitle="Gestiona las entregas y sus pagos"
+        actions={
+          <Button variant="primary" onPress={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
+            Nueva entrega
+          </Button>
+        }
+      />
+
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+        <SearchInput
+          initialValue={initialFilters.q}
+          placeholder="Buscar por cliente…"
+          onApply={(v) => setParam('q', v)}
+        />
         <FilterPopover
           title="Filtros de entregas"
           subtitle="Filtra entregas por estado"
@@ -116,12 +176,10 @@ export function DeliveryClient({
           }
           onClear={() => setParam('status', null)}
         >
-          <label className="block space-y-1">
-            <span className="text-xs font-medium text-gray-600">Estado</span>
-            <select
+          <Field label="Estado">
+            <NativeSelect
               value={initialFilters.status ?? ''}
               onChange={(e) => setParam('status', e.target.value || null)}
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
             >
               <option value="">Todos los estados</option>
               {DELIVERY_STATUSES.map((s) => (
@@ -129,177 +187,141 @@ export function DeliveryClient({
                   {s}
                 </option>
               ))}
-            </select>
-          </label>
+            </NativeSelect>
+          </Field>
         </FilterPopover>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+      <ResponsiveTable
+        table={
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-medium">Cliente</th>
-                <th className="px-4 py-3 font-medium">Categoría</th>
-                <th className="px-4 py-3 font-medium">Peso</th>
-                <th className="px-4 py-3 font-medium">Costo</th>
-                <th className="px-4 py-3 font-medium">Ganancia</th>
-                <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium">Pago</th>
-                <th className="px-4 py-3 font-medium">Fecha</th>
-                <th className="px-4 py-3 font-medium">Captura</th>
-                <th className="px-4 py-3 text-right font-medium">Acciones</th>
+                <th>Cliente</th>
+                <th>Categoría</th>
+                <th>Peso</th>
+                <th>Costo</th>
+                <th>Ganancia</th>
+                <th>Estado</th>
+                <th>Pago</th>
+                <th>Fecha</th>
+                <th>Captura</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody>
               {initialRows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={10}
-                    className="px-4 py-8 text-center text-sm text-zinc-500"
-                  >
-                    {isPending ? 'Cargando…' : 'No hay entregas.'}
-                  </td>
-                </tr>
+                <TableEmpty
+                  colSpan={10}
+                  icon={PackageSearch}
+                  message={isPending ? 'Cargando…' : 'No hay entregas.'}
+                />
               ) : (
                 initialRows.map((row) => (
-                  <tr key={row.id} className="text-zinc-800 dark:text-zinc-200">
-                    <td className="px-4 py-3">
+                  <tr key={row.id}>
+                    <td>
                       <Link
                         href={`/delivery/${row.id}`}
-                        className="font-medium hover:underline"
+                        className="font-medium text-foreground transition-colors hover:text-accent"
                       >
                         {row.clientName}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-zinc-500">
+                    <td className="text-muted">
                       {row.categoryName ?? (
-                        <span className="italic text-zinc-400">—</span>
+                        <span className="italic text-muted/60">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 tabular-nums">
-                      {row.weight.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3 tabular-nums font-medium">
+                    <td className="tabular-nums">{row.weight.toFixed(2)}</td>
+                    <td className="font-semibold tabular-nums">
                       {formatCurrency(row.weightCost)}
                     </td>
-                    <td className="px-4 py-3 tabular-nums text-zinc-500">
+                    <td className="tabular-nums text-muted">
                       {formatCurrency(row.managerProfit)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <DeliveryStatusBadge status={row.status} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <PayStatusBadge status={row.paymentStatus} />
                     </td>
-                    <td className="px-4 py-3 text-zinc-500">
-                      {formatDate(row.deliverDate)}
-                    </td>
-                    <td className="px-4 py-3">
+                    <td className="text-muted">{formatDate(row.deliverDate)}</td>
+                    <td>
                       <PictureHover
                         url={row.deliverPicture}
                         alt={`Captura de la entrega ${row.id}`}
                       />
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="inline-flex gap-1">
-                        <Link
-                          href={`/delivery/${row.id}`}
-                          className="rounded-md px-2 py-1 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                          Open
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (row.paymentStatus === 'Pagado') {
-                              toast.info(
-                                `La entrega #${row.id} ya está marcada como Pagada`
-                              );
-                              return;
-                            }
-                            setPaymentTarget(row);
-                          }}
-                          aria-label="Confirmar pago"
-                          title="Confirmar pago"
-                          className={`rounded-md p-1.5 transition hover:bg-green-50 hover:text-green-600 ${
-                            row.paymentStatus === 'Pagado'
-                              ? 'cursor-not-allowed text-zinc-300'
-                              : 'text-zinc-600 dark:text-zinc-400'
-                          }`}
-                        >
-                          <DollarSign className="h-4 w-4" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditTarget(row)}
-                          aria-label="Editar entrega"
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                          <Pencil className="h-4 w-4" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(row)}
-                          aria-label="Eliminar entrega"
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
-                        >
-                          <Trash2 className="h-4 w-4" aria-hidden />
-                        </button>
-                      </div>
+                    <td className="text-right">
+                      <div className="inline-flex gap-0.5">{rowActions(row)}</div>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </div>
-
-        <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
-          {initialRows.length === 0 ? (
-            <li className="px-4 py-8 text-center text-sm text-zinc-500">
+        }
+        cards={
+          initialRows.length === 0 ? (
+            <div className="surface-card p-8 text-center text-sm text-muted">
               {isPending ? 'Cargando…' : 'No hay entregas.'}
-            </li>
+            </div>
           ) : (
             initialRows.map((row) => (
-              <li key={row.id} className="space-y-2 px-4 py-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="font-medium">{row.clientName}</div>
-                    <div className="text-xs text-zinc-500">
-                      {row.weight.toFixed(2)} lb ·{' '}
-                      {formatDate(row.deliverDate)}
-                    </div>
-                  </div>
-                  <span className="text-sm font-semibold tabular-nums">
-                    {formatCurrency(row.weightCost)}
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-1 text-xs">
-                  <DeliveryStatusBadge status={row.status} />
-                  <PayStatusBadge status={row.paymentStatus} />
-                </div>
-                <div className="flex gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setEditTarget(row)}
-                    className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 dark:border-zinc-800 dark:text-zinc-300"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteTarget(row)}
-                    className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-red-600 dark:border-zinc-800"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </li>
+              <MobileCard
+                key={row.id}
+                title={row.clientName}
+                subtitle={`Entrega #${row.id}`}
+                media={
+                  <PictureHover
+                    url={row.deliverPicture}
+                    alt={`Captura de la entrega ${row.id}`}
+                  />
+                }
+                badges={
+                  <>
+                    <DeliveryStatusBadge status={row.status} />
+                    <PayStatusBadge status={row.paymentStatus} />
+                  </>
+                }
+                rows={[
+                  {
+                    icon: Tag,
+                    label: 'Categoría',
+                    value: row.categoryName ?? '—',
+                  },
+                  {
+                    icon: Weight,
+                    label: 'Peso',
+                    value: `${row.weight.toFixed(2)} lb`,
+                  },
+                  {
+                    icon: DollarSign,
+                    label: 'Costo',
+                    value: (
+                      <span className="font-semibold">
+                        {formatCurrency(row.weightCost)}
+                      </span>
+                    ),
+                  },
+                  {
+                    icon: TrendingUp,
+                    label: 'Ganancia',
+                    value: formatCurrency(row.managerProfit),
+                  },
+                  {
+                    icon: CalendarDays,
+                    label: 'Fecha',
+                    value: formatDate(row.deliverDate),
+                  },
+                ]}
+                actions={rowActions(row)}
+                onClick={() => router.push(`/delivery/${row.id}`)}
+              />
             ))
-          )}
-        </ul>
-      </div>
+          )
+        }
+      />
 
       <DeliveryDialog
         open={createOpen}

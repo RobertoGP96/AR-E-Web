@@ -13,36 +13,12 @@ export default async function SettingsPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold text-gray-900">Configuración</h1>
-        <p className="mt-2 text-gray-600">
-          Personaliza la configuración de tu panel de administración
-        </p>
-      </header>
-
-      {canEdit ? (
-        <SettingsForm
-          defaults={{
-            changeRate: info?.changeRate ?? 0,
-            costPerPound: info?.costPerPound ?? 0,
-          }}
-        />
-      ) : (
-        <div className="rounded-lg border border-zinc-200 bg-white p-5 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
-          <p>
-            Change rate:{' '}
-            <strong>{(info?.changeRate ?? 0).toFixed(2)}</strong>
-          </p>
-          <p className="mt-1">
-            Cost per pound:{' '}
-            <strong>{(info?.costPerPound ?? 0).toFixed(2)}</strong>
-          </p>
-          <p className="mt-3 text-xs text-zinc-500">
-            Only admin or accountant roles can change these.
-          </p>
-        </div>
-      )}
-    </div>
+    <SettingsForm
+      canEdit={canEdit}
+      defaults={{
+        changeRate: info?.changeRate ?? 0,
+        costPerPound: info?.costPerPound ?? 0,
+      }}
+    />
   );
 }

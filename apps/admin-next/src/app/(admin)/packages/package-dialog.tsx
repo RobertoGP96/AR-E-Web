@@ -1,14 +1,22 @@
 'use client';
 
-import { useActionState, useEffect, useId, useRef } from 'react';
-import { X } from 'lucide-react';
+import { useActionState, useEffect, useRef } from 'react';
+import { Box } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@heroui/react';
 import {
   createPackageAction,
   updatePackageAction,
   type ActionResult,
 } from './actions';
 import { ImageUploadField } from '@/components/image-upload-field';
+import {
+  AppModal,
+  Field,
+  NativeSelect,
+  TextInput,
+  SubmitButton,
+} from '@/components/ui';
 import { PACKAGE_STATUSES, type PackageRow } from './schema';
 
 interface PackageDialogProps {
@@ -31,13 +39,11 @@ export function PackageDialog({
   onClose,
   onSuccess,
 }: PackageDialogProps) {
-  const headingId = useId();
   const action = mode === 'create' ? createPackageAction : updatePackageAction;
   const [state, formAction, isPending] = useActionState<
     ActionResult | undefined,
     FormData
   >(action, undefined);
-
   const lastHandledRef = useRef<ActionResult | undefined>(undefined);
 
   useEffect(() => {
@@ -47,175 +53,99 @@ export function PackageDialog({
     else if (!state.fieldErrors) toast.error(state.error);
   }, [state, onSuccess]);
 
-  useEffect(() => {
-    if (open) lastHandledRef.current = undefined;
-  }, [open]);
-
-  if (!open) return null;
-
-  const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
+  const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={headingId}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <AppModal
+      isOpen={open}
+      onClose={onClose}
+      title={mode === 'create' ? 'Nuevo paquete' : 'Editar paquete'}
+      description={
+        mode === 'create'
+          ? 'Registra un paquete con su tracking, agencia y fecha de llegada.'
+          : `Paquete ${pkg?.numberOfTracking ?? ''} de ${pkg?.agencyName ?? ''}`
+      }
+      icon={<Box className="h-5 w-5" aria-hidden />}
+      size="md"
     >
-      <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mb-4 flex items-start justify-between gap-2">
-          <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'Nuevo paquete' : 'Editar paquete'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-md p-1 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
-        </div>
+      <form
+        key={mode === 'edit' ? (pkg?.id ?? 'edit') : 'create'}
+        action={formAction}
+        className="space-y-4"
+      >
+        {mode === 'edit' && pkg ? (
+          <input type="hidden" name="id" value={pkg.id} />
+        ) : null}
 
-        <form action={formAction} className="space-y-4">
-          {mode === 'edit' && pkg ? (
-            <input type="hidden" name="id" value={pkg.id} />
-          ) : null}
-
-          <Field
-            label="Número de tracking"
+        <Field
+          label="Número de tracking"
+          required
+          error={errors['numberOfTracking']}
+        >
+          <TextInput
             name="numberOfTracking"
             type="text"
-            defaultValue={pkg?.numberOfTracking ?? ''}
-            error={errors['numberOfTracking']}
             required
             maxLength={100}
+            defaultValue={pkg?.numberOfTracking ?? ''}
+            invalid={!!errors['numberOfTracking']}
+            className="font-mono"
           />
+        </Field>
 
-          <Field
-            label="Nombre de la agencia"
+        <Field
+          label="Nombre de la agencia"
+          required
+          error={errors['agencyName']}
+        >
+          <TextInput
             name="agencyName"
             type="text"
-            defaultValue={pkg?.agencyName ?? ''}
-            error={errors['agencyName']}
             required
             maxLength={100}
+            defaultValue={pkg?.agencyName ?? ''}
+            invalid={!!errors['agencyName']}
           />
+        </Field>
 
-          <div className="space-y-1">
-            <label
-              htmlFor="statusOfProcessing"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Status
-            </label>
-            <select
-              id="statusOfProcessing"
-              name="statusOfProcessing"
-              defaultValue={pkg?.statusOfProcessing ?? 'Enviado'}
-              required
-              className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:bg-zinc-950 ${
-                errors['statusOfProcessing']
-                  ? 'border-red-500'
-                  : 'border-zinc-300 dark:border-zinc-700'
-              }`}
-            >
-              {PACKAGE_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-            {errors['statusOfProcessing'] ? (
-              <p className="text-xs text-red-600">
-                {errors['statusOfProcessing']}
-              </p>
-            ) : null}
-          </div>
+        <Field label="Estado" error={errors['statusOfProcessing']}>
+          <NativeSelect
+            name="statusOfProcessing"
+            defaultValue={pkg?.statusOfProcessing ?? 'Enviado'}
+            required
+            invalid={!!errors['statusOfProcessing']}
+          >
+            {PACKAGE_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </NativeSelect>
+        </Field>
 
-          <Field
-            label="Fecha de llegada"
+        <Field label="Fecha de llegada" required error={errors['arrivalDate']}>
+          <TextInput
             name="arrivalDate"
             type="date"
-            defaultValue={isoToDateInput(pkg?.arrivalDate)}
-            error={errors['arrivalDate']}
             required
+            defaultValue={isoToDateInput(pkg?.arrivalDate)}
+            invalid={!!errors['arrivalDate']}
           />
+        </Field>
 
-          <ImageUploadField
-            name="packagePicture"
-            label="Foto del paquete (opcional)"
-            defaultUrl={pkg?.packagePicture}
-          />
+        <ImageUploadField
+          name="packagePicture"
+          label="Foto del paquete (opcional)"
+          defaultUrl={pkg?.packagePicture}
+        />
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isPending ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-interface FieldProps {
-  label: string;
-  name: string;
-  type: 'text' | 'url' | 'date';
-  defaultValue?: string;
-  placeholder?: string;
-  error?: string;
-  required?: boolean;
-  maxLength?: number;
-}
-
-function Field({
-  label,
-  name,
-  type,
-  defaultValue,
-  placeholder,
-  error,
-  required,
-  maxLength,
-}: FieldProps) {
-  const id = useId();
-  return (
-    <div className="space-y-1">
-      <label
-        htmlFor={id}
-        className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-      >
-        {label}
-      </label>
-      <input
-        id={id}
-        name={name}
-        type={type}
-        maxLength={maxLength}
-        required={required}
-        defaultValue={defaultValue}
-        placeholder={placeholder}
-        className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-brand dark:bg-zinc-950 ${
-          error ? 'border-red-500' : 'border-zinc-300 dark:border-zinc-700'
-        }`}
-      />
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
-    </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="tertiary" onPress={onClose}>
+            Cancelar
+          </Button>
+          <SubmitButton isPending={isPending}>Guardar</SubmitButton>
+        </div>
+      </form>
+    </AppModal>
   );
 }

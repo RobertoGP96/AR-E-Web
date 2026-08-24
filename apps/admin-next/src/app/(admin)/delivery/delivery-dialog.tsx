@@ -1,14 +1,9 @@
 'use client';
 
-import {
-  useActionState,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-} from 'react';
-import { X } from 'lucide-react';
+import { useActionState, useEffect, useRef, useState } from 'react';
+import { Truck } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@heroui/react';
 import {
   createDeliveryAction,
   updateDeliveryAction,
@@ -17,6 +12,13 @@ import {
 import { round2 } from '@/lib/order-cost';
 import { formatCurrency } from '@/lib/format';
 import { ImageUploadField } from '@/components/image-upload-field';
+import {
+  AppModal,
+  Field,
+  NativeSelect,
+  TextInput,
+  SubmitButton,
+} from '@/components/ui';
 import {
   DELIVERY_STATUSES,
   type CategoryOption,
@@ -48,7 +50,6 @@ export function DeliveryDialog({
   onClose,
   onSuccess,
 }: DeliveryDialogProps) {
-  const headingId = useId();
   const action =
     mode === 'create' ? createDeliveryAction : updateDeliveryAction;
   const [state, formAction, isPending] = useActionState<
@@ -57,6 +58,7 @@ export function DeliveryDialog({
   >(action, undefined);
   const lastHandledRef = useRef<ActionResult | undefined>(undefined);
 
+  // Live weight-cost preview state.
   const [weight, setWeight] = useState(delivery?.weight ?? 0);
   const [categoryId, setCategoryId] = useState(delivery?.categoryId ?? '');
 
@@ -75,265 +77,172 @@ export function DeliveryDialog({
     else if (!state.fieldErrors) toast.error(state.error);
   }, [state, onSuccess]);
 
-  if (!open) return null;
-
-  const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
+  const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
   const cat = categoryOptions.find((c) => c.id === categoryId);
-  const weightCostPreview = round2(
-    weight * (cat?.clientShippingCharge ?? 0)
-  );
+  const weightCostPreview = round2(weight * (cat?.clientShippingCharge ?? 0));
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={headingId}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <AppModal
+      isOpen={open}
+      onClose={onClose}
+      title={mode === 'create' ? 'Nueva entrega' : 'Editar entrega'}
+      description={
+        mode === 'create'
+          ? 'Registra una entrega de paquetes para un cliente.'
+          : `Entrega #${delivery?.id ?? ''} de ${delivery?.clientName ?? ''}`
+      }
+      icon={<Truck className="h-5 w-5" aria-hidden />}
+      size="lg"
     >
-      <div className="flex max-h-full w-full max-w-lg flex-col rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="flex items-start justify-between gap-2 border-b border-zinc-200 p-5 dark:border-zinc-800">
-          <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'Nueva entrega' : 'Editar entrega'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-md p-1 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+      <form
+        key={mode === 'edit' ? (delivery?.id ?? 'edit') : 'create'}
+        action={formAction}
+        className="space-y-4"
+      >
+        {mode === 'edit' && delivery ? (
+          <input type="hidden" name="id" value={delivery.id} />
+        ) : null}
+
+        <Field label="Cliente" required error={errors['clientId']}>
+          <NativeSelect
+            name="clientId"
+            defaultValue={delivery?.clientId ?? ''}
+            required
+            invalid={!!errors['clientId']}
           >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
-        </div>
+            <option value="">— Selecciona un cliente —</option>
+            {clientOptions.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.label}
+              </option>
+            ))}
+          </NativeSelect>
+        </Field>
 
-        <form action={formAction} className="space-y-4 overflow-y-auto p-5">
-          {mode === 'edit' && delivery ? (
-            <input type="hidden" name="id" value={delivery.id} />
-          ) : null}
-
-          <div className="space-y-1">
-            <label
-              htmlFor={`${headingId}-client`}
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Categoría (opcional)">
+            <NativeSelect
+              name="categoryId"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
             >
-              Client
-            </label>
-            <select
-              id={`${headingId}-client`}
-              name="clientId"
-              defaultValue={delivery?.clientId ?? ''}
-              required
-              className={`w-full rounded-md border bg-white px-3 py-2 text-sm dark:bg-zinc-950 ${
-                errors['clientId']
-                  ? 'border-red-500'
-                  : 'border-zinc-300 dark:border-zinc-700'
-              }`}
-            >
-              <option value="">— Select a client —</option>
-              {clientOptions.map((c) => (
+              <option value="">— Ninguna —</option>
+              {categoryOptions.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.label}
+                  {c.label} (${c.clientShippingCharge.toFixed(2)}/lb)
                 </option>
               ))}
-            </select>
-            {errors['clientId'] ? (
-              <p className="text-xs text-red-600">{errors['clientId']}</p>
-            ) : null}
-          </div>
+            </NativeSelect>
+          </Field>
+          <Field label="Peso (lb)" error={errors['weight']}>
+            <TextInput
+              name="weight"
+              type="number"
+              step="0.01"
+              min="0"
+              value={Number.isFinite(weight) ? weight : 0}
+              onChange={(e) => setWeight(Number(e.target.value) || 0)}
+              invalid={!!errors['weight']}
+            />
+          </Field>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label
-                htmlFor={`${headingId}-cat`}
-                className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-              >
-                Category (optional)
-              </label>
-              <select
-                id={`${headingId}-cat`}
-                name="categoryId"
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-              >
-                <option value="">— None —</option>
-                {categoryOptions.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label} (${c.clientShippingCharge.toFixed(2)}/lb)
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label
-                htmlFor={`${headingId}-w`}
-                className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-              >
-                Weight (lb)
-              </label>
-              <input
-                id={`${headingId}-w`}
-                name="weight"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Estado">
+            <NativeSelect
+              name="status"
+              defaultValue={delivery?.status ?? 'Pendiente'}
+            >
+              {DELIVERY_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+          <Field label="Fecha de entrega" required error={errors['deliverDate']}>
+            <TextInput
+              name="deliverDate"
+              type="date"
+              required
+              defaultValue={isoToDateInput(delivery?.deliverDate)}
+              invalid={!!errors['deliverDate']}
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Monto pagado" error={errors['paymentAmount']}>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
+                $
+              </span>
+              <TextInput
+                name="paymentAmount"
                 type="number"
                 step="0.01"
                 min="0"
-                value={weight}
-                onChange={(e) => setWeight(Number(e.target.value) || 0)}
-                className={`w-full rounded-md border bg-white px-3 py-2 text-sm dark:bg-zinc-950 ${
-                  errors['weight']
-                    ? 'border-red-500'
-                    : 'border-zinc-300 dark:border-zinc-700'
-                }`}
+                defaultValue={delivery?.paymentAmount.toString() ?? '0'}
+                invalid={!!errors['paymentAmount']}
+                className="pl-7"
               />
-              {errors['weight'] ? (
-                <p className="text-xs text-red-600">{errors['weight']}</p>
-              ) : null}
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label
-                htmlFor={`${headingId}-st`}
-                className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-              >
-                Status
-              </label>
-              <select
-                id={`${headingId}-st`}
-                name="status"
-                defaultValue={delivery?.status ?? 'Pendiente'}
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-              >
-                {DELIVERY_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Field
-              label="Fecha de entrega"
-              name="deliverDate"
-              type="date"
-              defaultValue={isoToDateInput(delivery?.deliverDate)}
-              error={errors['deliverDate']}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              label="Monto pagado"
-              name="paymentAmount"
-              type="number"
-              prefix="$"
-              defaultValue={delivery?.paymentAmount.toString() ?? '0'}
-              error={errors['paymentAmount']}
-            />
-            <Field
-              label="Saldo aplicado"
-              name="balanceApplied"
-              type="number"
-              prefix="$"
-              defaultValue={delivery?.balanceApplied.toString() ?? '0'}
-              error={errors['balanceApplied']}
-            />
-          </div>
-
-          <ImageUploadField
-            name="deliverPicture"
-            label="Foto de la entrega (opcional)"
-            defaultUrl={delivery?.deliverPicture}
-          />
-
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex items-center justify-between">
-              <span className="text-zinc-600 dark:text-zinc-400">
-                Weight cost (weight × category charge)
+          </Field>
+          <Field label="Saldo aplicado" error={errors['balanceApplied']}>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
+                $
               </span>
-              <span className="font-medium tabular-nums">
-                {formatCurrency(weightCostPreview)}
-              </span>
+              <TextInput
+                name="balanceApplied"
+                type="number"
+                step="0.01"
+                min="0"
+                defaultValue={delivery?.balanceApplied.toString() ?? '0'}
+                invalid={!!errors['balanceApplied']}
+                className="pl-7"
+              />
             </div>
-            <p className="mt-1 text-[10px] text-zinc-500">
-              Weight cost & manager profit are recomputed server-side from
-              the category rate and the client&apos;s assigned agent.
-            </p>
-          </div>
+          </Field>
+        </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isPending ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  name,
-  type,
-  defaultValue,
-  error,
-  required,
-  prefix,
-}: {
-  label: string;
-  name: string;
-  type: 'number' | 'date' | 'url';
-  defaultValue?: string;
-  error?: string;
-  required?: boolean;
-  prefix?: string;
-}) {
-  const id = useId();
-  return (
-    <div className="space-y-1">
-      <label
-        htmlFor={id}
-        className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-      >
-        {label}
-      </label>
-      <div className="relative">
-        {prefix ? (
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">
-            {prefix}
-          </span>
-        ) : null}
-        <input
-          id={id}
-          name={name}
-          type={type}
-          step={type === 'number' ? '0.01' : undefined}
-          min={type === 'number' ? '0' : undefined}
-          required={required}
-          defaultValue={defaultValue}
-          className={`w-full rounded-md border bg-white py-2 ${
-            prefix ? 'pl-7' : 'pl-3'
-          } pr-3 text-sm dark:bg-zinc-950 ${
-            error ? 'border-red-500' : 'border-zinc-300 dark:border-zinc-700'
-          }`}
+        <ImageUploadField
+          name="deliverPicture"
+          label="Foto de la entrega (opcional)"
+          defaultUrl={delivery?.deliverPicture}
         />
-      </div>
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
-    </div>
+
+        <div className="rounded-xl border border-accent/25 bg-accent-soft/40 p-3 text-sm">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted">
+            <span>Peso</span>
+            <span className="text-right tabular-nums">
+              {weight.toFixed(2)} lb
+            </span>
+            <span>Tarifa de la categoría</span>
+            <span className="text-right tabular-nums">
+              {formatCurrency(cat?.clientShippingCharge ?? 0)}/lb
+            </span>
+          </div>
+          <div className="mt-2 flex items-center justify-between border-t border-accent/20 pt-2 text-sm font-bold text-foreground">
+            <span>Costo por peso</span>
+            <span className="tabular-nums">
+              {formatCurrency(weightCostPreview)}
+            </span>
+          </div>
+          <p className="mt-1 text-[10px] text-muted">
+            El costo por peso y la ganancia del gestor se recalculan en el
+            servidor con la tarifa de la categoría y el agente asignado al
+            cliente.
+          </p>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="tertiary" onPress={onClose}>
+            Cancelar
+          </Button>
+          <SubmitButton isPending={isPending}>Guardar</SubmitButton>
+        </div>
+      </form>
+    </AppModal>
   );
 }

@@ -1,25 +1,38 @@
+'use client';
+
 import Link from 'next/link';
-import { SearchX } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, SearchX } from 'lucide-react';
+import { Button } from '@heroui/react';
+import { buttonVariants } from '@heroui/styles';
 
 export default function AdminNotFound() {
+  const router = useRouter();
+
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+      <div className="surface-card animate-in fade-in zoom-in-95 duration-300 w-full max-w-md p-6 text-center sm:p-8">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
           <SearchX className="h-6 w-6" aria-hidden />
         </div>
-        <h1 className="text-xl font-semibold tracking-tight">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
           No encontrado
         </h1>
-        <p className="mt-2 text-sm text-zinc-500">
+        <p className="mt-2 text-sm text-muted">
           El registro que buscas no existe o fue eliminado.
         </p>
-        <Link
-          href="/dashboard"
-          className="mt-6 inline-block rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-strong"
-        >
-          Ir al dashboard
-        </Link>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <Link
+            href="/dashboard"
+            className={buttonVariants({ variant: 'primary' })}
+          >
+            Ir al dashboard
+          </Link>
+          <Button variant="outline" onPress={() => router.back()}>
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Volver
+          </Button>
+        </div>
       </div>
     </div>
   );

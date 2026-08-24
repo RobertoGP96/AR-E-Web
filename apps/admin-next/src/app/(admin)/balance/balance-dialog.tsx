@@ -1,13 +1,22 @@
 'use client';
 
-import { useActionState, useEffect, useId, useRef } from 'react';
-import { X } from 'lucide-react';
+import { useActionState, useEffect, useRef } from 'react';
+import { Scale } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@heroui/react';
 import {
   createBalanceAction,
   updateBalanceAction,
   type ActionResult,
 } from './actions';
+import { formatDate } from '@/lib/format';
+import {
+  AppModal,
+  Field,
+  TextInput,
+  TextArea,
+  SubmitButton,
+} from '@/components/ui';
 import type { BalanceRow } from './schema';
 
 interface BalanceDialogProps {
@@ -23,6 +32,35 @@ function isoToDateInput(iso: string | undefined): string {
   return iso.slice(0, 10);
 }
 
+/** Campo numérico con prefijo $ (mantiene el input nativo para FormData). */
+function MoneyInput({
+  name,
+  defaultValue,
+  invalid,
+}: {
+  name: string;
+  defaultValue: string;
+  invalid?: boolean;
+}) {
+  return (
+    <div className="relative">
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
+        $
+      </span>
+      <TextInput
+        name={name}
+        type="number"
+        step="0.01"
+        min="0"
+        required
+        defaultValue={defaultValue}
+        invalid={invalid}
+        className="pl-7"
+      />
+    </div>
+  );
+}
+
 export function BalanceDialog({
   open,
   mode,
@@ -30,7 +68,6 @@ export function BalanceDialog({
   onClose,
   onSuccess,
 }: BalanceDialogProps) {
-  const headingId = useId();
   const action = mode === 'create' ? createBalanceAction : updateBalanceAction;
   const [state, formAction, isPending] = useActionState<
     ActionResult | undefined,
@@ -50,229 +87,138 @@ export function BalanceDialog({
     if (open) lastHandledRef.current = undefined;
   }, [open]);
 
-  if (!open) return null;
-
-  const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
+  const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={headingId}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <AppModal
+      isOpen={open}
+      onClose={onClose}
+      title={mode === 'create' ? 'Nuevo balance' : 'Editar balance'}
+      description={
+        mode === 'create'
+          ? 'Registra un período con sus pesos, ingresos y costos.'
+          : balance
+            ? `Período ${formatDate(balance.startDate)} → ${formatDate(balance.endDate)}`
+            : undefined
+      }
+      icon={<Scale className="h-5 w-5" aria-hidden />}
+      size="lg"
     >
-      <div className="w-full max-w-xl rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mb-4 flex items-start justify-between gap-2">
-          <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'Nuevo balance' : 'Editar balance'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-md p-1 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
-        </div>
+      <form
+        key={mode === 'edit' ? (balance?.id ?? 'edit') : 'create'}
+        action={formAction}
+        className="space-y-4"
+      >
+        {mode === 'edit' && balance ? (
+          <input type="hidden" name="id" value={balance.id} />
+        ) : null}
 
-        <form action={formAction} className="space-y-4">
-          {mode === 'edit' && balance ? (
-            <input type="hidden" name="id" value={balance.id} />
-          ) : null}
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              label="Fecha inicio"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Fecha inicio" required error={errors['startDate']}>
+            <TextInput
               name="startDate"
               type="date"
-              defaultValue={isoToDateInput(balance?.startDate)}
-              error={errors['startDate']}
               required
+              defaultValue={isoToDateInput(balance?.startDate)}
+              invalid={!!errors['startDate']}
             />
-            <Field
-              label="Fecha fin"
+          </Field>
+          <Field label="Fecha fin" required error={errors['endDate']}>
+            <TextInput
               name="endDate"
               type="date"
-              defaultValue={isoToDateInput(balance?.endDate)}
-              error={errors['endDate']}
               required
+              defaultValue={isoToDateInput(balance?.endDate)}
+              invalid={!!errors['endDate']}
             />
-          </div>
+          </Field>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              label="Peso del sistema"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field
+            label="Peso del sistema"
+            required
+            error={errors['systemWeight']}
+          >
+            <TextInput
               name="systemWeight"
               type="number"
               step="0.01"
               min="0"
-              defaultValue={balance?.systemWeight.toString() ?? '0'}
-              error={errors['systemWeight']}
               required
+              defaultValue={balance?.systemWeight.toString() ?? '0'}
+              invalid={!!errors['systemWeight']}
             />
-            <Field
-              label="Peso registrado"
+          </Field>
+          <Field
+            label="Peso registrado"
+            required
+            error={errors['registeredWeight']}
+          >
+            <TextInput
               name="registeredWeight"
               type="number"
               step="0.01"
               min="0"
+              required
               defaultValue={balance?.registeredWeight.toString() ?? '0'}
-              error={errors['registeredWeight']}
-              required
+              invalid={!!errors['registeredWeight']}
             />
-          </div>
+          </Field>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              label="Revenues"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Ingresos" required error={errors['revenues']}>
+            <MoneyInput
               name="revenues"
-              type="number"
-              step="0.01"
-              min="0"
-              prefix="$"
               defaultValue={balance?.revenues.toString() ?? '0'}
-              error={errors['revenues']}
-              required
+              invalid={!!errors['revenues']}
             />
-            <Field
-              label="Costos de compras"
+          </Field>
+          <Field
+            label="Costos de compras"
+            required
+            error={errors['buysCosts']}
+          >
+            <MoneyInput
               name="buysCosts"
-              type="number"
-              step="0.01"
-              min="0"
-              prefix="$"
               defaultValue={balance?.buysCosts.toString() ?? '0'}
-              error={errors['buysCosts']}
-              required
+              invalid={!!errors['buysCosts']}
             />
-            <Field
-              label="Costs"
+          </Field>
+          <Field label="Costos" required error={errors['costs']}>
+            <MoneyInput
               name="costs"
-              type="number"
-              step="0.01"
-              min="0"
-              prefix="$"
               defaultValue={balance?.costs.toString() ?? '0'}
-              error={errors['costs']}
-              required
+              invalid={!!errors['costs']}
             />
-            <Field
-              label="Expenses"
+          </Field>
+          <Field label="Gastos" required error={errors['expenses']}>
+            <MoneyInput
               name="expenses"
-              type="number"
-              step="0.01"
-              min="0"
-              prefix="$"
               defaultValue={balance?.expenses.toString() ?? '0'}
-              error={errors['expenses']}
-              required
+              invalid={!!errors['expenses']}
             />
-          </div>
+          </Field>
+        </div>
 
-          <div className="space-y-1">
-            <label
-              htmlFor="notes"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Notes (optional)
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              rows={3}
-              maxLength={2000}
-              defaultValue={balance?.notes ?? ''}
-              className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-brand dark:bg-zinc-950 ${
-                errors['notes']
-                  ? 'border-red-500'
-                  : 'border-zinc-300 dark:border-zinc-700'
-              }`}
-            />
-            {errors['notes'] ? (
-              <p className="text-xs text-red-600">{errors['notes']}</p>
-            ) : null}
-          </div>
+        <Field label="Notas (opcional)" error={errors['notes']}>
+          <TextArea
+            name="notes"
+            rows={3}
+            maxLength={2000}
+            defaultValue={balance?.notes ?? ''}
+            invalid={!!errors['notes']}
+          />
+        </Field>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isPending ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-interface FieldProps {
-  label: string;
-  name: string;
-  type: 'number' | 'date';
-  defaultValue?: string;
-  error?: string;
-  required?: boolean;
-  step?: string;
-  min?: string;
-  prefix?: string;
-}
-
-function Field({
-  label,
-  name,
-  type,
-  defaultValue,
-  error,
-  required,
-  step,
-  min,
-  prefix,
-}: FieldProps) {
-  const id = useId();
-  return (
-    <div className="space-y-1">
-      <label
-        htmlFor={id}
-        className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-      >
-        {label}
-      </label>
-      <div className="relative">
-        {prefix ? (
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">
-            {prefix}
-          </span>
-        ) : null}
-        <input
-          id={id}
-          name={name}
-          type={type}
-          step={step}
-          min={min}
-          required={required}
-          defaultValue={defaultValue}
-          className={`w-full rounded-md border bg-white py-2 ${
-            prefix ? 'pl-7' : 'pl-3'
-          } pr-3 text-sm shadow-sm outline-none focus:border-brand dark:bg-zinc-950 ${
-            error ? 'border-red-500' : 'border-zinc-300 dark:border-zinc-700'
-          }`}
-        />
-      </div>
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
-    </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="tertiary" onPress={onClose}>
+            Cancelar
+          </Button>
+          <SubmitButton isPending={isPending}>Guardar</SubmitButton>
+        </div>
+      </form>
+    </AppModal>
   );
 }

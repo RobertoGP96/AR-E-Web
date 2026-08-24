@@ -28,8 +28,8 @@ export default async function LoginPage({
   return (
     <div className="font-sans grid min-h-screen lg:grid-cols-2">
       {/* Left: logo / brand panel — client-app look: orange clip-path
-          polygon blobs, blurred, on a near-black base */}
-      <div className="relative hidden flex-col justify-between overflow-hidden bg-[oklch(21.779%_0.00002_271.152)] p-12 lg:flex">
+          polygon blobs, blurred, on the near-black sidebar tone */}
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-sidebar p-12 lg:flex">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 -top-40 transform-gpu overflow-hidden blur-3xl"
@@ -85,8 +85,8 @@ export default async function LoginPage({
         </p>
       </div>
 
-      {/* Right: form panel — white background */}
-      <div className="flex items-center justify-center bg-white px-4 py-10 sm:px-6">
+      {/* Right: form panel — light surface */}
+      <div className="flex items-center justify-center bg-surface px-4 py-10 sm:px-6">
         <LoginForm nextPath={sanitizeNextPath(next)} initialError={error} />
       </div>
     </div>

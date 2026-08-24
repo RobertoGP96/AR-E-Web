@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { round2 } from '@/lib/order-cost';
 import { DashboardGreeting } from './dashboard-greeting';
+import { StatCard, type StatTone } from '@/components/ui';
 import {
   Users,
   Package,
@@ -15,6 +16,7 @@ import {
   Truck,
   UserCheck,
   Receipt,
+  Percent,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -25,14 +27,11 @@ interface MetricCardData {
   value: string;
   subtitle?: string;
   icon: LucideIcon;
-  iconBg: string;
-  borderColor: string;
-  hoverColor: string;
+  tone: StatTone;
 }
 
 interface MetricGroup {
   label: string;
-  accent: string;
   cards: MetricCardData[];
 }
 
@@ -121,127 +120,98 @@ export default async function DashboardPage() {
   const groups: MetricGroup[] = [
     {
       label: 'Resumen General',
-      accent: 'border-orange-400',
       cards: [
         {
           title: 'Total Usuarios',
           value: totalUsers.toLocaleString(),
           icon: Users,
-          iconBg: 'bg-orange-500',
-          borderColor: 'border-gray-200',
-          hoverColor: 'hover:border-orange-300 hover:shadow-orange-50',
+          tone: 'accent',
         },
         {
           title: 'Total Productos',
           value: totalProducts.toLocaleString(),
           icon: Package,
-          iconBg: 'bg-orange-500',
-          borderColor: 'border-gray-200',
-          hoverColor: 'hover:border-orange-300 hover:shadow-orange-50',
+          tone: 'accent',
         },
         {
           title: 'Órdenes del Mes',
           value: ordersMonth.toLocaleString(),
           icon: ShoppingCart,
-          iconBg: 'bg-orange-500',
-          borderColor: 'border-gray-200',
-          hoverColor: 'hover:border-orange-300 hover:shadow-orange-50',
+          tone: 'accent',
         },
         {
           title: 'Ingresos del Mes',
           value: `$${(revenueMonthAgg._sum.receivedValueOfClient ?? 0).toLocaleString()}`,
           icon: DollarSign,
-          iconBg: 'bg-orange-500',
-          borderColor: 'border-gray-200',
-          hoverColor: 'hover:border-orange-300 hover:shadow-orange-50',
+          tone: 'success',
         },
       ],
     },
     {
       label: 'Finanzas',
-      accent: 'border-emerald-400',
       cards: [
         {
           title: 'Ganancia Total',
           value: fmt(profit),
           icon: TrendingUp,
-          iconBg: 'bg-emerald-500',
-          borderColor: 'border-emerald-200',
-          hoverColor: 'hover:border-emerald-400 hover:shadow-emerald-50',
+          tone: 'success',
         },
         {
           title: 'Margen de Ganancia',
           value: `${margin.toFixed(1)}%`,
-          icon: TrendingUp,
-          iconBg: 'bg-cyan-500',
-          borderColor: 'border-cyan-200',
-          hoverColor: 'hover:border-cyan-400 hover:shadow-cyan-50',
+          icon: Percent,
+          tone: 'success',
         },
         {
           title: 'Entregas Sin Pagar',
           value: fmt(Math.max(0, unpaidAmount)),
           subtitle: `${unpaidDeliveries._count._all} entregas`,
           icon: CreditCard,
-          iconBg: 'bg-amber-500',
-          borderColor: 'border-amber-200',
-          hoverColor: 'hover:border-amber-400 hover:shadow-amber-50',
+          tone: 'warning',
         },
         {
           title: 'Gastos del Mes',
           value: fmt(expensesMonthAgg._sum.amount ?? 0),
           icon: TrendingDown,
-          iconBg: 'bg-slate-500',
-          borderColor: 'border-slate-200',
-          hoverColor: 'hover:border-slate-400 hover:shadow-slate-50',
+          tone: 'default',
         },
       ],
     },
     {
       label: 'Clientes & Operaciones',
-      accent: 'border-blue-400',
       cards: [
         {
           title: 'Deudas Pendientes',
           value: fmt(Math.abs(debtClients._sum.balance ?? 0)),
           subtitle: `${debtClients._count._all} clientes`,
           icon: AlertCircle,
-          iconBg: 'bg-rose-500',
-          borderColor: 'border-rose-200',
-          hoverColor: 'hover:border-rose-400 hover:shadow-rose-50',
+          tone: 'danger',
         },
         {
           title: 'Saldos a Favor',
           value: fmt(surplusClients._sum.balance ?? 0),
           subtitle: `${surplusClients._count._all} clientes`,
           icon: Wallet,
-          iconBg: 'bg-violet-500',
-          borderColor: 'border-violet-200',
-          hoverColor: 'hover:border-violet-400 hover:shadow-violet-50',
+          tone: 'success',
         },
         {
           title: 'Peso Total Entregado',
           value: `${(deliveredWeightAgg._sum.weight ?? 0).toFixed(1)} lbs`,
           icon: Truck,
-          iconBg: 'bg-yellow-500',
-          borderColor: 'border-yellow-200',
-          hoverColor: 'hover:border-yellow-400 hover:shadow-yellow-50',
+          tone: 'accent',
         },
         {
           title: 'Comisiones de Agentes',
           value: fmt(commissionsAgg._sum.managerProfit ?? 0),
           subtitle: `${agentCount} agentes`,
           icon: UserCheck,
-          iconBg: 'bg-blue-500',
-          borderColor: 'border-blue-200',
-          hoverColor: 'hover:border-blue-400 hover:shadow-blue-50',
+          tone: 'accent',
         },
         {
           title: 'Reembolsos Totales',
           value: fmt(refundsAgg._sum.refundAmount ?? 0),
           icon: Receipt,
-          iconBg: 'bg-rose-500',
-          borderColor: 'border-rose-200',
-          hoverColor: 'hover:border-rose-400 hover:shadow-rose-50',
+          tone: 'warning',
         },
       ],
     },
@@ -251,66 +221,36 @@ export default async function DashboardPage() {
     <div className="animate-in space-y-8 pb-8 fade-in duration-500">
       <DashboardGreeting role={role} rate={common?.changeRate ?? 0} />
 
-      <section className="animate-in space-y-4 duration-700 slide-in-from-bottom">
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-              {role === 'agent' ? 'Mi Panel' : 'Métricas'}
-            </h2>
-            <p className="mt-1 text-sm text-gray-600">
-              Resumen de las métricas más importantes de tu negocio
-            </p>
-          </div>
+      <section className="animate-in space-y-4 fade-in slide-in-from-bottom-4 duration-700">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            {role === 'agent' ? 'Mi Panel' : 'Métricas'}
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Resumen de las métricas más importantes de tu negocio
+          </p>
         </div>
-        <hr className="my-4 border-border" />
+        <hr className="my-4 border-separator" />
 
         <div className="space-y-8">
           {groups.map((group) => (
             <div key={group.label} className="space-y-3">
-              <div
-                className={`flex items-center gap-2 border-l-4 pl-3 ${group.accent}`}
-              >
-                <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
+              <div className="flex items-center gap-2 border-l-4 border-accent pl-3">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-muted">
                   {group.label}
-                </span>
+                </h3>
               </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {group.cards.map((card) => {
-                  const Icon = card.icon;
-                  return (
-                    <div
-                      key={card.title}
-                      className={`group relative cursor-pointer overflow-hidden rounded-xl border-2 bg-white py-0 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${card.borderColor} ${card.hoverColor}`}
-                    >
-                      <div
-                        className={`absolute right-0 top-0 h-20 w-20 -translate-y-5 translate-x-5 transform rounded-full opacity-[0.06] transition-transform duration-300 group-hover:scale-110 ${card.iconBg}`}
-                      />
-                      <div className="relative z-10 px-5 py-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="mb-1.5 truncate text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                              {card.title}
-                            </p>
-                            <p className="truncate text-2xl font-extrabold tracking-tight text-gray-900">
-                              {card.value}
-                            </p>
-                            {card.subtitle ? (
-                              <p className="mt-1.5 flex items-center gap-1 text-[10px] font-medium text-gray-400">
-                                <span className="h-1 w-1 flex-shrink-0 rounded-full bg-gray-300" />
-                                {card.subtitle}
-                              </p>
-                            ) : null}
-                          </div>
-                          <div
-                            className={`flex-shrink-0 transform rounded-lg p-2 shadow-sm transition-all duration-300 group-hover:scale-105 ${card.iconBg}`}
-                          >
-                            <Icon className="h-5 w-5 text-white" aria-hidden />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="stagger-children grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                {group.cards.map((card) => (
+                  <StatCard
+                    key={card.title}
+                    icon={card.icon}
+                    label={card.title}
+                    value={card.value}
+                    hint={card.subtitle}
+                    tone={card.tone}
+                  />
+                ))}
               </div>
             </div>
           ))}

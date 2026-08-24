@@ -2,11 +2,25 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Pencil, Trash2, FileText } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  FileText,
+  Tags,
+  DollarSign,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { Button, Chip, Tooltip } from '@heroui/react';
 import { InvoiceDialog } from './invoice-dialog';
 import { DeleteInvoiceDialog } from './delete-dialog';
 import { formatCurrency, formatDate } from '@/lib/format';
+import {
+  PageHeader,
+  ResponsiveTable,
+  MobileCard,
+  TableEmpty,
+} from '@/components/ui';
 import type { InvoiceRow } from './schema';
 
 interface InvoicesClientProps {
@@ -19,138 +33,132 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
   const [editTarget, setEditTarget] = useState<InvoiceRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<InvoiceRow | null>(null);
 
-  return (
-    <div className="space-y-6">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
-            <FileText className="h-8 w-8 text-orange-400" aria-hidden />
-            Costos de Envío
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Gestiona los costos de envío del sistema.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
+  const rowActions = (row: InvoiceRow) => (
+    <>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Editar factura"
+          onPress={() => setEditTarget(row)}
         >
-          <Plus className="h-4 w-4" aria-hidden />
-          Nueva factura
-        </button>
-      </header>
+          <Pencil className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Editar</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Eliminar factura"
+          onPress={() => setDeleteTarget(row)}
+          className="hover:bg-danger-soft hover:text-danger"
+        >
+          <Trash2 className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Eliminar</Tooltip.Content>
+      </Tooltip>
+    </>
+  );
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="hidden md:block">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+  const conceptChip = (row: InvoiceRow) => (
+    <Chip color="accent" variant="soft" size="sm" className="whitespace-nowrap">
+      <Tags className="h-3.5 w-3.5" aria-hidden />
+      <Chip.Label>
+        {row.tags.length} concepto{row.tags.length === 1 ? '' : 's'}
+      </Chip.Label>
+    </Chip>
+  );
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        icon={FileText}
+        title="Costos de Envío"
+        subtitle="Gestiona las facturas de costos de envío del sistema"
+        actions={
+          <Button variant="primary" onPress={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
+            Nueva factura
+          </Button>
+        }
+      />
+
+      <ResponsiveTable
+        table={
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-medium">ID</th>
-                <th className="px-4 py-3 font-medium">Fecha</th>
-                <th className="px-4 py-3 font-medium">Tags</th>
-                <th className="px-4 py-3 font-medium">Total</th>
-                <th className="px-4 py-3 text-right font-medium">Acciones</th>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Conceptos</th>
+                <th>Total</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody>
               {initialRows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-8 text-center text-sm text-zinc-500"
-                  >
-                    No invoices yet.
-                  </td>
-                </tr>
+                <TableEmpty
+                  colSpan={5}
+                  icon={FileText}
+                  message="Aún no hay facturas."
+                />
               ) : (
                 initialRows.map((row) => (
-                  <tr key={row.id} className="text-zinc-800 dark:text-zinc-200">
-                    <td className="px-4 py-3 font-mono text-xs">#{row.id}</td>
-                    <td className="px-4 py-3 text-zinc-500">
+                  <tr key={row.id}>
+                    <td className="font-mono text-xs text-muted">#{row.id}</td>
+                    <td className="font-medium text-foreground">
                       {formatDate(row.date)}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                        {row.tags.length} tag
-                        {row.tags.length === 1 ? '' : 's'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+                    <td>{conceptChip(row)}</td>
+                    <td className="font-semibold tabular-nums text-success-soft-foreground">
                       {formatCurrency(row.total)}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="inline-flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setEditTarget(row)}
-                          aria-label="Editar factura"
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                          <Pencil className="h-4 w-4" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(row)}
-                          aria-label="Eliminar factura"
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
-                        >
-                          <Trash2 className="h-4 w-4" aria-hidden />
-                        </button>
-                      </div>
+                    <td className="text-right">
+                      <div className="inline-flex gap-0.5">{rowActions(row)}</div>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </div>
-
-        <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
-          {initialRows.length === 0 ? (
-            <li className="px-4 py-8 text-center text-sm text-zinc-500">
-              No invoices yet.
-            </li>
+        }
+        cards={
+          initialRows.length === 0 ? (
+            <div className="surface-card p-8 text-center text-sm text-muted">
+              Aún no hay facturas.
+            </div>
           ) : (
             initialRows.map((row) => (
-              <li key={row.id} className="space-y-2 px-4 py-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="font-mono text-xs text-zinc-500">
-                      #{row.id}
-                    </div>
-                    <div className="text-sm">{formatDate(row.date)}</div>
-                    <div className="text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-                      {formatCurrency(row.total)}
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setEditTarget(row)}
-                      aria-label="Editar factura"
-                      className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                    >
-                      <Pencil className="h-4 w-4" aria-hidden />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteTarget(row)}
-                      aria-label="Eliminar factura"
-                      className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden />
-                    </button>
-                  </div>
-                </div>
-                <span className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                  {row.tags.length} tag{row.tags.length === 1 ? '' : 's'}
-                </span>
-              </li>
+              <MobileCard
+                key={row.id}
+                title={formatDate(row.date)}
+                subtitle={`Factura #${row.id}`}
+                badges={conceptChip(row)}
+                rows={[
+                  {
+                    icon: Tags,
+                    label: 'Conceptos',
+                    value: row.tags.length,
+                  },
+                  {
+                    icon: DollarSign,
+                    label: 'Total',
+                    value: (
+                      <span className="font-semibold text-success-soft-foreground">
+                        {formatCurrency(row.total)}
+                      </span>
+                    ),
+                  },
+                ]}
+                actions={rowActions(row)}
+              />
             ))
-          )}
-        </ul>
-      </div>
+          )
+        }
+      />
 
       <InvoiceDialog
         open={createOpen}

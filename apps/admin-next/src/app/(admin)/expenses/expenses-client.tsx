@@ -2,16 +2,75 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, Pencil, Trash2, Receipt, Search } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Receipt,
+  UserRound,
+  DollarSign,
+  Truck,
+  Percent,
+  Wallet,
+  Megaphone,
+  Wrench,
+  PackageCheck,
+  CircleEllipsis,
+  type LucideIcon,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { Button, Chip, Tooltip } from '@heroui/react';
 import { ExpenseDialog } from './expense-dialog';
 import { DeleteExpenseDialog } from './delete-dialog';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { FilterPopover } from '@/components/filter-popover';
+import {
+  PageHeader,
+  SearchInput,
+  Field,
+  NativeSelect,
+  ResponsiveTable,
+  MobileCard,
+  TableEmpty,
+} from '@/components/ui';
 import {
   EXPENSE_CATEGORIES,
   type ExpenseCategory,
   type ExpenseRow,
 } from './schema';
+
+// Semantic chip per category: orange for the logistics flow, warning
+// for fees/marketing, success for payroll, gray for the rest. Red stays
+// reserved for destructive actions.
+const CATEGORY_CHIPS: Record<
+  ExpenseCategory,
+  { color: 'accent' | 'default' | 'success' | 'warning'; icon: LucideIcon }
+> = {
+  Envio: { color: 'accent', icon: Truck },
+  Entrega: { color: 'accent', icon: PackageCheck },
+  Tasas: { color: 'warning', icon: Percent },
+  Publicidad: { color: 'warning', icon: Megaphone },
+  Sueldo: { color: 'success', icon: Wallet },
+  Operativo: { color: 'default', icon: Wrench },
+  Otro: { color: 'default', icon: CircleEllipsis },
+};
+
+function CategoryChip({ category }: { category: ExpenseCategory }) {
+  const config = CATEGORY_CHIPS[category] ?? CATEGORY_CHIPS.Otro;
+  const Icon = config.icon;
+  return (
+    <Chip
+      color={config.color}
+      variant="soft"
+      size="sm"
+      className="whitespace-nowrap"
+      title={category}
+    >
+      <Icon className="h-3.5 w-3.5" aria-hidden />
+      <Chip.Label>{category}</Chip.Label>
+    </Chip>
+  );
+}
 
 interface ExpensesClientProps {
   initialRows: ExpenseRow[];
@@ -29,221 +88,195 @@ export function ExpensesClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [query, setQuery] = useState(initialQuery);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ExpenseRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ExpenseRow | null>(null);
 
-  function applyParams(nextQuery: string, nextCategory: ExpenseCategory | null) {
+  function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
-    if (nextQuery) params.set('q', nextQuery);
-    else params.delete('q');
-    if (nextCategory) params.set('category', nextCategory);
-    else params.delete('category');
+    if (value) params.set(key, value);
+    else params.delete(key);
+    params.delete('page');
     startTransition(() => {
       router.replace(`/expenses?${params.toString()}`);
     });
   }
 
-  return (
-    <div className="space-y-6">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
-            <Receipt className="h-8 w-8 text-orange-400" aria-hidden />
-            Gastos
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Gestiona los gastos del sistema.
-          </p>
-        </div>
-        <div className="hidden text-right sm:block">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">
-            Total shown
-          </p>
-          <p className="text-lg font-semibold tabular-nums">
-            {formatCurrency(totalAmount)}
-          </p>
-        </div>
-      </header>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-          <label className="relative flex-1 sm:max-w-sm">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
-              aria-hidden
-            />
-            <input
-              type="search"
-              value={query}
-              placeholder="Buscar por descripción…"
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') applyParams(query, initialCategory);
-              }}
-              onBlur={() => {
-                if (query !== initialQuery) applyParams(query, initialCategory);
-              }}
-              className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
-            />
-          </label>
-          <select
-            value={initialCategory ?? ''}
-            onChange={(e) => {
-              const next = e.target.value as ExpenseCategory | '';
-              applyParams(query, next === '' ? null : next);
-            }}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
-          >
-            <option value="">Todas las categorías</option>
-            {EXPENSE_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
+  const rowActions = (row: ExpenseRow) => (
+    <>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Editar gasto"
+          onPress={() => setEditTarget(row)}
         >
-          <Plus className="h-4 w-4" aria-hidden />
-          Nuevo gasto
-        </button>
+          <Pencil className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Editar</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Eliminar gasto"
+          onPress={() => setDeleteTarget(row)}
+          className="hover:bg-danger-soft hover:text-danger"
+        >
+          <Trash2 className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Eliminar</Tooltip.Content>
+      </Tooltip>
+    </>
+  );
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        icon={Receipt}
+        title="Gastos"
+        subtitle="Gestiona los gastos del sistema"
+        actions={
+          <Button variant="primary" onPress={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
+            Nuevo gasto
+          </Button>
+        }
+      />
+
+      <div className="animate-in fade-in slide-in-from-top-2 duration-300 flex flex-col gap-2 lg:flex-row lg:items-center">
+        <SearchInput
+          initialValue={initialQuery}
+          placeholder="Buscar por descripción…"
+          onApply={(v) => setParam('q', v)}
+        />
+        <FilterPopover
+          title="Filtros de gastos"
+          subtitle="Filtra los gastos por categoría"
+          activeFilters={
+            initialCategory
+              ? [
+                  {
+                    key: 'category',
+                    label: initialCategory,
+                    onRemove: () => setParam('category', null),
+                  },
+                ]
+              : []
+          }
+          onClear={() => setParam('category', null)}
+        >
+          <Field label="Categoría">
+            <NativeSelect
+              value={initialCategory ?? ''}
+              onChange={(e) => setParam('category', e.target.value || null)}
+            >
+              <option value="">Todas las categorías</option>
+              {EXPENSE_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+        </FilterPopover>
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-accent/25 bg-accent-soft/40 px-3 py-1.5 lg:ml-auto">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted">
+            Total mostrado
+          </span>
+          <span className="text-sm font-bold tabular-nums text-success-soft-foreground">
+            {formatCurrency(totalAmount)}
+          </span>
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="hidden md:block">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+      <ResponsiveTable
+        table={
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-medium">Fecha</th>
-                <th className="px-4 py-3 font-medium">Categoría</th>
-                <th className="px-4 py-3 font-medium">Descripción</th>
-                <th className="px-4 py-3 font-medium">Created by</th>
-                <th className="px-4 py-3 font-medium">Monto</th>
-                <th className="px-4 py-3 text-right font-medium">Acciones</th>
+                <th>Fecha</th>
+                <th>Categoría</th>
+                <th>Descripción</th>
+                <th>Registrado por</th>
+                <th>Monto</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody>
               {initialRows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-8 text-center text-sm text-zinc-500"
-                  >
-                    {isPending ? 'Cargando…' : 'No hay gastos.'}
-                  </td>
-                </tr>
+                <TableEmpty
+                  colSpan={6}
+                  icon={Receipt}
+                  message={isPending ? 'Cargando…' : 'No hay gastos.'}
+                />
               ) : (
                 initialRows.map((row) => (
-                  <tr key={row.id} className="text-zinc-800 dark:text-zinc-200">
-                    <td className="px-4 py-3 text-zinc-500">
+                  <tr key={row.id}>
+                    <td className="font-medium text-foreground">
                       {formatDate(row.date)}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                        {row.category}
-                      </span>
+                    <td>
+                      <CategoryChip category={row.category} />
                     </td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    <td className="max-w-64 truncate text-muted">
                       {row.description ?? (
-                        <span className="italic text-zinc-400">—</span>
+                        <span className="italic text-muted/60">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-zinc-500">
+                    <td className="text-muted">
                       {row.createdByName ?? (
-                        <span className="italic text-zinc-400">—</span>
+                        <span className="italic text-muted/60">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 tabular-nums font-medium">
+                    <td className="font-semibold tabular-nums">
                       {formatCurrency(row.amount)}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="inline-flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setEditTarget(row)}
-                          aria-label="Editar gasto"
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                          <Pencil className="h-4 w-4" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(row)}
-                          aria-label="Eliminar gasto"
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
-                        >
-                          <Trash2 className="h-4 w-4" aria-hidden />
-                        </button>
-                      </div>
+                    <td className="text-right">
+                      <div className="inline-flex gap-0.5">{rowActions(row)}</div>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </div>
-
-        <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
-          {initialRows.length === 0 ? (
-            <li className="px-4 py-8 text-center text-sm text-zinc-500">
+        }
+        cards={
+          initialRows.length === 0 ? (
+            <div className="surface-card p-8 text-center text-sm text-muted">
               {isPending ? 'Cargando…' : 'No hay gastos.'}
-            </li>
+            </div>
           ) : (
             initialRows.map((row) => (
-              <li key={row.id} className="space-y-2 px-4 py-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="text-xs text-zinc-500">
-                      {formatDate(row.date)}
-                    </div>
-                    <div className="text-lg font-semibold tabular-nums">
-                      {formatCurrency(row.amount)}
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setEditTarget(row)}
-                      aria-label="Editar gasto"
-                      className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                    >
-                      <Pencil className="h-4 w-4" aria-hidden />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteTarget(row)}
-                      aria-label="Eliminar gasto"
-                      className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                    {row.category}
-                  </span>
-                  {row.createdByName ? (
-                    <span className="text-zinc-500">
-                      by {row.createdByName}
-                    </span>
-                  ) : null}
-                </div>
-                {row.description ? (
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                    {row.description}
-                  </p>
-                ) : null}
-              </li>
+              <MobileCard
+                key={row.id}
+                title={row.description ?? 'Sin descripción'}
+                subtitle={formatDate(row.date)}
+                badges={<CategoryChip category={row.category} />}
+                rows={[
+                  {
+                    icon: UserRound,
+                    label: 'Registrado por',
+                    value: row.createdByName ?? '—',
+                  },
+                  {
+                    icon: DollarSign,
+                    label: 'Monto',
+                    value: (
+                      <span className="font-semibold">
+                        {formatCurrency(row.amount)}
+                      </span>
+                    ),
+                  },
+                ]}
+                actions={rowActions(row)}
+              />
             ))
-          )}
-        </ul>
-      </div>
+          )
+        }
+      />
 
       <ExpenseDialog
         open={createOpen}

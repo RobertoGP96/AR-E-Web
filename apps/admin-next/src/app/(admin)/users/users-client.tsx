@@ -7,23 +7,94 @@ import {
   Pencil,
   Trash2,
   Users as UsersIcon,
-  Search,
   KeyRound,
   BadgeCheck,
   Power,
+  CheckCircle2,
+  XCircle,
+  CircleAlert,
+  UserRound,
+  UserRoundSearch,
+  CalendarDays,
+  Mail,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { UserDialog } from './user-dialog';
+import { Button, Tooltip, Chip } from '@heroui/react';
+import { UserDialog, ROLE_LABELS } from './user-dialog';
 import { ChangePasswordDialog } from './change-password-dialog';
 import { DeleteUserDialog } from './delete-dialog';
 import { toggleUserActiveAction, verifyUserAction } from './actions';
 import { formatDate } from '@/lib/format';
+import { FilterPopover } from '@/components/filter-popover';
+import {
+  PageHeader,
+  SearchInput,
+  Field,
+  NativeSelect,
+  ResponsiveTable,
+  MobileCard,
+  TableEmpty,
+} from '@/components/ui';
 import {
   USER_ROLES,
   type AgentOption,
   type UserRole,
   type UserRow,
 } from './schema';
+
+type ChipColor = 'accent' | 'default' | 'success' | 'warning' | 'danger';
+
+const ROLE_COLORS: Record<UserRole, ChipColor> = {
+  admin: 'accent',
+  agent: 'warning',
+  accountant: 'success',
+  logistical: 'default',
+  client: 'default',
+  user: 'default',
+};
+
+function RoleBadge({ role }: { role: UserRole }) {
+  return (
+    <Chip
+      color={ROLE_COLORS[role] ?? 'default'}
+      variant="soft"
+      size="sm"
+      className="whitespace-nowrap"
+    >
+      <Chip.Label>{ROLE_LABELS[role] ?? role}</Chip.Label>
+    </Chip>
+  );
+}
+
+function ActiveBadge({ active }: { active: boolean }) {
+  const Icon = active ? CheckCircle2 : XCircle;
+  return (
+    <Chip
+      color={active ? 'success' : 'danger'}
+      variant="soft"
+      size="sm"
+      className="whitespace-nowrap"
+    >
+      <Icon className="h-3.5 w-3.5" aria-hidden />
+      <Chip.Label>{active ? 'Activo' : 'Inactivo'}</Chip.Label>
+    </Chip>
+  );
+}
+
+function VerifiedBadge({ verified }: { verified: boolean }) {
+  const Icon = verified ? BadgeCheck : CircleAlert;
+  return (
+    <Chip
+      color={verified ? 'success' : 'danger'}
+      variant="soft"
+      size="sm"
+      className="whitespace-nowrap"
+    >
+      <Icon className="h-3.5 w-3.5" aria-hidden />
+      <Chip.Label>{verified ? 'Verificado' : 'No verificado'}</Chip.Label>
+    </Chip>
+  );
+}
 
 interface UsersClientProps {
   initialRows: UserRow[];
@@ -44,7 +115,6 @@ export function UsersClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [query, setQuery] = useState(initialFilters.q);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<UserRow | null>(null);
   const [pwTarget, setPwTarget] = useState<UserRow | null>(null);
@@ -55,6 +125,7 @@ export function UsersClient({
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
+    params.delete('page');
     startTransition(() => {
       router.replace(`/users?${params.toString()}`);
     });
@@ -66,7 +137,9 @@ export function UsersClient({
       const result = await toggleUserActiveAction(row.id, !row.isActive);
       setBusyId(null);
       if (result.ok) {
-        toast.success(`${row.name} ${row.isActive ? 'deactivated' : 'activated'}`);
+        toast.success(
+          `${row.name} ${row.isActive ? 'desactivado' : 'activado'}`
+        );
         router.refresh();
       } else {
         toast.error(result.error);
@@ -80,7 +153,7 @@ export function UsersClient({
       const result = await verifyUserAction(row.id);
       setBusyId(null);
       if (result.ok) {
-        toast.success(`${row.name} verified`);
+        toast.success(`${row.name} verificado`);
         router.refresh();
       } else {
         toast.error(result.error);
@@ -88,211 +161,245 @@ export function UsersClient({
     });
   }
 
-  return (
-    <div className="space-y-6">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
-            <UsersIcon className="h-8 w-8 text-orange-500" aria-hidden />
-            Usuarios
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Gestiona los usuarios y permisos del sistema
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
+  const rowActions = (row: UserRow) => (
+    <>
+      {!row.isVerified ? (
+        <Tooltip delay={500}>
+          <Button
+            variant="ghost"
+            size="sm"
+            isIconOnly
+            aria-label="Verificar usuario"
+            isDisabled={busyId === row.id}
+            onPress={() => handleVerify(row)}
+            className="text-success-soft-foreground hover:bg-success-soft"
+          >
+            <BadgeCheck className="h-4 w-4" aria-hidden />
+          </Button>
+          <Tooltip.Content>Verificar</Tooltip.Content>
+        </Tooltip>
+      ) : null}
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label={row.isActive ? 'Desactivar usuario' : 'Activar usuario'}
+          isDisabled={busyId === row.id}
+          onPress={() => handleToggleActive(row)}
         >
-          <Plus className="h-4 w-4" aria-hidden />
-          Nuevo usuario
-        </button>
-      </header>
+          <Power className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>
+          {row.isActive ? 'Desactivar' : 'Activar'}
+        </Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Cambiar contraseña"
+          onPress={() => setPwTarget(row)}
+        >
+          <KeyRound className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Cambiar contraseña</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Editar usuario"
+          onPress={() => setEditTarget(row)}
+        >
+          <Pencil className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Editar</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Eliminar usuario"
+          onPress={() => setDeleteTarget(row)}
+          className="hover:bg-danger-soft hover:text-danger"
+        >
+          <Trash2 className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Eliminar</Tooltip.Content>
+      </Tooltip>
+    </>
+  );
 
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-        <label className="relative flex-1 lg:max-w-xs">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
-            aria-hidden
-          />
-          <input
-            type="search"
-            value={query}
-            placeholder="Buscar por nombre, email o teléfono…"
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') setParam('q', query || null);
-            }}
-            onBlur={() => {
-              if (query !== initialFilters.q) setParam('q', query || null);
-            }}
-            className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
-          />
-        </label>
-        <select
-          value={initialFilters.role ?? ''}
-          onChange={(e) => setParam('role', e.target.value || null)}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        icon={UsersIcon}
+        title="Usuarios"
+        subtitle="Gestiona los usuarios y permisos del sistema"
+        actions={
+          <Button variant="primary" onPress={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
+            Nuevo usuario
+          </Button>
+        }
+      />
+
+      <div className="animate-in fade-in slide-in-from-top-2 duration-300 flex flex-col gap-2 lg:flex-row lg:items-center">
+        <SearchInput
+          initialValue={initialFilters.q}
+          placeholder="Buscar por nombre, email o teléfono…"
+          onApply={(v) => setParam('q', v)}
+        />
+        <FilterPopover
+          title="Filtros de usuarios"
+          subtitle="Filtra usuarios por rol, estado y verificación"
+          activeFilters={[
+            ...(initialFilters.role
+              ? [
+                  {
+                    key: 'role',
+                    label: ROLE_LABELS[initialFilters.role] ?? initialFilters.role,
+                    onRemove: () => setParam('role', null),
+                  },
+                ]
+              : []),
+            ...(initialFilters.active !== null
+              ? [
+                  {
+                    key: 'active',
+                    label: initialFilters.active ? 'Activos' : 'Inactivos',
+                    onRemove: () => setParam('active', null),
+                  },
+                ]
+              : []),
+            ...(initialFilters.verified !== null
+              ? [
+                  {
+                    key: 'verified',
+                    label: initialFilters.verified
+                      ? 'Verificados'
+                      : 'No verificados',
+                    onRemove: () => setParam('verified', null),
+                  },
+                ]
+              : []),
+          ]}
+          onClear={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete('role');
+            params.delete('active');
+            params.delete('verified');
+            params.delete('page');
+            startTransition(() => {
+              router.replace(`/users?${params.toString()}`);
+            });
+          }}
         >
-          <option value="">Todos los roles</option>
-          {USER_ROLES.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-        <select
-          value={
-            initialFilters.active === null
-              ? ''
-              : initialFilters.active
-                ? 'true'
-                : 'false'
-          }
-          onChange={(e) => setParam('active', e.target.value || null)}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
-        >
-          <option value="">Active: all</option>
-          <option value="true">Active only</option>
-          <option value="false">Solo inactivos</option>
-        </select>
-        <select
-          value={
-            initialFilters.verified === null
-              ? ''
-              : initialFilters.verified
-                ? 'true'
-                : 'false'
-          }
-          onChange={(e) => setParam('verified', e.target.value || null)}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
-        >
-          <option value="">Verified: all</option>
-          <option value="true">Solo verificados</option>
-          <option value="false">Solo no verificados</option>
-        </select>
+          <Field label="Rol">
+            <NativeSelect
+              value={initialFilters.role ?? ''}
+              onChange={(e) => setParam('role', e.target.value || null)}
+            >
+              <option value="">Todos los roles</option>
+              {USER_ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {ROLE_LABELS[r] ?? r}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+          <Field label="Estado">
+            <NativeSelect
+              value={
+                initialFilters.active === null
+                  ? ''
+                  : initialFilters.active
+                    ? 'true'
+                    : 'false'
+              }
+              onChange={(e) => setParam('active', e.target.value || null)}
+            >
+              <option value="">Todos</option>
+              <option value="true">Solo activos</option>
+              <option value="false">Solo inactivos</option>
+            </NativeSelect>
+          </Field>
+          <Field label="Verificación">
+            <NativeSelect
+              value={
+                initialFilters.verified === null
+                  ? ''
+                  : initialFilters.verified
+                    ? 'true'
+                    : 'false'
+              }
+              onChange={(e) => setParam('verified', e.target.value || null)}
+            >
+              <option value="">Todos</option>
+              <option value="true">Solo verificados</option>
+              <option value="false">Solo no verificados</option>
+            </NativeSelect>
+          </Field>
+        </FilterPopover>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+      <ResponsiveTable
+        table={
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-medium">Nombre</th>
-                <th className="px-4 py-3 font-medium">Contact</th>
-                <th className="px-4 py-3 font-medium">Rol</th>
-                <th className="px-4 py-3 font-medium">Agent</th>
-                <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium">Registrado</th>
-                <th className="px-4 py-3 text-right font-medium">Acciones</th>
+                <th>Nombre</th>
+                <th>Contacto</th>
+                <th>Rol</th>
+                <th>Agente</th>
+                <th>Estado</th>
+                <th>Registrado</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody>
               {initialRows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-sm text-zinc-500"
-                  >
-                    {isPending ? 'Cargando…' : 'No hay usuarios.'}
-                  </td>
-                </tr>
+                <TableEmpty
+                  colSpan={7}
+                  icon={UserRoundSearch}
+                  message={isPending ? 'Cargando…' : 'No hay usuarios.'}
+                />
               ) : (
                 initialRows.map((row) => (
-                  <tr key={row.id} className="text-zinc-800 dark:text-zinc-200">
-                    <td className="px-4 py-3">
-                      <div className="font-medium">
+                  <tr key={row.id}>
+                    <td>
+                      <span className="font-medium text-foreground">
                         {row.name} {row.lastName}
-                      </div>
+                      </span>
                     </td>
-                    <td className="px-4 py-3 text-zinc-500">
+                    <td className="text-muted">
                       <div>{row.phoneNumber}</div>
                       {row.email ? (
                         <div className="text-xs">{row.email}</div>
                       ) : null}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                        {row.role}
-                      </span>
+                    <td>
+                      <RoleBadge role={row.role} />
                     </td>
-                    <td className="px-4 py-3 text-zinc-500">
+                    <td className="text-muted">
                       {row.assignedAgentName ?? (
-                        <span className="italic text-zinc-400">—</span>
+                        <span className="italic text-muted/60">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col gap-1">
-                        <span
-                          className={`inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                            row.isActive
-                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                              : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
-                          }`}
-                        >
-                          {row.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                        <span
-                          className={`inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                            row.isVerified
-                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                              : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
-                          }`}
-                        >
-                          {row.isVerified ? 'Verified' : 'Unverified'}
-                        </span>
+                    <td>
+                      <div className="flex flex-col items-start gap-1">
+                        <ActiveBadge active={row.isActive} />
+                        <VerifiedBadge verified={row.isVerified} />
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-zinc-500">
-                      {formatDate(row.dateJoined)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="inline-flex gap-1">
-                        {!row.isVerified ? (
-                          <button
-                            type="button"
-                            onClick={() => handleVerify(row)}
-                            disabled={busyId === row.id}
-                            aria-label="Verify user"
-                            className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-blue-600 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                          >
-                            <BadgeCheck className="h-4 w-4" aria-hidden />
-                          </button>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => handleToggleActive(row)}
-                          disabled={busyId === row.id}
-                          aria-label="Toggle active"
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                          <Power className="h-4 w-4" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPwTarget(row)}
-                          aria-label="Cambiar contraseña"
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                          <KeyRound className="h-4 w-4" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditTarget(row)}
-                          aria-label="Editar usuario"
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                          <Pencil className="h-4 w-4" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(row)}
-                          aria-label="Eliminar usuario"
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
-                        >
-                          <Trash2 className="h-4 w-4" aria-hidden />
-                        </button>
+                    <td className="text-muted">{formatDate(row.dateJoined)}</td>
+                    <td className="text-right">
+                      <div className="inline-flex gap-0.5">
+                        {rowActions(row)}
                       </div>
                     </td>
                   </tr>
@@ -300,101 +407,48 @@ export function UsersClient({
               )}
             </tbody>
           </table>
-        </div>
-
-        <ul className="divide-y divide-zinc-200 lg:hidden dark:divide-zinc-800">
-          {initialRows.length === 0 ? (
-            <li className="px-4 py-8 text-center text-sm text-zinc-500">
+        }
+        cards={
+          initialRows.length === 0 ? (
+            <div className="surface-card p-8 text-center text-sm text-muted">
               {isPending ? 'Cargando…' : 'No hay usuarios.'}
-            </li>
+            </div>
           ) : (
             initialRows.map((row) => (
-              <li key={row.id} className="space-y-2 px-4 py-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="font-medium">
-                      {row.name} {row.lastName}
-                    </div>
-                    <div className="text-xs text-zinc-500">
-                      {row.phoneNumber}
-                      {row.email ? ` · ${row.email}` : ''}
-                    </div>
-                  </div>
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                    {row.role}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1 text-xs">
-                  <span
-                    className={`rounded-full px-2 py-0.5 font-medium ${
-                      row.isActive
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                        : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
-                    }`}
-                  >
-                    {row.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 font-medium ${
-                      row.isVerified
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                        : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
-                    }`}
-                  >
-                    {row.isVerified ? 'Verified' : 'Unverified'}
-                  </span>
-                  {row.assignedAgentName ? (
-                    <span className="text-zinc-500">
-                      Agent: {row.assignedAgentName}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {!row.isVerified ? (
-                    <button
-                      type="button"
-                      onClick={() => handleVerify(row)}
-                      disabled={busyId === row.id}
-                      className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 disabled:opacity-50 dark:border-zinc-800 dark:text-zinc-300"
-                    >
-                      Verify
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => handleToggleActive(row)}
-                    disabled={busyId === row.id}
-                    className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 disabled:opacity-50 dark:border-zinc-800 dark:text-zinc-300"
-                  >
-                    {row.isActive ? 'Deactivate' : 'Activate'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPwTarget(row)}
-                    className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 dark:border-zinc-800 dark:text-zinc-300"
-                  >
-                    Password
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditTarget(row)}
-                    className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 dark:border-zinc-800 dark:text-zinc-300"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteTarget(row)}
-                    className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-red-600 dark:border-zinc-800"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </li>
+              <MobileCard
+                key={row.id}
+                title={`${row.name} ${row.lastName}`}
+                subtitle={row.phoneNumber}
+                badges={
+                  <>
+                    <RoleBadge role={row.role} />
+                    <ActiveBadge active={row.isActive} />
+                    <VerifiedBadge verified={row.isVerified} />
+                  </>
+                }
+                rows={[
+                  {
+                    icon: Mail,
+                    label: 'Email',
+                    value: row.email ?? '—',
+                  },
+                  {
+                    icon: UserRound,
+                    label: 'Agente',
+                    value: row.assignedAgentName ?? '—',
+                  },
+                  {
+                    icon: CalendarDays,
+                    label: 'Registrado',
+                    value: formatDate(row.dateJoined),
+                  },
+                ]}
+                actions={rowActions(row)}
+              />
             ))
-          )}
-        </ul>
-      </div>
+          )
+        }
+      />
 
       <UserDialog
         open={createOpen}

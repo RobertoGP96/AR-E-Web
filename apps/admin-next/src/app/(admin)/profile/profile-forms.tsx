@@ -1,27 +1,82 @@
 'use client';
 
-import { useActionState, useEffect, useId, useRef } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
+import { UserRound, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { Chip } from '@heroui/react';
 import {
   updateProfileAction,
   changeOwnPasswordAction,
   type ActionResult,
 } from './actions';
+import { Field, TextInput, SubmitButton, PageHeader } from '@/components/ui';
 
-interface ProfileFormsProps {
-  defaults: {
-    name: string;
-    lastName: string;
-    email: string;
-    homeAddress: string;
-  };
+const ROLE_LABELS: Record<string, string> = {
+  user: 'Usuario',
+  agent: 'Agente',
+  accountant: 'Contador',
+  logistical: 'Logístico',
+  admin: 'Administrador',
+  client: 'Cliente',
+};
+
+interface ProfileDefaults {
+  name: string;
+  lastName: string;
+  email: string;
+  homeAddress: string;
 }
 
-export function ProfileForms({ defaults }: ProfileFormsProps) {
+interface ProfileFormsProps {
+  defaults: ProfileDefaults;
+  phoneNumber: string;
+  role: string;
+}
+
+export function ProfileForms({
+  defaults,
+  phoneNumber,
+  role,
+}: ProfileFormsProps) {
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <ProfileCard defaults={defaults} />
-      <PasswordCard />
+    <div>
+      <PageHeader
+        icon={UserRound}
+        title="Mi Perfil"
+        subtitle="Gestiona tu información personal y configuración de cuenta"
+      />
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <ProfileCard
+          defaults={defaults}
+          phoneNumber={phoneNumber}
+          role={role}
+        />
+        <PasswordCard />
+      </div>
+    </div>
+  );
+}
+
+function SectionHeading({
+  icon: Icon,
+  title,
+  extra,
+}: {
+  icon: typeof UserRound;
+  title: string;
+  extra?: React.ReactNode;
+}) {
+  return (
+    <div className="animate-in fade-in slide-in-from-top-2 duration-300 flex items-center justify-between gap-2 border-b border-separator pb-3">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+          <Icon className="h-4 w-4" aria-hidden />
+        </span>
+        <h2 className="text-base font-semibold tracking-tight text-foreground">
+          {title}
+        </h2>
+      </div>
+      {extra}
     </div>
   );
 }
@@ -44,52 +99,72 @@ function useHandled(
   }, [state, okMsg, onOk]);
 }
 
-function ProfileCard({ defaults }: ProfileFormsProps) {
+function ProfileCard({ defaults, phoneNumber, role }: ProfileFormsProps) {
   const [state, formAction, isPending] = useActionState<
     ActionResult | undefined,
     FormData
   >(updateProfileAction, undefined);
   useHandled(state, 'Perfil actualizado');
-  const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
+  const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-      <h2 className="mb-4 text-lg font-semibold tracking-tight">
-        Account details
-      </h2>
-      <form action={formAction} className="space-y-4">
+    <div className="surface-card p-5">
+      <SectionHeading
+        icon={UserRound}
+        title="Datos personales"
+        extra={
+          <Chip
+            color="accent"
+            variant="soft"
+            size="sm"
+            className="whitespace-nowrap"
+          >
+            <Chip.Label>{ROLE_LABELS[role] ?? role}</Chip.Label>
+          </Chip>
+        }
+      />
+      <form action={formAction} className="mt-4 space-y-4">
+        <Field label="Nombre" error={errors['name']}>
+          <TextInput
+            name="name"
+            type="text"
+            defaultValue={defaults.name}
+            invalid={!!errors['name']}
+          />
+        </Field>
+        <Field label="Apellidos" error={errors['lastName']}>
+          <TextInput
+            name="lastName"
+            type="text"
+            defaultValue={defaults.lastName}
+            invalid={!!errors['lastName']}
+          />
+        </Field>
+        <Field label="Email" error={errors['email']}>
+          <TextInput
+            name="email"
+            type="email"
+            defaultValue={defaults.email}
+            invalid={!!errors['email']}
+          />
+        </Field>
+        <Field label="Dirección" error={errors['homeAddress']}>
+          <TextInput
+            name="homeAddress"
+            type="text"
+            defaultValue={defaults.homeAddress}
+            invalid={!!errors['homeAddress']}
+          />
+        </Field>
         <Field
-          label="Name"
-          name="name"
-          defaultValue={defaults.name}
-          error={errors['name']}
-        />
-        <Field
-          label="Apellidos"
-          name="lastName"
-          defaultValue={defaults.lastName}
-          error={errors['lastName']}
-        />
-        <Field
-          label="Email"
-          name="email"
-          type="email"
-          defaultValue={defaults.email}
-          error={errors['email']}
-        />
-        <Field
-          label="Dirección"
-          name="homeAddress"
-          defaultValue={defaults.homeAddress}
-          error={errors['homeAddress']}
-        />
-        <button
-          type="submit"
-          disabled={isPending}
-          className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-70"
+          label="Teléfono"
+          hint="El teléfono no puede cambiarse desde aquí."
         >
-          {isPending ? 'Guardando…' : 'Save changes'}
-        </button>
+          <TextInput type="text" defaultValue={phoneNumber} disabled />
+        </Field>
+        <div className="flex justify-end pt-1">
+          <SubmitButton isPending={isPending}>Guardar cambios</SubmitButton>
+        </div>
       </form>
     </div>
   );
@@ -102,77 +177,42 @@ function PasswordCard() {
   >(changeOwnPasswordAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
   useHandled(state, 'Contraseña cambiada', () => formRef.current?.reset());
-  const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
+  const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-      <h2 className="mb-4 text-lg font-semibold tracking-tight">
-        Change password
-      </h2>
-      <form ref={formRef} action={formAction} className="space-y-4">
-        <Field
-          label="Contraseña actual"
-          name="current"
-          type="password"
-          error={errors['current']}
-        />
-        <Field
-          label="Nueva contraseña"
-          name="next"
-          type="password"
-          error={errors['next']}
-        />
-        <Field
-          label="Confirmar nueva contraseña"
-          name="confirm"
-          type="password"
-          error={errors['confirm']}
-        />
-        <button
-          type="submit"
-          disabled={isPending}
-          className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-70"
-        >
-          {isPending ? 'Guardando…' : 'Actualizar contraseña'}
-        </button>
+    <div className="surface-card p-5">
+      <SectionHeading icon={Lock} title="Cambiar contraseña" />
+      <form ref={formRef} action={formAction} className="mt-4 space-y-4">
+        <Field label="Contraseña actual" error={errors['current']}>
+          <TextInput
+            name="current"
+            type="password"
+            autoComplete="new-password"
+            invalid={!!errors['current']}
+          />
+        </Field>
+        <Field label="Nueva contraseña" error={errors['next']}>
+          <TextInput
+            name="next"
+            type="password"
+            autoComplete="new-password"
+            invalid={!!errors['next']}
+          />
+        </Field>
+        <Field label="Confirmar nueva contraseña" error={errors['confirm']}>
+          <TextInput
+            name="confirm"
+            type="password"
+            autoComplete="new-password"
+            invalid={!!errors['confirm']}
+          />
+        </Field>
+        <div className="flex justify-end pt-1">
+          <SubmitButton isPending={isPending}>
+            Actualizar contraseña
+          </SubmitButton>
+        </div>
       </form>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  name,
-  type = 'text',
-  defaultValue,
-  error,
-}: {
-  label: string;
-  name: string;
-  type?: 'text' | 'email' | 'password';
-  defaultValue?: string;
-  error?: string;
-}) {
-  const id = useId();
-  return (
-    <div className="space-y-1">
-      <label
-        htmlFor={id}
-        className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-      >
-        {label}
-      </label>
-      <input
-        id={id}
-        name={name}
-        type={type}
-        defaultValue={defaultValue}
-        autoComplete={type === 'password' ? 'new-password' : undefined}
-        className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-brand dark:bg-zinc-950 ${
-          error ? 'border-red-500' : 'border-zinc-300 dark:border-zinc-700'
-        }`}
-      />
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
     </div>
   );
 }

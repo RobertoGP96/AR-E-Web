@@ -3,14 +3,38 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2, Undo2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  Undo2,
+  Receipt,
+  CreditCard,
+  ShoppingBag,
+  PackageSearch,
+  Loader2,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { Button, Tooltip, Chip } from '@heroui/react';
 import {
   addBuyedProductAction,
   removeBuyedProductAction,
   refundBuyedProductAction,
 } from '../actions';
 import { formatCurrency } from '@/lib/format';
+import { PurchasePayBadge } from '@/components/status-badges';
+import {
+  AppModal,
+  ConfirmModal,
+  Field,
+  NativeSelect,
+  TextInput,
+  TextArea,
+  StatCard,
+  ResponsiveTable,
+  MobileCard,
+  TableEmpty,
+} from '@/components/ui';
 
 interface BuyedProduct {
   id: string;
@@ -50,6 +74,17 @@ export function PurchaseDetailClient({
   const [productId, setProductId] = useState('');
   const [amount, setAmount] = useState(1);
   const [refundTarget, setRefundTarget] = useState<BuyedProduct | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<BuyedProduct | null>(null);
+
+  const boughtUnits = buyedProducts.reduce((s, bp) => s + bp.amountBuyed, 0);
+  const refundedUnits = buyedProducts.reduce(
+    (s, bp) => s + bp.quantityRefuned,
+    0
+  );
+  const totalRefunded = buyedProducts.reduce(
+    (s, bp) => s + bp.refundAmount,
+    0
+  );
 
   function handleAdd() {
     if (!productId) {
@@ -57,11 +92,7 @@ export function PurchaseDetailClient({
       return;
     }
     startTransition(async () => {
-      const result = await addBuyedProductAction(
-        purchaseId,
-        productId,
-        amount
-      );
+      const result = await addBuyedProductAction(purchaseId, productId, amount);
       if (result.ok) {
         toast.success('Producto añadido a la compra');
         setProductId('');
@@ -73,168 +104,283 @@ export function PurchaseDetailClient({
     });
   }
 
-  function handleRemove(rowId: string) {
-    startTransition(async () => {
-      const result = await removeBuyedProductAction(purchaseId, rowId);
-      if (result.ok) {
-        toast.success('Producto quitado');
-        router.refresh();
-      } else {
-        toast.error(result.error);
-      }
-    });
-  }
+  const productActions = (bp: BuyedProduct) => (
+    <>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label={`Reembolsar ${bp.productName}`}
+          onPress={() => setRefundTarget(bp)}
+        >
+          <Undo2 className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Registrar reembolso</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label={`Quitar ${bp.productName}`}
+          onPress={() => setRemoveTarget(bp)}
+          className="hover:bg-danger-soft hover:text-danger"
+        >
+          <Trash2 className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Quitar</Tooltip.Content>
+      </Tooltip>
+    </>
+  );
+
+  const refundChip = (bp: BuyedProduct) =>
+    bp.quantityRefuned > 0 ? (
+      <Chip
+        color={bp.isRefunded ? 'danger' : 'warning'}
+        variant="soft"
+        size="sm"
+        className="whitespace-nowrap"
+      >
+        <Chip.Label>
+          {bp.isRefunded ? 'Reembolsado' : 'Reembolso parcial'}
+        </Chip.Label>
+      </Chip>
+    ) : undefined;
 
   return (
     <div className="space-y-6">
-      <Link
-        href="/purchases"
-        className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Volver a compras
-      </Link>
+      <div className="animate-in fade-in slide-in-from-top-1 duration-300">
+        <Link
+          href="/purchases"
+          className="inline-flex items-center gap-1 rounded-md text-sm text-muted transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Volver a compras
+        </Link>
+      </div>
 
-      <header className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+      <header className="surface-card animate-in fade-in slide-in-from-top-2 duration-300 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
               {header.shopName}
             </h1>
-            <p className="text-sm text-zinc-500">{header.accountName}</p>
-          </div>
-          <div className="text-right">
-            <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-              {header.status}
-            </span>
-            <p className="mt-2 text-lg font-semibold tabular-nums">
-              {formatCurrency(header.totalCostOfPurchase)}
+            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted">
+              <CreditCard className="h-3.5 w-3.5" aria-hidden />
+              {header.accountName}
             </p>
           </div>
+          <PurchasePayBadge status={header.status} />
+        </div>
+
+        <div className="stagger-children mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard
+            icon={Receipt}
+            label="Total de la compra"
+            value={formatCurrency(header.totalCostOfPurchase)}
+            tone="accent"
+          />
+          <StatCard
+            icon={PackageSearch}
+            label="Productos"
+            value={buyedProducts.length}
+            tone="default"
+          />
+          <StatCard
+            icon={ShoppingBag}
+            label="Unidades compradas"
+            value={boughtUnits}
+            tone="success"
+          />
+          <StatCard
+            icon={Undo2}
+            label="Reembolsado"
+            value={formatCurrency(totalRefunded)}
+            hint={refundedUnits > 0 ? `${refundedUnits} unidad(es)` : undefined}
+            tone={totalRefunded > 0 ? 'danger' : 'default'}
+          />
         </div>
       </header>
 
-      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Añadir un producto comprado en esta compra
+      <section className="surface-card animate-in fade-in slide-in-from-top-2 duration-300 p-4">
+        <h2 className="mb-3 text-sm font-semibold text-foreground">
+          Añadir producto comprado
         </h2>
         {candidates.length === 0 ? (
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted">
             No hay productos disponibles de esta tienda.
           </p>
         ) : (
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-            <label className="flex-1 space-y-1">
-              <span className="text-xs text-zinc-500">Producto</span>
-              <select
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <Field label="Producto" className="flex-1">
+              <NativeSelect
                 value={productId}
                 onChange={(e) => setProductId(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
               >
-                <option value="">— Select —</option>
+                <option value="">— Selecciona —</option>
                 {candidates.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
-                    {c.pending > 0 ? ` (${c.pending} pending)` : ''}
+                    {c.pending > 0 ? ` (${c.pending} pendientes)` : ''}
                   </option>
                 ))}
-              </select>
-            </label>
-            <label className="space-y-1">
-              <span className="text-xs text-zinc-500">Monto</span>
-              <input
+              </NativeSelect>
+            </Field>
+            <Field label="Cantidad" className="sm:w-28">
+              <TextInput
                 type="number"
                 min={1}
                 value={amount}
                 onChange={(e) =>
                   setAmount(Math.max(1, Math.floor(Number(e.target.value) || 1)))
                 }
-                className="w-24 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
               />
-            </label>
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={isPending || !productId}
-              className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-60"
+            </Field>
+            <Button
+              variant="primary"
+              onPress={handleAdd}
+              isDisabled={isPending || !productId}
             >
               <Plus className="h-4 w-4" aria-hidden />
-              Add
-            </button>
+              Añadir
+            </Button>
           </div>
         )}
-      </div>
+      </section>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
-            <tr>
-              <th className="px-4 py-3 font-medium">Producto</th>
-              <th className="px-4 py-3 font-medium">Bought</th>
-              <th className="px-4 py-3 font-medium">Reembolsado</th>
-              <th className="px-4 py-3 text-right font-medium">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {buyedProducts.length === 0 ? (
+      <h2 className="text-lg font-semibold tracking-tight text-foreground">
+        Productos comprados
+      </h2>
+
+      <ResponsiveTable
+        table={
+          <table className="data-table">
+            <thead>
               <tr>
-                <td
-                  colSpan={4}
-                  className="px-4 py-8 text-center text-sm text-zinc-500"
-                >
-                  Aún no hay productos comprados en esta compra.
-                </td>
+                <th>Producto</th>
+                <th>Comprado</th>
+                <th>Reembolsado</th>
+                <th className="text-right">Acciones</th>
               </tr>
-            ) : (
-              buyedProducts.map((bp) => (
-                <tr key={bp.id} className="text-zinc-800 dark:text-zinc-200">
-                  <td className="px-4 py-3 font-medium">{bp.productName}</td>
-                  <td className="px-4 py-3 tabular-nums">{bp.amountBuyed}</td>
-                  <td className="px-4 py-3 text-zinc-500">
-                    {bp.quantityRefuned > 0
-                      ? `${bp.quantityRefuned} (${formatCurrency(bp.refundAmount)})`
-                      : '—'}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="inline-flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setRefundTarget(bp)}
-                        aria-label="Refund"
-                        className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                      >
-                        <Undo2 className="h-4 w-4" aria-hidden />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(bp.id)}
-                        disabled={isPending}
-                        aria-label="Remove"
-                        className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 disabled:opacity-60 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                      >
-                        <Trash2 className="h-4 w-4" aria-hidden />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {buyedProducts.length === 0 ? (
+                <TableEmpty
+                  colSpan={4}
+                  icon={PackageSearch}
+                  message="Aún no hay productos comprados en esta compra."
+                />
+              ) : (
+                buyedProducts.map((bp) => (
+                  <tr key={bp.id}>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-foreground">
+                          {bp.productName}
+                        </span>
+                        {refundChip(bp)}
+                      </div>
+                    </td>
+                    <td className="tabular-nums">{bp.amountBuyed}</td>
+                    <td>
+                      {bp.quantityRefuned > 0 ? (
+                        <span className="font-medium tabular-nums text-danger">
+                          {bp.quantityRefuned} (
+                          {formatCurrency(bp.refundAmount)})
+                        </span>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
+                    </td>
+                    <td className="text-right">
+                      <div className="inline-flex gap-0.5">
+                        {productActions(bp)}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        }
+        cards={
+          buyedProducts.length === 0 ? (
+            <div className="surface-card p-8 text-center text-sm text-muted">
+              Aún no hay productos comprados en esta compra.
+            </div>
+          ) : (
+            buyedProducts.map((bp) => (
+              <MobileCard
+                key={bp.id}
+                title={bp.productName}
+                badges={refundChip(bp)}
+                rows={[
+                  { label: 'Comprado', value: bp.amountBuyed },
+                  {
+                    label: 'Reembolsado',
+                    value:
+                      bp.quantityRefuned > 0 ? (
+                        <span className="font-medium text-danger">
+                          {bp.quantityRefuned} (
+                          {formatCurrency(bp.refundAmount)})
+                        </span>
+                      ) : (
+                        '—'
+                      ),
+                  },
+                ]}
+                actions={productActions(bp)}
+              />
+            ))
+          )
+        }
+      />
 
-      {refundTarget ? (
-        <RefundDialog
-          purchaseId={purchaseId}
-          row={refundTarget}
-          onClose={() => setRefundTarget(null)}
-          onSuccess={() => {
-            setRefundTarget(null);
-            toast.success('Reembolso registrado');
+      <ConfirmModal
+        isOpen={removeTarget !== null}
+        onClose={() => setRemoveTarget(null)}
+        title="¿Quitar producto?"
+        description={
+          removeTarget ? (
+            <>
+              Se quitará{' '}
+              <strong className="text-foreground">
+                {removeTarget.productName}
+              </strong>{' '}
+              ({removeTarget.amountBuyed} unidad(es)) de esta compra. La
+              cantidad comprada del producto original se recalculará.
+            </>
+          ) : null
+        }
+        confirmLabel="Quitar"
+        onConfirm={async () => {
+          if (!removeTarget) {
+            return { ok: false, error: 'Producto no encontrado' };
+          }
+          const result = await removeBuyedProductAction(
+            purchaseId,
+            removeTarget.id
+          );
+          if (result.ok) {
+            setRemoveTarget(null);
+            toast.success('Producto quitado');
             router.refresh();
-          }}
-        />
-      ) : null}
+          }
+          return result;
+        }}
+      />
+
+      <RefundDialog
+        purchaseId={purchaseId}
+        row={refundTarget}
+        onClose={() => setRefundTarget(null)}
+        onSuccess={() => {
+          setRefundTarget(null);
+          toast.success('Reembolso registrado');
+          router.refresh();
+        }}
+      />
     </div>
   );
 }
@@ -246,19 +392,33 @@ function RefundDialog({
   onSuccess,
 }: {
   purchaseId: string;
-  row: BuyedProduct;
+  row: BuyedProduct | null;
   onClose: () => void;
   onSuccess: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
   // Refunds accumulate server-side; this dialog records an ADDITIONAL
   // refund, so it starts at 1/0 and caps at what is left to refund.
-  const refundable = Math.max(0, row.amountBuyed - row.quantityRefuned);
+  const refundable = row
+    ? Math.max(0, row.amountBuyed - row.quantityRefuned)
+    : 0;
   const [quantity, setQuantity] = useState(Math.min(1, refundable));
   const [amount, setAmount] = useState(0);
   const [notes, setNotes] = useState('');
 
+  const signature = row?.id ?? 'none';
+  const [lastSignature, setLastSignature] = useState(signature);
+  if (signature !== lastSignature) {
+    setLastSignature(signature);
+    setQuantity(
+      Math.min(1, row ? Math.max(0, row.amountBuyed - row.quantityRefuned) : 0)
+    );
+    setAmount(0);
+    setNotes('');
+  }
+
   function submit() {
+    if (!row) return;
     startTransition(async () => {
       const result = await refundBuyedProductAction(
         purchaseId,
@@ -273,31 +433,29 @@ function RefundDialog({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <AppModal
+      isOpen={row !== null}
+      onClose={onClose}
+      title="Registrar reembolso"
+      description={
+        row
+          ? `${row.productName} — ${row.amountBuyed} comprado(s)${
+              row.quantityRefuned > 0
+                ? `, ${row.quantityRefuned} ya reembolsado(s)`
+                : ''
+            }.`
+          : undefined
+      }
+      icon={<Undo2 className="h-5 w-5" aria-hidden />}
+      size="sm"
     >
-      <div className="w-full max-w-sm space-y-4 rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="text-lg font-semibold tracking-tight">
-          Refund — {row.productName}
-        </h2>
-        <p className="text-xs text-zinc-500">
-          {row.amountBuyed} bought
-          {row.quantityRefuned > 0
-            ? `, ${row.quantityRefuned} already refunded`
-            : ''}
-          . Refunding reduces the product&apos;s purchased amount and may
-          change its status.
-        </p>
-        <label className="block space-y-1">
-          <span className="text-xs text-zinc-500">
-            Quantity to refund (max {refundable})
-          </span>
-          <input
+      <div key={row?.id ?? 'none'} className="space-y-4">
+        <Field
+          label="Cantidad a reembolsar"
+          hint={`Máximo ${refundable}`}
+          required
+        >
+          <TextInput
             type="number"
             min={1}
             max={refundable}
@@ -306,55 +464,69 @@ function RefundDialog({
               setQuantity(
                 Math.max(
                   1,
-                  Math.min(
-                    refundable,
-                    Math.floor(Number(e.target.value) || 1)
-                  )
+                  Math.min(refundable, Math.floor(Number(e.target.value) || 1))
                 )
               )
             }
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
           />
-        </label>
-        <label className="block space-y-1">
-          <span className="text-xs text-zinc-500">Refund amount ($)</span>
-          <input
-            type="number"
-            step="0.01"
-            min={0}
-            value={amount}
-            onChange={(e) => setAmount(Number(e.target.value) || 0)}
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-          />
-        </label>
-        <label className="block space-y-1">
-          <span className="text-xs text-zinc-500">Notes (optional)</span>
-          <textarea
+        </Field>
+
+        <Field label="Monto del reembolso">
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
+              $
+            </span>
+            <TextInput
+              type="number"
+              step="0.01"
+              min={0}
+              value={amount}
+              onChange={(e) => setAmount(Number(e.target.value) || 0)}
+              className="pl-7"
+            />
+          </div>
+        </Field>
+
+        <Field label="Notas (opcional)">
+          <TextArea
             rows={2}
+            maxLength={500}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
           />
-        </label>
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isPending}
-            className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-70 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
-          >
+        </Field>
+
+        <div className="rounded-xl border border-danger/25 bg-danger-soft/40 p-3 text-sm">
+          <div className="flex items-center justify-between font-semibold text-danger-soft-foreground">
+            <span>Se reembolsarán {quantity} unidad(es)</span>
+            <span className="tabular-nums">{formatCurrency(amount)}</span>
+          </div>
+          <p className="mt-1 text-xs text-muted">
+            El reembolso reduce la cantidad comprada del producto y puede
+            cambiar su estado.
+          </p>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="tertiary" onPress={onClose} isDisabled={isPending}>
             Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={isPending || refundable === 0}
-            className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-70"
+          </Button>
+          <Button
+            variant="danger"
+            onPress={submit}
+            isDisabled={isPending || refundable === 0}
           >
-            {isPending ? 'Guardando…' : 'Registrar reembolso'}
-          </button>
+            {isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Guardando…
+              </>
+            ) : (
+              'Registrar reembolso'
+            )}
+          </Button>
         </div>
       </div>
-    </div>
+    </AppModal>
   );
 }

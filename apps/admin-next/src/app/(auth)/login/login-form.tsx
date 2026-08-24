@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import { Button } from '@heroui/react';
 import {
   AtSign,
   Lock,
@@ -61,7 +62,7 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
 
   return (
     <div className="w-full max-w-md p-2 sm:p-4">
-      <div className="space-y-1.5">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-1.5">
         <div className="mb-5 flex justify-center lg:hidden">
           <Image
             src="/logo.svg"
@@ -72,25 +73,22 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
             className="h-12 w-auto object-contain"
           />
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Bienvenido de nuevo
         </h1>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted">
           Inicia sesión para entrar al panel de administración.
         </p>
       </div>
 
       <form action={handleSubmit} className="mt-7 space-y-5">
-        <div className="space-y-1.5">
-          <label
-            htmlFor="identifier"
-            className="text-sm font-medium text-slate-700"
-          >
+        <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards delay-100 duration-500 space-y-1.5">
+          <label htmlFor="identifier" className="field-label">
             Email o teléfono
           </label>
           <div className="relative">
             <AtSign
-              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
               aria-hidden
             />
             <input
@@ -102,27 +100,24 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               placeholder="tu@email.com o +53..."
-              className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-10 text-base text-slate-900 shadow-sm outline-none transition-colors duration-200 placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/30"
+              className="field-input h-12 rounded-xl pl-11 pr-10 text-base"
             />
             {identifierValid ? (
               <Check
-                className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500"
+                className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-success"
                 aria-hidden
               />
             ) : null}
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label
-            htmlFor="password"
-            className="text-sm font-medium text-slate-700"
-          >
+        <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards delay-150 duration-500 space-y-1.5">
+          <label htmlFor="password" className="field-label">
             Contraseña
           </label>
           <div className="relative">
             <Lock
-              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
               aria-hidden
             />
             <input
@@ -134,7 +129,7 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-11 text-base text-slate-900 shadow-sm outline-none transition-colors duration-200 placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/30"
+              className="field-input h-12 rounded-xl pl-11 pr-11 text-base"
             />
             <button
               type="button"
@@ -142,7 +137,7 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
               aria-label={
                 showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
               }
-              className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer rounded-lg p-1.5 text-slate-500 transition-colors duration-200 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+              className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer rounded-lg p-1.5 text-muted transition-colors duration-200 hover:bg-default hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" aria-hidden />
@@ -153,11 +148,11 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
           </div>
         </div>
 
-        <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-slate-600">
+        <label className="animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards delay-200 duration-500 flex w-fit cursor-pointer items-center gap-2 text-sm text-muted">
           <input
             type="checkbox"
             name="remember"
-            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-brand accent-[oklch(71.065%_0.15929_64.92)] focus-visible:ring-2 focus-visible:ring-brand/40"
+            className="h-4 w-4 cursor-pointer rounded border-border accent-[var(--accent)] focus-visible:ring-2 focus-visible:ring-accent/40"
           />
           Recordarme
         </label>
@@ -166,36 +161,41 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
           <div
             role="alert"
             aria-live="assertive"
-            className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700"
+            className="animate-in fade-in slide-in-from-top-1 duration-300 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-sm font-medium text-danger-soft-foreground"
           >
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <span>{error}</span>
           </div>
         ) : null}
 
-        <button
-          type="submit"
-          disabled={busy}
-          className="group flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand text-base font-medium text-white shadow-sm shadow-brand/30 transition-colors duration-200 hover:bg-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {busy ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              Iniciando sesión...
-            </>
-          ) : (
-            <>
-              Iniciar sesión
-              <ArrowRight
-                className="h-4 w-4 transition-transform duration-200 motion-safe:group-hover:translate-x-0.5"
-                aria-hidden
-              />
-            </>
-          )}
-        </button>
+        <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards delay-300 duration-500">
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            isDisabled={busy}
+            className="group h-12 rounded-xl text-base"
+          >
+            {busy ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Iniciando sesión...
+              </>
+            ) : (
+              <>
+                Iniciar sesión
+                <ArrowRight
+                  className="h-4 w-4 transition-transform duration-200 motion-safe:group-hover:translate-x-0.5"
+                  aria-hidden
+                />
+              </>
+            )}
+          </Button>
+        </div>
       </form>
 
-      <p className="mt-6 text-center text-xs text-slate-500">
+      <p className="animate-in fade-in fill-mode-backwards delay-500 duration-500 mt-6 text-center text-xs text-muted">
         Usa el mismo usuario y contraseña del sistema AR-E.
       </p>
     </div>

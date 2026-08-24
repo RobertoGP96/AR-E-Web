@@ -3,11 +3,35 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Plus,
+  Pencil,
+  Trash2,
+  Phone,
+  UserRound,
+  Wallet,
+  DollarSign,
+  Receipt,
+  PackageSearch,
+  Store,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { Button, Tooltip } from '@heroui/react';
 import { ProductDialog } from './product-dialog';
 import { ProductDeleteDialog } from './product-delete-dialog';
 import { formatCurrency } from '@/lib/format';
+import {
+  OrderStatusBadge,
+  PayStatusBadge,
+  ProductStatusBadge,
+} from '@/components/status-badges';
+import {
+  StatCard,
+  ResponsiveTable,
+  MobileCard,
+  TableEmpty,
+} from '@/components/ui';
 import type { ProductRow, SelectOption } from '../schema';
 
 interface OrderHeader {
@@ -45,144 +69,160 @@ export function OrderDetailClient({
   const paid = header.receivedValueOfClient + header.balanceApplied;
   const outstanding = Math.max(0, header.totalCosts - paid);
 
+  const productActions = (p: ProductRow) => (
+    <>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label={`Editar ${p.name}`}
+          onPress={() => setEditTarget(p)}
+        >
+          <Pencil className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Editar</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label={`Eliminar ${p.name}`}
+          onPress={() => setDeleteTarget(p)}
+          className="hover:bg-danger-soft hover:text-danger"
+        >
+          <Trash2 className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Eliminar</Tooltip.Content>
+      </Tooltip>
+    </>
+  );
+
   return (
     <div className="space-y-6">
-      <div>
+      <div className="animate-in fade-in slide-in-from-top-1 duration-300">
         <Link
           href="/orders"
-          className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          className="inline-flex items-center gap-1 rounded-md text-sm text-muted transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Volver a órdenes
         </Link>
       </div>
 
-      <header className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+      <header className="surface-card animate-in fade-in slide-in-from-top-2 duration-300 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
               {header.clientName}
             </h1>
-            <p className="text-sm text-zinc-500">{header.clientPhone}</p>
+            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted">
+              <Phone className="h-3.5 w-3.5" aria-hidden />
+              {header.clientPhone}
+            </p>
             {header.salesManagerName ? (
-              <p className="mt-1 text-xs text-zinc-500">
-                Manager: {header.salesManagerName}
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
+                <UserRound className="h-3.5 w-3.5" aria-hidden />
+                Gestor: {header.salesManagerName}
               </p>
             ) : null}
             {header.observations ? (
-              <p className="mt-2 max-w-prose text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="mt-2 max-w-prose rounded-lg bg-background px-3 py-2 text-sm text-muted">
                 {header.observations}
               </p>
             ) : null}
           </div>
           <div className="flex gap-2">
-            <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-              {header.status}
-            </span>
-            <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-              {header.payStatus}
-            </span>
+            <OrderStatusBadge status={header.status} />
+            <PayStatusBadge status={header.payStatus} />
           </div>
         </div>
 
-        <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label="Total" value={formatCurrency(header.totalCosts)} />
-          <Stat
-            label="Received"
-            value={formatCurrency(header.receivedValueOfClient)}
+        <div className="stagger-children mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard
+            icon={Receipt}
+            label="Total"
+            value={formatCurrency(header.totalCosts)}
+            tone="accent"
           />
-          <Stat
+          <StatCard
+            icon={DollarSign}
+            label="Recibido"
+            value={formatCurrency(header.receivedValueOfClient)}
+            tone="success"
+          />
+          <StatCard
+            icon={Wallet}
             label="Saldo aplicado"
             value={formatCurrency(header.balanceApplied)}
+            tone="default"
           />
-          <Stat
-            label="Outstanding"
+          <StatCard
+            icon={DollarSign}
+            label="Pendiente"
             value={formatCurrency(outstanding)}
-            highlight={outstanding > 0}
+            tone={outstanding > 0 ? 'danger' : 'success'}
           />
-        </dl>
+        </div>
       </header>
 
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold tracking-tight">Productos</h2>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
-        >
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+          Productos
+        </h2>
+        <Button variant="primary" onPress={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4" aria-hidden />
-          Add product
-        </button>
+          Añadir producto
+        </Button>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+      <ResponsiveTable
+        table={
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-medium">Nombre</th>
-                <th className="px-4 py-3 font-medium">Tienda</th>
-                <th className="px-4 py-3 font-medium">Qty</th>
-                <th className="px-4 py-3 font-medium">Unidad</th>
-                <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium">Costo total</th>
-                <th className="px-4 py-3 text-right font-medium">Acciones</th>
+                <th>Nombre</th>
+                <th>Tienda</th>
+                <th>Cant.</th>
+                <th>Unidad</th>
+                <th>Estado</th>
+                <th>Costo total</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody>
               {products.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-sm text-zinc-500"
-                  >
-                    Aún no hay productos. Añade el primero.
-                  </td>
-                </tr>
+                <TableEmpty
+                  colSpan={7}
+                  icon={PackageSearch}
+                  message="Aún no hay productos. Añade el primero."
+                />
               ) : (
                 products.map((p) => (
-                  <tr key={p.id} className="text-zinc-800 dark:text-zinc-200">
-                    <td className="px-4 py-3">
-                      <div className="font-medium">{p.name}</div>
+                  <tr key={p.id}>
+                    <td>
+                      <div className="font-medium text-foreground">{p.name}</div>
                       {p.categoryName ? (
-                        <div className="text-xs text-zinc-500">
+                        <div className="text-xs text-muted">
                           {p.categoryName}
                         </div>
                       ) : null}
                     </td>
-                    <td className="px-4 py-3 text-zinc-500">{p.shopName}</td>
-                    <td className="px-4 py-3 tabular-nums">
-                      {p.amountRequested}
-                    </td>
-                    <td className="px-4 py-3 tabular-nums">
+                    <td className="text-muted">{p.shopName}</td>
+                    <td className="tabular-nums">{p.amountRequested}</td>
+                    <td className="tabular-nums">
                       {formatCurrency(p.shopCost)}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                        {p.status}
-                      </span>
+                    <td>
+                      <ProductStatusBadge status={p.status} />
                     </td>
-                    <td className="px-4 py-3 tabular-nums font-medium">
+                    <td className="font-semibold tabular-nums">
                       {formatCurrency(p.totalCost)}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="inline-flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setEditTarget(p)}
-                          aria-label={`Edit ${p.name}`}
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                          <Pencil className="h-4 w-4" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(p)}
-                          aria-label={`Delete ${p.name}`}
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
-                        >
-                          <Trash2 className="h-4 w-4" aria-hidden />
-                        </button>
+                    <td className="text-right">
+                      <div className="inline-flex gap-0.5">
+                        {productActions(p)}
                       </div>
                     </td>
                   </tr>
@@ -191,11 +231,11 @@ export function OrderDetailClient({
             </tbody>
             {products.length > 0 ? (
               <tfoot>
-                <tr className="border-t border-zinc-200 font-medium dark:border-zinc-800">
-                  <td colSpan={5} className="px-4 py-3 text-right text-zinc-500">
-                    Order total
+                <tr>
+                  <td colSpan={5} className="text-right text-muted">
+                    Total de la orden
                   </td>
-                  <td className="px-4 py-3 tabular-nums">
+                  <td className="tabular-nums">
                     {formatCurrency(header.totalCosts)}
                   </td>
                   <td />
@@ -203,8 +243,38 @@ export function OrderDetailClient({
               </tfoot>
             ) : null}
           </table>
-        </div>
-      </div>
+        }
+        cards={
+          products.length === 0 ? (
+            <div className="surface-card p-8 text-center text-sm text-muted">
+              Aún no hay productos. Añade el primero.
+            </div>
+          ) : (
+            products.map((p) => (
+              <MobileCard
+                key={p.id}
+                title={p.name}
+                subtitle={p.categoryName ?? undefined}
+                badges={<ProductStatusBadge status={p.status} />}
+                rows={[
+                  { icon: Store, label: 'Tienda', value: p.shopName },
+                  { label: 'Cantidad', value: p.amountRequested },
+                  { label: 'Unidad', value: formatCurrency(p.shopCost) },
+                  {
+                    label: 'Costo total',
+                    value: (
+                      <span className="font-semibold">
+                        {formatCurrency(p.totalCost)}
+                      </span>
+                    ),
+                  },
+                ]}
+                actions={productActions(p)}
+              />
+            ))
+          )
+        }
+      />
 
       <ProductDialog
         open={createOpen}
@@ -245,31 +315,6 @@ export function OrderDetailClient({
           router.refresh();
         }}
       />
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-zinc-500">
-        {label}
-      </dt>
-      <dd
-        className={`text-lg font-semibold tabular-nums ${
-          highlight ? 'text-red-600 dark:text-red-400' : ''
-        }`}
-      >
-        {value}
-      </dd>
     </div>
   );
 }

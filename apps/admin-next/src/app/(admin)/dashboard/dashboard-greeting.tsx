@@ -46,67 +46,59 @@ export function DashboardGreeting({
     : '';
 
   return (
-    <div className="relative animate-in rounded-2xl duration-700 slide-in-from-top">
-      <div className="relative z-10">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-3">
-            <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900 md:text-4xl">
-              {greeting}
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 md:text-base">
-              {role === 'agent'
-                ? 'Panel de Agente · Mi Resumen'
-                : 'Panel de Administración · Resumen General'}
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-4 sm:flex-row sm:items-center">
-            {/* Exchange rate card */}
-            <div className="w-full overflow-hidden rounded-xl border-2 border-orange-200 bg-white py-0 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg md:w-48">
-              <div className="bg-orange-400 px-3 py-2">
-                <div className="mb-0 flex items-center justify-center gap-2 pb-0 text-sm font-bold uppercase tracking-wider text-white">
-                  <DollarSign className="h-4 w-4" aria-hidden />
-                  Tasa Cambio
-                </div>
-              </div>
-              <div className="bg-white p-2 text-center">
-                <div className="flex flex-col items-center justify-center">
-                  <div className="flex items-baseline gap-1">
-                    <p className="text-4xl font-extrabold text-orange-400">
-                      {rate > 0 ? rate.toFixed(2) : 'N/A'}
-                    </p>
-                    {rate > 0 ? (
-                      <span className="text-xs font-bold text-orange-400/70">
-                        CUP
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="mt-1 text-[10px] font-medium text-gray-400">
-                    Actualizado hoy
-                  </p>
-                </div>
-                {rate === 0 ? (
-                  <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-1 text-[10px] text-amber-800">
-                    ⚠️ No configurada
-                  </div>
+    <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+            {greeting}
+          </h1>
+          <p className="text-sm text-muted md:text-base">
+            {role === 'agent'
+              ? 'Panel de Agente · Mi Resumen'
+              : 'Panel de Administración · Resumen General'}
+          </p>
+        </div>
+        <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
+          {/* Exchange rate card — brand gradient */}
+          <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards delay-100 duration-500 w-full overflow-hidden rounded-xl bg-gradient-to-br from-accent to-warning text-white shadow-md transition-all hover:-translate-y-1 hover:shadow-lg md:w-48">
+            <div className="flex items-center justify-center gap-2 border-b border-white/25 px-3 py-2 text-sm font-bold uppercase tracking-wider">
+              <DollarSign className="h-4 w-4" aria-hidden />
+              Tasa Cambio
+            </div>
+            <div className="p-2 text-center">
+              <div className="flex items-baseline justify-center gap-1">
+                <p className="text-4xl font-extrabold tabular-nums">
+                  {rate > 0 ? rate.toFixed(2) : 'N/A'}
+                </p>
+                {rate > 0 ? (
+                  <span className="text-xs font-bold text-white/80">CUP</span>
                 ) : null}
               </div>
+              <p className="mt-1 text-[10px] font-medium text-white/75">
+                Actualizado hoy
+              </p>
+              {rate === 0 ? (
+                <div className="mt-2 rounded-md bg-white/15 px-2 py-1 text-[10px] font-semibold">
+                  No configurada
+                </div>
+              ) : null}
             </div>
+          </div>
 
-            {/* Calendar / clock card */}
-            <div className="w-full overflow-hidden rounded-xl border-2 border-orange-200 bg-white shadow-sm md:w-36">
-              <div className="flex items-center justify-center bg-orange-400 px-3 py-1 text-[14px] font-bold uppercase tracking-wider text-white">
-                <span className="truncate">{month}</span>
+          {/* Calendar / clock card */}
+          <div className="surface-card animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards delay-200 duration-500 w-full overflow-hidden md:w-36">
+            <div className="flex items-center justify-center bg-accent px-3 py-1 text-sm font-bold uppercase tracking-wider text-accent-foreground">
+              <span className="truncate">{month}</span>
+            </div>
+            <div className="p-3 text-center">
+              <div className="text-xs font-bold uppercase tracking-tight text-accent">
+                {weekday}
               </div>
-              <div className="bg-white p-3 text-center">
-                <div className="text-[12px] font-bold uppercase tracking-tight text-orange-400/80">
-                  {weekday}
-                </div>
-                <div className="my-1 text-4xl font-extrabold leading-none text-orange-400">
-                  {dayNumber}
-                </div>
-                <div className="text-[12px] font-semibold text-gray-400">
-                  {time}
-                </div>
+              <div className="my-1 text-4xl font-extrabold leading-none tabular-nums text-foreground">
+                {dayNumber}
+              </div>
+              <div className="text-xs font-semibold tabular-nums text-muted">
+                {time}
               </div>
             </div>
           </div>

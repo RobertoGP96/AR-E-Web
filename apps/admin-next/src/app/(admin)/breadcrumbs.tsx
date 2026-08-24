@@ -19,6 +19,7 @@ import {
   ChartColumn,
   Receipt,
   Coins,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -68,19 +69,6 @@ const DETAIL_NAMES: Record<string, string> = {
   '/delivery': 'Detalles de Entrega',
 };
 
-function Chevron() {
-  return (
-    <svg
-      fill="currentColor"
-      viewBox="0 0 20 20"
-      aria-hidden="true"
-      className="size-5 shrink-0 text-orange-400"
-    >
-      <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z" />
-    </svg>
-  );
-}
-
 export function Breadcrumbs() {
   const pathname = usePathname();
   if (pathname === '/dashboard') return null;
@@ -99,39 +87,48 @@ export function Breadcrumbs() {
   });
 
   return (
-    <nav aria-label="Breadcrumb" className="ml-2 flex">
-      <ol role="list" className="flex flex-row items-center space-x-4">
-        <li>
-          <div className="flex items-center">
-            <Link
-              href="/dashboard"
-              className="text-gray-400 hover:text-gray-500"
-            >
-              <Home
-                aria-hidden="true"
-                className="size-5 shrink-0 text-orange-400"
-              />
-              <span className="sr-only">Home</span>
-            </Link>
-          </div>
+    <nav aria-label="Breadcrumb" className="ml-1 flex min-w-0">
+      <ol role="list" className="flex min-w-0 flex-row items-center gap-1.5">
+        <li className="shrink-0">
+          <Link
+            href="/dashboard"
+            className="flex items-center rounded-md p-1.5 text-accent transition-colors hover:bg-accent-soft"
+          >
+            <Home aria-hidden="true" className="size-4.5 shrink-0" />
+            <span className="sr-only">Inicio</span>
+          </Link>
         </li>
         {crumbs.map((crumb) => (
-          <li key={crumb.href} className="hidden sm:block">
-            <div className="flex items-center">
-              <Chevron />
+          <li key={crumb.href} className="hidden min-w-0 sm:block">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <ChevronRight
+                className="size-4 shrink-0 text-muted/60"
+                aria-hidden
+              />
               <Link
                 href={crumb.href}
                 aria-current={crumb.current ? 'page' : undefined}
-                className="ml-4 flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700"
+                className={`flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-sm transition-colors ${
+                  crumb.current
+                    ? 'font-semibold text-foreground'
+                    : 'font-medium text-muted hover:bg-default hover:text-foreground'
+                }`}
               >
                 {crumb.Icon ? (
-                  <crumb.Icon className="size-4 shrink-0 text-orange-400" />
+                  <crumb.Icon className="size-4 shrink-0 text-accent" />
                 ) : null}
-                {crumb.name}
+                <span className="truncate">{crumb.name}</span>
               </Link>
             </div>
           </li>
         ))}
+        {/* On phones show only the current page name */}
+        <li className="min-w-0 sm:hidden">
+          <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <ChevronRight className="size-4 shrink-0 text-muted/60" aria-hidden />
+            <span className="truncate">{crumbs[crumbs.length - 1]?.name}</span>
+          </span>
+        </li>
       </ol>
     </nav>
   );

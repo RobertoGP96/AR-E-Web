@@ -1,12 +1,10 @@
 'use client';
 
-import { useId, useState, useTransition } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { useState, useTransition } from 'react';
+import { Plus, Trash2, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  createInvoiceAction,
-  updateInvoiceAction,
-} from './actions';
+import { Button, Tooltip } from '@heroui/react';
+import { createInvoiceAction, updateInvoiceAction } from './actions';
 import {
   TAG_TYPES,
   computeTagSubtotal,
@@ -14,6 +12,7 @@ import {
   type TagType,
 } from './schema';
 import { formatCurrency } from '@/lib/format';
+import { AppModal, Field, TextInput, NativeSelect } from '@/components/ui';
 
 interface DraftTag {
   key: string;
@@ -30,6 +29,11 @@ interface InvoiceDialogProps {
   onClose: () => void;
   onSuccess: () => void;
 }
+
+const TAG_TYPE_LABELS: Record<TagType, string> = {
+  pesaje: 'Pesaje',
+  nominal: 'Nominal',
+};
 
 function isoToDateInput(iso: string | undefined): string {
   if (!iso) return new Date().toISOString().slice(0, 10);
@@ -79,7 +83,6 @@ export function InvoiceDialog({
   onClose,
   onSuccess,
 }: InvoiceDialogProps) {
-  const headingId = useId();
   const [isPending, startTransition] = useTransition();
   const [date, setDate] = useState(isoToDateInput(invoice?.date));
   const [tags, setTags] = useState<DraftTag[]>(() => toDraft(invoice));
@@ -96,8 +99,6 @@ export function InvoiceDialog({
     setErrors({});
     setRenderKey((k) => k + 1);
   }
-
-  if (!open) return null;
 
   const total =
     Math.round(tags.reduce((sum, t) => sum + draftSubtotal(t), 0) * 100) / 100;
@@ -138,145 +139,127 @@ export function InvoiceDialog({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={headingId}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <AppModal
+      isOpen={open}
+      onClose={onClose}
+      title={mode === 'create' ? 'Nueva factura' : 'Editar factura'}
+      description={
+        mode === 'create'
+          ? 'Registra una factura de costos de envío con sus conceptos.'
+          : `Factura #${invoice?.id ?? ''}`
+      }
+      icon={<FileText className="h-5 w-5" aria-hidden />}
+      size="lg"
+      footer={
+        <>
+          <Button variant="tertiary" onPress={onClose} isDisabled={isPending}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onPress={submit} isDisabled={isPending}>
+            {isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Guardando…
+              </>
+            ) : (
+              'Guardar'
+            )}
+          </Button>
+        </>
+      }
     >
-      <div className="flex max-h-full w-full max-w-2xl flex-col rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="flex items-start justify-between gap-2 border-b border-zinc-200 p-5 dark:border-zinc-800">
-          <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'Nueva factura' : 'Editar factura'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-md p-1 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
-        </div>
+      <div key={renderKey} className="space-y-4">
+        <Field label="Fecha" required error={errors['date']} className="max-w-xs">
+          <TextInput
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            invalid={!!errors['date']}
+          />
+        </Field>
 
-        <div key={renderKey} className="space-y-4 overflow-y-auto p-5">
-          <div className="space-y-1">
-            <label
-              htmlFor={`${headingId}-date`}
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="field-label">Conceptos</h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={() => setTags((p) => [...p, emptyTag()])}
             >
-              Date
-            </label>
-            <input
-              id={`${headingId}-date`}
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className={`w-full max-w-xs rounded-md border bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-brand dark:bg-zinc-950 ${
-                errors['date']
-                  ? 'border-red-500'
-                  : 'border-zinc-300 dark:border-zinc-700'
-              }`}
-            />
-            {errors['date'] ? (
-              <p className="text-xs text-red-600">{errors['date']}</p>
-            ) : null}
+              <Plus className="h-3.5 w-3.5" aria-hidden />
+              Añadir concepto
+            </Button>
           </div>
+          {errors['tags'] ? (
+            <p role="alert" className="text-xs font-medium text-danger">
+              {errors['tags']}
+            </p>
+          ) : null}
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Tags / concepts
-              </h3>
-              <button
-                type="button"
-                onClick={() => setTags((p) => [...p, emptyTag()])}
-                className="inline-flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
-              >
-                <Plus className="h-3 w-3" aria-hidden />
-                Add tag
-              </button>
-            </div>
-            {errors['tags'] ? (
-              <p className="text-xs text-red-600">{errors['tags']}</p>
-            ) : null}
-
-            <div className="space-y-3">
-              {tags.map((tag, index) => (
-                <div
-                  key={tag.key}
-                  className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
-                >
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs font-medium text-zinc-500">
-                      #{index + 1}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
+          <div className="stagger-children space-y-2.5">
+            {tags.map((tag, index) => (
+              <div key={tag.key} className="surface-card p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                    Concepto #{index + 1}
+                  </span>
+                  <Tooltip delay={500}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      isIconOnly
+                      aria-label="Quitar concepto"
+                      isDisabled={tags.length === 1}
+                      onPress={() =>
                         setTags((p) =>
                           p.length > 1
                             ? p.filter((t) => t.key !== tag.key)
                             : p
                         )
                       }
-                      disabled={tags.length === 1}
-                      aria-label="Quitar tag"
-                      className="rounded-md p-1 text-zinc-500 transition hover:bg-zinc-100 hover:text-red-600 disabled:opacity-40 dark:hover:bg-zinc-800"
+                      className="hover:bg-danger-soft hover:text-danger"
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                    </button>
-                  </div>
+                    </Button>
+                    <Tooltip.Content>Quitar concepto</Tooltip.Content>
+                  </Tooltip>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <label className="space-y-1">
-                      <span className="text-xs text-zinc-500">Tipo</span>
-                      <select
-                        value={tag.type}
-                        onChange={(e) =>
-                          updateTag(tag.key, {
-                            type: e.target.value as TagType,
-                          })
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <label className="block space-y-1">
+                    <span className="text-xs font-medium text-muted">Tipo</span>
+                    <NativeSelect
+                      value={tag.type}
+                      onChange={(e) =>
+                        updateTag(tag.key, {
+                          type: e.target.value as TagType,
+                        })
+                      }
+                    >
+                      {TAG_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {TAG_TYPE_LABELS[t]}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </label>
+
+                  {tag.type === 'pesaje' ? (
+                    <>
+                      <NumberCell
+                        label="Peso (lb)"
+                        value={tag.weight}
+                        onChange={(v) => updateTag(tag.key, { weight: v })}
+                        error={errors[`tags.${index}.weight`]}
+                      />
+                      <NumberCell
+                        label="Costo / lb"
+                        value={tag.costPerLb}
+                        onChange={(v) =>
+                          updateTag(tag.key, { costPerLb: v })
                         }
-                        className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                      >
-                        {TAG_TYPES.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    {tag.type === 'pesaje' ? (
-                      <>
-                        <NumberCell
-                          label="Peso (lb)"
-                          value={tag.weight}
-                          onChange={(v) => updateTag(tag.key, { weight: v })}
-                          error={errors[`tags.${index}.weight`]}
-                        />
-                        <NumberCell
-                          label="Costo / lb"
-                          value={tag.costPerLb}
-                          onChange={(v) =>
-                            updateTag(tag.key, { costPerLb: v })
-                          }
-                          error={errors[`tags.${index}.costPerLb`]}
-                        />
-                        <NumberCell
-                          label="Costo fijo"
-                          value={tag.fixedCost}
-                          onChange={(v) =>
-                            updateTag(tag.key, { fixedCost: v })
-                          }
-                          error={errors[`tags.${index}.fixedCost`]}
-                        />
-                      </>
-                    ) : (
+                        error={errors[`tags.${index}.costPerLb`]}
+                      />
                       <NumberCell
                         label="Costo fijo"
                         value={tag.fixedCost}
@@ -285,48 +268,55 @@ export function InvoiceDialog({
                         }
                         error={errors[`tags.${index}.fixedCost`]}
                       />
-                    )}
-                  </div>
-
-                  <div className="mt-2 text-right text-xs text-zinc-500">
-                    Subtotal:{' '}
-                    <span className="font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
-                      {formatCurrency(draftSubtotal(tag))}
-                    </span>
-                  </div>
+                    </>
+                  ) : (
+                    <NumberCell
+                      label="Costo fijo"
+                      value={tag.fixedCost}
+                      onChange={(v) =>
+                        updateTag(tag.key, { fixedCost: v })
+                      }
+                      error={errors[`tags.${index}.fixedCost`]}
+                    />
+                  )}
                 </div>
-              ))}
-            </div>
+
+                <div className="mt-2 text-right text-xs text-muted">
+                  Subtotal:{' '}
+                  <span className="font-semibold tabular-nums text-foreground">
+                    {formatCurrency(draftSubtotal(tag))}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-zinc-200 p-5 dark:border-zinc-800">
-          <div className="text-sm">
-            Total:{' '}
-            <span className="text-lg font-semibold tabular-nums">
+        <div className="rounded-xl border border-accent/25 bg-accent-soft/40 p-3 text-sm">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted">
+            {tags.map((tag, index) => (
+              <div key={tag.key} className="contents">
+                <span>
+                  Concepto #{index + 1} · {TAG_TYPE_LABELS[tag.type]}
+                </span>
+                <span className="text-right tabular-nums">
+                  {formatCurrency(draftSubtotal(tag))}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 flex items-center justify-between border-t border-accent/20 pt-2 text-sm font-bold">
+            <span className="text-foreground">Total de la factura</span>
+            <span className="tabular-nums text-success-soft-foreground">
               {formatCurrency(total)}
             </span>
           </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={submit}
-              disabled={isPending}
-              className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isPending ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
+          <p className="mt-1 text-[10px] text-muted">
+            El total se recalcula y redondea en el servidor al guardar.
+          </p>
         </div>
       </div>
-    </div>
+    </AppModal>
   );
 }
 
@@ -342,21 +332,21 @@ function NumberCell({
   error?: string;
 }) {
   return (
-    <label className="space-y-1">
-      <span className="text-xs text-zinc-500">{label}</span>
-      <input
+    <label className="block space-y-1">
+      <span className="text-xs font-medium text-muted">{label}</span>
+      <TextInput
         type="number"
         step="0.01"
         min="0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full rounded-md border bg-white px-2 py-1.5 text-sm dark:bg-zinc-950 ${
-          error
-            ? 'border-red-500'
-            : 'border-zinc-300 dark:border-zinc-700'
-        }`}
+        invalid={!!error}
       />
-      {error ? <p className="text-[10px] text-red-600">{error}</p> : null}
+      {error ? (
+        <span role="alert" className="block text-[10px] font-medium text-danger">
+          {error}
+        </span>
+      ) : null}
     </label>
   );
 }

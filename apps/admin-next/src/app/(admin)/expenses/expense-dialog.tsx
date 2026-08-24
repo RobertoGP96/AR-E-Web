@@ -1,13 +1,22 @@
 'use client';
 
-import { useActionState, useEffect, useId, useRef } from 'react';
-import { X } from 'lucide-react';
+import { useActionState, useEffect, useRef } from 'react';
+import { Receipt } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@heroui/react';
 import {
   createExpenseAction,
   updateExpenseAction,
   type ActionResult,
 } from './actions';
+import {
+  AppModal,
+  Field,
+  NativeSelect,
+  TextInput,
+  TextArea,
+  SubmitButton,
+} from '@/components/ui';
 import { EXPENSE_CATEGORIES, type ExpenseRow } from './schema';
 
 interface ExpenseDialogProps {
@@ -30,13 +39,11 @@ export function ExpenseDialog({
   onClose,
   onSuccess,
 }: ExpenseDialogProps) {
-  const headingId = useId();
   const action = mode === 'create' ? createExpenseAction : updateExpenseAction;
   const [state, formAction, isPending] = useActionState<
     ActionResult | undefined,
     FormData
   >(action, undefined);
-
   const lastHandledRef = useRef<ActionResult | undefined>(undefined);
 
   useEffect(() => {
@@ -46,199 +53,92 @@ export function ExpenseDialog({
     else if (!state.fieldErrors) toast.error(state.error);
   }, [state, onSuccess]);
 
-  useEffect(() => {
-    if (open) lastHandledRef.current = undefined;
-  }, [open]);
-
-  if (!open) return null;
-
-  const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
+  const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={headingId}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <AppModal
+      isOpen={open}
+      onClose={onClose}
+      title={mode === 'create' ? 'Nuevo gasto' : 'Editar gasto'}
+      description={
+        mode === 'create'
+          ? 'Registra un gasto del sistema con su categoría.'
+          : `Gasto #${expense?.id ?? ''}`
+      }
+      icon={<Receipt className="h-5 w-5" aria-hidden />}
+      size="md"
     >
-      <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mb-4 flex items-start justify-between gap-2">
-          <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'Nuevo gasto' : 'Editar gasto'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-md p-1 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
-        </div>
+      <form
+        key={mode === 'edit' ? (expense?.id ?? 'edit') : 'create'}
+        action={formAction}
+        className="space-y-4"
+      >
+        {mode === 'edit' && expense ? (
+          <input type="hidden" name="id" value={expense.id} />
+        ) : null}
 
-        <form action={formAction} className="space-y-4">
-          {mode === 'edit' && expense ? (
-            <input type="hidden" name="id" value={expense.id} />
-          ) : null}
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              label="Date"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Fecha" required error={errors['date']}>
+            <TextInput
               name="date"
               type="date"
               defaultValue={isoToDateInput(expense?.date)}
-              error={errors['date']}
               required
+              invalid={!!errors['date']}
             />
-            <Field
-              label="Amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              min="0"
-              prefix="$"
-              placeholder="0.00"
-              defaultValue={expense?.amount.toString() ?? '0'}
-              error={errors['amount']}
-              required
-            />
-          </div>
+          </Field>
+          <Field label="Monto" required error={errors['amount']}>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
+                $
+              </span>
+              <TextInput
+                name="amount"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                defaultValue={expense?.amount.toString() ?? '0'}
+                required
+                invalid={!!errors['amount']}
+                className="pl-7"
+              />
+            </div>
+          </Field>
+        </div>
 
-          <div className="space-y-1">
-            <label
-              htmlFor="category"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Category
-            </label>
-            <select
-              id="category"
-              name="category"
-              defaultValue={expense?.category ?? 'Operativo'}
-              required
-              className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:bg-zinc-950 ${
-                errors['category']
-                  ? 'border-red-500'
-                  : 'border-zinc-300 dark:border-zinc-700'
-              }`}
-            >
-              {EXPENSE_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            {errors['category'] ? (
-              <p className="text-xs text-red-600">{errors['category']}</p>
-            ) : null}
-          </div>
+        <Field label="Categoría" required error={errors['category']}>
+          <NativeSelect
+            name="category"
+            defaultValue={expense?.category ?? 'Operativo'}
+            required
+            invalid={!!errors['category']}
+          >
+            {EXPENSE_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </NativeSelect>
+        </Field>
 
-          <div className="space-y-1">
-            <label
-              htmlFor="description"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Description (optional)
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows={3}
-              maxLength={500}
-              defaultValue={expense?.description ?? ''}
-              className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-brand dark:bg-zinc-950 ${
-                errors['description']
-                  ? 'border-red-500'
-                  : 'border-zinc-300 dark:border-zinc-700'
-              }`}
-            />
-            {errors['description'] ? (
-              <p className="text-xs text-red-600">{errors['description']}</p>
-            ) : null}
-          </div>
+        <Field label="Descripción (opcional)" error={errors['description']}>
+          <TextArea
+            name="description"
+            rows={3}
+            maxLength={500}
+            defaultValue={expense?.description ?? ''}
+            invalid={!!errors['description']}
+          />
+        </Field>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isPending ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-interface FieldProps {
-  label: string;
-  name: string;
-  type: 'number' | 'date';
-  defaultValue?: string;
-  placeholder?: string;
-  error?: string;
-  required?: boolean;
-  step?: string;
-  min?: string;
-  prefix?: string;
-}
-
-function Field({
-  label,
-  name,
-  type,
-  defaultValue,
-  placeholder,
-  error,
-  required,
-  step,
-  min,
-  prefix,
-}: FieldProps) {
-  const id = useId();
-  return (
-    <div className="space-y-1">
-      <label
-        htmlFor={id}
-        className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-      >
-        {label}
-      </label>
-      <div className="relative">
-        {prefix ? (
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">
-            {prefix}
-          </span>
-        ) : null}
-        <input
-          id={id}
-          name={name}
-          type={type}
-          step={step}
-          min={min}
-          required={required}
-          defaultValue={defaultValue}
-          placeholder={placeholder}
-          className={`w-full rounded-md border bg-white py-2 ${
-            prefix ? 'pl-7' : 'pl-3'
-          } pr-3 text-sm shadow-sm outline-none focus:border-brand dark:bg-zinc-950 ${
-            error ? 'border-red-500' : 'border-zinc-300 dark:border-zinc-700'
-          }`}
-        />
-      </div>
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
-    </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="tertiary" onPress={onClose}>
+            Cancelar
+          </Button>
+          <SubmitButton isPending={isPending}>Guardar</SubmitButton>
+        </div>
+      </form>
+    </AppModal>
   );
 }

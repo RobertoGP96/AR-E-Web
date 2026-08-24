@@ -83,6 +83,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
     clientId: o.clientId.toString(),
     clientBalance: o.client.balance,
     clientName: `${o.client.name} ${o.client.lastName}`.trim(),
+    salesManagerId: o.salesManagerId ? o.salesManagerId.toString() : null,
     salesManagerName: o.salesManager
       ? `${o.salesManager.name} ${o.salesManager.lastName}`.trim()
       : null,

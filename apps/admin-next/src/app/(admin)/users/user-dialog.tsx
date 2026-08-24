@@ -1,19 +1,37 @@
 'use client';
 
-import { useActionState, useEffect, useId, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { useActionState, useEffect, useRef, useState } from 'react';
+import { UserRound } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@heroui/react';
 import {
   createUserAction,
   updateUserAction,
   type ActionResult,
 } from './actions';
 import {
+  AppModal,
+  Field,
+  NativeSelect,
+  TextInput,
+  SubmitButton,
+} from '@/components/ui';
+import {
   USER_ROLES,
   type AgentOption,
   type UserRole,
   type UserRow,
 } from './schema';
+
+/** Etiquetas en español para los roles del sistema. */
+export const ROLE_LABELS: Record<UserRole, string> = {
+  user: 'Usuario',
+  agent: 'Agente',
+  accountant: 'Contador',
+  logistical: 'Logístico',
+  admin: 'Administrador',
+  client: 'Cliente',
+};
 
 interface UserDialogProps {
   open: boolean;
@@ -32,7 +50,6 @@ export function UserDialog({
   onClose,
   onSuccess,
 }: UserDialogProps) {
-  const headingId = useId();
   const action = mode === 'create' ? createUserAction : updateUserAction;
   const [state, formAction, isPending] = useActionState<
     ActionResult | undefined,
@@ -57,259 +74,175 @@ export function UserDialog({
     else if (!state.fieldErrors) toast.error(state.error);
   }, [state, onSuccess]);
 
-  if (!open) return null;
-
-  const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
+  const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={headingId}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <AppModal
+      isOpen={open}
+      onClose={onClose}
+      title={mode === 'create' ? 'Nuevo usuario' : 'Editar usuario'}
+      description={
+        mode === 'create'
+          ? 'Crea una cuenta y define su rol en el sistema.'
+          : `Editando a ${user?.name ?? ''} ${user?.lastName ?? ''}`
+      }
+      icon={<UserRound className="h-5 w-5" aria-hidden />}
+      size="lg"
     >
-      <div className="flex max-h-full w-full max-w-lg flex-col rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="flex items-start justify-between gap-2 border-b border-zinc-200 p-5 dark:border-zinc-800">
-          <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'Nuevo usuario' : 'Editar usuario'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-md p-1 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
-        </div>
+      <form
+        key={mode === 'edit' ? (user?.id ?? 'edit') : 'create'}
+        action={formAction}
+        className="space-y-4"
+      >
+        {mode === 'edit' && user ? (
+          <input type="hidden" name="id" value={user.id} />
+        ) : null}
 
-        <form
-          action={formAction}
-          className="space-y-4 overflow-y-auto p-5"
-        >
-          {mode === 'edit' && user ? (
-            <input type="hidden" name="id" value={user.id} />
-          ) : null}
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              label="Name"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Nombre" required error={errors['name']}>
+            <TextInput
               name="name"
               defaultValue={user?.name ?? ''}
-              error={errors['name']}
               required
+              invalid={!!errors['name']}
             />
-            <Field
-              label="Apellidos"
+          </Field>
+          <Field label="Apellidos" required error={errors['lastName']}>
+            <TextInput
               name="lastName"
               defaultValue={user?.lastName ?? ''}
-              error={errors['lastName']}
               required
+              invalid={!!errors['lastName']}
             />
-          </div>
+          </Field>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              label="Teléfono"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Teléfono" required error={errors['phoneNumber']}>
+            <TextInput
               name="phoneNumber"
               defaultValue={user?.phoneNumber ?? ''}
-              error={errors['phoneNumber']}
               required
+              invalid={!!errors['phoneNumber']}
             />
-            <Field
-              label="Email (optional)"
+          </Field>
+          <Field label="Email (opcional)" error={errors['email']}>
+            <TextInput
               name="email"
               type="email"
               defaultValue={user?.email ?? ''}
-              error={errors['email']}
+              invalid={!!errors['email']}
             />
-          </div>
+          </Field>
+        </div>
 
-          <Field
-            label="Dirección"
+        <Field label="Dirección" error={errors['homeAddress']}>
+          <TextInput
             name="homeAddress"
             defaultValue={user?.homeAddress ?? ''}
-            error={errors['homeAddress']}
+            invalid={!!errors['homeAddress']}
           />
+        </Field>
 
-          {mode === 'create' ? (
-            <Field
-              label="Contraseña"
+        {mode === 'create' ? (
+          <Field label="Contraseña" required error={errors['password']}>
+            <TextInput
               name="password"
               type="password"
-              error={errors['password']}
+              autoComplete="new-password"
               required
+              invalid={!!errors['password']}
             />
-          ) : null}
+          </Field>
+        ) : null}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label
-                htmlFor={`${headingId}-role`}
-                className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-              >
-                Role
-              </label>
-              <select
-                id={`${headingId}-role`}
-                name="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value as UserRole)}
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
-              >
-                {USER_ROLES.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Rol">
+            <NativeSelect
+              name="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value as UserRole)}
+            >
+              {USER_ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {ROLE_LABELS[r] ?? r}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
 
-            {role === 'agent' ? (
-              <Field
-                label="Agent profit (%)"
+          {role === 'agent' ? (
+            <Field label="Ganancia de agente (%)" error={errors['agentProfit']}>
+              <TextInput
                 name="agentProfit"
                 type="number"
                 step="0.01"
                 min="0"
                 defaultValue={user?.agentProfit.toString() ?? '0'}
-                error={errors['agentProfit']}
+                invalid={!!errors['agentProfit']}
               />
-            ) : (
-              <input
-                type="hidden"
-                name="agentProfit"
-                value={user?.agentProfit ?? 0}
-              />
-            )}
-          </div>
-
-          {role !== 'agent' ? (
-            <div className="space-y-1">
-              <label
-                htmlFor={`${headingId}-agent`}
-                className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-              >
-                Assigned agent
-              </label>
-              <select
-                id={`${headingId}-agent`}
-                name="assignedAgentId"
-                defaultValue={user?.assignedAgentId ?? ''}
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
-              >
-                <option value="">— None —</option>
-                {agentOptions.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.label} ({a.role})
-                  </option>
-                ))}
-              </select>
-            </div>
+            </Field>
           ) : (
-            <input type="hidden" name="assignedAgentId" value="" />
-          )}
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              label="Balance"
-              name="balance"
-              type="number"
-              step="0.01"
-              prefix="$"
-              defaultValue={user?.balance.toString() ?? '0'}
-              error={errors['balance']}
+            <input
+              type="hidden"
+              name="agentProfit"
+              value={user?.agentProfit ?? 0}
             />
-            <label className="flex items-end gap-2 pb-2 text-sm">
-              <input
-                type="checkbox"
-                name="isActive"
-                defaultChecked={user ? user.isActive : true}
-                className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:border-zinc-700"
+          )}
+        </div>
+
+        {role !== 'agent' ? (
+          <Field label="Agente asignado">
+            <NativeSelect
+              name="assignedAgentId"
+              defaultValue={user?.assignedAgentId ?? ''}
+            >
+              <option value="">— Ninguno —</option>
+              {agentOptions.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.label} ({ROLE_LABELS[a.role] ?? a.role})
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+        ) : (
+          <input type="hidden" name="assignedAgentId" value="" />
+        )}
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Balance" error={errors['balance']}>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
+                $
+              </span>
+              <TextInput
+                name="balance"
+                type="number"
+                step="0.01"
+                defaultValue={user?.balance.toString() ?? '0'}
+                invalid={!!errors['balance']}
+                className="pl-7"
               />
-              <span className="text-zinc-700 dark:text-zinc-300">Activo</span>
-            </label>
-          </div>
+            </div>
+          </Field>
+          <label className="flex w-fit cursor-pointer items-center gap-2 self-end rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:bg-default">
+            <input
+              type="checkbox"
+              name="isActive"
+              defaultChecked={user ? user.isActive : true}
+              className="h-4 w-4 accent-accent"
+            />
+            <span className="font-medium text-foreground">Activo</span>
+          </label>
+        </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isPending ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-interface FieldProps {
-  label: string;
-  name: string;
-  type?: 'text' | 'email' | 'password' | 'number';
-  defaultValue?: string;
-  error?: string;
-  required?: boolean;
-  step?: string;
-  min?: string;
-  prefix?: string;
-}
-
-function Field({
-  label,
-  name,
-  type = 'text',
-  defaultValue,
-  error,
-  required,
-  step,
-  min,
-  prefix,
-}: FieldProps) {
-  const id = useId();
-  return (
-    <div className="space-y-1">
-      <label
-        htmlFor={id}
-        className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-      >
-        {label}
-      </label>
-      <div className="relative">
-        {prefix ? (
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">
-            {prefix}
-          </span>
-        ) : null}
-        <input
-          id={id}
-          name={name}
-          type={type}
-          step={step}
-          min={min}
-          required={required}
-          defaultValue={defaultValue}
-          className={`w-full rounded-md border bg-white py-2 ${
-            prefix ? 'pl-7' : 'pl-3'
-          } pr-3 text-sm shadow-sm outline-none focus:border-brand dark:bg-zinc-950 ${
-            error ? 'border-red-500' : 'border-zinc-300 dark:border-zinc-700'
-          }`}
-        />
-      </div>
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
-    </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="tertiary" onPress={onClose}>
+            Cancelar
+          </Button>
+          <SubmitButton isPending={isPending}>Guardar</SubmitButton>
+        </div>
+      </form>
+    </AppModal>
   );
 }

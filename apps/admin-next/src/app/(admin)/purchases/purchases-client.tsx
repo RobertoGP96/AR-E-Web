@@ -3,12 +3,32 @@
 import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, Pencil, Trash2, ShoppingBag } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ShoppingBag,
+  ExternalLink,
+  CreditCard,
+  CalendarDays,
+  DollarSign,
+  PackageSearch,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { Button, Tooltip } from '@heroui/react';
 import { PurchaseDialog } from './purchase-dialog';
 import { DeletePurchaseDialog } from './delete-dialog';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { PurchasePayBadge } from '@/components/status-badges';
+import { FilterPopover } from '@/components/filter-popover';
+import {
+  PageHeader,
+  Field,
+  NativeSelect,
+  ResponsiveTable,
+  MobileCard,
+  TableEmpty,
+} from '@/components/ui';
 import {
   PAY_STATUSES,
   type PayStatus,
@@ -38,167 +58,196 @@ export function PurchasesClient({
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set('status', value);
     else params.delete('status');
+    params.delete('page');
     startTransition(() => {
       router.replace(`/purchases?${params.toString()}`);
     });
   }
 
-  return (
-    <div className="space-y-6">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
-            <ShoppingBag className="h-8 w-8 text-orange-400" aria-hidden />
-            Compras
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Gestiona las compras
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
+  const rowActions = (row: PurchaseRow) => (
+    <>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Abrir compra"
+          onPress={() => router.push(`/purchases/${row.id}`)}
         >
-          <Plus className="h-4 w-4" aria-hidden />
-          Nueva compra
-        </button>
-      </header>
+          <ExternalLink className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Ver detalles</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Editar compra"
+          onPress={() => setEditTarget(row)}
+        >
+          <Pencil className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Editar</Tooltip.Content>
+      </Tooltip>
+      <Tooltip delay={500}>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label="Eliminar compra"
+          onPress={() => setDeleteTarget(row)}
+          className="hover:bg-danger-soft hover:text-danger"
+        >
+          <Trash2 className="h-4 w-4" aria-hidden />
+        </Button>
+        <Tooltip.Content>Eliminar</Tooltip.Content>
+      </Tooltip>
+    </>
+  );
 
-      <div>
-        <select
-          value={initialStatus ?? ''}
-          onChange={(e) => setStatus(e.target.value || null)}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        icon={ShoppingBag}
+        title="Compras"
+        subtitle="Gestión de las compras en tiendas"
+        actions={
+          <Button variant="primary" onPress={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
+            Nueva compra
+          </Button>
+        }
+      />
+
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+        <FilterPopover
+          title="Filtros de compras"
+          subtitle="Filtra compras por estado de pago"
+          activeFilters={
+            initialStatus
+              ? [
+                  {
+                    key: 'status',
+                    label: initialStatus,
+                    onRemove: () => setStatus(null),
+                  },
+                ]
+              : []
+          }
+          onClear={() => setStatus(null)}
         >
-          <option value="">Todos los pagos</option>
-          {PAY_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+          <Field label="Estado de pago">
+            <NativeSelect
+              value={initialStatus ?? ''}
+              onChange={(e) => setStatus(e.target.value || null)}
+            >
+              <option value="">Todos los pagos</option>
+              {PAY_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+        </FilterPopover>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+      <ResponsiveTable
+        table={
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-medium">Fecha</th>
-                <th className="px-4 py-3 font-medium">Tienda</th>
-                <th className="px-4 py-3 font-medium">Account</th>
-                <th className="px-4 py-3 font-medium">Productos</th>
-                <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium">Total</th>
-                <th className="px-4 py-3 text-right font-medium">Acciones</th>
+                <th>Fecha</th>
+                <th>Tienda</th>
+                <th>Cuenta</th>
+                <th>Productos</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody>
               {initialRows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-sm text-zinc-500"
-                  >
-                    {isPending ? 'Cargando…' : 'No hay compras.'}
-                  </td>
-                </tr>
+                <TableEmpty
+                  colSpan={7}
+                  icon={PackageSearch}
+                  message={isPending ? 'Cargando…' : 'No hay compras.'}
+                />
               ) : (
                 initialRows.map((row) => (
-                  <tr key={row.id} className="text-zinc-800 dark:text-zinc-200">
-                    <td className="px-4 py-3 text-zinc-500">
-                      {formatDate(row.buyDate)}
+                  <tr key={row.id}>
+                    <td className="text-muted">{formatDate(row.buyDate)}</td>
+                    <td>
+                      <Link
+                        href={`/purchases/${row.id}`}
+                        className="font-medium text-foreground transition-colors hover:text-accent"
+                      >
+                        {row.shopName}
+                      </Link>
                     </td>
-                    <td className="px-4 py-3 font-medium">{row.shopName}</td>
-                    <td className="px-4 py-3 text-zinc-500">
-                      {row.accountName}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-500">
-                      {row.productCount}
-                    </td>
-                    <td className="px-4 py-3">
+                    <td className="text-muted">{row.accountName}</td>
+                    <td className="text-muted">{row.productCount}</td>
+                    <td>
                       <PurchasePayBadge status={row.statusOfShopping} />
                     </td>
-                    <td className="px-4 py-3 tabular-nums font-medium">
+                    <td className="font-semibold tabular-nums">
                       {formatCurrency(row.totalCostOfPurchase)}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="inline-flex gap-1">
-                        <Link
-                          href={`/purchases/${row.id}`}
-                          className="rounded-md px-2 py-1 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                          Open
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => setEditTarget(row)}
-                          aria-label="Editar compra"
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                          <Pencil className="h-4 w-4" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(row)}
-                          aria-label="Eliminar compra"
-                          className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
-                        >
-                          <Trash2 className="h-4 w-4" aria-hidden />
-                        </button>
-                      </div>
+                    <td className="text-right">
+                      <div className="inline-flex gap-0.5">{rowActions(row)}</div>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </div>
-
-        <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
-          {initialRows.length === 0 ? (
-            <li className="px-4 py-8 text-center text-sm text-zinc-500">
+        }
+        cards={
+          initialRows.length === 0 ? (
+            <div className="surface-card p-8 text-center text-sm text-muted">
               {isPending ? 'Cargando…' : 'No hay compras.'}
-            </li>
+            </div>
           ) : (
             initialRows.map((row) => (
-              <li key={row.id} className="space-y-2 px-4 py-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="font-medium">{row.shopName}</div>
-                    <div className="text-xs text-zinc-500">
-                      {row.accountName} · {formatDate(row.buyDate)}
-                    </div>
-                  </div>
-                  <span className="text-sm font-semibold tabular-nums">
-                    {formatCurrency(row.totalCostOfPurchase)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <PurchasePayBadge status={row.statusOfShopping} />
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setEditTarget(row)}
-                      className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 dark:border-zinc-800 dark:text-zinc-300"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteTarget(row)}
-                      className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-red-600 dark:border-zinc-800"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </li>
+              <MobileCard
+                key={row.id}
+                title={row.shopName}
+                subtitle={`Compra #${row.id}`}
+                badges={<PurchasePayBadge status={row.statusOfShopping} />}
+                rows={[
+                  {
+                    icon: CreditCard,
+                    label: 'Cuenta',
+                    value: row.accountName,
+                  },
+                  {
+                    icon: PackageSearch,
+                    label: 'Productos',
+                    value: row.productCount,
+                  },
+                  {
+                    icon: DollarSign,
+                    label: 'Total',
+                    value: (
+                      <span className="font-semibold">
+                        {formatCurrency(row.totalCostOfPurchase)}
+                      </span>
+                    ),
+                  },
+                  {
+                    icon: CalendarDays,
+                    label: 'Fecha',
+                    value: formatDate(row.buyDate),
+                  },
+                ]}
+                actions={rowActions(row)}
+                onClick={() => router.push(`/purchases/${row.id}`)}
+              />
             ))
-          )}
-        </ul>
-      </div>
+          )
+        }
+      />
 
       <PurchaseDialog
         open={createOpen}

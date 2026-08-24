@@ -1,42 +1,37 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
+import { Button, Drawer } from '@heroui/react';
 import { AdminNav } from './admin-nav';
 
+/**
+ * Mobile navigation: HeroUI drawer (animated slide-in, focus trap,
+ * Escape/backdrop dismiss) hosting the same AdminNav as the desktop
+ * sidebar, over the near-black brand surface.
+ */
 export function MobileNav({ role }: { role: string }) {
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
-
   return (
     <div className="md:hidden">
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
+      <Button
+        variant="ghost"
+        isIconOnly
         aria-label="Abrir menú"
-        aria-expanded={open}
-        className="rounded-md p-2 text-foreground transition hover:bg-muted"
+        onPress={() => setOpen(true)}
       >
         <Menu className="h-5 w-5" aria-hidden />
-      </button>
+      </Button>
 
-      {open ? (
-        <div className="fixed inset-0 z-50">
-          <button
-            type="button"
-            aria-label="Cerrar menú"
-            onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-black/50"
-          />
-          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-sidebar text-sidebar-foreground shadow-xl">
-            <div className="flex items-center justify-between border-b border-orange-400 px-4 py-3">
+      <Drawer.Backdrop isOpen={open} onOpenChange={setOpen}>
+        <Drawer.Content
+          placement="left"
+          className="w-72 max-w-[85vw] bg-sidebar p-0 text-sidebar-foreground"
+        >
+          <Drawer.Dialog className="flex h-full flex-col bg-transparent p-0">
+            <div className="flex shrink-0 items-center justify-between border-b border-sidebar-border px-4 py-3">
               <Image
                 src="/logo.svg"
                 alt="AR-E"
@@ -44,19 +39,12 @@ export function MobileNav({ role }: { role: string }) {
                 height={44}
                 className="h-10 w-auto object-contain"
               />
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Cerrar menú"
-                className="rounded-md p-2 text-sidebar-foreground/80 transition hover:bg-white/10 hover:text-white"
-              >
-                <X className="h-5 w-5" aria-hidden />
-              </button>
+              <Drawer.CloseTrigger className="text-sidebar-foreground/80 hover:text-white" />
             </div>
             <AdminNav role={role} onNavigate={() => setOpen(false)} />
-          </div>
-        </div>
-      ) : null}
+          </Drawer.Dialog>
+        </Drawer.Content>
+      </Drawer.Backdrop>
     </div>
   );
 }

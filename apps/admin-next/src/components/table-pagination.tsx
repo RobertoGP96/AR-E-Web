@@ -2,14 +2,14 @@
 
 import { useTransition } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { Pagination } from '@heroui/react';
 
 import { PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 
 /**
- * "Mostrar N filas de X" pagination bar, ported from the Vite admin's
- * TablePagination + its orange-accented pagination buttons. URL-driven:
- * writes ?page= and ?per= preserving the other filters.
+ * "Mostrar N filas de X" bar + HeroUI pagination. URL-driven: writes
+ * ?page= and ?per= preserving the other filters. Same public API as
+ * the pre-redesign version.
  */
 export function TablePagination({
   page,
@@ -40,7 +40,7 @@ export function TablePagination({
     });
   }
 
-  // Up to 5 page numbers with ellipsis, like the original.
+  // Up to 5 page numbers with ellipsis.
   function pageItems(): (number | 'ellipsis')[] {
     if (totalPages <= 5) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -56,20 +56,25 @@ export function TablePagination({
         totalPages,
       ];
     }
-    return [1, 'ellipsis', current - 1, current, current + 1, 'ellipsis', totalPages];
+    return [
+      1,
+      'ellipsis',
+      current - 1,
+      current,
+      current + 1,
+      'ellipsis',
+      totalPages,
+    ];
   }
-
-  const btnBase =
-    'inline-flex h-9 items-center justify-center rounded-md text-sm font-medium transition hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50';
 
   return (
     <div className="mt-4 flex flex-col items-center justify-between gap-4 px-2 sm:flex-row">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm text-muted">
         <span>Mostrar</span>
         <select
           value={perPage}
           onChange={(e) => apply(1, Number(e.target.value))}
-          className="h-8 w-[70px] rounded-md border border-input bg-white px-2 text-sm"
+          className="field-input h-8 w-[74px] px-2 py-1"
           aria-label="Filas por página"
         >
           {PAGE_SIZE_OPTIONS.map((n) => (
@@ -82,65 +87,47 @@ export function TablePagination({
       </div>
 
       {totalPages > 1 ? (
-        <nav aria-label="Paginación" className="mx-0 w-auto">
-          <ul className="flex flex-row items-center gap-1">
-            <li>
-              <button
-                type="button"
-                onClick={() => apply(current - 1, perPage)}
-                disabled={current === 1}
-                aria-label="Ir a la página anterior"
-                className={`${btnBase} gap-1 px-2.5 pl-2.5`}
+        <Pagination aria-label="Paginación">
+          <Pagination.Content>
+            <Pagination.Item>
+              <Pagination.Previous
+                onPress={() => apply(current - 1, perPage)}
+                isDisabled={current === 1}
               >
-                <ChevronLeft className="h-4 w-4" aria-hidden />
-                <span className="hidden sm:inline">Anterior</span>
-              </button>
-            </li>
+                <Pagination.PreviousIcon />
+              </Pagination.Previous>
+            </Pagination.Item>
             {pageItems().map((item, i) =>
               item === 'ellipsis' ? (
-                <li
-                  key={`e${i}`}
-                  className="hidden h-9 w-9 items-center justify-center sm:flex"
-                >
-                  <MoreHorizontal className="h-4 w-4" aria-hidden />
-                  <span className="sr-only">Más páginas</span>
-                </li>
+                <Pagination.Item key={`e${i}`} className="hidden sm:block">
+                  <Pagination.Ellipsis />
+                </Pagination.Item>
               ) : (
-                <li key={item} className="hidden sm:block">
-                  <button
-                    type="button"
-                    onClick={() => apply(item, perPage)}
-                    aria-current={item === current ? 'page' : undefined}
-                    className={`${btnBase} w-9 ${
-                      item === current
-                        ? 'border border-orange-400 bg-orange-50 text-orange-600 hover:bg-orange-100'
-                        : ''
-                    }`}
+                <Pagination.Item key={item} className="hidden sm:block">
+                  <Pagination.Link
+                    isActive={item === current}
+                    onPress={() => apply(item, perPage)}
                   >
                     {item}
-                  </button>
-                </li>
+                  </Pagination.Link>
+                </Pagination.Item>
               )
             )}
-            <li className="sm:hidden">
-              <span className="inline-flex h-9 items-center px-2 text-sm tabular-nums text-muted-foreground">
+            <Pagination.Item className="sm:hidden">
+              <span className="inline-flex h-9 items-center px-2 text-sm tabular-nums text-muted">
                 {current} / {totalPages}
               </span>
-            </li>
-            <li>
-              <button
-                type="button"
-                onClick={() => apply(current + 1, perPage)}
-                disabled={current === totalPages}
-                aria-label="Ir a la página siguiente"
-                className={`${btnBase} gap-1 px-2.5 pr-2.5`}
+            </Pagination.Item>
+            <Pagination.Item>
+              <Pagination.Next
+                onPress={() => apply(current + 1, perPage)}
+                isDisabled={current === totalPages}
               >
-                <span className="hidden sm:inline">Siguiente</span>
-                <ChevronRight className="h-4 w-4" aria-hidden />
-              </button>
-            </li>
-          </ul>
-        </nav>
+                <Pagination.NextIcon />
+              </Pagination.Next>
+            </Pagination.Item>
+          </Pagination.Content>
+        </Pagination>
       ) : null}
     </div>
   );

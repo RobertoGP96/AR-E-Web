@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck, Inbox } from 'lucide-react';
+import { Button, Popover } from '@heroui/react';
 import {
   getNotificationsAction,
   markNotificationReadAction,
@@ -13,17 +14,16 @@ import {
 const POLL_MS = 60_000;
 
 const PRIORITY_DOT: Record<string, string> = {
-  urgent: 'bg-red-500',
-  high: 'bg-orange-500',
-  normal: 'bg-blue-500',
-  low: 'bg-zinc-400',
+  urgent: 'bg-danger',
+  high: 'bg-accent',
+  normal: 'bg-warning',
+  low: 'bg-muted/50',
 };
 
 export function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [items, setItems] = useState<NotificationItem[]>([]);
-  const rootRef = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(async () => {
     const result = await getNotificationsAction();
@@ -41,16 +41,6 @@ export function NotificationsBell() {
     return () => clearInterval(timer);
   }, [refresh]);
 
-  // Close on outside click.
-  useEffect(() => {
-    if (!open) return;
-    function onPointerDown(e: PointerEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, [open]);
-
   function handleItemClick(item: NotificationItem) {
     if (!item.isRead) {
       void markNotificationReadAction(item.id).then(() => void refresh());
@@ -63,41 +53,45 @@ export function NotificationsBell() {
   }
 
   return (
-    <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
+    <Popover isOpen={open} onOpenChange={setOpen}>
+      <Button
+        variant="ghost"
+        isIconOnly
         aria-label={
           unread > 0 ? `Notificaciones (${unread} sin leer)` : 'Notificaciones'
         }
-        aria-expanded={open}
-        className="group relative rounded-xl p-3 text-gray-500 transition-all duration-200 hover:bg-orange-50 hover:text-orange-600"
+        className="group relative overflow-visible"
       >
         <Bell
-          className="h-5 w-5 transition-transform group-hover:scale-110"
+          className="h-5 w-5 transition-transform duration-150 group-hover:scale-110"
           aria-hidden
         />
         {unread > 0 ? (
           <>
-            <span className="absolute -right-1 -top-1 h-5 w-5 animate-ping rounded-full bg-orange-500 opacity-75" />
-            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-amber-500 ring-2 ring-white">
-              <span className="text-xs font-bold text-white">
+            <span className="absolute -right-0.5 -top-0.5 h-5 w-5 animate-ping rounded-full bg-accent opacity-60" />
+            <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-accent to-warning ring-2 ring-background">
+              <span className="text-[10px] font-bold text-white">
                 {unread > 9 ? '9+' : unread}
               </span>
             </span>
           </>
         ) : null}
-      </button>
+      </Button>
 
-      {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
-          <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
-            <span className="text-sm font-medium">Notificaciones</span>
+      <Popover.Content
+        placement="bottom end"
+        className="w-80 max-w-[calc(100vw-2rem)] p-0"
+      >
+        <Popover.Dialog className="overflow-hidden p-0">
+          <div className="flex items-center justify-between border-b border-separator px-3 py-2.5">
+            <span className="text-sm font-semibold text-foreground">
+              Notificaciones
+            </span>
             {unread > 0 ? (
               <button
                 type="button"
                 onClick={handleMarkAll}
-                className="inline-flex items-center gap-1 text-xs text-zinc-500 transition hover:text-zinc-900 dark:hover:text-zinc-100"
+                className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-muted transition-colors hover:bg-default hover:text-foreground"
               >
                 <CheckCheck className="h-3.5 w-3.5" aria-hidden />
                 Marcar todas
@@ -106,8 +100,13 @@ export function NotificationsBell() {
           </div>
           <ul className="max-h-80 overflow-y-auto">
             {items.length === 0 ? (
-              <li className="px-3 py-8 text-center text-sm text-zinc-500">
-                No tienes notificaciones.
+              <li className="flex flex-col items-center gap-2 px-3 py-10 text-center">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-default text-muted">
+                  <Inbox className="h-5 w-5" aria-hidden />
+                </span>
+                <span className="text-sm text-muted">
+                  No tienes notificaciones.
+                </span>
               </li>
             ) : (
               items.map((item) => {
@@ -125,13 +124,13 @@ export function NotificationsBell() {
                       <div
                         className={`truncate text-sm ${
                           item.isRead
-                            ? 'text-zinc-600 dark:text-zinc-400'
-                            : 'font-medium text-zinc-900 dark:text-zinc-100'
+                            ? 'text-muted'
+                            : 'font-medium text-foreground'
                         }`}
                       >
                         {item.title}
                       </div>
-                      <div className="line-clamp-2 text-xs text-zinc-500">
+                      <div className="line-clamp-2 text-xs text-muted">
                         {item.message}
                       </div>
                     </div>
@@ -141,13 +140,13 @@ export function NotificationsBell() {
                 return (
                   <li
                     key={item.id}
-                    className="border-b border-zinc-100 last:border-0 dark:border-zinc-900"
+                    className="border-b border-separator last:border-0"
                   >
                     {isInternal && item.actionUrl ? (
                       <Link
                         href={item.actionUrl}
                         onClick={() => handleItemClick(item)}
-                        className="block px-3 py-2.5 transition hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                        className="block px-3 py-2.5 transition-colors hover:bg-surface-hover"
                       >
                         {inner}
                       </Link>
@@ -155,7 +154,7 @@ export function NotificationsBell() {
                       <button
                         type="button"
                         onClick={() => handleItemClick(item)}
-                        className="block w-full px-3 py-2.5 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                        className="block w-full px-3 py-2.5 text-left transition-colors hover:bg-surface-hover"
                       >
                         {inner}
                       </button>
@@ -165,8 +164,8 @@ export function NotificationsBell() {
               })
             )}
           </ul>
-        </div>
-      ) : null}
-    </div>
+        </Popover.Dialog>
+      </Popover.Content>
+    </Popover>
   );
 }

@@ -22,21 +22,15 @@ export default async function ProfilePage() {
   if (!user) redirect('/login');
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold text-gray-900">Mi Perfil</h1>
-        <p className="mt-2 text-gray-600">
-          Gestiona tu información personal y configuración de cuenta
-        </p>
-      </header>
-      <ProfileForms
-        defaults={{
-          name: user.name,
-          lastName: user.lastName,
-          email: user.email ?? '',
-          homeAddress: user.homeAddress,
-        }}
-      />
-    </div>
+    <ProfileForms
+      defaults={{
+        name: user.name,
+        lastName: user.lastName,
+        email: user.email ?? '',
+        homeAddress: user.homeAddress,
+      }}
+      phoneNumber={user.phoneNumber}
+      role={user.role}
+    />
   );
 }

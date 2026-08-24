@@ -1,13 +1,20 @@
 'use client';
 
-import { useActionState, useEffect, useId, useRef } from 'react';
-import { X } from 'lucide-react';
+import { useActionState, useEffect, useRef } from 'react';
+import { Store } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@heroui/react';
 import {
   createShopAction,
   updateShopAction,
   type ActionResult,
 } from './actions';
+import {
+  AppModal,
+  Field,
+  TextInput,
+  SubmitButton,
+} from '@/components/ui';
 import type { ShopRow } from './schema';
 
 interface ShopDialogProps {
@@ -25,181 +32,108 @@ export function ShopDialog({
   onClose,
   onSuccess,
 }: ShopDialogProps) {
-  const headingId = useId();
   const action = mode === 'create' ? createShopAction : updateShopAction;
   const [state, formAction, isPending] = useActionState<
     ActionResult | undefined,
     FormData
   >(action, undefined);
-
   const lastHandledRef = useRef<ActionResult | undefined>(undefined);
 
   useEffect(() => {
     if (!state || state === lastHandledRef.current) return;
     lastHandledRef.current = state;
-    if (state.ok) {
-      onSuccess();
-    } else if (!state.fieldErrors) {
-      toast.error(state.error);
-    }
+    if (state.ok) onSuccess();
+    else if (!state.fieldErrors) toast.error(state.error);
   }, [state, onSuccess]);
 
   useEffect(() => {
     if (open) lastHandledRef.current = undefined;
   }, [open]);
 
-  if (!open) return null;
-
-  const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
+  const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
   const isActiveDefault = shop ? shop.isActive : true;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={headingId}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <AppModal
+      isOpen={open}
+      onClose={onClose}
+      title={mode === 'create' ? 'Nueva tienda' : 'Editar tienda'}
+      description={
+        mode === 'create'
+          ? 'Registra una tienda y su enlace de compra.'
+          : `Tienda «${shop?.name ?? ''}»`
+      }
+      icon={<Store className="h-5 w-5" aria-hidden />}
+      size="md"
     >
-      <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mb-4 flex items-start justify-between gap-2">
-          <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-            {mode === 'create' ? 'Nueva tienda' : 'Editar tienda'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-md p-1 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
-        </div>
+      <form
+        key={mode === 'edit' ? (shop?.id ?? 'edit') : 'create'}
+        action={formAction}
+        className="space-y-4"
+      >
+        {mode === 'edit' && shop ? (
+          <input type="hidden" name="id" value={shop.id} />
+        ) : null}
 
-        <form action={formAction} className="space-y-4">
-          {mode === 'edit' && shop ? (
-            <input type="hidden" name="id" value={shop.id} />
-          ) : null}
-
-          <Field
-            label="Shop name"
+        <Field label="Nombre de la tienda" required error={errors['name']}>
+          <TextInput
             name="name"
             type="text"
-            defaultValue={shop?.name ?? ''}
-            error={errors['name']}
-            required
             maxLength={100}
+            required
+            defaultValue={shop?.name ?? ''}
+            invalid={!!errors['name']}
           />
+        </Field>
 
-          <Field
-            label="Shop link"
+        <Field label="Enlace de la tienda" required error={errors['link']}>
+          <TextInput
             name="link"
             type="url"
-            placeholder="https://example.com"
+            placeholder="https://ejemplo.com"
+            required
             defaultValue={shop?.link ?? ''}
-            error={errors['link']}
-            required
+            invalid={!!errors['link']}
           />
+        </Field>
 
-          <Field
-            label="Tax rate (%)"
-            name="taxRate"
-            type="number"
-            step="0.01"
-            min="0"
-            max="100"
-            placeholder="0.00"
-            defaultValue={shop?.taxRate.toString() ?? '0'}
-            error={errors['taxRate']}
-            required
-          />
-
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="isActive"
-              defaultChecked={isActiveDefault}
-              className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:border-zinc-700"
+        <Field label="Tasa de impuesto (%)" required error={errors['taxRate']}>
+          <div className="relative">
+            <TextInput
+              name="taxRate"
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              placeholder="0.00"
+              required
+              defaultValue={shop?.taxRate.toString() ?? '0'}
+              invalid={!!errors['taxRate']}
+              className="pr-8"
             />
-            <span className="text-zinc-700 dark:text-zinc-300">Activo</span>
-          </label>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isPending ? 'Guardando…' : 'Guardar'}
-            </button>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">
+              %
+            </span>
           </div>
-        </form>
-      </div>
-    </div>
-  );
-}
+        </Field>
 
-interface FieldProps {
-  label: string;
-  name: string;
-  type: 'text' | 'number' | 'url';
-  defaultValue?: string;
-  placeholder?: string;
-  error?: string;
-  required?: boolean;
-  step?: string;
-  min?: string;
-  max?: string;
-  maxLength?: number;
-}
+        <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:bg-surface-hover">
+          <input
+            type="checkbox"
+            name="isActive"
+            defaultChecked={isActiveDefault}
+            className="h-4 w-4 accent-accent"
+          />
+          <span className="font-medium text-foreground">Tienda activa</span>
+        </label>
 
-function Field({
-  label,
-  name,
-  type,
-  defaultValue,
-  placeholder,
-  error,
-  required,
-  step,
-  min,
-  max,
-  maxLength,
-}: FieldProps) {
-  const id = useId();
-  return (
-    <div className="space-y-1">
-      <label
-        htmlFor={id}
-        className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-      >
-        {label}
-      </label>
-      <input
-        id={id}
-        name={name}
-        type={type}
-        step={step}
-        min={min}
-        max={max}
-        maxLength={maxLength}
-        required={required}
-        defaultValue={defaultValue}
-        placeholder={placeholder}
-        className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-brand dark:bg-zinc-950 ${
-          error ? 'border-red-500' : 'border-zinc-300 dark:border-zinc-700'
-        }`}
-      />
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
-    </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="tertiary" onPress={onClose}>
+            Cancelar
+          </Button>
+          <SubmitButton isPending={isPending}>Guardar</SubmitButton>
+        </div>
+      </form>
+    </AppModal>
   );
 }

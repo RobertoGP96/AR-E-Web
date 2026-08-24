@@ -2,13 +2,15 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, X, KeyRound } from 'lucide-react';
+import { Plus, Trash2, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button, Tooltip } from '@heroui/react';
 import {
   addBuyingAccountAction,
   renameBuyingAccountAction,
   deleteBuyingAccountAction,
 } from './actions';
+import { AppModal, TextInput } from '@/components/ui';
 import type { ShopRow } from './schema';
 
 interface AccountsDialogProps {
@@ -17,16 +19,29 @@ interface AccountsDialogProps {
 }
 
 export function AccountsDialog({ shop, onClose }: AccountsDialogProps) {
+  return (
+    <AppModal
+      isOpen={shop !== null}
+      onClose={onClose}
+      title="Cuentas de compra"
+      description={shop ? `Cuentas asociadas a ${shop.name}` : undefined}
+      icon={<KeyRound className="h-5 w-5" aria-hidden />}
+      size="md"
+    >
+      {shop ? <AccountsBody key={shop.id} shop={shop} /> : null}
+    </AppModal>
+  );
+}
+
+function AccountsBody({ shop }: { shop: ShopRow }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [newName, setNewName] = useState('');
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 
-  if (!shop) return null;
-
   function handleAdd() {
     const name = newName.trim();
-    if (!name || !shop) return;
+    if (!name) return;
     startTransition(async () => {
       const result = await addBuyingAccountAction(shop.id, name);
       if (result.ok) {
@@ -66,100 +81,82 @@ export function AccountsDialog({ shop, onClose }: AccountsDialogProps) {
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-md space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-xl sm:p-6 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-              <KeyRound className="h-4 w-4" aria-hidden />
-              Cuentas de compra
-            </h2>
-            <p className="text-sm text-zinc-500">{shop.name}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
-        </div>
-
-        <ul className="max-h-72 space-y-2 overflow-y-auto">
-          {shop.accounts.length === 0 ? (
-            <li className="rounded-md border border-dashed border-zinc-300 px-3 py-6 text-center text-sm text-zinc-500 dark:border-zinc-700">
-              Esta tienda no tiene cuentas de compra.
-            </li>
-          ) : (
-            shop.accounts.map((account) => (
-              <li key={account.id} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  maxLength={100}
-                  defaultValue={account.accountName}
-                  onChange={(e) =>
-                    setDrafts((d) => ({
-                      ...d,
-                      [account.id]: e.target.value,
-                    }))
-                  }
-                  onBlur={() =>
-                    handleRename(account.id, account.accountName)
-                  }
-                  className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                />
-                <span className="shrink-0 text-xs tabular-nums text-zinc-500">
-                  {account.buysCount} compra{account.buysCount === 1 ? '' : 's'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(account.id)}
-                  disabled={isPending || account.buysCount > 0}
+    <div className="space-y-4">
+      <ul className="stagger-children max-h-72 space-y-2 overflow-y-auto pr-0.5">
+        {shop.accounts.length === 0 ? (
+          <li className="rounded-xl border border-dashed border-border px-3 py-8 text-center text-sm text-muted">
+            Esta tienda no tiene cuentas de compra.
+          </li>
+        ) : (
+          shop.accounts.map((account) => (
+            <li
+              key={account.id}
+              className="flex items-center gap-2 rounded-xl border border-border bg-surface p-2 transition-colors hover:bg-surface-hover"
+            >
+              <TextInput
+                type="text"
+                maxLength={100}
+                defaultValue={account.accountName}
+                aria-label={`Renombrar ${account.accountName}`}
+                onChange={(e) =>
+                  setDrafts((d) => ({
+                    ...d,
+                    [account.id]: e.target.value,
+                  }))
+                }
+                onBlur={() => handleRename(account.id, account.accountName)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.currentTarget.blur();
+                }}
+                className="min-w-0 flex-1"
+              />
+              <span className="shrink-0 text-xs tabular-nums text-muted">
+                {account.buysCount} compra{account.buysCount === 1 ? '' : 's'}
+              </span>
+              <Tooltip delay={500}>
+                <Button
+                  variant="danger-soft"
+                  size="sm"
+                  isIconOnly
+                  isDisabled={isPending || account.buysCount > 0}
                   aria-label={`Eliminar ${account.accountName}`}
-                  title={
-                    account.buysCount > 0
-                      ? 'No se puede eliminar: tiene compras'
-                      : 'Eliminar cuenta'
-                  }
-                  className="shrink-0 rounded-md p-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-red-600 disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  onPress={() => handleDelete(account.id)}
                 >
                   <Trash2 className="h-4 w-4" aria-hidden />
-                </button>
-              </li>
-            ))
-          )}
-        </ul>
+                </Button>
+                <Tooltip.Content>
+                  {account.buysCount > 0
+                    ? 'No se puede eliminar: tiene compras'
+                    : 'Eliminar cuenta'}
+                </Tooltip.Content>
+              </Tooltip>
+            </li>
+          ))
+        )}
+      </ul>
 
-        <div className="flex gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-          <input
-            type="text"
-            maxLength={100}
-            value={newName}
-            placeholder="Nueva cuenta…"
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleAdd();
-            }}
-            className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-          />
-          <button
-            type="button"
-            onClick={handleAdd}
-            disabled={isPending || !newName.trim()}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:opacity-60"
-          >
-            <Plus className="h-4 w-4" aria-hidden />
-            Añadir
-          </button>
-        </div>
+      <div className="flex gap-2 border-t border-separator pt-4">
+        <TextInput
+          type="text"
+          maxLength={100}
+          value={newName}
+          placeholder="Nueva cuenta…"
+          aria-label="Nombre de la nueva cuenta"
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleAdd();
+          }}
+          className="min-w-0 flex-1"
+        />
+        <Button
+          variant="primary"
+          onPress={handleAdd}
+          isDisabled={isPending || !newName.trim()}
+          className="shrink-0"
+        >
+          <Plus className="h-4 w-4" aria-hidden />
+          Añadir
+        </Button>
       </div>
     </div>
   );
