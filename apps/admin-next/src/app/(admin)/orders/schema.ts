@@ -11,16 +11,18 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export const PAY_STATUSES = ['No pagado', 'Pagado', 'Parcial'] as const;
 export type PayStatus = (typeof PAY_STATUSES)[number];
 
-// Prisma enum identifiers (the DB stores "No pagado" via @map but the
-// generated client uses the name "NoPagado").
-export type DbPayStatus = 'NoPagado' | 'Pagado' | 'Parcial';
+// The pay_status column is VARCHAR in the Django-owned DB and stores
+// the display strings verbatim ("No pagado"), so DB and UI values are
+// identical. The mapper pair stays as the seam where a divergence
+// would go, but is a pass-through today.
+export type DbPayStatus = PayStatus;
 
 export function toDbPayStatus(p: PayStatus): DbPayStatus {
-  return p === 'No pagado' ? 'NoPagado' : p;
+  return p;
 }
 
 export function fromDbPayStatus(p: DbPayStatus): PayStatus {
-  return p === 'NoPagado' ? 'No pagado' : p;
+  return p;
 }
 
 export const orderFormSchema = z.object({

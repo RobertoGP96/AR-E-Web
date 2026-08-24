@@ -50,12 +50,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!user || !user.isActive) return null;
         if (!verifyDjangoPassword(password, user.password)) return null;
 
+        // role is a VARCHAR in the Django-owned DB; narrow it to the
+        // known set and treat anything unexpected as the weakest role.
+        const KNOWN_ROLES: readonly Role[] = [
+          'user',
+          'agent',
+          'accountant',
+          'logistical',
+          'admin',
+          'client',
+        ];
+        const role: Role = (KNOWN_ROLES as readonly string[]).includes(
+          user.role
+        )
+          ? (user.role as Role)
+          : 'user';
+
         return {
           id: user.id.toString(),
           email: user.email ?? undefined,
           name: `${user.name} ${user.lastName}`.trim(),
           phoneNumber: user.phoneNumber,
-          role: user.role,
+          role,
         };
       },
     }),

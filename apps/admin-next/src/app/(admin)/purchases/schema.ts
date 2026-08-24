@@ -2,13 +2,15 @@ import { z } from 'zod';
 
 export const PAY_STATUSES = ['No pagado', 'Pagado', 'Parcial'] as const;
 export type PayStatus = (typeof PAY_STATUSES)[number];
-export type DbPayStatus = 'NoPagado' | 'Pagado' | 'Parcial';
+// VARCHAR column in the Django-owned DB — stores the display strings
+// verbatim, so these are pass-throughs.
+export type DbPayStatus = PayStatus;
 
 export function toDbPayStatus(p: PayStatus): DbPayStatus {
-  return p === 'No pagado' ? 'NoPagado' : p;
+  return p;
 }
 export function fromDbPayStatus(p: DbPayStatus): PayStatus {
-  return p === 'NoPagado' ? 'No pagado' : p;
+  return p;
 }
 
 export const purchaseFormSchema = z.object({

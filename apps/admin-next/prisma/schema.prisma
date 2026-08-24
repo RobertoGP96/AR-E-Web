@@ -11,57 +11,11 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserRole {
-  user
-  agent
-  accountant
-  logistical
-  admin
-  client
-}
-
-enum OrderStatus {
-  Encargado
-  Procesando
-  Completado
-  Cancelado
-}
-
-enum PayStatus {
-  NoPagado    @map("No pagado")
-  Pagado
-  Parcial
-}
-
-enum ProductStatus {
-  Encargado
-  Comprado
-  Recibido
-  Entregado
-}
-
-enum DeliveryStatus {
-  Pendiente
-  EnTransito @map("En transito")
-  Entregado
-  Fallida
-}
-
-enum PackageStatus {
-  Enviado
-  Recibido
-  Procesado
-}
-
-enum ExpenseCategory {
-  Envio
-  Tasas
-  Sueldo
-  Publicidad
-  Operativo
-  Entrega
-  Otro
-}
+// NOTE: role/status/category columns are VARCHAR in the Django-owned
+// database (CharField + choices) — NOT Postgres enum types. Modeling
+// them as Prisma enums makes the client cast parameters to types like
+// "public"."UserRole" that don't exist (error 42704). Keep them String
+// and validate the allowed values in application code (zod schemas).
 
 model CustomUser {
   id                       BigInt    @id @default(autoincrement())
@@ -73,7 +27,7 @@ model CustomUser {
   lastName                 String    @map("last_name") @db.VarChar(100)
   homeAddress              String    @map("home_address") @db.VarChar(200)
   phoneNumber              String    @unique @map("phone_number") @db.VarChar(20)
-  role                     UserRole  @default(client)
+  role                     String    @default("client") @db.VarChar(20)
   agentProfit              Float     @default(0) @map("agent_profit")
   balance                  Float     @default(0)
   assignedAgentId          BigInt?   @map("assigned_agent_id")
@@ -172,7 +126,7 @@ model ShoppingReceip {
   shoppingAccount      BuyingAccounts  @relation(fields: [shoppingAccountId], references: [id], onDelete: Cascade)
   shopOfBuyId          BigInt          @map("shop_of_buy_id")
   shopOfBuy            Shop            @relation(fields: [shopOfBuyId], references: [id], onDelete: Cascade)
-  statusOfShopping     PayStatus       @default(NoPagado) @map("status_of_shopping")
+  statusOfShopping     String          @default("No pagado") @map("status_of_shopping") @db.VarChar(100)
   cardId               String?         @map("card_id")
   buyDate              DateTime        @default(now()) @map("buy_date") @db.Timestamptz()
   totalCostOfPurchase  Float           @default(0) @map("total_cost_of_purchase")
@@ -190,8 +144,8 @@ model Order {
   client                 CustomUser  @relation("ClientOrders", fields: [clientId], references: [id], onDelete: Cascade)
   salesManagerId         BigInt?     @map("sales_manager_id")
   salesManager           CustomUser? @relation("SalesManagerOrders", fields: [salesManagerId], references: [id], onDelete: Cascade)
-  status                 OrderStatus @default(Encargado)
-  payStatus              PayStatus   @default(NoPagado) @map("pay_status")
+  status                 String      @default("Encargado") @db.VarChar(100)
+  payStatus              String      @default("No pagado") @map("pay_status") @db.VarChar(100)
   observations           String?
   receivedValueOfClient  Float       @default(0) @map("received_value_of_client")
   balanceApplied         Float       @default(0) @map("balance_applied")
@@ -223,7 +177,7 @@ model Product {
   amountDelivered     Int             @default(0) @map("amount_delivered")
   orderId             BigInt          @map("order_id")
   order               Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  status              ProductStatus   @default(Encargado)
+  status              String          @default("Encargado") @db.VarChar(100)
   productPictures     String?         @map("product_pictures")
   shopCost            Float           @map("shop_cost")
   shopDeliveryCost    Float           @default(0) @map("shop_delivery_cost")
@@ -270,7 +224,7 @@ model Package {
   id                   BigInt            @id @default(autoincrement())
   agencyName           String            @map("agency_name") @db.VarChar(100)
   numberOfTracking     String            @unique @map("number_of_tracking") @db.VarChar(100)
-  statusOfProcessing   PackageStatus     @default(Enviado) @map("status_of_processing")
+  statusOfProcessing   String            @default("Enviado") @map("status_of_processing") @db.VarChar(100)
   arrivalDate          DateTime          @default(now()) @map("arrival_date") @db.Timestamptz()
   packagePicture       String?           @map("package_picture")
   createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz()
@@ -302,8 +256,8 @@ model DeliverReceip {
   categoryId        BigInt?           @map("category_id")
   category          Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   weight            Float
-  status            DeliveryStatus    @default(Pendiente)
-  paymentStatus     PayStatus         @default(NoPagado) @map("payment_status")
+  status            String            @default("Pendiente") @db.VarChar(100)
+  paymentStatus     String            @default("No pagado") @map("payment_status") @db.VarChar(100)
   paymentDate       DateTime?         @map("payment_date") @db.Timestamptz()
   paymentAmount     Float             @default(0) @map("payment_amount")
   balanceApplied    Float             @default(0) @map("balance_applied")
@@ -363,7 +317,7 @@ model Expense {
   id          BigInt           @id @default(autoincrement())
   date        DateTime         @default(now()) @db.Timestamptz()
   amount      Float            @default(0)
-  category    ExpenseCategory  @default(Operativo)
+  category    String           @default("Operativo") @db.VarChar(50)
   description String?
   createdById BigInt?          @map("created_by_id")
   createdBy   CustomUser?      @relation(fields: [createdById], references: [id], onDelete: SetNull)

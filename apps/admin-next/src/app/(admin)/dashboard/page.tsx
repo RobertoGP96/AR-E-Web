@@ -148,9 +148,7 @@ export default async function DashboardPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-2 text-zinc-500">{o.status}</td>
-                  <td className="px-4 py-2 text-zinc-500">
-                    {o.payStatus === 'NoPagado' ? 'No pagado' : o.payStatus}
-                  </td>
+                  <td className="px-4 py-2 text-zinc-500">{o.payStatus}</td>
                   <td className="px-4 py-2 tabular-nums">
                     {formatCurrency(o.totalCosts)}
                   </td>

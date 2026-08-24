@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-// Display values. DeliveryStatus Prisma enum maps EnTransito -> "En transito".
+// The status/payment_status columns are VARCHAR in the Django-owned DB
+// and store the display strings verbatim ("En transito", "No pagado"),
+// so DB and UI values are identical and the mappers are pass-throughs.
 export const DELIVERY_STATUSES = [
   'Pendiente',
   'En transito',
@@ -9,28 +11,24 @@ export const DELIVERY_STATUSES = [
 ] as const;
 export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
 
-export type DbDeliveryStatus =
-  | 'Pendiente'
-  | 'EnTransito'
-  | 'Entregado'
-  | 'Fallida';
+export type DbDeliveryStatus = DeliveryStatus;
 
 export function toDbDeliveryStatus(s: DeliveryStatus): DbDeliveryStatus {
-  return s === 'En transito' ? 'EnTransito' : s;
+  return s;
 }
 export function fromDbDeliveryStatus(s: DbDeliveryStatus): DeliveryStatus {
-  return s === 'EnTransito' ? 'En transito' : s;
+  return s;
 }
 
 export const PAY_STATUSES = ['No pagado', 'Pagado', 'Parcial'] as const;
 export type PayStatus = (typeof PAY_STATUSES)[number];
-export type DbPayStatus = 'NoPagado' | 'Pagado' | 'Parcial';
+export type DbPayStatus = PayStatus;
 
 export function toDbPayStatus(p: PayStatus): DbPayStatus {
-  return p === 'No pagado' ? 'NoPagado' : p;
+  return p;
 }
 export function fromDbPayStatus(p: DbPayStatus): PayStatus {
-  return p === 'NoPagado' ? 'No pagado' : p;
+  return p;
 }
 
 export const deliveryFormSchema = z.object({
