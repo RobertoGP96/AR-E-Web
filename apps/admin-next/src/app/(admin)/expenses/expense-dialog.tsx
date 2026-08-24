@@ -119,7 +119,7 @@ export function ExpenseDialog({
               name="category"
               defaultValue={expense?.category ?? 'Operativo'}
               required
-              className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm focus:border-zinc-900 dark:bg-zinc-950 dark:focus:border-zinc-100 ${
+              className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:bg-zinc-950 ${
                 errors['category']
                   ? 'border-red-500'
                   : 'border-zinc-300 dark:border-zinc-700'
@@ -149,7 +149,7 @@ export function ExpenseDialog({
               rows={3}
               maxLength={500}
               defaultValue={expense?.description ?? ''}
-              className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-900 dark:bg-zinc-950 dark:focus:border-zinc-100 ${
+              className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-brand dark:bg-zinc-950 ${
                 errors['description']
                   ? 'border-red-500'
                   : 'border-zinc-300 dark:border-zinc-700'
@@ -171,7 +171,7 @@ export function ExpenseDialog({
             <button
               type="submit"
               disabled={isPending}
-              className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isPending ? 'Saving…' : 'Save'}
             </button>
@@ -233,7 +233,7 @@ function Field({
           placeholder={placeholder}
           className={`w-full rounded-md border bg-white py-2 ${
             prefix ? 'pl-7' : 'pl-3'
-          } pr-3 text-sm shadow-sm outline-none focus:border-zinc-900 dark:bg-zinc-950 dark:focus:border-zinc-100 ${
+          } pr-3 text-sm shadow-sm outline-none focus:border-brand dark:bg-zinc-950 ${
             error ? 'border-red-500' : 'border-zinc-300 dark:border-zinc-700'
           }`}
         />

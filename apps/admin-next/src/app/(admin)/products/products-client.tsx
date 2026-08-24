@@ -115,7 +115,7 @@ export function ProductsClient({
               if (query !== initialFilters.q)
                 applyParams(query, initialFilters.status, initialFilters.shop);
             }}
-            className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-zinc-100"
+            className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
           />
         </label>
         <select
@@ -124,7 +124,7 @@ export function ProductsClient({
             const next = e.target.value as ProductStatus | '';
             applyParams(query, next === '' ? null : next, initialFilters.shop);
           }}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-zinc-100"
+          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
         >
           <option value="">Todos los estados</option>
           {PRODUCT_STATUSES.map((s) => (
@@ -142,7 +142,7 @@ export function ProductsClient({
               e.target.value === '' ? null : e.target.value
             )
           }
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-zinc-100"
+          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
         >
           <option value="">Todas las tiendas</option>
           {shopOptions.map((s) => (

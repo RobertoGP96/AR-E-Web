@@ -88,7 +88,7 @@ export function ExpensesClient({
               onBlur={() => {
                 if (query !== initialQuery) applyParams(query, initialCategory);
               }}
-              className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-zinc-100"
+              className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
             />
           </label>
           <select
@@ -97,7 +97,7 @@ export function ExpensesClient({
               const next = e.target.value as ExpenseCategory | '';
               applyParams(query, next === '' ? null : next);
             }}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-zinc-100"
+            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
           >
             <option value="">All categories</option>
             {EXPENSE_CATEGORIES.map((c) => (
@@ -110,7 +110,7 @@ export function ExpensesClient({
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
         >
           <Plus className="h-4 w-4" aria-hidden />
           New expense
@@ -137,7 +137,7 @@ export function ExpensesClient({
                     colSpan={6}
                     className="px-4 py-8 text-center text-sm text-zinc-500"
                   >
-                    {isPending ? 'Loading…' : 'No expenses found.'}
+                    {isPending ? 'Cargando…' : 'No expenses found.'}
                   </td>
                 </tr>
               ) : (
@@ -194,7 +194,7 @@ export function ExpensesClient({
         <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
           {initialRows.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-zinc-500">
-              {isPending ? 'Loading…' : 'No expenses found.'}
+              {isPending ? 'Cargando…' : 'No expenses found.'}
             </li>
           ) : (
             initialRows.map((row) => (

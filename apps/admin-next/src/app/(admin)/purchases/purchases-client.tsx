@@ -59,7 +59,7 @@ export function PurchasesClient({
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-strong"
         >
           <Plus className="h-4 w-4" aria-hidden />
           New purchase
@@ -102,7 +102,7 @@ export function PurchasesClient({
                     colSpan={7}
                     className="px-4 py-8 text-center text-sm text-zinc-500"
                   >
-                    {isPending ? 'Loading…' : 'No purchases found.'}
+                    {isPending ? 'Cargando…' : 'No purchases found.'}
                   </td>
                 </tr>
               ) : (
@@ -162,7 +162,7 @@ export function PurchasesClient({
         <ul className="divide-y divide-zinc-200 md:hidden dark:divide-zinc-800">
           {initialRows.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-zinc-500">
-              {isPending ? 'Loading…' : 'No purchases found.'}
+              {isPending ? 'Cargando…' : 'No purchases found.'}
             </li>
           ) : (
             initialRows.map((row) => (
