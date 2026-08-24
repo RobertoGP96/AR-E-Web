@@ -53,7 +53,7 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
     prisma.deliverReceip.findMany({
       where,
       include: {
-        client: { select: { name: true, lastName: true } },
+        client: { select: { name: true, lastName: true, balance: true } },
         category: { select: { name: true } },
       },
       orderBy: { deliverDate: 'desc' },
@@ -77,6 +77,7 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
     id: d.id.toString(),
     clientId: d.clientId.toString(),
     clientName: `${d.client.name} ${d.client.lastName}`.trim(),
+    clientBalance: d.client.balance,
     categoryId: d.categoryId ? d.categoryId.toString() : null,
     categoryName: d.category?.name ?? null,
     weight: d.weight,

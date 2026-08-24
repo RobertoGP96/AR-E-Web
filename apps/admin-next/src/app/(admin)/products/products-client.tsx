@@ -1,11 +1,18 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Package2, Search, ExternalLink } from 'lucide-react';
+import {
+  Package2,
+  Search,
+  ExternalLink,
+  Columns3,
+  ChevronDown,
+} from 'lucide-react';
 import { formatCurrency } from '@/lib/format';
 import { ProductStatusBadge } from '@/components/status-badges';
+import { QRLink } from '@/components/qr-link';
 
 const PRODUCT_STATUSES = [
   'Encargado',
@@ -46,6 +53,105 @@ interface ProductsClientProps {
   };
 }
 
+// Toggleable columns, like the Vite admin's ProductsColumnsSelector.
+const COLUMNS = [
+  { key: 'client', label: 'Cliente' },
+  { key: 'shop', label: 'Tienda' },
+  { key: 'status', label: 'Estado' },
+  { key: 'amounts', label: 'Cantidades' },
+  { key: 'cost', label: 'Costo Total' },
+  { key: 'order', label: 'Orden' },
+] as const;
+type ColumnKey = (typeof COLUMNS)[number]['key'];
+
+const DEFAULT_VISIBLE: ColumnKey[] = [
+  'client',
+  'shop',
+  'status',
+  'amounts',
+  'cost',
+  'order',
+];
+const STORAGE_KEY = 'admin-next:products:columns';
+
+function ColumnsSelector({
+  visible,
+  onChange,
+}: {
+  visible: Set<ColumnKey>;
+  onChange: (next: Set<ColumnKey>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: PointerEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="inline-flex items-center gap-1.5 rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm transition hover:bg-gray-50"
+      >
+        <Columns3 className="h-4 w-4" aria-hidden />
+        Columnas
+        <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+      </button>
+      {open ? (
+        <div className="absolute right-0 z-50 mt-2 w-64 rounded-xl border border-border bg-white p-3 shadow-xl">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Columnas visibles
+          </p>
+          <ul className="space-y-1.5">
+            {COLUMNS.map((col) => (
+              <li key={col.key}>
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={visible.has(col.key)}
+                    onChange={(e) => {
+                      const next = new Set(visible);
+                      if (e.target.checked) next.add(col.key);
+                      else next.delete(col.key);
+                      onChange(next);
+                    }}
+                    className="h-4 w-4 rounded border-gray-300 accent-[oklch(71.065%_0.15929_64.92)]"
+                  />
+                  {col.label}
+                </label>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 flex justify-between border-t border-border pt-2">
+            <button
+              type="button"
+              onClick={() => onChange(new Set(DEFAULT_VISIBLE))}
+              className="text-xs font-medium text-gray-500 hover:text-gray-800"
+            >
+              Por defecto
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="text-xs font-medium text-orange-600 hover:text-orange-700"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function ProductsClient({
   initialRows,
   shopOptions,
@@ -55,6 +161,41 @@ export function ProductsClient({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState(initialFilters.q);
+  const [visible, setVisible] = useState<Set<ColumnKey>>(
+    () => new Set(DEFAULT_VISIBLE)
+  );
+
+  // Restore/persist the column selection (client-only preference).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed: unknown = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          const keys = COLUMNS.map((c) => c.key) as string[];
+          const next = new Set(
+            parsed.filter((k): k is ColumnKey => keys.includes(String(k)))
+          );
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setVisible(next);
+        }
+      }
+    } catch {
+      // corrupted preference — keep defaults
+    }
+  }, []);
+
+  function updateColumns(next: Set<ColumnKey>) {
+    setVisible(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
+    } catch {
+      // storage unavailable — selection just won't persist
+    }
+  }
+
+  const show = (key: ColumnKey) => visible.has(key);
+  const colCount = 1 + COLUMNS.filter((c) => visible.has(c.key)).length;
 
   function applyParams(
     nextQuery: string,
@@ -68,6 +209,7 @@ export function ProductsClient({
     else params.delete('status');
     if (nextShop) params.set('shop', nextShop);
     else params.delete('shop');
+    params.delete('page');
     startTransition(() => {
       router.replace(`/products?${params.toString()}`);
     });
@@ -140,6 +282,9 @@ export function ProductsClient({
             </option>
           ))}
         </select>
+        <div className="hidden md:block">
+          <ColumnsSelector visible={visible} onChange={updateColumns} />
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -149,21 +294,33 @@ export function ProductsClient({
             <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
                 <th className="px-4 py-3 font-medium">Producto</th>
-                <th className="px-4 py-3 font-medium">Cliente</th>
-                <th className="px-4 py-3 font-medium">Tienda</th>
-                <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 text-right font-medium">
-                  Ped / Comp / Rec / Ent
-                </th>
-                <th className="px-4 py-3 text-right font-medium">Costo</th>
-                <th className="px-4 py-3 text-right font-medium">Orden</th>
+                {show('client') ? (
+                  <th className="px-4 py-3 font-medium">Cliente</th>
+                ) : null}
+                {show('shop') ? (
+                  <th className="px-4 py-3 font-medium">Tienda</th>
+                ) : null}
+                {show('status') ? (
+                  <th className="px-4 py-3 font-medium">Estado</th>
+                ) : null}
+                {show('amounts') ? (
+                  <th className="px-4 py-3 text-right font-medium">
+                    Ped / Comp / Rec / Ent
+                  </th>
+                ) : null}
+                {show('cost') ? (
+                  <th className="px-4 py-3 text-right font-medium">Costo</th>
+                ) : null}
+                {show('order') ? (
+                  <th className="px-4 py-3 text-right font-medium">Orden</th>
+                ) : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {initialRows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={colCount}
                     className="px-4 py-8 text-center text-sm text-zinc-500"
                   >
                     {isPending ? 'Cargando…' : 'No hay productos.'}
@@ -173,7 +330,12 @@ export function ProductsClient({
                 initialRows.map((row) => (
                   <tr key={row.id} className="text-zinc-800 dark:text-zinc-200">
                     <td className="max-w-[260px] px-4 py-3">
-                      <div className="truncate font-medium">{row.name}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate font-medium capitalize">
+                          {row.name}
+                        </span>
+                        <QRLink url={row.link} name={row.name} />
+                      </div>
                       <div className="truncate text-xs text-zinc-500">
                         {row.sku ?? ''}
                         {row.link ? (
@@ -189,26 +351,38 @@ export function ProductsClient({
                         ) : null}
                       </div>
                     </td>
-                    <td className="px-4 py-3">{row.clientName}</td>
-                    <td className="px-4 py-3">{row.shopName}</td>
-                    <td className="px-4 py-3">
-                      <ProductStatusBadge status={row.status} />
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {row.amountRequested} / {row.amountPurchased} /{' '}
-                      {row.amountReceived} / {row.amountDelivered}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {formatCurrency(row.totalCost)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/orders/${row.orderId}`}
-                        className="text-sm font-medium text-zinc-700 hover:underline dark:text-zinc-300"
-                      >
-                        #{row.orderId}
-                      </Link>
-                    </td>
+                    {show('client') ? (
+                      <td className="px-4 py-3">{row.clientName}</td>
+                    ) : null}
+                    {show('shop') ? (
+                      <td className="px-4 py-3">{row.shopName}</td>
+                    ) : null}
+                    {show('status') ? (
+                      <td className="px-4 py-3">
+                        <ProductStatusBadge status={row.status} />
+                      </td>
+                    ) : null}
+                    {show('amounts') ? (
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {row.amountRequested} / {row.amountPurchased} /{' '}
+                        {row.amountReceived} / {row.amountDelivered}
+                      </td>
+                    ) : null}
+                    {show('cost') ? (
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {formatCurrency(row.totalCost)}
+                      </td>
+                    ) : null}
+                    {show('order') ? (
+                      <td className="px-4 py-3 text-right">
+                        <Link
+                          href={`/orders/${row.orderId}`}
+                          className="text-sm font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                        >
+                          #{row.orderId}
+                        </Link>
+                      </td>
+                    ) : null}
                   </tr>
                 ))
               )}

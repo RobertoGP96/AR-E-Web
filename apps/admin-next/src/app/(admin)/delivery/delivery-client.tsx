@@ -3,12 +3,22 @@
 import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, Pencil, Trash2, Truck, Search } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Truck,
+  Search,
+  DollarSign,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { DeliveryDialog } from './delivery-dialog';
 import { DeleteDeliveryDialog } from './delete-dialog';
+import { ConfirmDeliveryPaymentDialog } from './confirm-payment-dialog';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { DeliveryStatusBadge, PayStatusBadge } from '@/components/status-badges';
+import { PictureHover } from '@/components/picture-hover';
+import { FilterPopover } from '@/components/filter-popover';
 import {
   DELIVERY_STATUSES,
   type CategoryOption,
@@ -37,6 +47,7 @@ export function DeliveryClient({
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<DeliveryRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeliveryRow | null>(null);
+  const [paymentTarget, setPaymentTarget] = useState<DeliveryRow | null>(null);
 
   function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -78,7 +89,7 @@ export function DeliveryClient({
           <input
             type="search"
             value={query}
-            placeholder="Buscar cliente…"
+            placeholder="Buscar por cliente…"
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') setParam('q', query || null);
@@ -89,18 +100,38 @@ export function DeliveryClient({
             className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
           />
         </label>
-        <select
-          value={initialFilters.status ?? ''}
-          onChange={(e) => setParam('status', e.target.value || null)}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
+        <FilterPopover
+          title="Filtros de entregas"
+          subtitle="Filtra entregas por estado"
+          activeFilters={
+            initialFilters.status
+              ? [
+                  {
+                    key: 'status',
+                    label: initialFilters.status,
+                    onRemove: () => setParam('status', null),
+                  },
+                ]
+              : []
+          }
+          onClear={() => setParam('status', null)}
         >
-          <option value="">Todos los estados</option>
-          {DELIVERY_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-gray-600">Estado</span>
+            <select
+              value={initialFilters.status ?? ''}
+              onChange={(e) => setParam('status', e.target.value || null)}
+              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
+            >
+              <option value="">Todos los estados</option>
+              {DELIVERY_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </label>
+        </FilterPopover>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -111,11 +142,12 @@ export function DeliveryClient({
                 <th className="px-4 py-3 font-medium">Cliente</th>
                 <th className="px-4 py-3 font-medium">Categoría</th>
                 <th className="px-4 py-3 font-medium">Peso</th>
-                <th className="px-4 py-3 font-medium">Cost</th>
+                <th className="px-4 py-3 font-medium">Costo</th>
                 <th className="px-4 py-3 font-medium">Ganancia</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium">Pay</th>
+                <th className="px-4 py-3 font-medium">Pago</th>
                 <th className="px-4 py-3 font-medium">Fecha</th>
+                <th className="px-4 py-3 font-medium">Captura</th>
                 <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
@@ -123,7 +155,7 @@ export function DeliveryClient({
               {initialRows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={10}
                     className="px-4 py-8 text-center text-sm text-zinc-500"
                   >
                     {isPending ? 'Cargando…' : 'No hay entregas.'}
@@ -163,6 +195,12 @@ export function DeliveryClient({
                     <td className="px-4 py-3 text-zinc-500">
                       {formatDate(row.deliverDate)}
                     </td>
+                    <td className="px-4 py-3">
+                      <PictureHover
+                        url={row.deliverPicture}
+                        alt={`Captura de la entrega ${row.id}`}
+                      />
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex gap-1">
                         <Link
@@ -171,6 +209,27 @@ export function DeliveryClient({
                         >
                           Open
                         </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (row.paymentStatus === 'Pagado') {
+                              toast.info(
+                                `La entrega #${row.id} ya está marcada como Pagada`
+                              );
+                              return;
+                            }
+                            setPaymentTarget(row);
+                          }}
+                          aria-label="Confirmar pago"
+                          title="Confirmar pago"
+                          className={`rounded-md p-1.5 transition hover:bg-green-50 hover:text-green-600 ${
+                            row.paymentStatus === 'Pagado'
+                              ? 'cursor-not-allowed text-zinc-300'
+                              : 'text-zinc-600 dark:text-zinc-400'
+                          }`}
+                        >
+                          <DollarSign className="h-4 w-4" aria-hidden />
+                        </button>
                         <button
                           type="button"
                           onClick={() => setEditTarget(row)}
@@ -278,6 +337,12 @@ export function DeliveryClient({
           router.refresh();
         }}
       />
+      {paymentTarget ? (
+        <ConfirmDeliveryPaymentDialog
+          delivery={paymentTarget}
+          onClose={() => setPaymentTarget(null)}
+        />
+      ) : null}
     </div>
   );
 }

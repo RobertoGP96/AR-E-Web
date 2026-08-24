@@ -9,6 +9,7 @@ import { PackageDialog } from './package-dialog';
 import { DeletePackageDialog } from './delete-dialog';
 import { setPackageStatusAction } from './actions';
 import { formatDate } from '@/lib/format';
+import { PictureHover } from '@/components/picture-hover';
 import { PACKAGE_STATUSES, type PackageRow, type PackageStatus } from './schema';
 
 interface PackagesClientProps {
@@ -58,7 +59,7 @@ export function PackagesClient({
       const result = await setPackageStatusAction(row.id, status);
       setUpdatingId(null);
       if (result.ok) {
-        toast.success(`Package status updated to ${status}`);
+        toast.success(`Estado del paquete cambiado a ${status}`);
         router.refresh();
       } else {
         toast.error(result.error);
@@ -131,9 +132,10 @@ export function PackagesClient({
             <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
                 <th className="px-4 py-3 font-medium">Tracking</th>
-                <th className="px-4 py-3 font-medium">Agency</th>
+                <th className="px-4 py-3 font-medium">Agencia</th>
                 <th className="px-4 py-3 font-medium">Llegada</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
+                <th className="px-4 py-3 font-medium">Captura</th>
                 <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
@@ -141,7 +143,7 @@ export function PackagesClient({
               {initialRows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-4 py-8 text-center text-sm text-zinc-500"
                   >
                     {isPending ? 'Cargando…' : 'No hay paquetes.'}
@@ -180,6 +182,12 @@ export function PackagesClient({
                           </option>
                         ))}
                       </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <PictureHover
+                        url={row.packagePicture}
+                        alt={`Captura de ${row.numberOfTracking}`}
+                      />
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex gap-1">

@@ -195,6 +195,82 @@ export async function updateDeliveryAction(
   return { ok: true };
 }
 
+/**
+ * Registro de pago de una entrega — mirrors DeliverReceip.add_payment()
+ * in api/models/deliveries.py: payment_amount and balance_applied
+ * ACCUMULATE, payment_status is recomputed against weight_cost (or
+ * forced to Pagado), payment_date is stamped. Transactional with the
+ * client-balance recalculation.
+ */
+export async function confirmDeliveryPaymentAction(
+  id: string,
+  amount: number,
+  applyBalance: number,
+  markPaidManually: boolean
+): Promise<ActionResult> {
+  const { denied } = await requireRole(ROLES.delivery);
+  if (denied) return denied;
+
+  const deliveryId = parseId(id);
+  if (!deliveryId) return { ok: false, error: 'Invalid delivery id' };
+  if (!Number.isFinite(amount) || amount < 0) {
+    return { ok: false, error: 'El monto no puede ser negativo' };
+  }
+  if (!Number.isFinite(applyBalance) || applyBalance < 0) {
+    return { ok: false, error: 'El saldo aplicado no puede ser negativo' };
+  }
+  if (amount === 0 && applyBalance === 0 && !markPaidManually) {
+    return { ok: false, error: 'Ingresa un monto o aplica saldo' };
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const delivery = await tx.deliverReceip.findUnique({
+      where: { id: deliveryId },
+      select: {
+        weightCost: true,
+        paymentAmount: true,
+        balanceApplied: true,
+        paymentDate: true,
+        clientId: true,
+        client: { select: { balance: true } },
+      },
+    });
+    if (!delivery) return { ok: false as const, error: 'Delivery not found' };
+
+    const available = Math.max(0, delivery.client.balance);
+    if (applyBalance > available) {
+      return {
+        ok: false as const,
+        error: `El cliente solo tiene ${round2(available).toFixed(2)} de saldo a favor`,
+      };
+    }
+
+    const newPayment = round2(delivery.paymentAmount + amount);
+    const newApplied = round2(delivery.balanceApplied + applyBalance);
+    const payStatus = markPaidManually
+      ? 'Pagado'
+      : computePayStatus(delivery.weightCost, newPayment, newApplied);
+
+    await tx.deliverReceip.update({
+      where: { id: deliveryId },
+      data: {
+        paymentAmount: newPayment,
+        balanceApplied: newApplied,
+        paymentStatus: toDbPayStatus(payStatus),
+        paymentDate: new Date(),
+      },
+    });
+    await recalculateClientBalance(delivery.clientId, tx);
+    return { ok: true as const };
+  });
+
+  if (!result.ok) return result;
+
+  revalidatePath('/delivery');
+  revalidatePath(`/delivery/${id}`);
+  return { ok: true };
+}
+
 export async function deleteDeliveryAction(
   id: string
 ): Promise<ActionResult> {

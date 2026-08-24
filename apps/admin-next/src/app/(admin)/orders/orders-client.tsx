@@ -16,6 +16,7 @@ import { OrderDialog } from './order-dialog';
 import { DeleteOrderDialog } from './delete-dialog';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { OrderStatusBadge, PayStatusBadge } from '@/components/status-badges';
+import { FilterPopover } from '@/components/filter-popover';
 import { ConfirmPaymentDialog } from './confirm-payment-dialog';
 import {
   ORDER_STATUSES,
@@ -103,30 +104,70 @@ export function OrdersClient({
             className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-950"
           />
         </label>
-        <select
-          value={initialFilters.status ?? ''}
-          onChange={(e) => setParam('status', e.target.value || null)}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
+        <FilterPopover
+          title="Filtros de órdenes"
+          subtitle="Filtra órdenes por estado y tipo de pago"
+          activeFilters={[
+            ...(initialFilters.status
+              ? [
+                  {
+                    key: 'status',
+                    label: initialFilters.status,
+                    onRemove: () => setParam('status', null),
+                  },
+                ]
+              : []),
+            ...(initialFilters.pay
+              ? [
+                  {
+                    key: 'pay',
+                    label: initialFilters.pay,
+                    onRemove: () => setParam('pay', null),
+                  },
+                ]
+              : []),
+          ]}
+          onClear={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete('status');
+            params.delete('pay');
+            params.delete('page');
+            startTransition(() => {
+              router.replace(`/orders?${params.toString()}`);
+            });
+          }}
         >
-          <option value="">Todos los estados</option>
-          {ORDER_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <select
-          value={initialFilters.pay ?? ''}
-          onChange={(e) => setParam('pay', e.target.value || null)}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
-        >
-          <option value="">Todos los pagos</option>
-          {PAY_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-gray-600">Estado</span>
+            <select
+              value={initialFilters.status ?? ''}
+              onChange={(e) => setParam('status', e.target.value || null)}
+              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
+            >
+              <option value="">Todos los estados</option>
+              {ORDER_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-gray-600">T. Pago</span>
+            <select
+              value={initialFilters.pay ?? ''}
+              onChange={(e) => setParam('pay', e.target.value || null)}
+              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
+            >
+              <option value="">Todos los pagos</option>
+              {PAY_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </label>
+        </FilterPopover>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">

@@ -59,6 +59,7 @@ export interface DeliveryRow {
   id: string;
   clientId: string;
   clientName: string;
+  clientBalance: number;
   categoryId: string | null;
   categoryName: string | null;
   weight: number;
