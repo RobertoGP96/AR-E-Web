@@ -66,8 +66,12 @@
   --separator: oklch(92.5% 0.004 84);
   --backdrop: rgba(12, 10, 6, 0.55);
 
-  /* Scrollbar — subtle brand tint */
+  /* Scrollbar — subtle brand tint (light surfaces) + light thumb for
+     the dark sidebar surfaces */
   --scrollbar-thumb: color-mix(in oklch, var(--accent) 45%, transparent);
+  --scrollbar-thumb-hover: color-mix(in oklch, var(--accent) 75%, transparent);
+  --scrollbar-thumb-dark: oklch(100% 0 0 / 0.18);
+  --scrollbar-thumb-dark-hover: oklch(100% 0 0 / 0.32);
 
   /* Shadows — soft, warm-neutral */
   --surface-shadow:
@@ -163,6 +167,66 @@ body {
 
 ::selection {
   background: color-mix(in oklch, var(--accent) 25%, transparent);
+}
+
+/* ---------------------------------------------------------------- */
+/* Scrollbars — thin, rounded, brand-tinted                          */
+/* ---------------------------------------------------------------- */
+
+/* Chromium / Safari: full control via the -webkit pseudo-elements.
+   The transparent border + padding-box clip slims the thumb inside
+   the gutter and keeps it rounded. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Dark surfaces (sidebar, mobile drawer, login hero) get a light thumb */
+.bg-sidebar::-webkit-scrollbar-thumb,
+.bg-sidebar ::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb-dark);
+}
+
+.bg-sidebar::-webkit-scrollbar-thumb:hover,
+.bg-sidebar ::-webkit-scrollbar-thumb:hover,
+.bg-sidebar::-webkit-scrollbar-thumb:active,
+.bg-sidebar ::-webkit-scrollbar-thumb:active {
+  background-color: var(--scrollbar-thumb-dark-hover);
+}
+
+/* Firefox (no ::-webkit-scrollbar support): standard properties only.
+   Scoped with @supports because Chromium would otherwise drop the
+   pseudo-element styling above in favor of scrollbar-color. */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+
+  .bg-sidebar,
+  .bg-sidebar * {
+    scrollbar-color: var(--scrollbar-thumb-dark) transparent;
+  }
 }
 
 /* Sonner toasts follow the design system */
