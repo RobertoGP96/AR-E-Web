@@ -15,7 +15,7 @@ import { ImageUploadField } from '@/components/image-upload-field';
 import {
   AppModal,
   Field,
-  NativeSelect,
+  Select,
   TextInput,
   SubmitButton,
 } from '@/components/ui';
@@ -104,7 +104,7 @@ export function DeliveryDialog({
         ) : null}
 
         <Field label="Cliente" required error={errors['clientId']}>
-          <NativeSelect
+          <Select
             name="clientId"
             defaultValue={delivery?.clientId ?? ''}
             required
@@ -116,12 +116,12 @@ export function DeliveryDialog({
                 {c.label}
               </option>
             ))}
-          </NativeSelect>
+          </Select>
         </Field>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Categoría (opcional)">
-            <NativeSelect
+            <Select
               name="categoryId"
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
@@ -132,7 +132,7 @@ export function DeliveryDialog({
                   {c.label} (${c.clientShippingCharge.toFixed(2)}/lb)
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
           <Field label="Peso (lb)" error={errors['weight']}>
             <TextInput
@@ -149,7 +149,7 @@ export function DeliveryDialog({
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Estado">
-            <NativeSelect
+            <Select
               name="status"
               defaultValue={delivery?.status ?? 'Pendiente'}
             >
@@ -158,7 +158,7 @@ export function DeliveryDialog({
                   {s}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
           <Field label="Fecha de entrega" required error={errors['deliverDate']}>
             <TextInput

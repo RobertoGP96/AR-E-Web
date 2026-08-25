@@ -3,24 +3,27 @@
 import type {
   InputHTMLAttributes,
   ReactNode,
-  SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react';
+import { createContext } from 'react';
 import {
   Alert,
   Button,
   cn,
   Input,
-  inputVariants,
   Spinner,
   TextArea as HeroUITextArea,
 } from '@heroui/react';
 
 /**
  * Form primitives of the design system, built on the HeroUI field
- * components. They render native input/select/textarea elements
- * underneath, so FormData + server actions keep working unchanged.
+ * components. They render native input/textarea elements underneath,
+ * so FormData + server actions keep working unchanged.
  */
+
+/** Field label text, consumed by non-native children (Select) as
+ * their accessible name. */
+export const FieldLabelContext = createContext<string | undefined>(undefined);
 
 export function Field({
   label,
@@ -43,7 +46,9 @@ export function Field({
         {label}
         {required ? <span className="ml-0.5 text-danger">*</span> : null}
       </span>
-      {children}
+      <FieldLabelContext.Provider value={label}>
+        {children}
+      </FieldLabelContext.Provider>
       {error ? (
         <span role="alert" className="block text-xs font-medium text-danger">
           {error}
@@ -70,26 +75,6 @@ export function TextInput({
 }: InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }) {
   return (
     <Input {...props} {...invalidProps(invalid)} fullWidth className={className} />
-  );
-}
-
-/** Native select with the HeroUI Input field treatment (there is no
- * HeroUI native select; its listbox Select would change the form
- * semantics, so only the styling is shared). */
-export function NativeSelect({
-  invalid,
-  className,
-  children,
-  ...props
-}: SelectHTMLAttributes<HTMLSelectElement> & { invalid?: boolean }) {
-  return (
-    <select
-      {...props}
-      {...invalidProps(invalid)}
-      className={cn(inputVariants({ fullWidth: true }), className)}
-    >
-      {children}
-    </select>
   );
 }
 

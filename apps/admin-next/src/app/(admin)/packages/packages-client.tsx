@@ -24,7 +24,7 @@ import {
   PageHeader,
   SearchInput,
   Field,
-  NativeSelect,
+  Select,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
@@ -82,19 +82,20 @@ export function PackagesClient({
   }
 
   const statusSelect = (row: PackageRow) => (
-    <select
+    <Select
       value={row.statusOfProcessing}
       onChange={(e) => handleStatusChange(row, e.target.value as PackageStatus)}
       disabled={updatingId === row.id}
       aria-label={`Estado del paquete ${row.numberOfTracking}`}
-      className={`cursor-pointer rounded-full px-2.5 py-1 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-60 ${STATUS_STYLES[row.statusOfProcessing]}`}
+      className="w-auto"
+      triggerClassName={`w-auto min-h-0 rounded-full border-0 px-2.5 py-1 font-medium shadow-none [&_[data-slot=select-value]]:text-xs ${STATUS_STYLES[row.statusOfProcessing]}`}
     >
       {PACKAGE_STATUSES.map((s) => (
         <option key={s} value={s}>
           {s}
         </option>
       ))}
-    </select>
+    </Select>
   );
 
   const rowActions = (row: PackageRow) => (
@@ -176,7 +177,7 @@ export function PackagesClient({
           onClear={() => setParam('status', null)}
         >
           <Field label="Estado">
-            <NativeSelect
+            <Select
               value={initialStatus ?? ''}
               onChange={(e) => setParam('status', e.target.value || null)}
             >
@@ -186,7 +187,7 @@ export function PackagesClient({
                   {s}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
         </FilterPopover>
       </div>

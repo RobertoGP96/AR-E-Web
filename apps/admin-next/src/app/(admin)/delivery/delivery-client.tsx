@@ -29,7 +29,7 @@ import {
   PageHeader,
   SearchInput,
   Field,
-  NativeSelect,
+  Select,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
@@ -177,7 +177,7 @@ export function DeliveryClient({
           onClear={() => setParam('status', null)}
         >
           <Field label="Estado">
-            <NativeSelect
+            <Select
               value={initialFilters.status ?? ''}
               onChange={(e) => setParam('status', e.target.value || null)}
             >
@@ -187,7 +187,7 @@ export function DeliveryClient({
                   {s}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
         </FilterPopover>
       </div>

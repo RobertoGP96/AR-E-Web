@@ -12,7 +12,7 @@ import {
   type TagType,
 } from './schema';
 import { formatCurrency } from '@/lib/format';
-import { AppModal, Field, TextInput, NativeSelect } from '@/components/ui';
+import { AppModal, Field, TextInput, Select } from '@/components/ui';
 
 interface DraftTag {
   key: string;
@@ -228,7 +228,7 @@ export function InvoiceDialog({
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <label className="block space-y-1">
                     <span className="text-xs font-medium text-muted">Tipo</span>
-                    <NativeSelect
+                    <Select
                       value={tag.type}
                       onChange={(e) =>
                         updateTag(tag.key, {
@@ -241,7 +241,7 @@ export function InvoiceDialog({
                           {TAG_TYPE_LABELS[t]}
                         </option>
                       ))}
-                    </NativeSelect>
+                    </Select>
                   </label>
 
                   {tag.type === 'pesaje' ? (

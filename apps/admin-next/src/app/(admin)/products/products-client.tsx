@@ -15,7 +15,7 @@ import {
   Truck,
   DollarSign,
 } from 'lucide-react';
-import { Button, Popover, Tooltip } from '@heroui/react';
+import { Button, Checkbox, Label, Popover, Tooltip } from '@heroui/react';
 import { formatCurrency } from '@/lib/format';
 import { ProductStatusBadge } from '@/components/status-badges';
 import { QRLink } from '@/components/qr-link';
@@ -24,7 +24,7 @@ import {
   PageHeader,
   SearchInput,
   Field,
-  NativeSelect,
+  Select,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
@@ -121,20 +121,24 @@ function ColumnsSelector({
           <ul className="mt-3 space-y-2">
             {COLUMNS.map((col) => (
               <li key={col.key}>
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={visible.has(col.key)}
-                    onChange={(e) => {
-                      const next = new Set(visible);
-                      if (e.target.checked) next.add(col.key);
-                      else next.delete(col.key);
-                      onChange(next);
-                    }}
-                    className="h-4 w-4 accent-accent"
-                  />
-                  {col.label}
-                </label>
+                <Checkbox
+                  isSelected={visible.has(col.key)}
+                  onChange={(checked) => {
+                    const next = new Set(visible);
+                    if (checked) next.add(col.key);
+                    else next.delete(col.key);
+                    onChange(next);
+                  }}
+                >
+                  <Checkbox.Content>
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <Label className="text-sm text-foreground">
+                      {col.label}
+                    </Label>
+                  </Checkbox.Content>
+                </Checkbox>
               </li>
             ))}
           </ul>
@@ -348,7 +352,7 @@ export function ProductsClient({
           }}
         >
           <Field label="Estado">
-            <NativeSelect
+            <Select
               value={initialFilters.status ?? ''}
               onChange={(e) => setParam('status', e.target.value || null)}
             >
@@ -358,10 +362,10 @@ export function ProductsClient({
                   {s}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
           <Field label="Tienda">
-            <NativeSelect
+            <Select
               value={initialFilters.shop ?? ''}
               onChange={(e) => setParam('shop', e.target.value || null)}
             >
@@ -371,7 +375,7 @@ export function ProductsClient({
                   {s.label}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
         </FilterPopover>
         <div className="hidden md:block">

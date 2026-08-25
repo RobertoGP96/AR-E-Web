@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { Alert, Button, Input, Spinner } from '@heroui/react';
+import { Alert, Button, Checkbox, Input, Label, Spinner } from '@heroui/react';
 import { AtSign, Lock, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
 
 interface LoginFormProps {
@@ -141,14 +141,17 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
           </div>
         </div>
 
-        <label className="animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards delay-200 duration-500 flex w-fit cursor-pointer items-center gap-2 text-sm text-muted">
-          <input
-            type="checkbox"
-            name="remember"
-            className="h-4 w-4 cursor-pointer rounded border-border accent-[var(--accent)] focus-visible:ring-2 focus-visible:ring-accent/40"
-          />
-          Recordarme
-        </label>
+        <Checkbox
+          name="remember"
+          className="animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards delay-200 duration-500 w-fit"
+        >
+          <Checkbox.Content>
+            <Checkbox.Control>
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            <Label className="text-sm text-muted">Recordarme</Label>
+          </Checkbox.Content>
+        </Checkbox>
 
         {error ? (
           <Alert

@@ -3,11 +3,11 @@ export { ConfirmModal } from './confirm-modal';
 export {
   Field,
   TextInput,
-  NativeSelect,
   TextArea,
   SubmitButton,
   FormError,
 } from './form';
+export { Select } from './select';
 export { PageHeader } from './page-header';
 export { StatCard, type StatTone } from './stat-card';
 export {

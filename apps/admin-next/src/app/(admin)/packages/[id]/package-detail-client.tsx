@@ -27,7 +27,7 @@ import {
   StatCard,
   ConfirmModal,
   Field,
-  NativeSelect,
+  Select,
   TextInput,
   ResponsiveTable,
   MobileCard,
@@ -204,7 +204,7 @@ export function PackageDetailClient({
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
               <Field label="Producto" className="flex-1">
-                <NativeSelect
+                <Select
                   value={productId}
                   onChange={(e) => {
                     setProductId(e.target.value);
@@ -218,7 +218,7 @@ export function PackageDetailClient({
                       {c.remaining === 1 ? '' : 's'})
                     </option>
                   ))}
-                </NativeSelect>
+                </Select>
               </Field>
               <Field
                 label="Cantidad"

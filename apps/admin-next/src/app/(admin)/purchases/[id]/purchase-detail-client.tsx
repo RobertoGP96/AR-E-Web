@@ -26,7 +26,7 @@ import {
   AppModal,
   ConfirmModal,
   Field,
-  NativeSelect,
+  Select,
   TextInput,
   TextArea,
   StatCard,
@@ -213,7 +213,7 @@ export function PurchaseDetailClient({
         ) : (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <Field label="Producto" className="flex-1">
-              <NativeSelect
+              <Select
                 value={productId}
                 onChange={(e) => setProductId(e.target.value)}
               >
@@ -224,7 +224,7 @@ export function PurchaseDetailClient({
                     {c.pending > 0 ? ` (${c.pending} pendientes)` : ''}
                   </option>
                 ))}
-              </NativeSelect>
+              </Select>
             </Field>
             <Field label="Cantidad" className="sm:w-28">
               <TextInput

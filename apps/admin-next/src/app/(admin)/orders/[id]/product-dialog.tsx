@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { PackagePlus } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@heroui/react';
+import { Button, Checkbox, Label } from '@heroui/react';
 import {
   createProductAction,
   updateProductAction,
@@ -14,7 +14,7 @@ import { formatCurrency } from '@/lib/format';
 import {
   AppModal,
   Field,
-  NativeSelect,
+  Select,
   TextInput,
   SubmitButton,
 } from '@/components/ui';
@@ -117,7 +117,7 @@ export function ProductDialog({
             />
           </Field>
           <Field label="Tienda" required error={errors['shopId']}>
-            <NativeSelect
+            <Select
               name="shopId"
               defaultValue={product?.shopId ?? ''}
               required
@@ -133,13 +133,13 @@ export function ProductDialog({
                   {s.label}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Categoría (opcional)">
-            <NativeSelect
+            <Select
               name="categoryId"
               defaultValue={product?.categoryId ?? ''}
             >
@@ -149,7 +149,7 @@ export function ProductDialog({
                   {c.label}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
           <Field label="Enlace (opcional)">
             <TextInput name="link" type="url" defaultValue={product?.link ?? ''} />
@@ -216,16 +216,21 @@ export function ProductDialog({
           </Field>
         </div>
 
-        <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:bg-surface-hover">
-          <input
-            type="checkbox"
-            name="chargeIva"
-            checked={chargeIva}
-            onChange={(e) => setChargeIva(e.target.checked)}
-            className="h-4 w-4 accent-accent"
-          />
-          <span className="font-medium text-foreground">Aplicar 7% de IVA</span>
-        </label>
+        <Checkbox
+          name="chargeIva"
+          isSelected={chargeIva}
+          onChange={setChargeIva}
+          className="w-fit rounded-lg border border-border px-3 py-2 transition-colors hover:bg-surface-hover"
+        >
+          <Checkbox.Content>
+            <Checkbox.Control>
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            <Label className="text-sm font-medium text-foreground">
+              Aplicar 7% de IVA
+            </Label>
+          </Checkbox.Content>
+        </Checkbox>
 
         <div className="rounded-xl border border-accent/25 bg-accent-soft/40 p-3 text-sm">
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted">

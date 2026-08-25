@@ -12,7 +12,7 @@ import {
 import {
   AppModal,
   Field,
-  NativeSelect,
+  Select,
   TextInput,
   TextArea,
   SubmitButton,
@@ -77,7 +77,7 @@ export function OrderDialog({
         ) : null}
 
         <Field label="Cliente" required error={errors['clientId']}>
-          <NativeSelect
+          <Select
             name="clientId"
             defaultValue={order?.clientId ?? ''}
             required
@@ -89,11 +89,11 @@ export function OrderDialog({
                 {o.label}
               </option>
             ))}
-          </NativeSelect>
+          </Select>
         </Field>
 
         <Field label="Gestor de venta (opcional)">
-          <NativeSelect
+          <Select
             name="salesManagerId"
             defaultValue={order?.salesManagerId ?? ''}
           >
@@ -103,17 +103,17 @@ export function OrderDialog({
                 {o.label}
               </option>
             ))}
-          </NativeSelect>
+          </Select>
         </Field>
 
         <Field label="Estado">
-          <NativeSelect name="status" defaultValue={order?.status ?? 'Encargado'}>
+          <Select name="status" defaultValue={order?.status ?? 'Encargado'}>
             {ORDER_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
             ))}
-          </NativeSelect>
+          </Select>
         </Field>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

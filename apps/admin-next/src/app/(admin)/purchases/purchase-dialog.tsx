@@ -12,7 +12,7 @@ import {
 import {
   AppModal,
   Field,
-  NativeSelect,
+  Select,
   TextInput,
   SubmitButton,
 } from '@/components/ui';
@@ -95,7 +95,7 @@ export function PurchaseDialog({
         ) : null}
 
         <Field label="Tienda" required error={errors['shopOfBuyId']}>
-          <NativeSelect
+          <Select
             name="shopOfBuyId"
             value={shopId}
             onChange={(e) => setShopId(e.target.value)}
@@ -108,7 +108,7 @@ export function PurchaseDialog({
                 {s.label}
               </option>
             ))}
-          </NativeSelect>
+          </Select>
         </Field>
 
         <Field
@@ -116,7 +116,7 @@ export function PurchaseDialog({
           required
           error={errors['shoppingAccountId']}
         >
-          <NativeSelect
+          <Select
             name="shoppingAccountId"
             defaultValue={purchase?.shoppingAccountId ?? ''}
             required
@@ -134,12 +134,12 @@ export function PurchaseDialog({
                 {a.label}
               </option>
             ))}
-          </NativeSelect>
+          </Select>
         </Field>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Estado de pago">
-            <NativeSelect
+            <Select
               name="statusOfShopping"
               defaultValue={purchase?.statusOfShopping ?? 'No pagado'}
             >
@@ -148,7 +148,7 @@ export function PurchaseDialog({
                   {s}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
           <Field label="Fecha de compra" required error={errors['buyDate']}>
             <TextInput

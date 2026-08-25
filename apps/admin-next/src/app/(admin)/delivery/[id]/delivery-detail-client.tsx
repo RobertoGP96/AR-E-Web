@@ -28,7 +28,7 @@ import {
 import {
   StatCard,
   Field,
-  NativeSelect,
+  Select,
   TextInput,
   ResponsiveTable,
   MobileCard,
@@ -198,7 +198,7 @@ export function DeliveryDetailClient({
         ) : (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <Field label="Producto" className="flex-1">
-              <NativeSelect
+              <Select
                 value={productId}
                 onChange={(e) => {
                   setProductId(e.target.value);
@@ -211,7 +211,7 @@ export function DeliveryDetailClient({
                     {c.name} ({c.remaining} disponibles)
                   </option>
                 ))}
-              </NativeSelect>
+              </Select>
             </Field>
             <Field label="Cantidad" className="sm:w-28">
               <TextInput

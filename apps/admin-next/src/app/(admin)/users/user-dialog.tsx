@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { UserRound } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@heroui/react';
+import { Button, Checkbox, Label } from '@heroui/react';
 import {
   createUserAction,
   updateUserAction,
@@ -12,7 +12,7 @@ import {
 import {
   AppModal,
   Field,
-  NativeSelect,
+  Select,
   TextInput,
   SubmitButton,
 } from '@/components/ui';
@@ -158,7 +158,7 @@ export function UserDialog({
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Rol">
-            <NativeSelect
+            <Select
               name="role"
               value={role}
               onChange={(e) => setRole(e.target.value as UserRole)}
@@ -168,7 +168,7 @@ export function UserDialog({
                   {ROLE_LABELS[r] ?? r}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
 
           {role === 'agent' ? (
@@ -193,7 +193,7 @@ export function UserDialog({
 
         {role !== 'agent' ? (
           <Field label="Agente asignado">
-            <NativeSelect
+            <Select
               name="assignedAgentId"
               defaultValue={user?.assignedAgentId ?? ''}
             >
@@ -203,7 +203,7 @@ export function UserDialog({
                   {a.label} ({ROLE_LABELS[a.role] ?? a.role})
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
         ) : (
           <input type="hidden" name="assignedAgentId" value="" />
@@ -225,15 +225,20 @@ export function UserDialog({
               />
             </div>
           </Field>
-          <label className="flex w-fit cursor-pointer items-center gap-2 self-end rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:bg-default">
-            <input
-              type="checkbox"
-              name="isActive"
-              defaultChecked={user ? user.isActive : true}
-              className="h-4 w-4 accent-accent"
-            />
-            <span className="font-medium text-foreground">Activo</span>
-          </label>
+          <Checkbox
+            name="isActive"
+            defaultSelected={user ? user.isActive : true}
+            className="w-fit self-end rounded-lg border border-border px-3 py-2 transition-colors hover:bg-default"
+          >
+            <Checkbox.Content>
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Label className="text-sm font-medium text-foreground">
+                Activo
+              </Label>
+            </Checkbox.Content>
+          </Checkbox>
         </div>
 
         <div className="flex justify-end gap-2 pt-2">

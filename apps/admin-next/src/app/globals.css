@@ -252,16 +252,6 @@ body {
     color: color-mix(in oklab, var(--foreground) 78%, transparent);
   }
 
-  /* NativeSelect: a native <select> wearing HeroUI's .input classes
-     (FormData + server actions submit unchanged). Add the chevron the
-     native element loses with appearance: none. */
-  select.input {
-    appearance: none;
-    padding-right: 2.25rem;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23777' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.65rem center;
-  }
 
   /* Standard data table look */
   .data-table {

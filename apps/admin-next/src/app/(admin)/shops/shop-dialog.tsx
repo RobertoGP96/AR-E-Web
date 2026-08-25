@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef } from 'react';
 import { Store } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@heroui/react';
+import { Button, Checkbox, Label } from '@heroui/react';
 import {
   createShopAction,
   updateShopAction,
@@ -117,15 +117,20 @@ export function ShopDialog({
           </div>
         </Field>
 
-        <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:bg-surface-hover">
-          <input
-            type="checkbox"
-            name="isActive"
-            defaultChecked={isActiveDefault}
-            className="h-4 w-4 accent-accent"
-          />
-          <span className="font-medium text-foreground">Tienda activa</span>
-        </label>
+        <Checkbox
+          name="isActive"
+          defaultSelected={isActiveDefault}
+          className="w-fit rounded-lg border border-border px-3 py-2 transition-colors hover:bg-surface-hover"
+        >
+          <Checkbox.Content>
+            <Checkbox.Control>
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            <Label className="text-sm font-medium text-foreground">
+              Tienda activa
+            </Label>
+          </Checkbox.Content>
+        </Checkbox>
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="tertiary" onPress={onClose}>

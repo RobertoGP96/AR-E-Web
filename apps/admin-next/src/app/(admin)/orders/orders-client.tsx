@@ -26,7 +26,7 @@ import {
   PageHeader,
   SearchInput,
   Field,
-  NativeSelect,
+  Select,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
@@ -196,7 +196,7 @@ export function OrdersClient({
           }}
         >
           <Field label="Estado">
-            <NativeSelect
+            <Select
               value={initialFilters.status ?? ''}
               onChange={(e) => setParam('status', e.target.value || null)}
             >
@@ -206,10 +206,10 @@ export function OrdersClient({
                   {s}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
           <Field label="Tipo de pago">
-            <NativeSelect
+            <Select
               value={initialFilters.pay ?? ''}
               onChange={(e) => setParam('pay', e.target.value || null)}
             >
@@ -219,7 +219,7 @@ export function OrdersClient({
                   {s}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
         </FilterPopover>
       </div>

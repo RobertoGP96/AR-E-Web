@@ -24,7 +24,7 @@ import { FilterPopover } from '@/components/filter-popover';
 import {
   PageHeader,
   Field,
-  NativeSelect,
+  Select,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
@@ -138,7 +138,7 @@ export function PurchasesClient({
           onClear={() => setStatus(null)}
         >
           <Field label="Estado de pago">
-            <NativeSelect
+            <Select
               value={initialStatus ?? ''}
               onChange={(e) => setStatus(e.target.value || null)}
             >
@@ -148,7 +148,7 @@ export function PurchasesClient({
                   {s}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
         </FilterPopover>
       </div>

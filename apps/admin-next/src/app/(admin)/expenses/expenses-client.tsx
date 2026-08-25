@@ -28,7 +28,7 @@ import {
   PageHeader,
   SearchInput,
   Field,
-  NativeSelect,
+  Select,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
@@ -169,7 +169,7 @@ export function ExpensesClient({
           onClear={() => setParam('category', null)}
         >
           <Field label="Categoría">
-            <NativeSelect
+            <Select
               value={initialCategory ?? ''}
               onChange={(e) => setParam('category', e.target.value || null)}
             >
@@ -179,7 +179,7 @@ export function ExpensesClient({
                   {c}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
         </FilterPopover>
         <div className="flex items-center justify-between gap-3 rounded-xl border border-accent/25 bg-accent-soft/40 px-3 py-1.5 lg:ml-auto">

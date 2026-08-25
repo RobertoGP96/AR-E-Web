@@ -12,7 +12,7 @@ import {
 import {
   AppModal,
   Field,
-  NativeSelect,
+  Select,
   TextInput,
   TextArea,
   SubmitButton,
@@ -108,7 +108,7 @@ export function ExpenseDialog({
         </div>
 
         <Field label="Categoría" required error={errors['category']}>
-          <NativeSelect
+          <Select
             name="category"
             defaultValue={expense?.category ?? 'Operativo'}
             required
@@ -119,7 +119,7 @@ export function ExpenseDialog({
                 {c}
               </option>
             ))}
-          </NativeSelect>
+          </Select>
         </Field>
 
         <Field label="Descripción (opcional)" error={errors['description']}>

@@ -13,7 +13,7 @@ import { ImageUploadField } from '@/components/image-upload-field';
 import {
   AppModal,
   Field,
-  NativeSelect,
+  Select,
   TextInput,
   SubmitButton,
 } from '@/components/ui';
@@ -109,7 +109,7 @@ export function PackageDialog({
         </Field>
 
         <Field label="Estado" error={errors['statusOfProcessing']}>
-          <NativeSelect
+          <Select
             name="statusOfProcessing"
             defaultValue={pkg?.statusOfProcessing ?? 'Enviado'}
             required
@@ -120,7 +120,7 @@ export function PackageDialog({
                 {s}
               </option>
             ))}
-          </NativeSelect>
+          </Select>
         </Field>
 
         <Field label="Fecha de llegada" required error={errors['arrivalDate']}>

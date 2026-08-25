@@ -5,7 +5,7 @@ import { User, Wallet } from 'lucide-react';
 import { Button, Spinner } from '@heroui/react';
 import { formatCurrency } from '@/lib/format';
 import { AppModal } from '@/components/ui/app-modal';
-import { Field, TextInput, NativeSelect, FormError } from '@/components/ui/form';
+import { Field, TextInput, Select, FormError } from '@/components/ui';
 
 export interface PaymentSubmitResult {
   ok: boolean;
@@ -170,7 +170,7 @@ export function PaymentPanel({
         </button>
 
         <Field label="Estado de pago">
-          <NativeSelect
+          <Select
             value={manualPaid ? 'manual' : 'auto'}
             onChange={(e) => setManualPaid(e.target.value === 'manual')}
           >
@@ -184,7 +184,7 @@ export function PaymentPanel({
               )
             </option>
             <option value="manual">✓ Marcar manualmente como Pagado</option>
-          </NativeSelect>
+          </Select>
         </Field>
 
         <div className="space-y-2 rounded-lg border border-border bg-background p-3 text-sm">

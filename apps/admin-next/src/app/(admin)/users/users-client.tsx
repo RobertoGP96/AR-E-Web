@@ -30,7 +30,7 @@ import {
   PageHeader,
   SearchInput,
   Field,
-  NativeSelect,
+  Select,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
@@ -300,7 +300,7 @@ export function UsersClient({
           }}
         >
           <Field label="Rol">
-            <NativeSelect
+            <Select
               value={initialFilters.role ?? ''}
               onChange={(e) => setParam('role', e.target.value || null)}
             >
@@ -310,10 +310,10 @@ export function UsersClient({
                   {ROLE_LABELS[r] ?? r}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           </Field>
           <Field label="Estado">
-            <NativeSelect
+            <Select
               value={
                 initialFilters.active === null
                   ? ''
@@ -326,10 +326,10 @@ export function UsersClient({
               <option value="">Todos</option>
               <option value="true">Solo activos</option>
               <option value="false">Solo inactivos</option>
-            </NativeSelect>
+            </Select>
           </Field>
           <Field label="Verificación">
-            <NativeSelect
+            <Select
               value={
                 initialFilters.verified === null
                   ? ''
@@ -342,7 +342,7 @@ export function UsersClient({
               <option value="">Todos</option>
               <option value="true">Solo verificados</option>
               <option value="false">Solo no verificados</option>
-            </NativeSelect>
+            </Select>
           </Field>
         </FilterPopover>
       </div>
