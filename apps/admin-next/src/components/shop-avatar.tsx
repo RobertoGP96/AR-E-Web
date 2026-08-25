@@ -3,7 +3,7 @@ import { Store } from 'lucide-react';
 import { getShopLogo } from '@/lib/shop-logos';
 
 const SIZES = {
-  sm: { box: 'h-8 w-8 rounded-lg p-1.5', icon: 'h-4 w-4', px: 20 },
+  sm: { box: 'h-9 w-9 rounded-lg p-1.5', icon: 'h-4.5 w-4.5', px: 24 },
   md: { box: 'h-10 w-10 rounded-xl p-2', icon: 'h-5 w-5', px: 24 },
 } as const;
 
