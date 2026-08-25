@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
     // React <ViewTransition> on route navigations — used by
     // app/(admin)/template.tsx for the page enter/exit animation.
     viewTransition: true,
+    // /import sube libros .xlsx (~0.5 MB) y devuelve el payload de
+    // confirmación como JSON; el límite por defecto es 1 MB.
+    serverActions: {
+      bodySizeLimit: '8mb',
+    },
   },
 
   // Use native require for these on the server instead of bundling them
@@ -19,6 +24,7 @@ const nextConfig: NextConfig = {
     '@prisma/adapter-neon',
     '@neondatabase/serverless',
     'ws',
+    'exceljs',
   ],
 
   images: {

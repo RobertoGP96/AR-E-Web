@@ -9,6 +9,7 @@ const ROUTE_ROLES: Record<string, readonly string[]> = {
   dashboard: STAFF_ROLES,
   users: ROLES.users,
   shops: ROLES.shops,
+  import: ['admin'],
   categories: ROLES.categories,
   purchases: ROLES.purchases,
   orders: ROLES.orders,

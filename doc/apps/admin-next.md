@@ -152,6 +152,7 @@ Grupos: `(auth)` para login (sin shell), `(admin)` para el panel (con sidebar/he
 | `/analytics` | `src/app/(admin)/analytics/page.tsx` + `analytics-charts.tsx` | Reportes de 12 meses (Recharts) | admin, accountant |
 | `/settings` | `src/app/(admin)/settings/page.tsx` + `settings-form.tsx` | CommonInformation (tasa de cambio, costo/lb) | staff (edita admin/accountant) |
 | `/profile` | `src/app/(admin)/profile/page.tsx` + `profile-forms.tsx` | Perfil propio + cambio de contraseña | staff |
+| `/import` | `src/app/(admin)/import/page.tsx` + `import-client.tsx` | Importación de embarques desde Excel "AR&E Shipps #NNN" (subir → previsualizar/omitir → importar). Parser/mapeador en `src/lib/excel-import/` (exceljs); actions `analyzeExcelAction`/`runImportAction` (transacción única: shops, cuentas, agentes, clientes con teléfono placeholder `imp-…`, órdenes por cliente, productos, ShoppingReceip por fila "Factura" con coste real, paquetes por tracking, recepciones si hay F. llegada, gastos de la hoja General). Tarifas de tienda replicadas del Excel: Shein 7 % IVA, Amazon +1 %, Temu +3 %, Otras +5 %. Scripts de diagnóstico: `scripts/inspect-import.ts` y `scripts/dry-run-import.ts` (npx tsx). | admin |
 | `/api/auth/[...nextauth]` | `src/app/api/auth/[...nextauth]/route.ts` | Endpoints Auth.js | — |
 | `manifest.webmanifest` | `src/app/manifest.ts` | PWA manifest (standalone, theme `#e8772e`) | Pública |
 | error / not-found | `src/app/error.tsx`, `src/app/not-found.tsx`, `src/app/(admin)/not-found.tsx` | Estados de error 500/404 | — |

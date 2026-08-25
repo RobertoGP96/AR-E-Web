@@ -20,6 +20,7 @@ import {
   Receipt,
   Coins,
   ChevronRight,
+  FileSpreadsheet,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -41,6 +42,7 @@ const ROUTE_NAMES: Record<string, string> = {
   '/analytics': 'Análisis',
   '/balance': 'Balance',
   '/client-balances': 'Balance de Clientes',
+  '/import': 'Importar Excel',
 };
 
 const ROUTE_ICONS: Record<string, LucideIcon> = {
@@ -59,6 +61,7 @@ const ROUTE_ICONS: Record<string, LucideIcon> = {
   '/analytics': ChartColumn,
   '/balance': Receipt,
   '/client-balances': Coins,
+  '/import': FileSpreadsheet,
 };
 
 const DETAIL_NAMES: Record<string, string> = {
