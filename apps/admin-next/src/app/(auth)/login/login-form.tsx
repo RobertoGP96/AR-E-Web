@@ -4,17 +4,8 @@ import Image from 'next/image';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { Button } from '@heroui/react';
-import {
-  AtSign,
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  Loader2,
-  Check,
-  AlertCircle,
-} from 'lucide-react';
+import { Alert, Button, Input, Spinner } from '@heroui/react';
+import { AtSign, Lock, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
 
 interface LoginFormProps {
   nextPath: string;
@@ -91,7 +82,7 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
               className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
               aria-hidden
             />
-            <input
+            <Input
               id="identifier"
               name="identifier"
               type="text"
@@ -100,7 +91,8 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               placeholder="tu@email.com o +53..."
-              className="field-input h-12 rounded-xl pl-11 pr-10 text-base"
+              fullWidth
+              className="h-12 rounded-xl pl-11 pr-10 text-base"
             />
             {identifierValid ? (
               <Check
@@ -120,7 +112,7 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
               className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
               aria-hidden
             />
-            <input
+            <Input
               id="password"
               name="password"
               type={showPassword ? 'text' : 'password'}
@@ -129,7 +121,8 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="field-input h-12 rounded-xl pl-11 pr-11 text-base"
+              fullWidth
+              className="h-12 rounded-xl pl-11 pr-11 text-base"
             />
             <button
               type="button"
@@ -158,14 +151,17 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
         </label>
 
         {error ? (
-          <div
+          <Alert
+            status="danger"
             role="alert"
             aria-live="assertive"
-            className="animate-in fade-in slide-in-from-top-1 duration-300 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-sm font-medium text-danger-soft-foreground"
+            className="animate-in fade-in slide-in-from-top-1 duration-300 items-center gap-2.5 rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-2.5 shadow-none"
           >
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <span>{error}</span>
-          </div>
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>{error}</Alert.Title>
+            </Alert.Content>
+          </Alert>
         ) : null}
 
         <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards delay-300 duration-500">
@@ -179,7 +175,7 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
           >
             {busy ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                <Spinner size="sm" aria-hidden />
                 Iniciando sesión...
               </>
             ) : (

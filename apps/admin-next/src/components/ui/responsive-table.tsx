@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Card, EmptyState } from '@heroui/react';
 
 /**
  * Standard responsive data view: a real table inside a scrollable
@@ -25,9 +26,10 @@ export function ResponsiveTable({
 }
 
 /**
- * Mobile representation of a table row: orange-edged card with title,
- * badges, labelled rows and an actions strip — the app-wide mobile
- * pattern (heir of the Vite admin's MobileDataCard).
+ * Mobile representation of a table row (HeroUI Card + surface-card
+ * identity): orange-edged card with title, badges, labelled rows and
+ * an actions strip — the app-wide mobile pattern (heir of the Vite
+ * admin's MobileDataCard).
  */
 export function MobileCard({
   title,
@@ -47,9 +49,9 @@ export function MobileCard({
   onClick?: () => void;
 }) {
   return (
-    <div
+    <Card
       onClick={onClick}
-      className={`surface-card border-l-4 border-l-accent p-4 transition-shadow ${
+      className={`surface-card gap-0 border-l-4 border-l-accent transition-shadow ${
         onClick ? 'cursor-pointer active:scale-[0.995] hover:shadow-md' : ''
       }`}
     >
@@ -102,11 +104,11 @@ export function MobileCard({
           {actions}
         </div>
       ) : null}
-    </div>
+    </Card>
   );
 }
 
-/** Standard table empty message (spans all columns). */
+/** Standard table empty message (HeroUI EmptyState, spans all columns). */
 export function TableEmpty({
   colSpan,
   icon: Icon,
@@ -119,14 +121,14 @@ export function TableEmpty({
   return (
     <tr>
       <td colSpan={colSpan}>
-        <div className="flex flex-col items-center gap-2 py-10 text-center">
+        <EmptyState className="flex flex-col items-center gap-2 px-2 py-10 text-center">
           {Icon ? (
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-default text-muted">
               <Icon className="h-5 w-5" aria-hidden />
             </span>
           ) : null}
-          <p className="text-sm text-muted">{message}</p>
-        </div>
+          <p>{message}</p>
+        </EmptyState>
       </td>
     </tr>
   );

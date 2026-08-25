@@ -2,12 +2,12 @@
 
 import type { ReactNode } from 'react';
 import { useState, useTransition } from 'react';
-import { Button, Modal } from '@heroui/react';
-import { Loader2, TriangleAlert } from 'lucide-react';
+import { AlertDialog, Button, Spinner } from '@heroui/react';
 
 /**
- * Destructive/irreversible action confirmation. Runs `onConfirm` in a
- * transition; shows the returned error inline instead of closing.
+ * Destructive/irreversible action confirmation (HeroUI AlertDialog).
+ * Runs `onConfirm` in a transition; shows the returned error inline
+ * instead of closing.
  */
 export function ConfirmModal({
   isOpen,
@@ -42,7 +42,7 @@ export function ConfirmModal({
   }
 
   return (
-    <Modal.Backdrop
+    <AlertDialog.Backdrop
       isOpen={isOpen}
       onOpenChange={(open) => {
         if (!open && !isPending) {
@@ -50,35 +50,31 @@ export function ConfirmModal({
           onClose();
         }
       }}
+      isDismissable={!isPending}
+      isKeyboardDismissDisabled={isPending}
     >
-      <Modal.Container size="sm" placement="auto">
-        <Modal.Dialog>
-          <Modal.Header>
-            <Modal.Icon
-              className={
-                tone === 'danger'
-                  ? 'bg-danger-soft text-danger-soft-foreground'
-                  : 'bg-accent-soft text-accent-soft-foreground'
-              }
-            >
-              <TriangleAlert className="h-5 w-5" aria-hidden />
-            </Modal.Icon>
-            <Modal.Heading>{title}</Modal.Heading>
+      <AlertDialog.Container size="sm" placement="auto">
+        <AlertDialog.Dialog>
+          <AlertDialog.Header>
+            <AlertDialog.Icon
+              status={tone === 'danger' ? 'danger' : 'accent'}
+            />
+            <AlertDialog.Heading>{title}</AlertDialog.Heading>
             {description ? (
               <p className="text-sm text-muted">{description}</p>
             ) : null}
-          </Modal.Header>
+          </AlertDialog.Header>
           {error ? (
-            <Modal.Body>
+            <AlertDialog.Body>
               <p
                 role="alert"
                 className="rounded-lg bg-danger-soft px-3 py-2 text-sm font-medium text-danger-soft-foreground"
               >
                 {error}
               </p>
-            </Modal.Body>
+            </AlertDialog.Body>
           ) : null}
-          <Modal.Footer>
+          <AlertDialog.Footer>
             <Button
               variant="tertiary"
               onPress={() => {
@@ -96,16 +92,16 @@ export function ConfirmModal({
             >
               {isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  <Spinner size="sm" aria-hidden />
                   Procesando…
                 </>
               ) : (
                 confirmLabel
               )}
             </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
-      </Modal.Container>
-    </Modal.Backdrop>
+          </AlertDialog.Footer>
+        </AlertDialog.Dialog>
+      </AlertDialog.Container>
+    </AlertDialog.Backdrop>
   );
 }

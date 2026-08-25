@@ -4,6 +4,7 @@ import { useTransition } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Pagination } from '@heroui/react';
 
+import { NativeSelect } from '@/components/ui';
 import { PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 
 /**
@@ -71,10 +72,10 @@ export function TablePagination({
     <div className="mt-4 flex flex-col items-center justify-between gap-4 px-2 sm:flex-row">
       <div className="flex items-center gap-2 text-sm text-muted">
         <span>Mostrar</span>
-        <select
+        <NativeSelect
           value={perPage}
           onChange={(e) => apply(1, Number(e.target.value))}
-          className="field-input h-8 w-[74px] px-2 py-1"
+          className="h-8 w-[74px] px-2 py-1"
           aria-label="Filas por página"
         >
           {PAGE_SIZE_OPTIONS.map((n) => (
@@ -82,7 +83,7 @@ export function TablePagination({
               {n}
             </option>
           ))}
-        </select>
+        </NativeSelect>
         <span>filas de {total}</span>
       </div>
 

@@ -12,10 +12,9 @@ import {
   CreditCard,
   ShoppingBag,
   PackageSearch,
-  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Tooltip, Chip } from '@heroui/react';
+import { Button, Tooltip, Chip, Spinner } from '@heroui/react';
 import {
   addBuyedProductAction,
   removeBuyedProductAction,
@@ -518,7 +517,7 @@ function RefundDialog({
           >
             {isPending ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                <Spinner size="sm" aria-hidden />
                 Guardando…
               </>
             ) : (
