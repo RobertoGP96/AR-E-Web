@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
   // serverless bundle includes workspace-hoisted dependencies.
   outputFileTracingRoot: path.join(__dirname, '../../'),
 
+  experimental: {
+    // React <ViewTransition> on route navigations — used by
+    // app/(admin)/template.tsx for the page enter/exit animation.
+    viewTransition: true,
+  },
+
   // Use native require for these on the server instead of bundling them
   // (Prisma engine, Neon driver, ws all use Node.js native features).
   serverExternalPackages: [

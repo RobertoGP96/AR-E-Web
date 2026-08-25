@@ -19,6 +19,7 @@ import { DeleteShopDialog } from './delete-dialog';
 import { AccountsDialog } from './accounts-dialog';
 import { toggleShopActiveAction } from './actions';
 import { formatDate } from '@/lib/format';
+import { ShopAvatar } from '@/components/shop-avatar';
 import {
   PageHeader,
   SearchInput,
@@ -185,7 +186,14 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
               ) : (
                 initialRows.map((row) => (
                   <tr key={row.id}>
-                    <td className="font-medium text-foreground">{row.name}</td>
+                    <td>
+                      <div className="flex items-center gap-2.5">
+                        <ShopAvatar name={row.name} />
+                        <span className="font-medium text-foreground">
+                          {row.name}
+                        </span>
+                      </div>
+                    </td>
                     <td>
                       <a
                         href={row.link}
@@ -222,6 +230,7 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
             initialRows.map((row) => (
               <MobileCard
                 key={row.id}
+                media={<ShopAvatar name={row.name} size="md" />}
                 title={row.name}
                 subtitle={
                   <a
