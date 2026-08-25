@@ -252,7 +252,6 @@ body {
     color: color-mix(in oklab, var(--foreground) 78%, transparent);
   }
 
-
   /* Standard data table look */
   .data-table {
     width: 100%;
