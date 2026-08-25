@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Plus, Trash2, FileText, Loader2 } from 'lucide-react';
+import { Plus, Trash2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Tooltip } from '@heroui/react';
+import { Button, Spinner, Tooltip } from '@heroui/react';
 import { createInvoiceAction, updateInvoiceAction } from './actions';
 import {
   TAG_TYPES,
@@ -158,7 +158,7 @@ export function InvoiceDialog({
           <Button variant="primary" onPress={submit} isDisabled={isPending}>
             {isPending ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                <Spinner size="sm" aria-hidden />
                 Guardando…
               </>
             ) : (

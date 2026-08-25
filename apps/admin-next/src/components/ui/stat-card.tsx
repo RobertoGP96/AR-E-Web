@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Card } from '@heroui/react';
 
 const TONES = {
   default: 'text-foreground bg-default',
@@ -12,8 +13,9 @@ const TONES = {
 export type StatTone = keyof typeof TONES;
 
 /**
- * Metric card: icon box + label + value, soft hover lift. Used by the
- * dashboard groups and the per-page stat strips.
+ * Metric card (HeroUI Card + surface-card identity): icon box + label
+ * + value, soft hover lift. Used by the dashboard groups and the
+ * per-page stat strips.
  */
 export function StatCard({
   icon: Icon,
@@ -31,8 +33,8 @@ export function StatCard({
   className?: string;
 }) {
   return (
-    <div
-      className={`surface-card group relative overflow-hidden p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${className ?? ''}`}
+    <Card
+      className={`surface-card group gap-0 overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${className ?? ''}`}
     >
       <div
         className={`pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full opacity-40 transition-transform duration-300 group-hover:scale-125 ${TONES[tone]}`}
@@ -54,6 +56,6 @@ export function StatCard({
           <Icon className="h-4.5 w-4.5" aria-hidden />
         </span>
       </div>
-    </div>
+    </Card>
   );
 }

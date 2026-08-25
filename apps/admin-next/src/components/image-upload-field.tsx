@@ -1,7 +1,8 @@
 'use client';
 
 import { useRef, useState, useTransition } from 'react';
-import { Loader2, Upload, X } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
+import { Spinner } from '@heroui/react';
 import { toast } from 'sonner';
 import { uploadImageAction } from '@/app/actions/upload';
 
@@ -71,7 +72,7 @@ export function ImageUploadField({
         >
           {isPending ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              <Spinner size="sm" aria-hidden />
               Subiendo…
             </>
           ) : (

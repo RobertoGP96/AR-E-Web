@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { Loader2, User, Wallet } from 'lucide-react';
-import { Button } from '@heroui/react';
+import { User, Wallet } from 'lucide-react';
+import { Button, Spinner } from '@heroui/react';
 import { formatCurrency } from '@/lib/format';
 import { AppModal } from '@/components/ui/app-modal';
 import { Field, TextInput, NativeSelect, FormError } from '@/components/ui/form';
@@ -100,7 +100,7 @@ export function PaymentPanel({
           >
             {isPending ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                <Spinner size="sm" aria-hidden />
                 Procesando…
               </>
             ) : (

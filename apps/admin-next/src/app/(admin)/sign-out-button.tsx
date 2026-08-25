@@ -2,8 +2,8 @@
 
 import { useTransition } from 'react';
 import { signOut } from 'next-auth/react';
-import { Loader2, LogOut } from 'lucide-react';
-import { Button, Tooltip } from '@heroui/react';
+import { LogOut } from 'lucide-react';
+import { Button, Spinner, Tooltip } from '@heroui/react';
 
 export function SignOutButton() {
   const [isPending, startTransition] = useTransition();
@@ -23,7 +23,7 @@ export function SignOutButton() {
         aria-label="Cerrar sesión"
       >
         {isPending ? (
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          <Spinner size="sm" aria-hidden />
         ) : (
           <LogOut className="h-4 w-4" aria-hidden />
         )}

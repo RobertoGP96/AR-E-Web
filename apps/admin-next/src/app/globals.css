@@ -243,9 +243,8 @@ body {
 /* App component classes (form fields, data tables, surfaces)        */
 /* ---------------------------------------------------------------- */
 @layer components {
-  /* Native form fields with the HeroUI field token treatment. Kept as
-     plain input/select/textarea so FormData + server actions submit
-     unchanged. */
+  /* Label text of the form Field primitive (the fields themselves are
+     the HeroUI Input/TextArea components). */
   .field-label {
     display: block;
     font-size: 0.8125rem;
@@ -253,53 +252,10 @@ body {
     color: color-mix(in oklab, var(--foreground) 78%, transparent);
   }
 
-  .field-input {
-    width: 100%;
-    border-radius: var(--field-radius);
-    border: var(--field-border-width) solid var(--field-border);
-    background: var(--field-background);
-    color: var(--field-foreground);
-    box-shadow: var(--field-shadow);
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    line-height: 1.35;
-    transition:
-      border-color 0.15s ease,
-      box-shadow 0.15s ease,
-      background-color 0.15s ease;
-  }
-
-  .field-input::placeholder {
-    color: var(--field-placeholder);
-  }
-
-  .field-input:hover:not(:disabled):not(:focus) {
-    border-color: var(--field-border-hover);
-  }
-
-  .field-input:focus,
-  .field-input:focus-visible {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 22%, transparent);
-  }
-
-  .field-input:disabled {
-    opacity: var(--disabled-opacity);
-    cursor: var(--cursor-disabled);
-  }
-
-  .field-input[aria-invalid='true'],
-  .field-input.field-invalid {
-    border-color: var(--danger);
-  }
-
-  .field-input[aria-invalid='true']:focus,
-  .field-input.field-invalid:focus {
-    box-shadow: 0 0 0 3px color-mix(in oklch, var(--danger) 20%, transparent);
-  }
-
-  select.field-input {
+  /* NativeSelect: a native <select> wearing HeroUI's .input classes
+     (FormData + server actions submit unchanged). Add the chevron the
+     native element loses with appearance: none. */
+  select.input {
     appearance: none;
     padding-right: 2.25rem;
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23777' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -389,5 +345,52 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .stagger-children > * {
     animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* View transitions — page navigation                                */
+/* ((admin)/template.tsx wraps each page in a <ViewTransition        */
+/* enter="page-enter" exit="page-exit">; these classes land on the   */
+/* browser's ::view-transition pseudo-elements.)                     */
+/* ---------------------------------------------------------------- */
+
+@keyframes ar-e-vt-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ar-e-vt-rise {
+  from {
+    transform: translateY(10px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Asymmetric timing: the old page leaves fast so it doesn't compete
+   for attention; the new one arrives a beat later, fading in while it
+   rises — same curve family as .stagger-children. */
+::view-transition-old(.page-exit) {
+  animation: 140ms cubic-bezier(0.4, 0, 1, 1) both ar-e-vt-fade reverse;
+}
+
+::view-transition-new(.page-enter) {
+  animation:
+    220ms cubic-bezier(0, 0, 0.2, 1) 90ms both ar-e-vt-fade,
+    340ms cubic-bezier(0.21, 0.9, 0.35, 1) both ar-e-vt-rise;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 }

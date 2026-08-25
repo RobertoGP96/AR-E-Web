@@ -6,14 +6,20 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react';
-import { Button } from '@heroui/react';
-import { Loader2 } from 'lucide-react';
+import {
+  Alert,
+  Button,
+  cn,
+  Input,
+  inputVariants,
+  Spinner,
+  TextArea as HeroUITextArea,
+} from '@heroui/react';
 
 /**
- * Form primitives of the design system. They stay native
- * (input/select/textarea) so FormData + server actions keep working
- * unchanged, but carry the HeroUI field treatment via the .field-*
- * classes defined in globals.css.
+ * Form primitives of the design system, built on the HeroUI field
+ * components. They render native input/select/textarea elements
+ * underneath, so FormData + server actions keep working unchanged.
  */
 
 export function Field({
@@ -49,20 +55,27 @@ export function Field({
   );
 }
 
+/** HeroUI styles key the invalid state off data-invalid; keep
+ * aria-invalid alongside for assistive tech. */
+function invalidProps(invalid?: boolean) {
+  return invalid
+    ? ({ 'aria-invalid': true, 'data-invalid': 'true' } as const)
+    : {};
+}
+
 export function TextInput({
   invalid,
   className,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }) {
   return (
-    <input
-      {...props}
-      aria-invalid={invalid || undefined}
-      className={`field-input ${className ?? ''}`}
-    />
+    <Input {...props} {...invalidProps(invalid)} fullWidth className={className} />
   );
 }
 
+/** Native select with the HeroUI Input field treatment (there is no
+ * HeroUI native select; its listbox Select would change the form
+ * semantics, so only the styling is shared). */
 export function NativeSelect({
   invalid,
   className,
@@ -72,8 +85,8 @@ export function NativeSelect({
   return (
     <select
       {...props}
-      aria-invalid={invalid || undefined}
-      className={`field-input ${className ?? ''}`}
+      {...invalidProps(invalid)}
+      className={cn(inputVariants({ fullWidth: true }), className)}
     >
       {children}
     </select>
@@ -86,10 +99,11 @@ export function TextArea({
   ...props
 }: TextareaHTMLAttributes<HTMLTextAreaElement> & { invalid?: boolean }) {
   return (
-    <textarea
+    <HeroUITextArea
       {...props}
-      aria-invalid={invalid || undefined}
-      className={`field-input min-h-20 ${className ?? ''}`}
+      {...invalidProps(invalid)}
+      fullWidth
+      className={cn('min-h-20', className)}
     />
   );
 }
@@ -115,7 +129,7 @@ export function SubmitButton({
     >
       {isPending ? (
         <>
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          <Spinner size="sm" aria-hidden />
           {pendingText}
         </>
       ) : (
@@ -125,15 +139,19 @@ export function SubmitButton({
   );
 }
 
-/** Inline form-level error banner. */
+/** Inline form-level error banner (HeroUI Alert). */
 export function FormError({ message }: { message?: string | null }) {
   if (!message) return null;
   return (
-    <div
+    <Alert
+      status="danger"
       role="alert"
-      className="animate-in fade-in slide-in-from-top-1 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm font-medium text-danger-soft-foreground"
+      className="animate-in fade-in slide-in-from-top-1 items-center gap-2.5 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 shadow-none"
     >
-      {message}
-    </div>
+      <Alert.Indicator />
+      <Alert.Content>
+        <Alert.Title>{message}</Alert.Title>
+      </Alert.Content>
+    </Alert>
   );
 }
