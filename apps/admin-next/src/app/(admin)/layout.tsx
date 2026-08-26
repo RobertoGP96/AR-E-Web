@@ -4,6 +4,7 @@ import { auth } from '@/auth';
 import { isStaff } from '@/lib/route-roles';
 import { SignOutButton } from './sign-out-button';
 import { MobileNav } from './mobile-nav';
+import { GlobalSearch } from './global-search';
 import { NotificationsBell } from './notifications-bell';
 import { AdminNav } from './admin-nav';
 import { Breadcrumbs } from './breadcrumbs';
@@ -62,12 +63,14 @@ export default async function AdminLayout({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="z-20 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/90 px-4 shadow-sm backdrop-blur-md sm:px-6">
+        {/* relative: anchors the mobile strip of GlobalSearch */}
+        <header className="relative z-20 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/90 px-4 shadow-sm backdrop-blur-md sm:px-6">
           <MobileNav role={role} />
           <div className="flex min-w-0 flex-1 items-center">
             <Breadcrumbs />
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
+            <GlobalSearch />
             <NotificationsBell />
             <SignOutButton />
           </div>
