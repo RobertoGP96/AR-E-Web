@@ -19,7 +19,6 @@ import {
   ReceiptText,
   BaggageClaim,
   CoinsIcon,
-  User,
   type LucideIcon,
 } from 'lucide-react';
 import { canAccessPath } from '@/lib/route-roles';
@@ -79,7 +78,6 @@ const NAV_GROUPS: NavGroup[] = [
 
 const BOTTOM_ITEMS: NavItem[] = [
   { name: 'Configuración', href: '/settings', icon: Settings },
-  { name: 'Perfil', href: '/profile', icon: User },
 ];
 
 export function AdminNav({

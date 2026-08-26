@@ -5,13 +5,24 @@ import Image from 'next/image';
 import { Menu } from 'lucide-react';
 import { Button, Drawer } from '@heroui/react';
 import { AdminNav } from './admin-nav';
+import { UserMenu } from './user-menu';
 
 /**
  * Mobile navigation: HeroUI drawer (animated slide-in, focus trap,
  * Escape/backdrop dismiss) hosting the same AdminNav as the desktop
- * sidebar, over the near-black brand surface.
+ * sidebar, over the near-black brand surface. The UserMenu footer
+ * mirrors the desktop sidebar — on mobile it is the only way to
+ * reach Perfil / Cerrar sesión.
  */
-export function MobileNav({ role }: { role: string }) {
+export function MobileNav({
+  role,
+  name,
+  email,
+}: {
+  role: string;
+  name: string;
+  email?: string | null;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -42,6 +53,9 @@ export function MobileNav({ role }: { role: string }) {
               <Drawer.CloseTrigger className="text-sidebar-foreground/80 hover:text-white" />
             </div>
             <AdminNav role={role} onNavigate={() => setOpen(false)} />
+            <div className="shrink-0 border-t border-sidebar-border p-3">
+              <UserMenu name={name} email={email} role={role} />
+            </div>
           </Drawer.Dialog>
         </Drawer.Content>
       </Drawer.Backdrop>
