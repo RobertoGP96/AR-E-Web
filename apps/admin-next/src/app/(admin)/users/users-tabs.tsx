@@ -78,12 +78,13 @@ export function UsersTabs({
             <Tabs.Tab id="users" className="gap-1.5">
               <UsersIcon className="h-4 w-4" aria-hidden />
               Usuarios
+              <Tabs.Indicator />
             </Tabs.Tab>
             <Tabs.Tab id="distribution" className="gap-1.5">
               <ChartPie className="h-4 w-4" aria-hidden />
               Distribución
+              <Tabs.Indicator />
             </Tabs.Tab>
-            <Tabs.Indicator />
           </Tabs.List>
         </Tabs.ListContainer>
 
