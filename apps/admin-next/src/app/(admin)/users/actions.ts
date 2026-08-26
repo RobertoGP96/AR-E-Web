@@ -14,6 +14,7 @@ import {
   createUserSchema,
   editUserSchema,
   changePasswordSchema,
+  CLIENT_ROLES,
 } from './schema';
 
 export type { ActionResult } from '@/lib/action-helpers';
@@ -249,6 +250,54 @@ export async function verifyUserAction(id: string): Promise<ActionResult> {
     }
     throw err;
   }
+
+  revalidatePath('/users');
+  return { ok: true };
+}
+
+/**
+ * Bulk re-assignment of clients to an agent (or none). Only rows whose
+ * role is a client role are touched, so a stale id can never move staff.
+ */
+export async function reassignClientsAction(
+  clientIds: string[],
+  agentId: string | null
+): Promise<ActionResult> {
+  const { denied } = await requireRole(ROLES.users);
+  if (denied) return denied;
+
+  if (!Array.isArray(clientIds) || clientIds.length === 0) {
+    return { ok: false, error: 'No clients selected' };
+  }
+  if (clientIds.length > 500) {
+    return { ok: false, error: 'Too many clients selected (max 500)' };
+  }
+  const ids: bigint[] = [];
+  for (const raw of clientIds) {
+    const parsed = parseId(raw);
+    if (!parsed) return { ok: false, error: 'Invalid client id' };
+    ids.push(parsed);
+  }
+
+  let targetId: bigint | null = null;
+  if (agentId !== null) {
+    targetId = parseId(agentId);
+    if (!targetId) return { ok: false, error: 'Invalid agent id' };
+    const agent = await prisma.customUser.findFirst({
+      where: {
+        id: targetId,
+        role: { in: ['agent', 'admin'] },
+        isActive: true,
+      },
+      select: { id: true },
+    });
+    if (!agent) return { ok: false, error: 'Agent not found or inactive' };
+  }
+
+  await prisma.customUser.updateMany({
+    where: { id: { in: ids }, role: { in: [...CLIENT_ROLES] } },
+    data: { assignedAgentId: targetId },
+  });
 
   revalidatePath('/users');
   return { ok: true };
