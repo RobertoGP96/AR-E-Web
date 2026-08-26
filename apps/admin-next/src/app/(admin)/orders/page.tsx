@@ -20,13 +20,31 @@ interface PageProps {
     q?: string;
     status?: string;
     pay?: string;
+    manager?: string;
+    from?: string;
+    to?: string;
     page?: string;
     per?: string;
   }>;
 }
 
+/** Valida un parámetro YYYY-MM-DD de la URL; cualquier otra cosa se ignora. */
+function parseDateParam(value: string | undefined): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  return Number.isNaN(new Date(`${value}T00:00:00`).getTime()) ? null : value;
+}
+
 export default async function OrdersPage({ searchParams }: PageProps) {
-  const { q, status, pay, page: pageParam, per } = await searchParams;
+  const {
+    q,
+    status,
+    pay,
+    manager,
+    from,
+    to,
+    page: pageParam,
+    per,
+  } = await searchParams;
   const search = q?.trim() ?? '';
   const statusFilter =
     status && (ORDER_STATUSES as readonly string[]).includes(status)
@@ -36,11 +54,24 @@ export default async function OrdersPage({ searchParams }: PageProps) {
     pay && (PAY_STATUSES as readonly string[]).includes(pay)
       ? (pay as PayStatus)
       : null;
+  const managerFilter =
+    manager && (manager === 'none' || /^\d+$/.test(manager)) ? manager : null;
+  const fromFilter = parseDateParam(from);
+  const toFilter = parseDateParam(to);
 
   const { page, perPage, skip } = parsePagination({ page: pageParam, per });
   const where: Prisma.OrderWhereInput = {
     ...(statusFilter && { status: statusFilter }),
     ...(payFilter && { payStatus: toDbPayStatus(payFilter) }),
+    ...(managerFilter && {
+      salesManagerId: managerFilter === 'none' ? null : BigInt(managerFilter),
+    }),
+    ...((fromFilter || toFilter) && {
+      createdAt: {
+        ...(fromFilter && { gte: new Date(`${fromFilter}T00:00:00`) }),
+        ...(toFilter && { lte: new Date(`${toFilter}T23:59:59.999`) }),
+      },
+    }),
     ...(search && {
       client: {
         OR: [
@@ -112,7 +143,14 @@ export default async function OrdersPage({ searchParams }: PageProps) {
         initialRows={rows}
         clientOptions={clientOptions}
         managerOptions={managerOptions}
-        initialFilters={{ q: search, status: statusFilter, pay: payFilter }}
+        initialFilters={{
+          q: search,
+          status: statusFilter,
+          pay: payFilter,
+          manager: managerFilter,
+          from: fromFilter,
+          to: toFilter,
+        }}
       />
       <TablePagination page={page} perPage={perPage} total={totalCount} />
     </>
