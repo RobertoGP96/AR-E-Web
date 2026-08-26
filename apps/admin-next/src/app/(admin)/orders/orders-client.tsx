@@ -27,6 +27,7 @@ import {
   SearchInput,
   Field,
   Select,
+  TextInput,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
@@ -48,6 +49,9 @@ interface OrdersClientProps {
     q: string;
     status: OrderStatus | null;
     pay: PayStatus | null;
+    manager: string | null;
+    from: string | null;
+    to: string | null;
   };
 }
 
@@ -64,6 +68,16 @@ export function OrdersClient({
   const [editTarget, setEditTarget] = useState<OrderRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<OrderRow | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<OrderRow | null>(null);
+  // Los date inputs son controlados con estado local para que escribir
+  // no dependa del roundtrip al servidor que actualiza initialFilters.
+  const [fromValue, setFromValue] = useState(initialFilters.from ?? '');
+  const [toValue, setToValue] = useState(initialFilters.to ?? '');
+
+  const managerLabel =
+    initialFilters.manager === 'none'
+      ? 'Sin gestor'
+      : (managerOptions.find((m) => m.id === initialFilters.manager)?.label ??
+        initialFilters.manager);
 
   function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -164,7 +178,7 @@ export function OrdersClient({
         />
         <FilterPopover
           title="Filtros de órdenes"
-          subtitle="Filtra órdenes por estado y tipo de pago"
+          subtitle="Filtra órdenes por estado, pago, gestor y fecha"
           activeFilters={[
             ...(initialFilters.status
               ? [
@@ -184,12 +198,47 @@ export function OrdersClient({
                   },
                 ]
               : []),
+            ...(initialFilters.manager && managerLabel
+              ? [
+                  {
+                    key: 'manager',
+                    label: `Gestor: ${managerLabel}`,
+                    onRemove: () => setParam('manager', null),
+                  },
+                ]
+              : []),
+            ...(initialFilters.from
+              ? [
+                  {
+                    key: 'from',
+                    label: `Desde ${initialFilters.from}`,
+                    onRemove: () => {
+                      setFromValue('');
+                      setParam('from', null);
+                    },
+                  },
+                ]
+              : []),
+            ...(initialFilters.to
+              ? [
+                  {
+                    key: 'to',
+                    label: `Hasta ${initialFilters.to}`,
+                    onRemove: () => {
+                      setToValue('');
+                      setParam('to', null);
+                    },
+                  },
+                ]
+              : []),
           ]}
           onClear={() => {
+            setFromValue('');
+            setToValue('');
             const params = new URLSearchParams(searchParams.toString());
-            params.delete('status');
-            params.delete('pay');
-            params.delete('page');
+            for (const key of ['status', 'pay', 'manager', 'from', 'to', 'page']) {
+              params.delete(key);
+            }
             startTransition(() => {
               router.replace(`/orders?${params.toString()}`);
             });
@@ -221,6 +270,44 @@ export function OrdersClient({
               ))}
             </Select>
           </Field>
+          <Field label="Gestor">
+            <Select
+              value={initialFilters.manager ?? ''}
+              onChange={(e) => setParam('manager', e.target.value || null)}
+            >
+              <option value="">Todos los gestores</option>
+              <option value="none">Sin gestor</option>
+              {managerOptions.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Desde">
+              <TextInput
+                type="date"
+                value={fromValue}
+                max={toValue || undefined}
+                onChange={(e) => {
+                  setFromValue(e.target.value);
+                  setParam('from', e.target.value || null);
+                }}
+              />
+            </Field>
+            <Field label="Hasta">
+              <TextInput
+                type="date"
+                value={toValue}
+                min={fromValue || undefined}
+                onChange={(e) => {
+                  setToValue(e.target.value);
+                  setParam('to', e.target.value || null);
+                }}
+              />
+            </Field>
+          </div>
         </FilterPopover>
       </div>
 
