@@ -10,6 +10,9 @@ export const USER_ROLES = [
 ] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
+/** Non-staff roles: the accounts that can be assigned to an agent. */
+export const CLIENT_ROLES = ['client', 'user'] as const;
+
 const baseUserShape = {
   name: z.string().trim().min(2, 'Min 2 characters').max(100),
   lastName: z.string().trim().min(2, 'Min 2 characters').max(100),
@@ -78,4 +81,22 @@ export interface AgentOption {
   id: string;
   label: string;
   role: UserRole;
+}
+
+export interface DistAgentRow {
+  id: string;
+  label: string;
+  role: UserRole;
+  isActive: boolean;
+  clientCount: number;
+}
+
+export interface DistClientRow {
+  id: string;
+  name: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string | null;
+  isActive: boolean;
+  assignedAgentId: string | null;
 }

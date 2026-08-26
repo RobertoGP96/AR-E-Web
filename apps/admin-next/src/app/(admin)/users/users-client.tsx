@@ -3,10 +3,8 @@
 import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  Plus,
   Pencil,
   Trash2,
-  Users as UsersIcon,
   KeyRound,
   BadgeCheck,
   Power,
@@ -27,7 +25,6 @@ import { toggleUserActiveAction, verifyUserAction } from './actions';
 import { formatDate } from '@/lib/format';
 import { FilterPopover } from '@/components/filter-popover';
 import {
-  PageHeader,
   SearchInput,
   Field,
   Select,
@@ -115,7 +112,6 @@ export function UsersClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<UserRow | null>(null);
   const [pwTarget, setPwTarget] = useState<UserRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
@@ -236,18 +232,6 @@ export function UsersClient({
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        icon={UsersIcon}
-        title="Usuarios"
-        subtitle="Gestiona los usuarios y permisos del sistema"
-        actions={
-          <Button variant="primary" onPress={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" aria-hidden />
-            Nuevo usuario
-          </Button>
-        }
-      />
-
       <div className="animate-in fade-in slide-in-from-top-2 duration-300 flex flex-col gap-2 lg:flex-row lg:items-center">
         <SearchInput
           initialValue={initialFilters.q}
@@ -448,18 +432,6 @@ export function UsersClient({
             ))
           )
         }
-      />
-
-      <UserDialog
-        open={createOpen}
-        mode="create"
-        agentOptions={agentOptions}
-        onClose={() => setCreateOpen(false)}
-        onSuccess={() => {
-          setCreateOpen(false);
-          toast.success('Usuario creado');
-          router.refresh();
-        }}
       />
 
       <UserDialog

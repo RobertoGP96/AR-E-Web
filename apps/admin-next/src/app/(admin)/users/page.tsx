@@ -5,15 +5,21 @@ import { prisma } from '@/lib/prisma';
 import { TablePagination } from '@/components/table-pagination';
 import { parsePagination } from '@/lib/pagination';
 import { UsersClient } from './users-client';
+import { DistributionClient } from './distribution-client';
+import { UsersTabs, type UsersTab } from './users-tabs';
 import {
+  CLIENT_ROLES,
   USER_ROLES,
   type AgentOption,
+  type DistAgentRow,
+  type DistClientRow,
   type UserRole,
   type UserRow,
 } from './schema';
 
 interface PageProps {
   searchParams: Promise<{
+    tab?: string;
     q?: string;
     role?: string;
     active?: string;
@@ -30,8 +36,97 @@ export default async function UsersPage({ searchParams }: PageProps) {
     redirect('/dashboard');
   }
 
-  const { q, role, active, verified, page: pageParam, per } =
+  const { tab: tabParam, q, role, active, verified, page: pageParam, per } =
     await searchParams;
+  const tab: UsersTab = tabParam === 'distribution' ? 'distribution' : 'users';
+
+  const agentsQuery = prisma.customUser.findMany({
+    where: { role: { in: ['agent', 'admin'] }, isActive: true },
+    select: { id: true, name: true, lastName: true, role: true },
+    orderBy: { name: 'asc' },
+  });
+
+  if (tab === 'distribution') {
+    // Include inactive/off-role users that still hold clients so no
+    // assignment is invisible in the distribution view.
+    const [agents, clients, holders] = await Promise.all([
+      agentsQuery,
+      prisma.customUser.findMany({
+        where: { role: { in: [...CLIENT_ROLES] } },
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          phoneNumber: true,
+          email: true,
+          isActive: true,
+          assignedAgentId: true,
+        },
+        orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
+      }),
+      prisma.customUser.findMany({
+        where: {
+          OR: [
+            { role: { in: ['agent', 'admin'] }, isActive: true },
+            { assignedClients: { some: { role: { in: [...CLIENT_ROLES] } } } },
+          ],
+        },
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          role: true,
+          isActive: true,
+        },
+        orderBy: { name: 'asc' },
+      }),
+    ]);
+    const agentOptions: AgentOption[] = agents.map((a) => ({
+      id: a.id.toString(),
+      label: `${a.name} ${a.lastName}`.trim(),
+      role: a.role as UserRole,
+    }));
+
+    const counts = new Map<string, number>();
+    const clientRows: DistClientRow[] = clients.map((c) => {
+      const agentId = c.assignedAgentId ? c.assignedAgentId.toString() : null;
+      if (agentId) counts.set(agentId, (counts.get(agentId) ?? 0) + 1);
+      return {
+        id: c.id.toString(),
+        name: c.name,
+        lastName: c.lastName,
+        phoneNumber: c.phoneNumber,
+        email: c.email,
+        isActive: c.isActive,
+        assignedAgentId: agentId,
+      };
+    });
+
+    const agentRows: DistAgentRow[] = holders
+      .map((a) => {
+        const id = a.id.toString();
+        return {
+          id,
+          label: `${a.name} ${a.lastName}`.trim(),
+          role: a.role as UserRole,
+          isActive: a.isActive,
+          clientCount: counts.get(id) ?? 0,
+        };
+      })
+      .sort((a, b) => b.clientCount - a.clientCount);
+
+    return (
+      <UsersTabs
+        tab={tab}
+        agentOptions={agentOptions}
+        usersPanel={null}
+        distributionPanel={
+          <DistributionClient agents={agentRows} clients={clientRows} />
+        }
+      />
+    );
+  }
+
   const search = q?.trim() ?? '';
   const roleFilter =
     role && (USER_ROLES as readonly string[]).includes(role)
@@ -57,7 +152,8 @@ export default async function UsersPage({ searchParams }: PageProps) {
     ...(verifiedFilter !== null && { isVerified: verifiedFilter }),
   };
 
-  const [users, agents, totalCount] = await Promise.all([
+  const [agents, users, totalCount] = await Promise.all([
+    agentsQuery,
     prisma.customUser.findMany({
       where,
       include: {
@@ -67,13 +163,13 @@ export default async function UsersPage({ searchParams }: PageProps) {
       skip,
       take: perPage,
     }),
-    prisma.customUser.findMany({
-      where: { role: { in: ['agent', 'admin'] }, isActive: true },
-      select: { id: true, name: true, lastName: true, role: true },
-      orderBy: { name: 'asc' },
-    }),
     prisma.customUser.count({ where }),
   ]);
+  const agentOptions: AgentOption[] = agents.map((a) => ({
+    id: a.id.toString(),
+    label: `${a.name} ${a.lastName}`.trim(),
+    role: a.role as UserRole,
+  }));
 
   const rows: UserRow[] = users.map((u) => ({
     id: u.id.toString(),
@@ -94,25 +190,26 @@ export default async function UsersPage({ searchParams }: PageProps) {
     dateJoined: u.dateJoined.toISOString(),
   }));
 
-  const agentOptions: AgentOption[] = agents.map((a) => ({
-    id: a.id.toString(),
-    label: `${a.name} ${a.lastName}`.trim(),
-    role: a.role as UserRole,
-  }));
-
   return (
-    <>
-      <UsersClient
-        initialRows={rows}
-        agentOptions={agentOptions}
-        initialFilters={{
-          q: search,
-          role: roleFilter,
-          active: activeFilter,
-          verified: verifiedFilter,
-        }}
-      />
-      <TablePagination page={page} perPage={perPage} total={totalCount} />
-    </>
+    <UsersTabs
+      tab={tab}
+      agentOptions={agentOptions}
+      usersPanel={
+        <>
+          <UsersClient
+            initialRows={rows}
+            agentOptions={agentOptions}
+            initialFilters={{
+              q: search,
+              role: roleFilter,
+              active: activeFilter,
+              verified: verifiedFilter,
+            }}
+          />
+          <TablePagination page={page} perPage={perPage} total={totalCount} />
+        </>
+      }
+      distributionPanel={null}
+    />
   );
 }
