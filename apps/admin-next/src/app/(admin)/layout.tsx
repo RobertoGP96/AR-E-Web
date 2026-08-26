@@ -4,6 +4,7 @@ import { auth } from '@/auth';
 import { isStaff } from '@/lib/route-roles';
 import { SignOutButton } from './sign-out-button';
 import { MobileNav } from './mobile-nav';
+import { GlobalSearch } from './global-search';
 import { NotificationsBell } from './notifications-bell';
 import { AdminNav } from './admin-nav';
 import { Breadcrumbs } from './breadcrumbs';
@@ -68,6 +69,7 @@ export default async function AdminLayout({
             <Breadcrumbs />
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
+            <GlobalSearch />
             <NotificationsBell />
             <SignOutButton />
           </div>
