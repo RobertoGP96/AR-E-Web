@@ -15,7 +15,7 @@ import {
   Clock,
   UserRound,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Tooltip } from '@heroui/react';
 import {
   addReceivedProductAction,

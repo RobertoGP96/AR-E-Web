@@ -14,7 +14,7 @@ import {
   DollarSign,
   PackageSearch,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Tooltip } from '@heroui/react';
 import { PurchaseDialog } from './purchase-dialog';
 import { DeletePurchaseDialog } from './delete-dialog';

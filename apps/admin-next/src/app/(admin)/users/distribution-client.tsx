@@ -14,7 +14,7 @@ import {
   UsersRound,
   X,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Checkbox, Chip, Spinner } from '@heroui/react';
 import { reassignClientsAction } from './actions';
 import {

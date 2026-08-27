@@ -12,7 +12,7 @@ import {
   DollarSign,
   Receipt,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Tooltip } from '@heroui/react';
 import { BalanceDialog } from './balance-dialog';
 import { DeleteBalanceDialog } from './delete-dialog';

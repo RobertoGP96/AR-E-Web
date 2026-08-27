@@ -18,7 +18,7 @@ import {
   CircleEllipsis,
   type LucideIcon,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Chip, Tooltip } from '@heroui/react';
 import { ExpenseDialog } from './expense-dialog';
 import { DeleteExpenseDialog } from './delete-dialog';

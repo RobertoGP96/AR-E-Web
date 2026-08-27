@@ -14,7 +14,7 @@ import {
   CalendarDays,
   PackageSearch,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Tooltip } from '@heroui/react';
 import { OrderDialog } from './order-dialog';
 import { DeleteOrderDialog } from './delete-dialog';

@@ -18,7 +18,7 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Alert, Button, Checkbox, Chip, Spinner } from '@heroui/react';
 
 import {

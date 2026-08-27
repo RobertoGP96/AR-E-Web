@@ -12,7 +12,7 @@ import {
   PackageSearch,
   CalendarDays,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Tooltip } from '@heroui/react';
 import { PackageDialog } from './package-dialog';
 import { DeletePackageDialog } from './delete-dialog';

@@ -16,7 +16,7 @@ import {
   CalendarDays,
   Mail,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Tooltip, Chip } from '@heroui/react';
 import { UserDialog, ROLE_LABELS } from './user-dialog';
 import { ChangePasswordDialog } from './change-password-dialog';

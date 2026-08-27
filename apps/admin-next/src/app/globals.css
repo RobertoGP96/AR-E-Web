@@ -229,14 +229,15 @@ body {
   }
 }
 
-/* Sonner toasts follow the design system */
-[data-sonner-toast] {
-  font-family: var(--font-inter), system-ui, sans-serif !important;
-  border-radius: var(--radius) !important;
+/* Sileo toasts follow the design system */
+[data-sileo-viewport] {
+  font-family: var(--font-inter), system-ui, sans-serif;
 }
 
-[data-sonner-toast] [data-title] {
-  font-weight: 600 !important;
+/* Sileo capitaliza cada palabra por defecto; en español queda mal */
+[data-sileo-title] {
+  text-transform: none;
+  font-weight: 600;
 }
 
 /* ---------------------------------------------------------------- */

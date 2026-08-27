@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { PaymentPanel } from '@/components/payment-panel';
 import { confirmDeliveryPaymentAction } from './actions';
 import { formatCurrency } from '@/lib/format';

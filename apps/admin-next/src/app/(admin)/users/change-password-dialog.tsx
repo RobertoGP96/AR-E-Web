@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from 'react';
 import { KeyRound } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button } from '@heroui/react';
 import { changePasswordAction, type ActionResult } from './actions';
 import { AppModal, Field, TextInput, SubmitButton } from '@/components/ui';

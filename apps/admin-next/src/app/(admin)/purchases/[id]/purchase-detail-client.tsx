@@ -13,7 +13,7 @@ import {
   ShoppingBag,
   PackageSearch,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Tooltip, Chip, Spinner } from '@heroui/react';
 import {
   addBuyedProductAction,

@@ -11,7 +11,7 @@ import {
   HandCoins,
   CalendarDays,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Tooltip } from '@heroui/react';
 import { CategoryDialog } from './category-dialog';
 import { DeleteCategoryDialog } from './delete-dialog';

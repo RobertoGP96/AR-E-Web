@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Plus, Trash2, FileText } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Spinner, Tooltip } from '@heroui/react';
 import { createInvoiceAction, updateInvoiceAction } from './actions';
 import {

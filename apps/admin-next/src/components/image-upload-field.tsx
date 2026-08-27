@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from 'react';
 import { Upload, X } from 'lucide-react';
 import { Spinner } from '@heroui/react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { uploadImageAction } from '@/app/actions/upload';
 
 interface ImageUploadFieldProps {

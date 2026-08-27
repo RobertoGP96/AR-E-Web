@@ -16,7 +16,7 @@ import {
   PackageSearch,
   Store,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Tooltip } from '@heroui/react';
 import { ProductDialog } from './product-dialog';
 import { ProductDeleteDialog } from './product-delete-dialog';

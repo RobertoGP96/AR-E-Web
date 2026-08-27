@@ -12,7 +12,7 @@ import {
   Percent,
   CalendarDays,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button, Chip, Tooltip } from '@heroui/react';
 import { ShopDialog } from './shop-dialog';
 import { DeleteShopDialog } from './delete-dialog';

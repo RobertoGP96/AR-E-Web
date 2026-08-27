@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from 'react';
 import { Settings, SlidersHorizontal, Lock } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { updateCommonInfoAction, type ActionResult } from './actions';
 import { Field, TextInput, SubmitButton, PageHeader } from '@/components/ui';
 
