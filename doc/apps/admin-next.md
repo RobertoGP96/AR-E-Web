@@ -187,7 +187,7 @@ Grupos: `(auth)` para login (sin shell), `(admin)` para el panel (con sidebar/he
 
 **Gastos** — CRUD con categoría (7 choices), fecha, monto, descripción; guarda `createdById` del usuario de la sesión; con paginación.
 
-**Balance (`/balance`)** — CRUD de registros manuales por período (pesos sistema/registrado, ingresos, compras, costos, gastos, notas) con columna calculada **Ganancia = revenues − buysCosts − costs − expenses** en el cliente.
+**Balance (`/balance`)** — CRUD de registros por período con **generador**: en el diálogo se elige el rango y "Calcular datos del período" (`calculateBalanceRangeAction`) agrega con Prisma los datos del rango (réplica del generador Vite `balance-report.tsx`, ver fórmulas en el docstring de la action): peso de entregas (`systemWeight`), peso de tags de facturas (`registeredWeight`), ingresos = órdenes pagadas creadas en rango + pagos fuera de fecha + `weightCost` de entregas, compras netas de reembolsos, facturas y gastos. Los valores prellenan el formulario (editables) junto a un panel resumen con desglose y ganancia proyectada; también admite escritura manual. Columna calculada **Ganancia = revenues − buysCosts − costs − expenses** en el cliente. Nota: el generador Vite sumaba a los ingresos `payment_out_date.total_payments` (un conteo, bug); aquí esos pedidos aportan su `receivedValueOfClient`.
 
 **Balance de Clientes (`/client-balances`)** — Sin mutaciones. Recalcula el balance **en vivo** por agregación (misma fórmula que `recalculate_balance`) y lo contrasta con la columna cacheada; tarjetas resumen (deuda total, saldo a favor total, clientes), filtro deuda/favor/al día, orden por mayor deuda primero, `BalanceBadge` (DEUDA roja / SALDO A FAVOR esmeralda / AL DÍA azul).
 
@@ -229,6 +229,7 @@ Grupos: `(auth)` para login (sin shell), `(admin)` para el panel (con sidebar/he
 | `addBuyingAccountAction` / `renameBuyingAccountAction` / `deleteBuyingAccountAction` | ídem | Cuentas de compra anidadas | BuyingAccounts | nombre 1–100; no borrar con compras |
 | `createCategoryAction` / `updateCategoryAction` / `deleteCategoryAction` | `(admin)/categories/actions.ts` | CRUD categorías | Category | nombre único |
 | `createBalanceAction` / `updateBalanceAction` / `deleteBalanceAction` | `(admin)/balance/actions.ts` | CRUD balances | Balance | `balanceFormSchema` (endDate ≥ startDate) |
+| `calculateBalanceRangeAction` | `(admin)/balance/actions.ts` | Solo lectura: agrega el rango (órdenes, entregas, compras−reembolsos, facturas+tags, gastos) para prellenar el form del balance | — | `balanceRangeSchema`; fechas como días calendario UTC, fin inclusivo |
 | `createExpenseAction` / `updateExpenseAction` / `deleteExpenseAction` | `(admin)/expenses/actions.ts` | CRUD gastos (sella `createdById`) | Expense | `expenseFormSchema` |
 | `createInvoiceAction` / `updateInvoiceAction` / `deleteInvoiceAction` | `(admin)/invoices/actions.ts` | CRUD facturas; el servidor recalcula subtotales/total (nunca confía en el cliente); update = deleteMany tags + recreate en transacción | Invoice, Tag | `invoiceInputSchema` (superRefine por tipo de tag) |
 | `updateCommonInfoAction` | `(admin)/settings/actions.ts` | Upsert del singleton | CommonInformation | ≥ 0 |
@@ -327,7 +328,7 @@ Otras fórmulas de negocio que viven en actions/páginas:
 - ⚠️ Faltante/incompleto:
   - **`/products/:id` (detalle de producto)** existe en Vite y no aquí (aquí solo lista con selector de columnas).
   - **Imágenes de producto** (`imageUrl`, `productPictures` existen en el schema) no se exponen en ningún formulario.
-  - Las páginas dedicadas de Vite `balance/new-balance`, `delivery/new`, `packages/new`, `*/edit` se sustituyeron por diálogos (decisión de diseño, no gap funcional).
+  - Las páginas dedicadas de Vite `balance/new-balance`, `delivery/new`, `packages/new`, `*/edit` se sustituyeron por diálogos (decisión de diseño, no gap funcional). El generador de balance por rango de `balance/new-balance` se reintrodujo dentro del diálogo de balance (`calculateBalanceRangeAction`); quedan fuera los paneles analíticos extensos y el historial de operaciones de tarjeta de esa página.
   - **Operaciones de tarjeta** (`/cards/operations/` del backend; `cardId` en compras es solo texto) no portadas.
   - **Override manual de `weight_cost`/`manager_profit`** en entregas (posible en Django/Vite): aquí la fórmula es siempre autoritativa.
   - **Creación de notificaciones**: solo lectura/marcado; las genera Django.

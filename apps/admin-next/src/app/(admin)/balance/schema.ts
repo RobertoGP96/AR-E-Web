@@ -30,6 +30,44 @@ export const balanceFormSchema = z
 
 export type BalanceFormInput = z.infer<typeof balanceFormSchema>;
 
+export const balanceRangeSchema = z
+  .object({
+    startDate: z
+      .string()
+      .min(1, 'Required')
+      .refine((s) => !Number.isNaN(Date.parse(s)), 'Invalid date'),
+    endDate: z
+      .string()
+      .min(1, 'Required')
+      .refine((s) => !Number.isNaN(Date.parse(s)), 'Invalid date'),
+  })
+  .refine((data) => Date.parse(data.endDate) >= Date.parse(data.startDate), {
+    message: 'End date must be ≥ start date',
+    path: ['endDate'],
+  });
+
+/** Aggregates of the selected period, computed server-side to prefill the form. */
+export interface BalanceRangeData {
+  systemWeight: number;
+  registeredWeight: number;
+  revenues: number;
+  buysCosts: number;
+  costs: number;
+  expenses: number;
+  breakdown: {
+    paidOrdersRevenue: number;
+    paidOrdersCount: number;
+    outOfDateRevenue: number;
+    outOfDateCount: number;
+    deliveriesRevenue: number;
+    deliveriesCount: number;
+    purchasesCount: number;
+    purchasesRefunded: number;
+    invoicesCount: number;
+    expensesCount: number;
+  };
+}
+
 export interface BalanceRow {
   id: string;
   startDate: string;
