@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Scale, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Spinner } from '@heroui/react';
@@ -91,78 +92,179 @@ function MoneyInput({
   );
 }
 
-/** Desglose del período calculado por calculateBalanceRangeAction. */
+/** Tarjeta de métrica del desglose, espejo del MetricCard del reporte Vite. */
+function MetricTile({
+  label,
+  detail,
+  value,
+  tone,
+}: {
+  label: string;
+  detail?: string;
+  value: string;
+  tone: 'success' | 'warning' | 'danger';
+}) {
+  const tones = {
+    success: 'border-success/30 bg-success-soft text-success-soft-foreground',
+    warning: 'border-warning/30 bg-warning-soft text-warning-soft-foreground',
+    danger: 'border-danger/30 bg-danger-soft text-danger',
+  } as const;
+  return (
+    <div className={`rounded-lg border p-2.5 ${tones[tone]}`}>
+      <div className="text-[11px] font-medium text-muted">
+        {label}
+        {detail ? <span className="text-muted/70"> · {detail}</span> : null}
+      </div>
+      <div className="mt-0.5 text-base font-bold tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+function SectionHeader({
+  dotClass,
+  children,
+}: {
+  dotClass: string;
+  children: ReactNode;
+}) {
+  return (
+    <h4 className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+      <span
+        className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`}
+        aria-hidden
+      />
+      {children}
+    </h4>
+  );
+}
+
+function TotalRow({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'success' | 'danger';
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between rounded-md border px-2.5 py-1.5 ${
+        tone === 'success' ? 'border-success/30' : 'border-danger/30'
+      }`}
+    >
+      <span className="text-xs font-semibold text-foreground">{label}</span>
+      <span
+        className={`text-sm font-bold tabular-nums ${
+          tone === 'success' ? 'text-success-soft-foreground' : 'text-danger'
+        }`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+/** Desglose del período calculado por calculateBalanceRangeAction,
+ * con la misma estructura del Resumen Financiero del admin Vite:
+ * Ingresos (órdenes/entregas + total), Costos - Gastos (+ pasivo total)
+ * y Ganancia Neta con margen. */
 function RangeSummary({ range }: { range: BalanceRangeData }) {
   const b = range.breakdown;
-  const profit =
-    range.revenues - range.buysCosts - range.costs - range.expenses;
+  const ordersRevenue = b.paidOrdersRevenue + b.outOfDateRevenue;
+  const totalCosts = range.buysCosts + range.costs + range.expenses;
+  const profit = range.revenues - totalCosts;
+  const margin = range.revenues > 0 ? (profit / range.revenues) * 100 : 0;
 
-  const rows: Array<{ label: string; detail: string; amount: number }> = [
-    {
-      label: 'Órdenes pagadas',
-      detail: `${b.paidOrdersCount}`,
-      amount: b.paidOrdersRevenue,
-    },
-    {
-      label: 'Pagos fuera de fecha',
-      detail: `${b.outOfDateCount}`,
-      amount: b.outOfDateRevenue,
-    },
-    {
-      label: 'Entregas',
-      detail: `${b.deliveriesCount}`,
-      amount: b.deliveriesRevenue,
-    },
-    {
-      label: 'Compras (neto de reembolsos)',
-      detail: `${b.purchasesCount}`,
-      amount: -range.buysCosts,
-    },
-    {
-      label: 'Facturas courier',
-      detail: `${b.invoicesCount}`,
-      amount: -range.costs,
-    },
-    {
-      label: 'Gastos',
-      detail: `${b.expensesCount}`,
-      amount: -range.expenses,
-    },
-  ];
+  const ordersDetail =
+    b.outOfDateCount > 0
+      ? `${b.paidOrdersCount} pagadas + ${b.outOfDateCount} fuera de fecha`
+      : `${b.paidOrdersCount} pagadas`;
+  const purchasesDetail =
+    b.purchasesRefunded > 0
+      ? `${b.purchasesCount} · −${formatCurrency(b.purchasesRefunded)} reemb.`
+      : `${b.purchasesCount}`;
 
   return (
-    <div className="animate-in fade-in slide-in-from-top-1 space-y-2 rounded-lg border border-accent/30 bg-accent-soft/40 p-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-accent-soft-foreground">
-          Resumen del período
-        </span>
-        <span
-          className={`text-sm font-semibold tabular-nums ${
+    <div className="animate-in fade-in slide-in-from-top-1 space-y-4 rounded-lg border border-accent/30 bg-accent-soft/40 p-3">
+      <div className="text-xs font-semibold uppercase tracking-wide text-accent-soft-foreground">
+        Resumen del período
+      </div>
+
+      <section className="space-y-2">
+        <SectionHeader dotClass="bg-success">Ingresos totales</SectionHeader>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <MetricTile
+            label="Órdenes"
+            detail={ordersDetail}
+            value={formatCurrency(ordersRevenue)}
+            tone="success"
+          />
+          <MetricTile
+            label="Entregas"
+            detail={`${b.deliveriesCount}`}
+            value={formatCurrency(b.deliveriesRevenue)}
+            tone="success"
+          />
+        </div>
+        <TotalRow
+          label="Ingreso total"
+          value={formatCurrency(range.revenues)}
+          tone="success"
+        />
+      </section>
+
+      <section className="space-y-2">
+        <SectionHeader dotClass="bg-danger">Costos - Gastos</SectionHeader>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <MetricTile
+            label="Compras"
+            detail={purchasesDetail}
+            value={formatCurrency(range.buysCosts)}
+            tone="warning"
+          />
+          <MetricTile
+            label="Facturas"
+            detail={`${b.invoicesCount}`}
+            value={formatCurrency(range.costs)}
+            tone="danger"
+          />
+          <MetricTile
+            label="Gastos"
+            detail={`${b.expensesCount}`}
+            value={formatCurrency(range.expenses)}
+            tone="danger"
+          />
+        </div>
+        <TotalRow
+          label="Pasivo total"
+          value={formatCurrency(totalCosts)}
+          tone="danger"
+        />
+      </section>
+
+      <div
+        className={`rounded-lg border-2 p-3 ${
+          profit >= 0
+            ? 'border-success/40 bg-success-soft'
+            : 'border-danger/40 bg-danger-soft'
+        }`}
+      >
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-xs font-medium text-muted">Ganancia neta</span>
+          <span className="text-[11px] text-muted">
+            {margin.toFixed(1)}% margen
+          </span>
+        </div>
+        <div
+          className={`mt-0.5 text-2xl font-bold tabular-nums ${
             profit >= 0 ? 'text-success-soft-foreground' : 'text-danger'
           }`}
         >
-          Ganancia {formatCurrency(profit)}
-        </span>
+          {formatCurrency(profit)}
+        </div>
       </div>
-      <dl className="grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
-        {rows.map((row) => (
-          <div
-            key={row.label}
-            className="flex items-baseline justify-between gap-2 text-xs"
-          >
-            <dt className="text-muted">
-              {row.label} <span className="text-muted/70">({row.detail})</span>
-            </dt>
-            <dd
-              className={`font-medium tabular-nums ${
-                row.amount < 0 ? 'text-danger' : 'text-foreground'
-              }`}
-            >
-              {formatCurrency(row.amount)}
-            </dd>
-          </div>
-        ))}
-      </dl>
+
       <p className="text-[11px] leading-snug text-muted">
         Peso entregas {range.systemWeight.toFixed(2)} lb · peso facturas{' '}
         {range.registeredWeight.toFixed(2)} lb. Los valores se aplicaron al
