@@ -27,11 +27,12 @@ import {
   StatCard,
   ConfirmModal,
   Field,
-  Select,
+  SearchSelect,
   TextInput,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
+  uniqueClientOptions,
 } from '@/components/ui';
 
 interface ReceivedProduct {
@@ -45,6 +46,7 @@ interface ReceivedProduct {
 interface Candidate {
   id: string;
   name: string;
+  clientId: string;
   clientName: string;
   remaining: number;
 }
@@ -71,11 +73,17 @@ export function PackageDetailClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [productId, setProductId] = useState('');
+  const [clientFilter, setClientFilter] = useState('');
   const [amount, setAmount] = useState(1);
   const [observation, setObservation] = useState('');
   const [removeTarget, setRemoveTarget] = useState<ReceivedProduct | null>(
     null
   );
+
+  const clientOptions = uniqueClientOptions(candidates);
+  const filteredCandidates = clientFilter
+    ? candidates.filter((c) => c.clientId === clientFilter)
+    : candidates;
 
   const selected = candidates.find((c) => c.id === productId);
   const maxAmount = selected?.remaining ?? 0;
@@ -203,22 +211,47 @@ export function PackageDetailClient({
         ) : (
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+              <Field label="Cliente" className="sm:w-56">
+                <SearchSelect
+                  value={clientFilter}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setClientFilter(next);
+                    // El producto elegido deja de ser válido si no es
+                    // del cliente filtrado.
+                    if (
+                      next &&
+                      !candidates.some(
+                        (c) => c.id === productId && c.clientId === next
+                      )
+                    ) {
+                      setProductId('');
+                      setAmount(1);
+                    }
+                  }}
+                  placeholder="Todos los clientes"
+                  searchPlaceholder="Buscar cliente…"
+                  options={clientOptions}
+                />
+              </Field>
               <Field label="Producto" className="flex-1">
-                <Select
+                <SearchSelect
                   value={productId}
                   onChange={(e) => {
                     setProductId(e.target.value);
                     setAmount(1);
                   }}
-                >
-                  <option value="">— Seleccionar —</option>
-                  {candidates.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} · {c.clientName} ({c.remaining} pendiente
-                      {c.remaining === 1 ? '' : 's'})
-                    </option>
-                  ))}
-                </Select>
+                  placeholder="— Seleccionar —"
+                  searchPlaceholder="Buscar producto o cliente…"
+                  emptyMessage="Sin productos comprados pendientes para ese filtro"
+                  options={filteredCandidates.map((c) => ({
+                    value: c.id,
+                    label: `${c.name} (${c.remaining} pendiente${
+                      c.remaining === 1 ? '' : 's'
+                    })`,
+                    description: c.clientName,
+                  }))}
+                />
               </Field>
               <Field
                 label="Cantidad"

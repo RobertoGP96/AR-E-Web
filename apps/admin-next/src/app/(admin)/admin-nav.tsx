@@ -18,7 +18,6 @@ import {
   ChartColumn,
   ReceiptText,
   BaggageClaim,
-  CoinsIcon,
   type LucideIcon,
 } from 'lucide-react';
 import { canAccessPath } from '@/lib/route-roles';
@@ -70,7 +69,6 @@ const NAV_GROUPS: NavGroup[] = [
       { name: 'Costos de Envío', href: '/invoices', icon: BaggageClaim },
       { name: 'Registro de Gastos', href: '/expenses', icon: ReceiptText },
       { name: 'Balance General', href: '/balance', icon: ReceiptIcon },
-      { name: 'Balance de Clientes', href: '/client-balances', icon: CoinsIcon },
       { name: 'Análisis', href: '/analytics', icon: ChartColumn },
     ],
   },

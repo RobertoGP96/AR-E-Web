@@ -18,7 +18,6 @@ import {
   FileText,
   ChartColumn,
   Receipt,
-  Coins,
   ChevronRight,
   FileSpreadsheet,
   type LucideIcon,
@@ -41,7 +40,6 @@ const ROUTE_NAMES: Record<string, string> = {
   '/expenses': 'Gastos',
   '/analytics': 'Análisis',
   '/balance': 'Balance',
-  '/client-balances': 'Balance de Clientes',
   '/import': 'Importar Excel',
 };
 
@@ -60,7 +58,6 @@ const ROUTE_ICONS: Record<string, LucideIcon> = {
   '/expenses': FileText,
   '/analytics': ChartColumn,
   '/balance': Receipt,
-  '/client-balances': Coins,
   '/import': FileSpreadsheet,
 };
 

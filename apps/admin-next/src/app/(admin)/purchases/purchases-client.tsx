@@ -25,6 +25,7 @@ import {
   PageHeader,
   Field,
   Select,
+  TextInput,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
@@ -39,13 +40,18 @@ import {
 interface PurchasesClientProps {
   initialRows: PurchaseRow[];
   shopOptions: ShopWithAccounts[];
-  initialStatus: PayStatus | null;
+  initialFilters: {
+    status: PayStatus | null;
+    shop: string | null;
+    from: string | null;
+    to: string | null;
+  };
 }
 
 export function PurchasesClient({
   initialRows,
   shopOptions,
-  initialStatus,
+  initialFilters,
 }: PurchasesClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -53,16 +59,25 @@ export function PurchasesClient({
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<PurchaseRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PurchaseRow | null>(null);
+  // Los date inputs son controlados con estado local para que escribir
+  // no dependa del roundtrip al servidor que actualiza initialFilters.
+  const [fromValue, setFromValue] = useState(initialFilters.from ?? '');
+  const [toValue, setToValue] = useState(initialFilters.to ?? '');
 
-  function setStatus(value: string | null) {
+  function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
-    if (value) params.set('status', value);
-    else params.delete('status');
+    if (value) params.set(key, value);
+    else params.delete(key);
     params.delete('page');
     startTransition(() => {
       router.replace(`/purchases?${params.toString()}`);
     });
   }
+
+  const activeShopLabel = initialFilters.shop
+    ? (shopOptions.find((s) => s.id === initialFilters.shop)?.label ??
+      initialFilters.shop)
+    : null;
 
   const rowActions = (row: PurchaseRow) => (
     <>
@@ -123,24 +138,67 @@ export function PurchasesClient({
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
         <FilterPopover
           title="Filtros de compras"
-          subtitle="Filtra compras por estado de pago"
-          activeFilters={
-            initialStatus
+          subtitle="Filtra compras por estado de pago, tienda y fecha"
+          activeFilters={[
+            ...(initialFilters.status
               ? [
                   {
                     key: 'status',
-                    label: initialStatus,
-                    onRemove: () => setStatus(null),
+                    label: initialFilters.status,
+                    onRemove: () => setParam('status', null),
                   },
                 ]
-              : []
-          }
-          onClear={() => setStatus(null)}
+              : []),
+            ...(activeShopLabel
+              ? [
+                  {
+                    key: 'shop',
+                    label: activeShopLabel,
+                    onRemove: () => setParam('shop', null),
+                  },
+                ]
+              : []),
+            ...(initialFilters.from
+              ? [
+                  {
+                    key: 'from',
+                    label: `Desde ${initialFilters.from}`,
+                    onRemove: () => {
+                      setFromValue('');
+                      setParam('from', null);
+                    },
+                  },
+                ]
+              : []),
+            ...(initialFilters.to
+              ? [
+                  {
+                    key: 'to',
+                    label: `Hasta ${initialFilters.to}`,
+                    onRemove: () => {
+                      setToValue('');
+                      setParam('to', null);
+                    },
+                  },
+                ]
+              : []),
+          ]}
+          onClear={() => {
+            setFromValue('');
+            setToValue('');
+            const params = new URLSearchParams(searchParams.toString());
+            for (const key of ['status', 'shop', 'from', 'to', 'page']) {
+              params.delete(key);
+            }
+            startTransition(() => {
+              router.replace(`/purchases?${params.toString()}`);
+            });
+          }}
         >
           <Field label="Estado de pago">
             <Select
-              value={initialStatus ?? ''}
-              onChange={(e) => setStatus(e.target.value || null)}
+              value={initialFilters.status ?? ''}
+              onChange={(e) => setParam('status', e.target.value || null)}
             >
               <option value="">Todos los pagos</option>
               {PAY_STATUSES.map((s) => (
@@ -150,6 +208,43 @@ export function PurchasesClient({
               ))}
             </Select>
           </Field>
+          <Field label="Tienda">
+            <Select
+              value={initialFilters.shop ?? ''}
+              onChange={(e) => setParam('shop', e.target.value || null)}
+            >
+              <option value="">Todas las tiendas</option>
+              {shopOptions.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Desde">
+              <TextInput
+                type="date"
+                value={fromValue}
+                max={toValue || undefined}
+                onChange={(e) => {
+                  setFromValue(e.target.value);
+                  setParam('from', e.target.value || null);
+                }}
+              />
+            </Field>
+            <Field label="Hasta">
+              <TextInput
+                type="date"
+                value={toValue}
+                min={fromValue || undefined}
+                onChange={(e) => {
+                  setToValue(e.target.value);
+                  setParam('to', e.target.value || null);
+                }}
+              />
+            </Field>
+          </div>
         </FilterPopover>
       </div>
 

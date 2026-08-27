@@ -15,7 +15,6 @@ import { Chip } from '@heroui/react';
 import { formatCurrency } from '@/lib/format';
 import { FilterPopover } from '@/components/filter-popover';
 import {
-  PageHeader,
   StatCard,
   SearchInput,
   Field,
@@ -38,18 +37,18 @@ export interface ClientBalanceRow {
   storedBalance: number;
 }
 
-type StatusFilter = 'deuda' | 'favor' | 'aldia';
+export type BalanceStatusFilter = 'deuda' | 'favor' | 'aldia';
 
-const STATUS_LABELS: Record<StatusFilter, string> = {
+const STATUS_LABELS: Record<BalanceStatusFilter, string> = {
   deuda: 'Con deuda',
   favor: 'Con saldo a favor',
   aldia: 'Al día',
 };
 
-interface ClientBalancesClientProps {
+interface BalancesClientProps {
   initialRows: ClientBalanceRow[];
   totals: { debt: number; credit: number; clients: number };
-  initialFilters: { q: string; status: StatusFilter | null };
+  initialFilters: { q: string; status: BalanceStatusFilter | null };
 }
 
 function BalanceBadge({ balance }: { balance: number }) {
@@ -72,11 +71,16 @@ function balanceTextClass(balance: number): string {
   return '';
 }
 
-export function ClientBalancesClient({
+/**
+ * Panel "Balances" de la vista de usuarios (antes /client-balances).
+ * El encabezado de página lo pone UsersTabs; aquí solo van métricas,
+ * filtros y la tabla. La URL se mantiene en /users con tab=balances.
+ */
+export function BalancesClient({
   initialRows,
   totals,
   initialFilters,
-}: ClientBalancesClientProps) {
+}: BalancesClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -86,18 +90,12 @@ export function ClientBalancesClient({
     if (value) params.set(key, value);
     else params.delete(key);
     startTransition(() => {
-      router.replace(`/client-balances?${params.toString()}`);
+      router.replace(`/users?${params.toString()}`);
     });
   }
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        icon={Wallet}
-        title="Balance de Clientes"
-        subtitle="Balance por cliente: cobrado menos costo de órdenes y entregas."
-      />
-
       <div className="stagger-children grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard
           icon={TrendingDown}
@@ -147,11 +145,13 @@ export function ClientBalancesClient({
               onChange={(e) => setParam('status', e.target.value || null)}
             >
               <option value="">Todos</option>
-              {(Object.keys(STATUS_LABELS) as StatusFilter[]).map((s) => (
-                <option key={s} value={s}>
-                  {STATUS_LABELS[s]}
-                </option>
-              ))}
+              {(Object.keys(STATUS_LABELS) as BalanceStatusFilter[]).map(
+                (s) => (
+                  <option key={s} value={s}>
+                    {STATUS_LABELS[s]}
+                  </option>
+                )
+              )}
             </Select>
           </Field>
         </FilterPopover>

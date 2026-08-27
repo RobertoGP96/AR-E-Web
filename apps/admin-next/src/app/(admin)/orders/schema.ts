@@ -25,6 +25,8 @@ export function fromDbPayStatus(p: DbPayStatus): PayStatus {
   return p;
 }
 
+// Los montos de pago (recibido del cliente / saldo aplicado) NO viajan
+// en este formulario: se gestionan con la acción de confirmar pago.
 export const orderFormSchema = z.object({
   clientId: z.string().min(1, 'Select a client'),
   salesManagerId: z
@@ -38,8 +40,6 @@ export const orderFormSchema = z.object({
     .max(2000)
     .optional()
     .transform((v) => (v && v.length > 0 ? v : null)),
-  receivedValueOfClient: z.coerce.number().min(0, 'Must be ≥ 0'),
-  balanceApplied: z.coerce.number().min(0, 'Must be ≥ 0'),
 });
 
 export type OrderFormInput = z.infer<typeof orderFormSchema>;
@@ -129,4 +129,20 @@ export interface SelectOption {
   id: string;
   label: string;
   taxRate?: number;
+}
+
+/** Cliente elegible en el formulario de orden, con su agente asignado
+ * para poder filtrar la lista según el agente seleccionado. */
+export interface ClientOption {
+  id: string;
+  label: string;
+  phoneNumber: string;
+  agentId: string | null;
+}
+
+/** Usuario de la sesión que abre el formulario: si es agente, la orden
+ * queda fijada a su propio id como gestor. */
+export interface CurrentUser {
+  id: string;
+  role: string;
 }

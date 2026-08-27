@@ -60,8 +60,6 @@ function parse(formData: FormData) {
     weight: formData.get('weight'),
     status: formData.get('status'),
     deliverDate: formData.get('deliverDate'),
-    paymentAmount: formData.get('paymentAmount') ?? 0,
-    balanceApplied: formData.get('balanceApplied') ?? 0,
     deliverPicture: formData.get('deliverPicture') ?? '',
   });
 }
@@ -93,22 +91,18 @@ export async function createDeliveryAction(
     categoryId,
     d.weight
   );
-  const payStatus = computePayStatus(
-    weightCost,
-    d.paymentAmount,
-    d.balanceApplied
-  );
 
+  // Los pagos se registran después con confirmDeliveryPaymentAction.
   await prisma.deliverReceip.create({
     data: {
       clientId,
       categoryId,
       weight: d.weight,
       status: toDbDeliveryStatus(d.status),
-      paymentStatus: toDbPayStatus(payStatus),
-      paymentAmount: d.paymentAmount,
-      balanceApplied: d.balanceApplied,
-      paymentDate: d.paymentAmount > 0 ? new Date() : null,
+      paymentStatus: toDbPayStatus(computePayStatus(weightCost, 0, 0)),
+      paymentAmount: 0,
+      balanceApplied: 0,
+      paymentDate: null,
       deliverDate: new Date(d.deliverDate),
       deliverPicture: d.deliverPicture,
       weightCost,
@@ -143,7 +137,11 @@ export async function updateDeliveryAction(
 
   const existing = await prisma.deliverReceip.findUnique({
     where: { id },
-    select: { clientId: true, paymentDate: true },
+    select: {
+      clientId: true,
+      paymentAmount: true,
+      balanceApplied: true,
+    },
   });
   if (!existing) return { ok: false, error: 'Delivery not found' };
 
@@ -158,10 +156,14 @@ export async function updateDeliveryAction(
     categoryId,
     d.weight
   );
+  // Los montos pagados no se editan aquí (confirmDeliveryPaymentAction
+  // los acumula), pero el costo por peso puede cambiar con el peso o la
+  // categoría, así que el estado de pago se recalcula contra el nuevo
+  // total con los pagos ya registrados.
   const payStatus = computePayStatus(
     weightCost,
-    d.paymentAmount,
-    d.balanceApplied
+    existing.paymentAmount,
+    existing.balanceApplied
   );
 
   await prisma.deliverReceip.update({
@@ -172,13 +174,6 @@ export async function updateDeliveryAction(
       weight: d.weight,
       status: toDbDeliveryStatus(d.status),
       paymentStatus: toDbPayStatus(payStatus),
-      paymentAmount: d.paymentAmount,
-      balanceApplied: d.balanceApplied,
-      // Preserve the original payment date on edits; only stamp a new
-      // one when payment goes from 0 to > 0, and clear it back to null
-      // when payment is removed.
-      paymentDate:
-        d.paymentAmount > 0 ? (existing.paymentDate ?? new Date()) : null,
       deliverDate: new Date(d.deliverDate),
       deliverPicture: d.deliverPicture,
       weightCost,

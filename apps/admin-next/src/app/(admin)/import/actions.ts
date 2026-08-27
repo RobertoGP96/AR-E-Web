@@ -572,7 +572,6 @@ export async function runImportAction(
     '/users',
     '/shops',
     '/expenses',
-    '/client-balances',
     '/dashboard',
   ]) {
     revalidatePath(path);

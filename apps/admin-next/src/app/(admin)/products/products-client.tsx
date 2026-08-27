@@ -15,7 +15,7 @@ import {
   Truck,
   DollarSign,
 } from 'lucide-react';
-import { Button, Checkbox, Label, Popover, Tooltip } from '@heroui/react';
+import { Button, Checkbox, Label, Popover, Slider, Tooltip } from '@heroui/react';
 import { formatCurrency } from '@/lib/format';
 import { ProductStatusBadge } from '@/components/status-badges';
 import { QRLink } from '@/components/qr-link';
@@ -25,6 +25,8 @@ import {
   SearchInput,
   Field,
   Select,
+  SearchSelect,
+  TextInput,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
@@ -57,15 +59,32 @@ export interface ProductRow {
 interface SelectOption {
   id: string;
   label: string;
+  description?: string;
 }
+
+type DateBy = 'encargo' | 'compra';
+
+const DATE_BY_LABELS: Record<DateBy, string> = {
+  encargo: 'Fecha de encargo',
+  compra: 'Fecha de compra',
+};
 
 interface ProductsClientProps {
   initialRows: ProductRow[];
   shopOptions: SelectOption[];
+  clientOptions: SelectOption[];
+  /** Límites globales (sin filtros) para el slider de precio. */
+  priceBounds: { min: number; max: number };
   initialFilters: {
     q: string;
     status: ProductStatus | null;
     shop: string | null;
+    client: string | null;
+    min: number | null;
+    max: number | null;
+    dateBy: DateBy;
+    from: string | null;
+    to: string | null;
   };
 }
 
@@ -226,6 +245,8 @@ function AmountsProgress({ row }: { row: ProductRow }) {
 export function ProductsClient({
   initialRows,
   shopOptions,
+  clientOptions,
+  priceBounds,
   initialFilters,
 }: ProductsClientProps) {
   const router = useRouter();
@@ -234,6 +255,17 @@ export function ProductsClient({
   const [visible, setVisible] = useState<Set<ColumnKey>>(
     () => new Set(DEFAULT_VISIBLE)
   );
+  // Los inputs de fecha y el slider son controlados con estado local
+  // para que interactuar no dependa del roundtrip al servidor.
+  const [fromValue, setFromValue] = useState(initialFilters.from ?? '');
+  const [toValue, setToValue] = useState(initialFilters.to ?? '');
+  const [price, setPrice] = useState<[number, number]>([
+    initialFilters.min ?? priceBounds.min,
+    initialFilters.max ?? priceBounds.max,
+  ]);
+  const hasPriceRange = priceBounds.max > priceBounds.min;
+  const priceActive =
+    initialFilters.min !== null || initialFilters.max !== null;
 
   // Restore/persist the column selection (client-only preference).
   useEffect(() => {
@@ -267,19 +299,43 @@ export function ProductsClient({
   const show = (key: ColumnKey) => visible.has(key);
   const colCount = 1 + COLUMNS.filter((c) => visible.has(c.key)).length;
 
-  function setParam(key: string, value: string | null) {
+  function setParams(entries: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
-    if (value) params.set(key, value);
-    else params.delete(key);
+    for (const [key, value] of Object.entries(entries)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
     params.delete('page');
     startTransition(() => {
       router.replace(`/products?${params.toString()}`);
     });
   }
 
+  function setParam(key: string, value: string | null) {
+    setParams({ [key]: value });
+  }
+
+  /** Aplica el rango del slider; los extremos coinciden con los
+   * límites globales viajan como "sin filtro". */
+  function applyPrice([lo, hi]: [number, number]) {
+    setParams({
+      min: lo > priceBounds.min ? String(lo) : null,
+      max: hi < priceBounds.max ? String(hi) : null,
+    });
+  }
+
+  function clearPrice() {
+    setPrice([priceBounds.min, priceBounds.max]);
+    setParams({ min: null, max: null });
+  }
+
   const activeShopLabel = initialFilters.shop
     ? (shopOptions.find((s) => s.id === initialFilters.shop)?.label ??
       initialFilters.shop)
+    : null;
+  const activeClientLabel = initialFilters.client
+    ? (clientOptions.find((c) => c.id === initialFilters.client)?.label ??
+      initialFilters.client)
     : null;
 
   const rowActions = (row: ProductRow) => (
@@ -320,7 +376,7 @@ export function ProductsClient({
         />
         <FilterPopover
           title="Filtros de productos"
-          subtitle="Filtra productos por estado y tienda"
+          subtitle="Filtra por estado, tienda, cliente, precio y fecha"
           activeFilters={[
             ...(initialFilters.status
               ? [
@@ -340,14 +396,75 @@ export function ProductsClient({
                   },
                 ]
               : []),
+            ...(activeClientLabel
+              ? [
+                  {
+                    key: 'client',
+                    label: `Cliente: ${activeClientLabel}`,
+                    onRemove: () => setParam('client', null),
+                  },
+                ]
+              : []),
+            ...(priceActive
+              ? [
+                  {
+                    key: 'price',
+                    label: `Precio: ${formatCurrency(
+                      initialFilters.min ?? priceBounds.min
+                    )} – ${formatCurrency(
+                      initialFilters.max ?? priceBounds.max
+                    )}`,
+                    onRemove: clearPrice,
+                  },
+                ]
+              : []),
+            ...(initialFilters.dateBy === 'compra'
+              ? [
+                  {
+                    key: 'dateBy',
+                    label: DATE_BY_LABELS.compra,
+                    onRemove: () => setParam('dateBy', null),
+                  },
+                ]
+              : []),
+            ...(initialFilters.from
+              ? [
+                  {
+                    key: 'from',
+                    label: `Desde ${initialFilters.from}`,
+                    onRemove: () => {
+                      setFromValue('');
+                      setParam('from', null);
+                    },
+                  },
+                ]
+              : []),
+            ...(initialFilters.to
+              ? [
+                  {
+                    key: 'to',
+                    label: `Hasta ${initialFilters.to}`,
+                    onRemove: () => {
+                      setToValue('');
+                      setParam('to', null);
+                    },
+                  },
+                ]
+              : []),
           ]}
           onClear={() => {
-            const params = new URLSearchParams(searchParams.toString());
-            params.delete('status');
-            params.delete('shop');
-            params.delete('page');
-            startTransition(() => {
-              router.replace(`/products?${params.toString()}`);
+            setFromValue('');
+            setToValue('');
+            setPrice([priceBounds.min, priceBounds.max]);
+            setParams({
+              status: null,
+              shop: null,
+              client: null,
+              min: null,
+              max: null,
+              dateBy: null,
+              from: null,
+              to: null,
             });
           }}
         >
@@ -377,6 +494,88 @@ export function ProductsClient({
               ))}
             </Select>
           </Field>
+          <Field label="Cliente">
+            <SearchSelect
+              value={initialFilters.client ?? ''}
+              onChange={(e) => setParam('client', e.target.value || null)}
+              placeholder="Todos los clientes"
+              searchPlaceholder="Buscar cliente…"
+              options={clientOptions.map((c) => ({
+                value: c.id,
+                label: c.label,
+                description: c.description,
+              }))}
+            />
+          </Field>
+          {hasPriceRange ? (
+            <Field label="Rango de precio">
+              <div className="px-1">
+                <Slider
+                  aria-label="Rango de precio"
+                  minValue={priceBounds.min}
+                  maxValue={priceBounds.max}
+                  step={1}
+                  value={price}
+                  onChange={(v) => {
+                    if (Array.isArray(v) && v.length === 2) {
+                      setPrice([v[0], v[1]]);
+                    }
+                  }}
+                  onChangeEnd={(v) => {
+                    if (Array.isArray(v) && v.length === 2) {
+                      applyPrice([v[0], v[1]]);
+                    }
+                  }}
+                  className="w-full"
+                >
+                  <Slider.Track>
+                    <Slider.Fill />
+                    <Slider.Thumb index={0} aria-label="Precio mínimo" />
+                    <Slider.Thumb index={1} aria-label="Precio máximo" />
+                  </Slider.Track>
+                </Slider>
+                <div className="mt-1 flex justify-between text-xs tabular-nums text-muted">
+                  <span>{formatCurrency(price[0])}</span>
+                  <span>{formatCurrency(price[1])}</span>
+                </div>
+              </div>
+            </Field>
+          ) : null}
+          <Field label="Filtrar fecha por">
+            <Select
+              value={initialFilters.dateBy}
+              onChange={(e) =>
+                setParam('dateBy', e.target.value === 'compra' ? 'compra' : null)
+              }
+            >
+              <option value="encargo">{DATE_BY_LABELS.encargo}</option>
+              <option value="compra">{DATE_BY_LABELS.compra}</option>
+            </Select>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Desde">
+              <TextInput
+                type="date"
+                value={fromValue}
+                max={toValue || undefined}
+                onChange={(e) => {
+                  setFromValue(e.target.value);
+                  setParam('from', e.target.value || null);
+                }}
+              />
+            </Field>
+            <Field label="Hasta">
+              <TextInput
+                type="date"
+                value={toValue}
+                min={fromValue || undefined}
+                onChange={(e) => {
+                  setToValue(e.target.value);
+                  setParam('to', e.target.value || null);
+                }}
+              />
+            </Field>
+          </div>
         </FilterPopover>
         <div className="hidden md:block">
           <ColumnsSelector visible={visible} onChange={updateColumns} />

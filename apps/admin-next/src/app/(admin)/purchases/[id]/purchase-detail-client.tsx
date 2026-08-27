@@ -26,13 +26,14 @@ import {
   AppModal,
   ConfirmModal,
   Field,
-  Select,
+  SearchSelect,
   TextInput,
   TextArea,
   StatCard,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
+  uniqueClientOptions,
 } from '@/components/ui';
 
 interface BuyedProduct {
@@ -47,6 +48,8 @@ interface BuyedProduct {
 interface Candidate {
   id: string;
   name: string;
+  clientId: string;
+  clientName: string;
   pending: number;
 }
 
@@ -71,9 +74,15 @@ export function PurchaseDetailClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [productId, setProductId] = useState('');
+  const [clientFilter, setClientFilter] = useState('');
   const [amount, setAmount] = useState(1);
   const [refundTarget, setRefundTarget] = useState<BuyedProduct | null>(null);
   const [removeTarget, setRemoveTarget] = useState<BuyedProduct | null>(null);
+
+  const clientOptions = uniqueClientOptions(candidates);
+  const filteredCandidates = clientFilter
+    ? candidates.filter((c) => c.clientId === clientFilter)
+    : candidates;
 
   const boughtUnits = buyedProducts.reduce((s, bp) => s + bp.amountBuyed, 0);
   const refundedUnits = buyedProducts.reduce(
@@ -208,23 +217,47 @@ export function PurchaseDetailClient({
         </h2>
         {candidates.length === 0 ? (
           <p className="text-sm text-muted">
-            No hay productos disponibles de esta tienda.
+            No hay productos encargados pendientes de comprar en esta tienda.
           </p>
         ) : (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+            <Field label="Cliente" className="lg:w-56">
+              <SearchSelect
+                value={clientFilter}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setClientFilter(next);
+                  // El producto elegido deja de ser válido si no es
+                  // del cliente filtrado.
+                  if (
+                    next &&
+                    !candidates.some(
+                      (c) => c.id === productId && c.clientId === next
+                    )
+                  ) {
+                    setProductId('');
+                  }
+                }}
+                placeholder="Todos los clientes"
+                searchPlaceholder="Buscar cliente…"
+                options={clientOptions}
+              />
+            </Field>
             <Field label="Producto" className="flex-1">
-              <Select
+              <SearchSelect
                 value={productId}
                 onChange={(e) => setProductId(e.target.value)}
-              >
-                <option value="">— Selecciona —</option>
-                {candidates.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                    {c.pending > 0 ? ` (${c.pending} pendientes)` : ''}
-                  </option>
-                ))}
-              </Select>
+                placeholder="— Selecciona —"
+                searchPlaceholder="Buscar producto…"
+                emptyMessage="Sin productos encargados para ese filtro"
+                options={filteredCandidates.map((c) => ({
+                  value: c.id,
+                  label: `${c.name} (${c.pending} pendiente${
+                    c.pending === 1 ? '' : 's'
+                  })`,
+                  description: c.clientName,
+                }))}
+              />
             </Field>
             <Field label="Cantidad" className="sm:w-28">
               <TextInput

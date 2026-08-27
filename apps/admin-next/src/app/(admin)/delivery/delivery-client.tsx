@@ -30,23 +30,32 @@ import {
   SearchInput,
   Field,
   Select,
+  TextInput,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
 } from '@/components/ui';
 import {
   DELIVERY_STATUSES,
+  PAY_STATUSES,
   type CategoryOption,
   type ClientOption,
   type DeliveryRow,
   type DeliveryStatus,
+  type PayStatus,
 } from './schema';
 
 interface DeliveryClientProps {
   initialRows: DeliveryRow[];
   clientOptions: ClientOption[];
   categoryOptions: CategoryOption[];
-  initialFilters: { q: string; status: DeliveryStatus | null };
+  initialFilters: {
+    q: string;
+    status: DeliveryStatus | null;
+    pay: PayStatus | null;
+    from: string | null;
+    to: string | null;
+  };
 }
 
 export function DeliveryClient({
@@ -62,6 +71,10 @@ export function DeliveryClient({
   const [editTarget, setEditTarget] = useState<DeliveryRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeliveryRow | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<DeliveryRow | null>(null);
+  // Los date inputs son controlados con estado local para que escribir
+  // no dependa del roundtrip al servidor que actualiza initialFilters.
+  const [fromValue, setFromValue] = useState(initialFilters.from ?? '');
+  const [toValue, setToValue] = useState(initialFilters.to ?? '');
 
   function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -162,9 +175,9 @@ export function DeliveryClient({
         />
         <FilterPopover
           title="Filtros de entregas"
-          subtitle="Filtra entregas por estado"
-          activeFilters={
-            initialFilters.status
+          subtitle="Filtra entregas por estado, pago y fecha"
+          activeFilters={[
+            ...(initialFilters.status
               ? [
                   {
                     key: 'status',
@@ -172,9 +185,52 @@ export function DeliveryClient({
                     onRemove: () => setParam('status', null),
                   },
                 ]
-              : []
-          }
-          onClear={() => setParam('status', null)}
+              : []),
+            ...(initialFilters.pay
+              ? [
+                  {
+                    key: 'pay',
+                    label: initialFilters.pay,
+                    onRemove: () => setParam('pay', null),
+                  },
+                ]
+              : []),
+            ...(initialFilters.from
+              ? [
+                  {
+                    key: 'from',
+                    label: `Desde ${initialFilters.from}`,
+                    onRemove: () => {
+                      setFromValue('');
+                      setParam('from', null);
+                    },
+                  },
+                ]
+              : []),
+            ...(initialFilters.to
+              ? [
+                  {
+                    key: 'to',
+                    label: `Hasta ${initialFilters.to}`,
+                    onRemove: () => {
+                      setToValue('');
+                      setParam('to', null);
+                    },
+                  },
+                ]
+              : []),
+          ]}
+          onClear={() => {
+            setFromValue('');
+            setToValue('');
+            const params = new URLSearchParams(searchParams.toString());
+            for (const key of ['status', 'pay', 'from', 'to', 'page']) {
+              params.delete(key);
+            }
+            startTransition(() => {
+              router.replace(`/delivery?${params.toString()}`);
+            });
+          }}
         >
           <Field label="Estado">
             <Select
@@ -189,6 +245,43 @@ export function DeliveryClient({
               ))}
             </Select>
           </Field>
+          <Field label="Tipo de pago">
+            <Select
+              value={initialFilters.pay ?? ''}
+              onChange={(e) => setParam('pay', e.target.value || null)}
+            >
+              <option value="">Todos los pagos</option>
+              {PAY_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Desde">
+              <TextInput
+                type="date"
+                value={fromValue}
+                max={toValue || undefined}
+                onChange={(e) => {
+                  setFromValue(e.target.value);
+                  setParam('from', e.target.value || null);
+                }}
+              />
+            </Field>
+            <Field label="Hasta">
+              <TextInput
+                type="date"
+                value={toValue}
+                min={fromValue || undefined}
+                onChange={(e) => {
+                  setToValue(e.target.value);
+                  setParam('to', e.target.value || null);
+                }}
+              />
+            </Field>
+          </div>
         </FilterPopover>
       </div>
 

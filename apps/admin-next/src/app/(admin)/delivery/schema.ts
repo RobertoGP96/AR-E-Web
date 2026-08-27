@@ -31,6 +31,9 @@ export function fromDbPayStatus(p: DbPayStatus): PayStatus {
   return p;
 }
 
+// Los montos de pago (monto pagado / saldo aplicado) NO viajan en este
+// formulario: se gestionan con la acción de confirmar pago, igual que
+// en órdenes.
 export const deliveryFormSchema = z.object({
   clientId: z.string().min(1, 'Select a client'),
   categoryId: z
@@ -43,8 +46,6 @@ export const deliveryFormSchema = z.object({
     .string()
     .min(1, 'Required')
     .refine((s) => !Number.isNaN(Date.parse(s)), 'Invalid date'),
-  paymentAmount: z.coerce.number().min(0, 'Must be ≥ 0'),
-  balanceApplied: z.coerce.number().min(0, 'Must be ≥ 0'),
   deliverPicture: z
     .string()
     .trim()
@@ -76,6 +77,7 @@ export interface DeliveryRow {
 export interface ClientOption {
   id: string;
   label: string;
+  phoneNumber: string;
 }
 
 export interface CategoryOption {

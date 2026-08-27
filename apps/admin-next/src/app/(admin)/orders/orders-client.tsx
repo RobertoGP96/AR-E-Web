@@ -35,6 +35,8 @@ import {
 import {
   ORDER_STATUSES,
   PAY_STATUSES,
+  type ClientOption,
+  type CurrentUser,
   type OrderRow,
   type OrderStatus,
   type PayStatus,
@@ -43,8 +45,9 @@ import {
 
 interface OrdersClientProps {
   initialRows: OrderRow[];
-  clientOptions: SelectOption[];
+  clientOptions: ClientOption[];
   managerOptions: SelectOption[];
+  currentUser: CurrentUser;
   initialFilters: {
     q: string;
     status: OrderStatus | null;
@@ -59,6 +62,7 @@ export function OrdersClient({
   initialRows,
   clientOptions,
   managerOptions,
+  currentUser,
   initialFilters,
 }: OrdersClientProps) {
   const router = useRouter();
@@ -425,6 +429,7 @@ export function OrdersClient({
         mode="create"
         clientOptions={clientOptions}
         managerOptions={managerOptions}
+        currentUser={currentUser}
         onClose={() => setCreateOpen(false)}
         onSuccess={(newId) => {
           setCreateOpen(false);
@@ -440,6 +445,7 @@ export function OrdersClient({
         order={editTarget ?? undefined}
         clientOptions={clientOptions}
         managerOptions={managerOptions}
+        currentUser={currentUser}
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);

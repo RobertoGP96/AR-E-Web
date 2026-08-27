@@ -13,20 +13,43 @@ import {
 } from './schema';
 
 interface PageProps {
-  searchParams: Promise<{ status?: string; page?: string; per?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    shop?: string;
+    from?: string;
+    to?: string;
+    page?: string;
+    per?: string;
+  }>;
+}
+
+/** Valida un parámetro YYYY-MM-DD de la URL; cualquier otra cosa se ignora. */
+function parseDateParam(value: string | undefined): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  return Number.isNaN(new Date(`${value}T00:00:00`).getTime()) ? null : value;
 }
 
 export default async function PurchasesPage({ searchParams }: PageProps) {
-  const { status, page: pageParam, per } = await searchParams;
+  const { status, shop, from, to, page: pageParam, per } = await searchParams;
   const statusFilter =
     status && (PAY_STATUSES as readonly string[]).includes(status)
       ? (status as PayStatus)
       : null;
+  const shopFilter = shop && /^\d+$/.test(shop) ? BigInt(shop) : null;
+  const fromFilter = parseDateParam(from);
+  const toFilter = parseDateParam(to);
 
   const { page, perPage, skip } = parsePagination({ page: pageParam, per });
-  const where = statusFilter
-    ? { statusOfShopping: toDbPayStatus(statusFilter) }
-    : undefined;
+  const where = {
+    ...(statusFilter && { statusOfShopping: toDbPayStatus(statusFilter) }),
+    ...(shopFilter && { shopOfBuyId: shopFilter }),
+    ...((fromFilter || toFilter) && {
+      buyDate: {
+        ...(fromFilter && { gte: new Date(`${fromFilter}T00:00:00`) }),
+        ...(toFilter && { lte: new Date(`${toFilter}T23:59:59.999`) }),
+      },
+    }),
+  };
 
   const [receipts, shops, totalCount] = await Promise.all([
     prisma.shoppingReceip.findMany({
@@ -81,7 +104,12 @@ export default async function PurchasesPage({ searchParams }: PageProps) {
       <PurchasesClient
         initialRows={rows}
         shopOptions={shopOptions}
-        initialStatus={statusFilter}
+        initialFilters={{
+          status: statusFilter,
+          shop: shopFilter?.toString() ?? null,
+          from: fromFilter,
+          to: toFilter,
+        }}
       />
       <TablePagination page={page} perPage={perPage} total={totalCount} />
     </>

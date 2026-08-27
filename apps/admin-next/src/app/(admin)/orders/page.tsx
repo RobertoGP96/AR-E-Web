@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { OrdersClient } from './orders-client';
 import { TablePagination } from '@/components/table-pagination';
@@ -8,6 +9,8 @@ import {
   PAY_STATUSES,
   fromDbPayStatus,
   toDbPayStatus,
+  type ClientOption,
+  type CurrentUser,
   type DbPayStatus,
   type OrderRow,
   type OrderStatus,
@@ -35,6 +38,11 @@ function parseDateParam(value: string | undefined): string | null {
 }
 
 export default async function OrdersPage({ searchParams }: PageProps) {
+  const session = await auth();
+  const currentUser: CurrentUser = {
+    id: session?.user.id ?? '',
+    role: session?.user.role ?? '',
+  };
   const {
     q,
     status,
@@ -97,7 +105,13 @@ export default async function OrdersPage({ searchParams }: PageProps) {
     }),
     prisma.customUser.findMany({
       where: { role: 'client' },
-      select: { id: true, name: true, lastName: true, phoneNumber: true },
+      select: {
+        id: true,
+        name: true,
+        lastName: true,
+        phoneNumber: true,
+        assignedAgentId: true,
+      },
       orderBy: { name: 'asc' },
       take: 1000,
     }),
@@ -128,9 +142,11 @@ export default async function OrdersPage({ searchParams }: PageProps) {
     createdAt: o.createdAt.toISOString(),
   }));
 
-  const clientOptions: SelectOption[] = clients.map((c) => ({
+  const clientOptions: ClientOption[] = clients.map((c) => ({
     id: c.id.toString(),
-    label: `${c.name} ${c.lastName} · ${c.phoneNumber}`.trim(),
+    label: `${c.name} ${c.lastName}`.trim(),
+    phoneNumber: c.phoneNumber,
+    agentId: c.assignedAgentId ? c.assignedAgentId.toString() : null,
   }));
   const managerOptions: SelectOption[] = managers.map((m) => ({
     id: m.id.toString(),
@@ -143,6 +159,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
         initialRows={rows}
         clientOptions={clientOptions}
         managerOptions={managerOptions}
+        currentUser={currentUser}
         initialFilters={{
           q: search,
           status: statusFilter,

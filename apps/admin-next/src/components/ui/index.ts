@@ -8,6 +8,11 @@ export {
   FormError,
 } from './form';
 export { Select } from './select';
+export {
+  SearchSelect,
+  uniqueClientOptions,
+  type SearchSelectOption,
+} from './search-select';
 export { PageHeader } from './page-header';
 export { StatCard, type StatTone } from './stat-card';
 export {

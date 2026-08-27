@@ -66,7 +66,7 @@ export async function createOrderAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const { denied } = await requireRole(ROLES.orders);
+  const { denied, user } = await requireRole(ROLES.orders);
   if (denied) return denied;
 
   const parsed = orderFormSchema.safeParse({
@@ -74,8 +74,6 @@ export async function createOrderAction(
     salesManagerId: formData.get('salesManagerId') ?? '',
     status: formData.get('status'),
     observations: formData.get('observations') ?? '',
-    receivedValueOfClient: formData.get('receivedValueOfClient') ?? 0,
-    balanceApplied: formData.get('balanceApplied') ?? 0,
   });
   if (!parsed.success) {
     return {
@@ -87,8 +85,11 @@ export async function createOrderAction(
   const d = parsed.data;
   const clientId = parseId(d.clientId);
   if (!clientId) return { ok: false, error: 'Invalid client id' };
-  const salesManagerId = d.salesManagerId ? parseId(d.salesManagerId) : null;
-  if (d.salesManagerId && !salesManagerId) {
+  // Un agente siempre crea órdenes a su propio nombre: el gestor se
+  // fija en el servidor, ignorando lo que venga del formulario.
+  const managerRaw = user.role === 'agent' ? user.id : d.salesManagerId;
+  const salesManagerId = managerRaw ? parseId(managerRaw) : null;
+  if (managerRaw && !salesManagerId) {
     return { ok: false, error: 'Invalid sales manager id' };
   }
 
@@ -98,11 +99,9 @@ export async function createOrderAction(
       salesManagerId,
       status: d.status,
       observations: d.observations,
-      receivedValueOfClient: d.receivedValueOfClient,
-      balanceApplied: d.balanceApplied,
-      payStatus: toDbPayStatus(
-        computePayStatus(0, d.receivedValueOfClient, d.balanceApplied)
-      ),
+      receivedValueOfClient: 0,
+      balanceApplied: 0,
+      payStatus: toDbPayStatus(computePayStatus(0, 0, 0)),
     },
   });
   await recalculateClientBalance(clientId);
@@ -115,7 +114,7 @@ export async function updateOrderAction(
   _prev: ActionResult | undefined,
   formData: FormData
 ): Promise<ActionResult> {
-  const { denied } = await requireRole(ROLES.orders);
+  const { denied, user } = await requireRole(ROLES.orders);
   if (denied) return denied;
 
   const orderId = parseId(formData.get('id'));
@@ -126,8 +125,6 @@ export async function updateOrderAction(
     salesManagerId: formData.get('salesManagerId') ?? '',
     status: formData.get('status'),
     observations: formData.get('observations') ?? '',
-    receivedValueOfClient: formData.get('receivedValueOfClient') ?? 0,
-    balanceApplied: formData.get('balanceApplied') ?? 0,
   });
   if (!parsed.success) {
     return {
@@ -139,8 +136,11 @@ export async function updateOrderAction(
   const d = parsed.data;
   const clientId = parseId(d.clientId);
   if (!clientId) return { ok: false, error: 'Invalid client id' };
-  const salesManagerId = d.salesManagerId ? parseId(d.salesManagerId) : null;
-  if (d.salesManagerId && !salesManagerId) {
+  // Igual que en create: un agente no puede reasignar la orden a otro
+  // gestor, así que el servidor fija su propio id.
+  const managerRaw = user.role === 'agent' ? user.id : d.salesManagerId;
+  const salesManagerId = managerRaw ? parseId(managerRaw) : null;
+  if (managerRaw && !salesManagerId) {
     return { ok: false, error: 'Invalid sales manager id' };
   }
 
@@ -150,6 +150,8 @@ export async function updateOrderAction(
   });
   if (!existing) return { ok: false, error: 'Order not found' };
 
+  // receivedValueOfClient / balanceApplied / payStatus no se tocan
+  // aquí: los pagos se registran con confirmOrderPaymentAction.
   await prisma.order.update({
     where: { id: orderId },
     data: {
@@ -157,15 +159,6 @@ export async function updateOrderAction(
       salesManagerId,
       status: d.status,
       observations: d.observations,
-      receivedValueOfClient: d.receivedValueOfClient,
-      balanceApplied: d.balanceApplied,
-      payStatus: toDbPayStatus(
-        computePayStatus(
-          existing.totalCosts,
-          d.receivedValueOfClient,
-          d.balanceApplied
-        )
-      ),
     },
   });
 

@@ -28,7 +28,7 @@ import {
 import {
   StatCard,
   Field,
-  Select,
+  SearchSelect,
   TextInput,
   ResponsiveTable,
   MobileCard,
@@ -198,20 +198,23 @@ export function DeliveryDetailClient({
         ) : (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <Field label="Producto" className="flex-1">
-              <Select
+              <SearchSelect
                 value={productId}
                 onChange={(e) => {
                   setProductId(e.target.value);
                   setAmount(1);
                 }}
-              >
-                <option value="">— Selecciona —</option>
-                {candidates.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.remaining} disponibles)
-                  </option>
-                ))}
-              </Select>
+                placeholder="— Selecciona —"
+                searchPlaceholder="Buscar producto…"
+                emptyMessage="Sin productos recibidos pendientes"
+                options={candidates.map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                  description: `${c.remaining} disponible${
+                    c.remaining === 1 ? '' : 's'
+                  }`,
+                }))}
+              />
             </Field>
             <Field label="Cantidad" className="sm:w-28">
               <TextInput

@@ -48,7 +48,10 @@ export default async function PackageDetailPage({ params }: PageProps) {
       amountPurchased: true,
       amountReceived: true,
       order: {
-        select: { client: { select: { name: true, lastName: true } } },
+        select: {
+          clientId: true,
+          client: { select: { name: true, lastName: true } },
+        },
       },
     },
     orderBy: { createdAt: 'desc' },
@@ -77,6 +80,7 @@ export default async function PackageDetailPage({ params }: PageProps) {
         .map((p) => ({
           id: p.id,
           name: p.name,
+          clientId: p.order.clientId.toString(),
           clientName:
             `${p.order.client.name} ${p.order.client.lastName}`.trim(),
           remaining: p.amountPurchased - p.amountReceived,

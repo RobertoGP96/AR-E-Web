@@ -107,15 +107,18 @@ export function ProductDialog({
           <input type="hidden" name="productId" value={product.id} />
         ) : null}
 
+        {/* El nombre ocupa todo el ancho: suele ser largo (títulos de
+            Shein/Amazon) y no debe compartir fila con otro campo. */}
+        <Field label="Nombre" required error={errors['name']}>
+          <TextInput
+            name="name"
+            defaultValue={product?.name ?? ''}
+            required
+            invalid={!!errors['name']}
+          />
+        </Field>
+
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field label="Nombre" required error={errors['name']}>
-            <TextInput
-              name="name"
-              defaultValue={product?.name ?? ''}
-              required
-              invalid={!!errors['name']}
-            />
-          </Field>
           <Field label="Tienda" required error={errors['shopId']}>
             <Select
               name="shopId"
@@ -135,9 +138,6 @@ export function ProductDialog({
               ))}
             </Select>
           </Field>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Categoría (opcional)">
             <Select
               name="categoryId"
@@ -151,10 +151,11 @@ export function ProductDialog({
               ))}
             </Select>
           </Field>
-          <Field label="Enlace (opcional)">
-            <TextInput name="link" type="url" defaultValue={product?.link ?? ''} />
-          </Field>
         </div>
+
+        <Field label="Enlace (opcional)">
+          <TextInput name="link" type="url" defaultValue={product?.link ?? ''} />
+        </Field>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Field label="SKU (opcional)">

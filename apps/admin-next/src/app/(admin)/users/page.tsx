@@ -2,10 +2,16 @@ import { redirect } from 'next/navigation';
 import type { Prisma } from '@prisma/client';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { round2 } from '@/lib/order-cost';
 import { TablePagination } from '@/components/table-pagination';
 import { parsePagination } from '@/lib/pagination';
 import { UsersClient } from './users-client';
 import { DistributionClient } from './distribution-client';
+import {
+  BalancesClient,
+  type BalanceStatusFilter,
+  type ClientBalanceRow,
+} from './balances-client';
 import { UsersTabs, type UsersTab } from './users-tabs';
 import {
   CLIENT_ROLES,
@@ -17,6 +23,8 @@ import {
   type UserRow,
 } from './schema';
 
+const BALANCE_STATUS_FILTERS = ['deuda', 'favor', 'aldia'] as const;
+
 interface PageProps {
   searchParams: Promise<{
     tab?: string;
@@ -24,6 +32,7 @@ interface PageProps {
     role?: string;
     active?: string;
     verified?: string;
+    status?: string;
     page?: string;
     per?: string;
   }>;
@@ -31,14 +40,152 @@ interface PageProps {
 
 export default async function UsersPage({ searchParams }: PageProps) {
   const session = await auth();
-  if (session?.user.role !== 'admin') {
-    // Only admins manage users in this app.
+  const sessionRole = session?.user.role;
+  // Admins manage users; accountants only get the balances tab (the
+  // former /client-balances view now lives here).
+  if (sessionRole !== 'admin' && sessionRole !== 'accountant') {
     redirect('/dashboard');
   }
+  const canManageUsers = sessionRole === 'admin';
 
-  const { tab: tabParam, q, role, active, verified, page: pageParam, per } =
-    await searchParams;
-  const tab: UsersTab = tabParam === 'distribution' ? 'distribution' : 'users';
+  const {
+    tab: tabParam,
+    q,
+    role: roleParam,
+    active,
+    verified,
+    status,
+    page: pageParam,
+    per,
+  } = await searchParams;
+  let tab: UsersTab =
+    tabParam === 'distribution'
+      ? 'distribution'
+      : tabParam === 'balances'
+        ? 'balances'
+        : 'users';
+  if (!canManageUsers) tab = 'balances';
+
+  const search = q?.trim() ?? '';
+
+  if (tab === 'balances') {
+    const statusFilter =
+      status && (BALANCE_STATUS_FILTERS as readonly string[]).includes(status)
+        ? (status as BalanceStatusFilter)
+        : null;
+
+    const [clients, orderAgg, deliveryAgg] = await Promise.all([
+      prisma.customUser.findMany({
+        where: {
+          role: 'client',
+          ...(search && {
+            OR: [
+              { name: { contains: search, mode: 'insensitive' as const } },
+              { lastName: { contains: search, mode: 'insensitive' as const } },
+              {
+                phoneNumber: {
+                  contains: search,
+                  mode: 'insensitive' as const,
+                },
+              },
+            ],
+          }),
+        },
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          phoneNumber: true,
+          balance: true,
+          assignedAgent: { select: { name: true, lastName: true } },
+        },
+        orderBy: { name: 'asc' },
+        take: 1000,
+      }),
+      prisma.order.groupBy({
+        by: ['clientId'],
+        _sum: { receivedValueOfClient: true, totalCosts: true },
+        _count: { _all: true },
+      }),
+      prisma.deliverReceip.groupBy({
+        by: ['clientId'],
+        _sum: { paymentAmount: true, weightCost: true },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const orderByClient = new Map(
+      orderAgg.map((a) => [a.clientId.toString(), a])
+    );
+    const deliveryByClient = new Map(
+      deliveryAgg.map((a) => [a.clientId.toString(), a])
+    );
+
+    let rows: ClientBalanceRow[] = clients.map((c) => {
+      const key = c.id.toString();
+      const o = orderByClient.get(key);
+      const d = deliveryByClient.get(key);
+      const received =
+        (o?._sum.receivedValueOfClient ?? 0) + (d?._sum.paymentAmount ?? 0);
+      const cost = (o?._sum.totalCosts ?? 0) + (d?._sum.weightCost ?? 0);
+      return {
+        id: key,
+        name: `${c.name} ${c.lastName}`.trim(),
+        phoneNumber: c.phoneNumber,
+        agentName: c.assignedAgent
+          ? `${c.assignedAgent.name} ${c.assignedAgent.lastName}`.trim()
+          : null,
+        orderCount: o?._count._all ?? 0,
+        deliveryCount: d?._count._all ?? 0,
+        totalReceived: round2(received),
+        totalCost: round2(cost),
+        // Same formula as CustomUser.recalculate_balance; the live
+        // aggregate is the source of truth, the stored column can lag.
+        balance: round2(received - cost),
+        storedBalance: c.balance,
+      };
+    });
+
+    if (statusFilter) {
+      rows = rows.filter((r) =>
+        statusFilter === 'deuda'
+          ? r.balance < 0
+          : statusFilter === 'favor'
+            ? r.balance > 0
+            : r.balance === 0
+      );
+    }
+
+    // Biggest debt first — that's what the accountant is here for.
+    rows.sort((a, b) => a.balance - b.balance);
+
+    const totals = {
+      debt: round2(
+        rows.filter((r) => r.balance < 0).reduce((s, r) => s + r.balance, 0)
+      ),
+      credit: round2(
+        rows.filter((r) => r.balance > 0).reduce((s, r) => s + r.balance, 0)
+      ),
+      clients: rows.length,
+    };
+
+    return (
+      <UsersTabs
+        tab="balances"
+        agentOptions={[]}
+        canManageUsers={canManageUsers}
+        usersPanel={null}
+        distributionPanel={null}
+        balancesPanel={
+          <BalancesClient
+            initialRows={rows}
+            totals={totals}
+            initialFilters={{ q: search, status: statusFilter }}
+          />
+        }
+      />
+    );
+  }
 
   const agentsQuery = prisma.customUser.findMany({
     where: { role: { in: ['agent', 'admin'] }, isActive: true },
@@ -119,18 +266,19 @@ export default async function UsersPage({ searchParams }: PageProps) {
       <UsersTabs
         tab={tab}
         agentOptions={agentOptions}
+        canManageUsers={canManageUsers}
         usersPanel={null}
         distributionPanel={
           <DistributionClient agents={agentRows} clients={clientRows} />
         }
+        balancesPanel={null}
       />
     );
   }
 
-  const search = q?.trim() ?? '';
   const roleFilter =
-    role && (USER_ROLES as readonly string[]).includes(role)
-      ? (role as UserRole)
+    roleParam && (USER_ROLES as readonly string[]).includes(roleParam)
+      ? (roleParam as UserRole)
       : null;
   const activeFilter =
     active === 'true' ? true : active === 'false' ? false : null;
@@ -194,6 +342,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
     <UsersTabs
       tab={tab}
       agentOptions={agentOptions}
+      canManageUsers={canManageUsers}
       usersPanel={
         <>
           <UsersClient
@@ -210,6 +359,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
         </>
       }
       distributionPanel={null}
+      balancesPanel={null}
     />
   );
 }

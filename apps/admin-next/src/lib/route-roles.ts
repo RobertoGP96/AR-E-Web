@@ -7,13 +7,16 @@ import { ROLES, STAFF_ROLES } from '@/lib/action-helpers';
  */
 const ROUTE_ROLES: Record<string, readonly string[]> = {
   dashboard: STAFF_ROLES,
-  users: ROLES.users,
+  // Accountants only reach the "Balances" tab (the page enforces it);
+  // user management writes stay admin-only via ROLES.users.
+  users: ['admin', 'accountant'],
   shops: ROLES.shops,
   import: ['admin'],
   categories: ROLES.categories,
   purchases: ROLES.purchases,
   orders: ROLES.orders,
   products: ['admin', 'agent', 'logistical'],
+  // Redirect legado hacia /users?tab=balances.
   'client-balances': ROLES.finance,
   // Agents can view deliveries (read-only actions server-side).
   delivery: ['admin', 'agent', 'logistical'],

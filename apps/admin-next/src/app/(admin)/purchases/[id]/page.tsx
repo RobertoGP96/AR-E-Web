@@ -29,14 +29,22 @@ export default async function PurchaseDetailPage({ params }: PageProps) {
   });
   if (!purchase) notFound();
 
-  // Candidate products to add: products sold from the same shop.
+  // Candidate products to add: products sold from the same shop that
+  // are still "Encargado" (units pending purchase — a fully purchased
+  // product leaves that status via deriveProductStatus).
   const candidateProducts = await prisma.product.findMany({
-    where: { shopId: purchase.shopOfBuyId },
+    where: { shopId: purchase.shopOfBuyId, status: 'Encargado' },
     select: {
       id: true,
       name: true,
       amountRequested: true,
       amountPurchased: true,
+      order: {
+        select: {
+          clientId: true,
+          client: { select: { name: true, lastName: true } },
+        },
+      },
     },
     orderBy: { createdAt: 'desc' },
     take: 500,
@@ -59,11 +67,16 @@ export default async function PurchaseDetailPage({ params }: PageProps) {
         isRefunded: bp.isRefunded,
         refundAmount: bp.refundAmount,
       }))}
-      candidates={candidateProducts.map((p) => ({
-        id: p.id,
-        name: p.name,
-        pending: Math.max(0, p.amountRequested - p.amountPurchased),
-      }))}
+      candidates={candidateProducts
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          clientId: p.order.clientId.toString(),
+          clientName:
+            `${p.order.client.name} ${p.order.client.lastName}`.trim(),
+          pending: Math.max(0, p.amountRequested - p.amountPurchased),
+        }))
+        .filter((p) => p.pending > 0)}
     />
   );
 }

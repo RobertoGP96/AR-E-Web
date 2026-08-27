@@ -16,6 +16,7 @@ import {
   AppModal,
   Field,
   Select,
+  SearchSelect,
   TextInput,
   SubmitButton,
 } from '@/components/ui';
@@ -104,19 +105,19 @@ export function DeliveryDialog({
         ) : null}
 
         <Field label="Cliente" required error={errors['clientId']}>
-          <Select
+          <SearchSelect
             name="clientId"
             defaultValue={delivery?.clientId ?? ''}
             required
             invalid={!!errors['clientId']}
-          >
-            <option value="">— Selecciona un cliente —</option>
-            {clientOptions.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.label}
-              </option>
-            ))}
-          </Select>
+            placeholder="— Selecciona un cliente —"
+            searchPlaceholder="Buscar cliente por nombre o teléfono…"
+            options={clientOptions.map((c) => ({
+              value: c.id,
+              label: c.label,
+              description: c.phoneNumber,
+            }))}
+          />
         </Field>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -171,41 +172,6 @@ export function DeliveryDialog({
           </Field>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field label="Monto pagado" error={errors['paymentAmount']}>
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
-                $
-              </span>
-              <TextInput
-                name="paymentAmount"
-                type="number"
-                step="0.01"
-                min="0"
-                defaultValue={delivery?.paymentAmount.toString() ?? '0'}
-                invalid={!!errors['paymentAmount']}
-                className="pl-7"
-              />
-            </div>
-          </Field>
-          <Field label="Saldo aplicado" error={errors['balanceApplied']}>
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
-                $
-              </span>
-              <TextInput
-                name="balanceApplied"
-                type="number"
-                step="0.01"
-                min="0"
-                defaultValue={delivery?.balanceApplied.toString() ?? '0'}
-                invalid={!!errors['balanceApplied']}
-                className="pl-7"
-              />
-            </div>
-          </Field>
-        </div>
-
         <ImageUploadField
           name="deliverPicture"
           label="Foto de la entrega (opcional)"
@@ -232,7 +198,8 @@ export function DeliveryDialog({
           <p className="mt-1 text-[10px] text-muted">
             El costo por peso y la ganancia del gestor se recalculan en el
             servidor con la tarifa de la categoría y el agente asignado al
-            cliente.
+            cliente. Los pagos (monto pagado y saldo aplicado) se registran
+            con la acción «Confirmar pago».
           </p>
         </div>
 

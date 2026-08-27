@@ -5,38 +5,64 @@ import { parsePagination } from '@/lib/pagination';
 import { DeliveryClient } from './delivery-client';
 import {
   DELIVERY_STATUSES,
+  PAY_STATUSES,
   fromDbDeliveryStatus,
   fromDbPayStatus,
   toDbDeliveryStatus,
+  toDbPayStatus,
   type CategoryOption,
   type ClientOption,
   type DbDeliveryStatus,
   type DbPayStatus,
   type DeliveryRow,
   type DeliveryStatus,
+  type PayStatus,
 } from './schema';
 
 interface PageProps {
   searchParams: Promise<{
     q?: string;
     status?: string;
+    pay?: string;
+    from?: string;
+    to?: string;
     page?: string;
     per?: string;
   }>;
 }
 
+/** Valida un parámetro YYYY-MM-DD de la URL; cualquier otra cosa se ignora. */
+function parseDateParam(value: string | undefined): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  return Number.isNaN(new Date(`${value}T00:00:00`).getTime()) ? null : value;
+}
+
 export default async function DeliveryPage({ searchParams }: PageProps) {
-  const { q, status, page: pageParam, per } = await searchParams;
+  const { q, status, pay, from, to, page: pageParam, per } =
+    await searchParams;
   const search = q?.trim() ?? '';
   const statusFilter =
     status && (DELIVERY_STATUSES as readonly string[]).includes(status)
       ? (status as DeliveryStatus)
       : null;
+  const payFilter =
+    pay && (PAY_STATUSES as readonly string[]).includes(pay)
+      ? (pay as PayStatus)
+      : null;
+  const fromFilter = parseDateParam(from);
+  const toFilter = parseDateParam(to);
 
   const { page, perPage, skip } = parsePagination({ page: pageParam, per });
   const where: Prisma.DeliverReceipWhereInput = {
     ...(statusFilter && {
       status: toDbDeliveryStatus(statusFilter),
+    }),
+    ...(payFilter && { paymentStatus: toDbPayStatus(payFilter) }),
+    ...((fromFilter || toFilter) && {
+      deliverDate: {
+        ...(fromFilter && { gte: new Date(`${fromFilter}T00:00:00`) }),
+        ...(toFilter && { lte: new Date(`${toFilter}T23:59:59.999`) }),
+      },
     }),
     ...(search && {
       client: {
@@ -93,7 +119,8 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
 
   const clientOptions: ClientOption[] = clients.map((c) => ({
     id: c.id.toString(),
-    label: `${c.name} ${c.lastName} · ${c.phoneNumber}`.trim(),
+    label: `${c.name} ${c.lastName}`.trim(),
+    phoneNumber: c.phoneNumber,
   }));
   const categoryOptions: CategoryOption[] = categories.map((c) => ({
     id: c.id.toString(),
@@ -107,7 +134,13 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
         initialRows={rows}
         clientOptions={clientOptions}
         categoryOptions={categoryOptions}
-        initialFilters={{ q: search, status: statusFilter }}
+        initialFilters={{
+          q: search,
+          status: statusFilter,
+          pay: payFilter,
+          from: fromFilter,
+          to: toFilter,
+        }}
       />
       <TablePagination page={page} perPage={perPage} total={totalCount} />
     </>
