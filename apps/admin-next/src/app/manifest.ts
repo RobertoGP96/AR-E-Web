@@ -11,11 +11,12 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     background_color: '#1c1c1f',
     theme_color: '#e8772e',
+    // Icons carry their own near-black background: the bee logo is
+    // orange-on-transparent and vanishes on dark launchers/tab strips.
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
       { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-      { src: '/logo.svg', sizes: 'any', type: 'image/svg+xml' },
     ],
   };
 }

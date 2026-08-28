@@ -7,6 +7,7 @@ import { MobileNav } from './mobile-nav';
 import { GlobalSearch } from './global-search';
 import { NotificationsBell } from './notifications-bell';
 import { AdminNav } from './admin-nav';
+import { BottomNav } from './bottom-nav';
 import { Breadcrumbs } from './breadcrumbs';
 
 export default async function AdminLayout({
@@ -58,9 +59,11 @@ export default async function AdminLayout({
             <NotificationsBell />
           </div>
         </header>
-        <main className="min-h-0 flex-1 overflow-auto scroll-smooth bg-background p-4 sm:p-6 xl:p-8">
+        {/* max-md:pb-28 keeps content clear of the floating bottom bar */}
+        <main className="min-h-0 flex-1 overflow-auto scroll-smooth bg-background p-4 max-md:pb-28 sm:p-6 xl:p-8">
           <div className="mx-auto w-full max-w-[1600px]">{children}</div>
         </main>
+        <BottomNav role={role} />
       </div>
     </div>
   );
