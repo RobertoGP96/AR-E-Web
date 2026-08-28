@@ -23,7 +23,6 @@ import { Alert, Button, Checkbox, Chip, Spinner } from '@heroui/react';
 
 import {
   FormError,
-  PageHeader,
   Select,
   StatCard,
   SubmitButton,
@@ -366,11 +365,6 @@ export function ImportClient() {
     ];
     return (
       <div className="space-y-5">
-        <PageHeader
-          icon={FileSpreadsheet}
-          title="Importar Excel"
-          subtitle="Importación completada"
-        />
         <div className="surface-card space-y-5 p-6">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-success-soft text-success-soft-foreground">
@@ -425,11 +419,6 @@ export function ImportClient() {
   if (!analysis || !derived) {
     return (
       <div className="space-y-5">
-        <PageHeader
-          icon={FileSpreadsheet}
-          title="Importar Excel"
-          subtitle="Incorpora los datos de un libro de embarque AR&E Shipps"
-        />
         <form
           action={handleAnalyze}
           className="surface-card mx-auto max-w-2xl space-y-4 p-6"
@@ -493,17 +482,18 @@ export function ImportClient() {
 
   return (
     <div className="space-y-5 pb-24">
-      <PageHeader
-        icon={FileSpreadsheet}
-        title="Importar Excel"
-        subtitle={`Revisa lo detectado en ${analysis.fileName}`}
-        actions={
-          <Button variant="ghost" onPress={resetAll}>
-            <RotateCcw className="h-4 w-4" aria-hidden />
-            Elegir otro archivo
-          </Button>
-        }
-      />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="flex min-w-0 items-center gap-2 text-base font-semibold text-foreground">
+          <FileSpreadsheet className="h-4.5 w-4.5 shrink-0 text-accent" aria-hidden />
+          <span className="truncate">
+            Revisa lo detectado en {analysis.fileName}
+          </span>
+        </h2>
+        <Button variant="ghost" onPress={resetAll}>
+          <RotateCcw className="h-4 w-4" aria-hidden />
+          Elegir otro archivo
+        </Button>
+      </div>
 
       {analysis.alreadyImported ? (
         <Alert status="warning" role="alert" className="items-center gap-2.5">

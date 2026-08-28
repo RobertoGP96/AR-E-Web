@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef } from 'react';
 import { Settings, SlidersHorizontal, Lock } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { updateCommonInfoAction, type ActionResult } from './actions';
-import { Field, TextInput, SubmitButton, PageHeader } from '@/components/ui';
+import { Field, TextInput, SubmitButton } from '@/components/ui';
 
 interface SettingsFormProps {
   defaults: { changeRate: number; costPerPound: number };
@@ -12,19 +12,10 @@ interface SettingsFormProps {
 }
 
 export function SettingsForm({ defaults, canEdit }: SettingsFormProps) {
-  return (
-    <div>
-      <PageHeader
-        icon={Settings}
-        title="Configuración"
-        subtitle="Personaliza la configuración de tu panel de administración"
-      />
-      {canEdit ? (
-        <EditableSettingsCard defaults={defaults} />
-      ) : (
-        <ReadOnlySettingsCard defaults={defaults} />
-      )}
-    </div>
+  return canEdit ? (
+    <EditableSettingsCard defaults={defaults} />
+  ) : (
+    <ReadOnlySettingsCard defaults={defaults} />
   );
 }
 

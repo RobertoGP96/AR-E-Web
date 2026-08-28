@@ -1,9 +1,6 @@
-import { ImportClient } from './import-client';
+import { redirect } from 'next/navigation';
 
-/**
- * Importación de embarques desde Excel (libros "AR&E Shipps #NNN").
- * Todo el flujo es interactivo: subir → previsualizar/omitir → importar.
- */
-export default function ImportPage() {
-  return <ImportClient />;
+/** La importación de Excel se movió a Configuración → Importar Excel. */
+export default function ImportRedirect() {
+  redirect('/settings/import');
 }

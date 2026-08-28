@@ -16,7 +16,7 @@ import type {
   ImportAnalysis,
   ImportSummary,
 } from '@/lib/excel-import/types';
-import { EXPENSE_CATEGORIES } from '../expenses/schema';
+import { EXPENSE_CATEGORIES } from '../../expenses/schema';
 import { importPayloadSchema, type ImportPayload } from './schema';
 
 const IMPORT_ROLES = ['admin'] as const;

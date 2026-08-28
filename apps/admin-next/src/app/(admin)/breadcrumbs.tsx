@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  Activity,
+  Database,
   Home,
   Users,
   Store,
@@ -34,13 +36,15 @@ const ROUTE_NAMES: Record<string, string> = {
   '/delivery': 'Entrega',
   '/orders': 'Órdenes',
   '/settings': 'Configuración',
+  '/settings/data': 'Gestión de Datos',
+  '/settings/import': 'Importar Excel',
+  '/settings/system': 'Sistema',
   '/profile': 'Mi Perfil',
   '/categories': 'Categorías',
   '/invoices': 'Costos de Envío',
   '/expenses': 'Gastos',
   '/analytics': 'Análisis',
   '/balance': 'Balance',
-  '/import': 'Importar Excel',
 };
 
 const ROUTE_ICONS: Record<string, LucideIcon> = {
@@ -52,13 +56,15 @@ const ROUTE_ICONS: Record<string, LucideIcon> = {
   '/delivery': Truck,
   '/orders': ShoppingCart,
   '/settings': Settings,
+  '/settings/data': Database,
+  '/settings/import': FileSpreadsheet,
+  '/settings/system': Activity,
   '/profile': UserCircle,
   '/categories': Tags,
   '/invoices': BaggageClaim,
   '/expenses': FileText,
   '/analytics': ChartColumn,
   '/balance': Receipt,
-  '/import': FileSpreadsheet,
 };
 
 const DETAIL_NAMES: Record<string, string> = {
