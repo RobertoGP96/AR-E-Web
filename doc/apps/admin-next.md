@@ -147,7 +147,7 @@ Grupos: `(auth)` para login (sin shell), `(admin)` para el panel (con sidebar/he
 | `/packages/[id]` | `src/app/(admin)/packages/[id]/page.tsx` + `package-detail-client.tsx` | Recepción de productos | admin, logistical |
 | `/delivery` | `src/app/(admin)/delivery/page.tsx` + `delivery-client.tsx` | CRUD entregas + pago | admin, agent (ver), logistical |
 | `/delivery/[id]` | `src/app/(admin)/delivery/[id]/page.tsx` + `delivery-detail-client.tsx` | Productos entregados | admin, agent (ver), logistical |
-| `/delivery/prepare` | `src/app/(admin)/delivery/prepare/page.tsx` + `prepare-client.tsx` | Mesa de preparación: productos recibidos sin entregar agrupados por cliente (con procedencia de paquetes y aviso de entregas pendientes); selección con cantidades y creación de la entrega en un paso | admin, agent (ver), logistical |
+| `/delivery/prepare` | `src/app/(admin)/delivery/prepare/page.tsx` + `prepare-client.tsx` (+ `review-packages-step.tsx`, `build-deliveries-step.tsx`) | Mesa de preparación en 2 fases (tabs con estado conservado): **(1) Revisar paquetes** — paquetes pendientes uno a uno con checklist de llegadas por producto y cantidad (lote `registerArrivalsAction`; nota opcional por ítem; Enviado→Recibido automático al registrar; «Terminar revisión» → Procesado); **(2) Armar entregas** — recibido sin entregar agrupado por cliente, con unidades por paquete de procedencia, avisos de «en camino»/«sin comprar» para entregas parciales incrementales, y creación de la entrega en un paso | admin, agent (ver), logistical |
 | `/invoices` | `src/app/(admin)/invoices/page.tsx` + `invoices-client.tsx` | Facturas de costos de envío (tags) | admin, accountant |
 | `/expenses` | `src/app/(admin)/expenses/page.tsx` + `expenses-client.tsx` | Registro de gastos | admin, accountant |
 | `/balance` | `src/app/(admin)/balance/page.tsx` + `balance-client.tsx` | Balances periódicos manuales | admin, accountant |
@@ -228,6 +228,7 @@ Grupos: `(auth)` para login (sin shell), `(admin)` para el panel (con sidebar/he
 | `createPackageAction` / `updatePackageAction` / `deletePackageAction` | `(admin)/packages/actions.ts` | CRUD de paquetes | Package | tracking único (P2002 → fieldError) |
 | `setPackageStatusAction` | ídem | Cambio rápido de estado | Package | estado ∈ `PACKAGE_STATUSES` |
 | `addReceivedProductAction` / `removeReceivedProductAction` | ídem | Recepción/eliminación de `ProductReceived` + recompute | ProductReceived, Product, Package | `amount ≤ comprado − recibido`; observación ≤ 200 |
+| `registerArrivalsAction` | ídem | Lote de la fase «Revisar paquetes» de `/delivery/prepare`: N recepciones en un paquete en una sola transacción (+ recompute por producto) y cambio opcional de estado del paquete (Enviado → Recibido) | ProductReceived, Product, Package | `arrivalBatchSchema`; sin productos duplicados; `amount ≤ comprado − recibido` por ítem; observación ≤ 200 |
 | `createUserAction` / `updateUserAction` | `(admin)/users/actions.ts` | CRUD usuarios; hash Django al crear | CustomUser | `createUserSchema`/`editUserSchema`; email/teléfono únicos |
 | `changePasswordAction` | ídem | Reset de contraseña por admin (hash Django) | CustomUser | min 6 + confirmación |
 | `toggleUserActiveAction` / `verifyUserAction` / `deleteUserAction` | ídem | Activar/desactivar, verificar (también activa), borrar (no a uno mismo) | CustomUser | P2003 |
@@ -310,13 +311,13 @@ Otras fórmulas de negocio que viven en actions/páginas:
 **Paquetes / recepción:**
 1. Logístico crea el paquete (agencia, tracking único, estado, fecha de llegada, foto Cloudinary).
 2. Cambia el estado inline en la tabla (Enviado → Recibido → Procesado).
-3. En `/packages/[id]` registra recepciones (tope: comprado − recibido) → producto pasa a `Recibido` y queda disponible para entregas.
+3. En `/packages/[id]` registra recepciones (tope: comprado − recibido) → producto pasa a `Recibido` y queda disponible para entregas. Flujo recomendado: la fase «Revisar paquetes» de `/delivery/prepare` hace lo mismo en lote — checklist multi-producto sobre el paquete abierto (`registerArrivalsAction`), pensada para paquetes que llegan incompletos: lo no marcado sigue pendiente y se recibe cuando llegue en otro paquete/división.
 
 **Entregas:**
 1. Logístico crea la entrega: cliente, categoría, peso → `weightCost` y `managerProfit` derivados; foto opcional; pago inicial opcional.
 2. En `/delivery/[id]` añade productos entregados (tope: recibido − entregado) → producto puede pasar a `Entregado`.
 3. Pago vía `PaymentPanel` (igual que órdenes).
-4. Flujo recomendado: `/delivery/prepare` lista todo lo recibido sin entregar agrupado por cliente (procedencia de paquetes incluida, todo preseleccionado), y `createPreparedDeliveryAction` crea la entrega con sus productos en una sola transacción; redirige a `/delivery/[id]`.
+4. Flujo recomendado: `/delivery/prepare` en 2 fases. Fase 1 «Revisar paquetes»: se abre cada paquete pendiente y se marca qué productos llegaron y cuántas unidades (`registerArrivalsAction` en lote; un producto puede llegar repartido en varios paquetes — p. ej. 150 compradas que llegan 95 + 25 + 20). Fase 2 «Armar entregas»: lo recibido sin entregar agrupado por cliente (procedencia con unidades por paquete, todo preseleccionado, avisos de unidades «en camino» para decidir entregas parciales), y `createPreparedDeliveryAction` crea la entrega con sus productos en una sola transacción; redirige a `/delivery/[id]`. Se pueden crear varias entregas sucesivas al mismo cliente según va llegando la mercancía.
 
 **Pagos (órdenes y entregas):**
 1. Botón `$` en la fila → `PaymentPanel`: costo pendiente vs saldo disponible del cliente.
