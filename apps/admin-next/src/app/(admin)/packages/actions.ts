@@ -10,8 +10,12 @@ import {
   parseId,
   ROLES,
 } from '@/lib/action-helpers';
-import { packageFormSchema, PACKAGE_STATUSES } from './schema';
-import type { PackageStatus } from './schema';
+import {
+  packageFormSchema,
+  arrivalBatchSchema,
+  PACKAGE_STATUSES,
+} from './schema';
+import type { ArrivalBatchInput, PackageStatus } from './schema';
 
 export type { ActionResult } from '@/lib/action-helpers';
 import type { ActionResult } from '@/lib/action-helpers';
@@ -182,6 +186,99 @@ export async function deletePackageAction(id: string): Promise<ActionResult> {
 }
 
 /**
+ * Lote de /delivery/prepare (fase «Revisar paquetes»): registra de una
+ * vez todas las llegadas marcadas en un paquete (N filas de
+ * ProductReceived) y opcionalmente deja el paquete en otro estado
+ * (Enviado → Recibido al marcar la primera llegada). Transaccional: si
+ * algún producto ya no tiene unidades compradas pendientes de recibir
+ * (otra sesión se adelantó), no se registra nada.
+ */
+export async function registerArrivalsAction(
+  input: ArrivalBatchInput
+): Promise<ActionResult> {
+  const { denied } = await requireRole(ROLES.packages);
+  if (denied) return denied;
+
+  const parsed = arrivalBatchSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? 'Datos inválidos',
+    };
+  }
+  const d = parsed.data;
+  const pid = parseId(d.packageId);
+  if (!pid) return { ok: false, error: 'Invalid package id' };
+  const productIds = d.items.map((i) => i.productId);
+  if (new Set(productIds).size !== productIds.length) {
+    return { ok: false, error: 'Hay productos repetidos en la selección' };
+  }
+
+  const result = await prisma.$transaction(
+    async (tx) => {
+      const pkg = await tx.package.findUnique({
+        where: { id: pid },
+        select: { id: true },
+      });
+      if (!pkg) return { ok: false as const, error: 'Paquete no encontrado' };
+
+      const products = await tx.product.findMany({
+        where: { id: { in: productIds } },
+        select: {
+          id: true,
+          name: true,
+          amountPurchased: true,
+          amountReceived: true,
+        },
+      });
+      const byId = new Map(products.map((p) => [p.id, p]));
+      for (const item of d.items) {
+        const p = byId.get(item.productId);
+        if (!p) return { ok: false as const, error: 'Producto no encontrado' };
+        const remaining = p.amountPurchased - p.amountReceived;
+        if (item.amount > remaining) {
+          return {
+            ok: false as const,
+            error: `Solo quedan ${Math.max(0, remaining)} unidad(es) de «${p.name}» compradas sin recibir`,
+          };
+        }
+      }
+
+      await tx.productReceived.createMany({
+        data: d.items.map((i) => ({
+          packageId: pid,
+          originalProductId: i.productId,
+          amountReceived: i.amount,
+          observation: i.observation ?? null,
+        })),
+      });
+      for (const item of d.items) {
+        await recomputeProductAmounts(item.productId, tx);
+      }
+      if (d.setStatus) {
+        await tx.package.update({
+          where: { id: pid },
+          data: { statusOfProcessing: d.setStatus },
+        });
+      }
+      return { ok: true as const };
+    },
+    // Un lote grande recalcula muchos productos sobre el driver de
+    // Neon; el timeout por defecto (5 s) se queda corto.
+    { timeout: 60_000, maxWait: 10_000 }
+  );
+
+  if (!result.ok) return result;
+
+  revalidatePath('/packages');
+  revalidatePath(`/packages/${d.packageId}`);
+  revalidatePath('/delivery/prepare');
+  revalidatePath('/orders');
+  revalidatePath('/products');
+  return { ok: true };
+}
+
+/**
  * Product reception: registering a ProductReceived row is what moves a
  * product from "Comprado" to "Recibido" (via recomputeProductAmounts)
  * and makes it a candidate for deliveries. Mirrors the Django flow the
@@ -236,7 +333,9 @@ export async function addReceivedProductAction(
 
   revalidatePath(`/packages/${packageId}`);
   revalidatePath('/packages');
+  revalidatePath('/delivery/prepare');
   revalidatePath('/orders');
+  revalidatePath('/products');
   return { ok: true };
 }
 
@@ -261,6 +360,8 @@ export async function removeReceivedProductAction(
 
   revalidatePath(`/packages/${packageId}`);
   revalidatePath('/packages');
+  revalidatePath('/delivery/prepare');
   revalidatePath('/orders');
+  revalidatePath('/products');
   return { ok: true };
 }

@@ -21,6 +21,33 @@ export const packageFormSchema = z.object({
 
 export type PackageFormInput = z.infer<typeof packageFormSchema>;
 
+// Lote de llegadas de /delivery/prepare: varias recepciones marcadas en
+// un mismo paquete se registran de una vez (registerArrivalsAction).
+export const arrivalBatchSchema = z.object({
+  packageId: z.string().min(1),
+  /** Estado a dejar en el paquete tras registrar (p. ej. Enviado → Recibido). */
+  setStatus: z.enum(PACKAGE_STATUSES).optional(),
+  items: z
+    .array(
+      z.object({
+        productId: z.string().min(1),
+        amount: z
+          .number()
+          .int('La cantidad debe ser un entero')
+          .positive('La cantidad debe ser mayor que 0'),
+        observation: z
+          .string()
+          .trim()
+          .max(200, 'La observación no puede exceder 200 caracteres')
+          .optional()
+          .transform((v) => (v && v.length > 0 ? v : null)),
+      })
+    )
+    .min(1, 'Marca al menos un producto'),
+});
+
+export type ArrivalBatchInput = z.input<typeof arrivalBatchSchema>;
+
 export interface PackageRow {
   id: string;
   agencyName: string;
