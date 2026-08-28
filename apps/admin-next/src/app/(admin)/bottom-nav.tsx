@@ -42,6 +42,10 @@ const CANDIDATES: BottomNavItem[] = [
  * the brand near-black, with the active section highlighted as an orange
  * accent chip. The full section list stays in the header drawer
  * (MobileNav); this bar is the quick path to the everyday sections.
+ *
+ * The view-transition-name keeps the bar out of the page enter/exit
+ * animation (template.tsx) — without it the animating page paints over
+ * the bar and it flickers on every navigation. See globals.css.
  */
 export function BottomNav({ role }: { role: string }) {
   const pathname = usePathname();
@@ -58,7 +62,7 @@ export function BottomNav({ role }: { role: string }) {
   return (
     <nav
       aria-label="Navegación rápida"
-      className="pointer-events-none fixed inset-x-0 bottom-[max(0.875rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-4 md:hidden"
+      className="pointer-events-none fixed inset-x-0 bottom-[max(0.875rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-4 [view-transition-name:bottom-nav] md:hidden"
     >
       <ul className="pointer-events-auto flex w-full max-w-sm items-stretch justify-between gap-1 rounded-[1.625rem] border border-white/10 bg-sidebar/95 p-1.5 shadow-[0_10px_32px_-8px_rgba(0,0,0,0.55)] backdrop-blur-md">
         {items.map((item) => {
