@@ -61,13 +61,13 @@ export function PrepareDeliveryClient({
   }[] = [
     {
       key: 'packages',
-      label: '1 · Revisar paquetes',
+      label: '1 · Paquetes',
       icon: PackageSearch,
       badge: pendingPackages,
     },
     {
       key: 'deliveries',
-      label: '2 · Armar entregas',
+      label: '2 · Entregas',
       icon: Truck,
       badge: groups.length,
     },
@@ -104,7 +104,11 @@ export function PrepareDeliveryClient({
             {STEPS.map((s) => {
               const Icon = s.icon;
               return (
-                <Tabs.Tab key={s.key} id={s.key} className="gap-1.5">
+                <Tabs.Tab
+                  key={s.key}
+                  id={s.key}
+                  className="gap-1.5 whitespace-nowrap"
+                >
                   <Icon className="h-4 w-4" aria-hidden />
                   {s.label}
                   {s.badge > 0 ? (

@@ -36,7 +36,7 @@ const SECTIONS: SettingsSection[] = [
   },
   {
     href: '/settings/import',
-    label: 'Importar Excel',
+    label: 'Importar',
     subtitle: 'Incorpora los datos de un libro de embarque AR&E Shipps',
     icon: FileSpreadsheet,
   },
@@ -110,7 +110,11 @@ export function SettingsNav({ role }: { role: string }) {
               {sections.map((s) => {
                 const Icon = s.icon;
                 return (
-                  <Tabs.Tab key={s.href} id={s.href} className="gap-1.5">
+                  <Tabs.Tab
+                    key={s.href}
+                    id={s.href}
+                    className="gap-1.5 whitespace-nowrap"
+                  >
                     <Icon className="h-4 w-4" aria-hidden />
                     {s.label}
                     <Tabs.Indicator />

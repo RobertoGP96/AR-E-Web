@@ -87,19 +87,19 @@ export function UsersTabs({
           <Tabs.List aria-label="Secciones de usuarios">
             {canManageUsers ? (
               <>
-                <Tabs.Tab id="users" className="gap-1.5">
+                <Tabs.Tab id="users" className="gap-1.5 whitespace-nowrap">
                   <UsersIcon className="h-4 w-4" aria-hidden />
                   Usuarios
                   <Tabs.Indicator />
                 </Tabs.Tab>
-                <Tabs.Tab id="distribution" className="gap-1.5">
+                <Tabs.Tab id="distribution" className="gap-1.5 whitespace-nowrap">
                   <ChartPie className="h-4 w-4" aria-hidden />
                   Distribución
                   <Tabs.Indicator />
                 </Tabs.Tab>
               </>
             ) : null}
-            <Tabs.Tab id="balances" className="gap-1.5">
+            <Tabs.Tab id="balances" className="gap-1.5 whitespace-nowrap">
               <Coins className="h-4 w-4" aria-hidden />
               Balances
               <Tabs.Indicator />
