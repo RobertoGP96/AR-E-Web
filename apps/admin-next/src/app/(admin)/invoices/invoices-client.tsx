@@ -166,7 +166,9 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Factura creada');
+          toast.success('Factura creada', {
+            description: 'La nueva factura ya aparece en la lista.',
+          });
           router.refresh();
         }}
       />
@@ -178,7 +180,9 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Factura actualizada');
+          toast.success('Factura actualizada', {
+            description: 'Los cambios de la factura se guardaron correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -188,7 +192,9 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Factura eliminada');
+          toast.success('Factura eliminada', {
+            description: 'La factura se eliminó de forma permanente.',
+          });
           router.refresh();
         }}
       />

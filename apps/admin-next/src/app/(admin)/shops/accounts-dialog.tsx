@@ -45,11 +45,15 @@ function AccountsBody({ shop }: { shop: ShopRow }) {
     startTransition(async () => {
       const result = await addBuyingAccountAction(shop.id, name);
       if (result.ok) {
-        toast.success('Cuenta añadida');
+        toast.success('Cuenta añadida', {
+          description: `«${name}» se añadió a las cuentas de ${shop.name}.`,
+        });
         setNewName('');
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error('No se pudo añadir la cuenta', {
+          description: result.error,
+        });
       }
     });
   }
@@ -60,10 +64,14 @@ function AccountsBody({ shop }: { shop: ShopRow }) {
     startTransition(async () => {
       const result = await renameBuyingAccountAction(accountId, draft);
       if (result.ok) {
-        toast.success('Cuenta renombrada');
+        toast.success('Cuenta renombrada', {
+          description: `«${original}» ahora se llama «${draft}».`,
+        });
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error('No se pudo renombrar la cuenta', {
+          description: result.error,
+        });
       }
     });
   }
@@ -72,10 +80,14 @@ function AccountsBody({ shop }: { shop: ShopRow }) {
     startTransition(async () => {
       const result = await deleteBuyingAccountAction(accountId);
       if (result.ok) {
-        toast.success('Cuenta eliminada');
+        toast.success('Cuenta eliminada', {
+          description: `La cuenta se quitó de ${shop.name}.`,
+        });
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error('No se pudo eliminar la cuenta', {
+          description: result.error,
+        });
       }
     });
   }

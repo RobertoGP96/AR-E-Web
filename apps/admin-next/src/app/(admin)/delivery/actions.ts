@@ -14,8 +14,10 @@ import {
 } from '@/lib/action-helpers';
 import {
   deliveryFormSchema,
+  preparedDeliverySchema,
   toDbDeliveryStatus,
   toDbPayStatus,
+  type PreparedDeliveryInput,
 } from './schema';
 
 export type { ActionResult } from '@/lib/action-helpers';
@@ -113,6 +115,119 @@ export async function createDeliveryAction(
 
   revalidatePath('/delivery');
   return { ok: true };
+}
+
+/**
+ * Flujo de /delivery/prepare: crea la entrega Y asocia los productos
+ * seleccionados en una sola transacción. Equivale a createDeliveryAction
+ * seguido de N × addDeliveredProductAction, pero atómico: si algún
+ * producto ya no tiene unidades disponibles (otra entrega se le
+ * adelantó) no se crea nada.
+ */
+export async function createPreparedDeliveryAction(
+  input: PreparedDeliveryInput
+): Promise<ActionResult> {
+  const { denied } = await requireRole(ROLES.delivery);
+  if (denied) return denied;
+
+  const parsed = preparedDeliverySchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? 'Datos inválidos',
+    };
+  }
+  const d = parsed.data;
+  const clientId = parseId(d.clientId);
+  if (!clientId) return { ok: false, error: 'Invalid client id' };
+  const categoryId = d.categoryId ? parseId(d.categoryId) : null;
+  if (d.categoryId && !categoryId) {
+    return { ok: false, error: 'Invalid category id' };
+  }
+  const productIds = d.items.map((i) => i.productId);
+  if (new Set(productIds).size !== productIds.length) {
+    return { ok: false, error: 'Hay productos repetidos en la selección' };
+  }
+
+  const { weightCost, managerProfit } = await deriveCosts(
+    clientId,
+    categoryId,
+    d.weight
+  );
+
+  const result = await prisma.$transaction(
+    async (tx) => {
+      const products = await tx.product.findMany({
+        where: { id: { in: productIds } },
+        select: {
+          id: true,
+          name: true,
+          amountReceived: true,
+          amountDelivered: true,
+          order: { select: { clientId: true } },
+        },
+      });
+      const byId = new Map(products.map((p) => [p.id, p]));
+      for (const item of d.items) {
+        const p = byId.get(item.productId);
+        if (!p) return { ok: false as const, error: 'Producto no encontrado' };
+        if (p.order.clientId !== clientId) {
+          return {
+            ok: false as const,
+            error: `«${p.name}» no pertenece a este cliente`,
+          };
+        }
+        const remaining = p.amountReceived - p.amountDelivered;
+        if (item.amount > remaining) {
+          return {
+            ok: false as const,
+            error: `Solo quedan ${remaining} unidad(es) de «${p.name}» por entregar`,
+          };
+        }
+      }
+
+      const delivery = await tx.deliverReceip.create({
+        data: {
+          clientId,
+          categoryId,
+          weight: d.weight,
+          status: toDbDeliveryStatus('Pendiente'),
+          paymentStatus: toDbPayStatus(computePayStatus(weightCost, 0, 0)),
+          paymentAmount: 0,
+          balanceApplied: 0,
+          paymentDate: null,
+          deliverDate: new Date(d.deliverDate),
+          deliverPicture: null,
+          weightCost,
+          managerProfit,
+        },
+        select: { id: true },
+      });
+      await tx.productDelivery.createMany({
+        data: d.items.map((i) => ({
+          deliverReceipId: delivery.id,
+          originalProductId: i.productId,
+          amountDelivered: i.amount,
+        })),
+      });
+      for (const item of d.items) {
+        await recomputeProductAmounts(item.productId, tx);
+      }
+      await recalculateClientBalance(clientId, tx);
+      return { ok: true as const, id: delivery.id.toString() };
+    },
+    // Una entrega grande recalcula muchos productos sobre el driver de
+    // Neon; el timeout por defecto (5 s) se queda corto.
+    { timeout: 60_000, maxWait: 10_000 }
+  );
+
+  if (!result.ok) return result;
+
+  revalidatePath('/delivery');
+  revalidatePath('/delivery/prepare');
+  revalidatePath('/orders');
+  revalidatePath('/products');
+  return { ok: true, id: result.id };
 }
 
 export async function updateDeliveryAction(

@@ -158,16 +158,19 @@ export function DistributionClient({
     startTransition(async () => {
       const result = await reassignClientsAction(ids, agentId);
       if (result.ok) {
-        toast.success(
-          agentId === null
-            ? `${ids.length} cliente${ids.length === 1 ? '' : 's'} sin agente`
-            : `${ids.length} cliente${ids.length === 1 ? '' : 's'} asignado${ids.length === 1 ? '' : 's'} a ${targetLabel}`
-        );
+        toast.success('Reasignación completada', {
+          description:
+            agentId === null
+              ? `${ids.length} cliente${ids.length === 1 ? '' : 's'} quedaron sin agente asignado.`
+              : `${ids.length} cliente${ids.length === 1 ? '' : 's'} ahora pertenece${ids.length === 1 ? '' : 'n'} a ${targetLabel}.`,
+        });
         setSelectedIds(new Set());
         setTarget('');
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error('No se pudo reasignar', {
+          description: result.error,
+        });
       }
     });
   }

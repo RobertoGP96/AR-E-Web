@@ -285,7 +285,9 @@ export function OrderDetailClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Producto añadido');
+          toast.success('Producto añadido', {
+            description: 'El producto se añadió a la orden correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -300,7 +302,9 @@ export function OrderDetailClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Producto actualizado');
+          toast.success('Producto actualizado', {
+            description: 'Los cambios del producto se guardaron correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -311,7 +315,9 @@ export function OrderDetailClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Producto eliminado');
+          toast.success('Producto eliminado', {
+            description: 'El producto se quitó de la orden.',
+          });
           router.refresh();
         }}
       />

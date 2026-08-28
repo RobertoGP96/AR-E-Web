@@ -85,7 +85,10 @@ export function DeliveryDetailClient({
 
   function handleAdd() {
     if (!productId) {
-      toast.error('Selecciona un producto');
+      toast.error('Producto sin seleccionar', {
+        description:
+          'Elige un producto de la lista antes de añadirlo a la entrega.',
+      });
       return;
     }
     startTransition(async () => {
@@ -95,12 +98,18 @@ export function DeliveryDetailClient({
         amount
       );
       if (result.ok) {
-        toast.success('Producto añadido a la entrega');
+        toast.success('Producto añadido a la entrega', {
+          description: selected
+            ? `Se añadieron ${amount} unidad(es) de «${selected.name}».`
+            : `Se añadieron ${amount} unidad(es) a la entrega.`,
+        });
         setProductId('');
         setAmount(1);
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error('No se pudo añadir el producto', {
+          description: result.error,
+        });
       }
     });
   }
@@ -109,10 +118,14 @@ export function DeliveryDetailClient({
     startTransition(async () => {
       const result = await removeDeliveredProductAction(deliveryId, rowId);
       if (result.ok) {
-        toast.success('Producto quitado');
+        toast.success('Producto quitado', {
+          description: 'El producto se quitó de la entrega.',
+        });
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error('No se pudo quitar el producto', {
+          description: result.error,
+        });
       }
     });
   }

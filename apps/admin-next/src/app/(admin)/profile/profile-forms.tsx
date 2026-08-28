@@ -84,6 +84,8 @@ function SectionHeading({
 function useHandled(
   state: ActionResult | undefined,
   okMsg: string,
+  okDescription: string,
+  errorTitle: string,
   onOk?: () => void
 ) {
   const ref = useRef<ActionResult | undefined>(undefined);
@@ -91,12 +93,12 @@ function useHandled(
     if (!state || state === ref.current) return;
     ref.current = state;
     if (state.ok) {
-      toast.success(okMsg);
+      toast.success(okMsg, { description: okDescription });
       onOk?.();
     } else if (!state.fieldErrors) {
-      toast.error(state.error);
+      toast.error(errorTitle, { description: state.error });
     }
-  }, [state, okMsg, onOk]);
+  }, [state, okMsg, okDescription, errorTitle, onOk]);
 }
 
 function ProfileCard({ defaults, phoneNumber, role }: ProfileFormsProps) {
@@ -104,7 +106,12 @@ function ProfileCard({ defaults, phoneNumber, role }: ProfileFormsProps) {
     ActionResult | undefined,
     FormData
   >(updateProfileAction, undefined);
-  useHandled(state, 'Perfil actualizado');
+  useHandled(
+    state,
+    'Perfil actualizado',
+    'Tus datos personales se guardaron correctamente.',
+    'No se pudo actualizar el perfil'
+  );
   const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
 
   return (
@@ -176,7 +183,13 @@ function PasswordCard() {
     FormData
   >(changeOwnPasswordAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
-  useHandled(state, 'Contraseña cambiada', () => formRef.current?.reset());
+  useHandled(
+    state,
+    'Contraseña cambiada',
+    'Usa la nueva contraseña la próxima vez que inicies sesión.',
+    'No se pudo cambiar la contraseña',
+    () => formRef.current?.reset()
+  );
   const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
 
   return (

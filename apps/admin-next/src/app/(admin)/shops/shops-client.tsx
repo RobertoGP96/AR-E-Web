@@ -65,11 +65,19 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
       setTogglingId(null);
       if (result.ok) {
         toast.success(
-          `${row.name} ahora está ${row.isActive ? 'inactiva' : 'activa'}`
+          `Tienda ${row.isActive ? 'desactivada' : 'activada'}`,
+          {
+            description: row.isActive
+              ? `${row.name} dejó de estar disponible para nuevas compras.`
+              : `${row.name} vuelve a estar disponible para compras.`,
+          }
         );
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error(
+          `No se pudo ${row.isActive ? 'desactivar' : 'activar'} la tienda`,
+          { description: result.error }
+        );
       }
     });
   }
@@ -273,7 +281,9 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Tienda creada');
+          toast.success('Tienda creada', {
+            description: 'La nueva tienda ya aparece en la lista.',
+          });
           router.refresh();
         }}
       />
@@ -285,7 +295,9 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Tienda actualizada');
+          toast.success('Tienda actualizada', {
+            description: 'Los cambios de la tienda se guardaron correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -295,7 +307,10 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Tienda eliminada');
+          toast.success('Tienda eliminada', {
+            description:
+              'La tienda y sus cuentas de compra se eliminaron de forma permanente.',
+          });
           router.refresh();
         }}
       />

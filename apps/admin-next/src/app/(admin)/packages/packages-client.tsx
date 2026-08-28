@@ -8,6 +8,7 @@ import {
   Pencil,
   Trash2,
   Box,
+  ClipboardList,
   PackageCheck,
   PackageSearch,
   CalendarDays,
@@ -73,10 +74,14 @@ export function PackagesClient({
       const result = await setPackageStatusAction(row.id, status);
       setUpdatingId(null);
       if (result.ok) {
-        toast.success(`Estado del paquete cambiado a ${status}`);
+        toast.success('Estado actualizado', {
+          description: `El paquete ${row.numberOfTracking} pasó a estado «${status}».`,
+        });
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error('No se pudo cambiar el estado', {
+          description: result.error,
+        });
       }
     });
   }
@@ -147,10 +152,19 @@ export function PackagesClient({
         title="Paquetes"
         subtitle="Gestiona todos los paquetes en tránsito y entregados"
         actions={
-          <Button variant="primary" onPress={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" aria-hidden />
-            Nuevo paquete
-          </Button>
+          <>
+            <Button
+              variant="tertiary"
+              onPress={() => router.push('/delivery/prepare')}
+            >
+              <ClipboardList className="h-4 w-4" aria-hidden />
+              Preparar entregas
+            </Button>
+            <Button variant="primary" onPress={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Nuevo paquete
+            </Button>
+          </>
         }
       />
 
@@ -289,7 +303,9 @@ export function PackagesClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Paquete creado');
+          toast.success('Paquete creado', {
+            description: 'El nuevo paquete ya aparece en la lista.',
+          });
           router.refresh();
         }}
       />
@@ -301,7 +317,9 @@ export function PackagesClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Paquete actualizado');
+          toast.success('Paquete actualizado', {
+            description: 'Los cambios del paquete se guardaron correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -311,7 +329,9 @@ export function PackagesClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Paquete eliminado');
+          toast.success('Paquete eliminado', {
+            description: 'El paquete se eliminó de forma permanente.',
+          });
           router.refresh();
         }}
       />

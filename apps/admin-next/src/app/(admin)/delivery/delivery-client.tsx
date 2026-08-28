@@ -8,6 +8,7 @@ import {
   Pencil,
   Trash2,
   Truck,
+  ClipboardList,
   DollarSign,
   ExternalLink,
   Tag,
@@ -88,7 +89,9 @@ export function DeliveryClient({
 
   function openPayment(row: DeliveryRow) {
     if (row.paymentStatus === 'Pagado') {
-      toast.info(`La entrega #${row.id} ya está marcada como Pagada`);
+      toast.info(`Entrega #${row.id} ya pagada`, {
+        description: `La entrega de ${row.clientName} ya está marcada como Pagada; no hay nada pendiente por cobrar.`,
+      });
       return;
     }
     setPaymentTarget(row);
@@ -160,10 +163,19 @@ export function DeliveryClient({
         title="Entregas"
         subtitle="Gestiona las entregas y sus pagos"
         actions={
-          <Button variant="primary" onPress={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" aria-hidden />
-            Nueva entrega
-          </Button>
+          <>
+            <Button
+              variant="tertiary"
+              onPress={() => router.push('/delivery/prepare')}
+            >
+              <ClipboardList className="h-4 w-4" aria-hidden />
+              Preparar entregas
+            </Button>
+            <Button variant="primary" onPress={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Nueva entrega
+            </Button>
+          </>
         }
       />
 
@@ -424,7 +436,9 @@ export function DeliveryClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Entrega creada');
+          toast.success('Entrega creada', {
+            description: 'La nueva entrega ya aparece en la lista.',
+          });
           router.refresh();
         }}
       />
@@ -438,7 +452,9 @@ export function DeliveryClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Entrega actualizada');
+          toast.success('Entrega actualizada', {
+            description: 'Los cambios de la entrega se guardaron correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -448,7 +464,9 @@ export function DeliveryClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Entrega eliminada');
+          toast.success('Entrega eliminada', {
+            description: 'La entrega se eliminó de forma permanente.',
+          });
           router.refresh();
         }}
       />

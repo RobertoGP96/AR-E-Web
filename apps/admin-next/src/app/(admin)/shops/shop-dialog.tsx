@@ -43,7 +43,10 @@ export function ShopDialog({
     if (!state || state === lastHandledRef.current) return;
     lastHandledRef.current = state;
     if (state.ok) onSuccess();
-    else if (!state.fieldErrors) toast.error(state.error);
+    else if (!state.fieldErrors)
+      toast.error('No se pudo guardar la tienda', {
+        description: state.error,
+      });
   }, [state, onSuccess]);
 
   useEffect(() => {

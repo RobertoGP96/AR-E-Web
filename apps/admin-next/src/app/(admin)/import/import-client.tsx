@@ -332,17 +332,24 @@ export function ImportClient() {
       payload.clients.length === 0 &&
       payload.expenses.length === 0
     ) {
-      toast.error('No hay nada seleccionado para importar.');
+      toast.error('Nada seleccionado para importar', {
+        description:
+          'Marca al menos un producto, cliente o gasto antes de ejecutar la importación.',
+      });
       return;
     }
     startImport(async () => {
       const res = await runImportAction(payload);
       if (!res.ok) {
-        toast.error(res.error);
+        toast.error('La importación falló', {
+          description: res.error,
+        });
         return;
       }
       setSummary(res.summary);
-      toast.success('Importación completada');
+      toast.success('Importación completada', {
+        description: `Se crearon ${res.summary.ordersCreated} órdenes y ${res.summary.productsCreated} productos. Revisa el resumen para ver el detalle.`,
+      });
       router.refresh();
     });
   }

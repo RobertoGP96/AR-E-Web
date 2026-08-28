@@ -61,8 +61,15 @@ function EditableSettingsCard({
   useEffect(() => {
     if (!state || state === ref.current) return;
     ref.current = state;
-    if (state.ok) toast.success('Ajustes guardados');
-    else if (!state.fieldErrors) toast.error(state.error);
+    if (state.ok)
+      toast.success('Ajustes guardados', {
+        description:
+          'Los parámetros del sistema se actualizaron correctamente.',
+      });
+    else if (!state.fieldErrors)
+      toast.error('No se pudieron guardar los ajustes', {
+        description: state.error,
+      });
   }, [state]);
 
   const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};

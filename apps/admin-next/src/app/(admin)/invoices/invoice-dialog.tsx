@@ -131,9 +131,13 @@ export function InvoiceDialog({
         onSuccess();
       } else if (result.fieldErrors) {
         setErrors(result.fieldErrors);
-        toast.error(result.error);
+        toast.error('Revisa los campos de la factura', {
+          description: result.error,
+        });
       } else {
-        toast.error(result.error);
+        toast.error('No se pudo guardar la factura', {
+          description: result.error,
+        });
       }
     });
   }

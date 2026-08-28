@@ -134,11 +134,19 @@ export function UsersClient({
       setBusyId(null);
       if (result.ok) {
         toast.success(
-          `${row.name} ${row.isActive ? 'desactivado' : 'activado'}`
+          `Usuario ${row.isActive ? 'desactivado' : 'activado'}`,
+          {
+            description: row.isActive
+              ? `${row.name} ya no puede acceder al sistema.`
+              : `${row.name} puede volver a acceder al sistema.`,
+          }
         );
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error(
+          `No se pudo ${row.isActive ? 'desactivar' : 'activar'} el usuario`,
+          { description: result.error }
+        );
       }
     });
   }
@@ -149,10 +157,14 @@ export function UsersClient({
       const result = await verifyUserAction(row.id);
       setBusyId(null);
       if (result.ok) {
-        toast.success(`${row.name} verificado`);
+        toast.success('Usuario verificado', {
+          description: `La cuenta de ${row.name} quedó verificada.`,
+        });
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error('No se pudo verificar el usuario', {
+          description: result.error,
+        });
       }
     });
   }
@@ -442,7 +454,9 @@ export function UsersClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Usuario actualizado');
+          toast.success('Usuario actualizado', {
+            description: 'Los cambios del usuario se guardaron correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -452,7 +466,10 @@ export function UsersClient({
         onClose={() => setPwTarget(null)}
         onSuccess={() => {
           setPwTarget(null);
-          toast.success('Contraseña actualizada');
+          toast.success('Contraseña actualizada', {
+            description:
+              'La nueva contraseña ya está activa para ese usuario.',
+          });
         }}
       />
 
@@ -461,7 +478,9 @@ export function UsersClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Usuario eliminado');
+          toast.success('Usuario eliminado', {
+            description: 'La cuenta se eliminó de forma permanente.',
+          });
           router.refresh();
         }}
       />

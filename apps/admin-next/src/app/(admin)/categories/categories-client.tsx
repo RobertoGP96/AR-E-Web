@@ -186,7 +186,9 @@ export function CategoriesClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Categoría creada');
+          toast.success('Categoría creada', {
+            description: 'La nueva categoría ya está disponible.',
+          });
           router.refresh();
         }}
       />
@@ -198,7 +200,10 @@ export function CategoriesClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Categoría actualizada');
+          toast.success('Categoría actualizada', {
+            description:
+              'Los cambios de la categoría se guardaron correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -208,7 +213,9 @@ export function CategoriesClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Categoría eliminada');
+          toast.success('Categoría eliminada', {
+            description: 'La categoría se eliminó de forma permanente.',
+          });
           router.refresh();
         }}
       />

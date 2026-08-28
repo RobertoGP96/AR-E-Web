@@ -33,9 +33,13 @@ export function ImageUploadField({
       const result = await uploadImageAction(fd);
       if (result.ok) {
         setUrl(result.url);
-        toast.success('Imagen subida');
+        toast.success('Imagen subida', {
+          description: `«${file.name}» se cargó correctamente.`,
+        });
       } else {
-        toast.error(result.error);
+        toast.error('No se pudo subir la imagen', {
+          description: result.error,
+        });
       }
     });
   }
