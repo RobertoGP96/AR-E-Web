@@ -8,6 +8,7 @@ import {
   Pencil,
   Trash2,
   Truck,
+  ClipboardList,
   DollarSign,
   ExternalLink,
   Tag,
@@ -162,10 +163,19 @@ export function DeliveryClient({
         title="Entregas"
         subtitle="Gestiona las entregas y sus pagos"
         actions={
-          <Button variant="primary" onPress={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" aria-hidden />
-            Nueva entrega
-          </Button>
+          <>
+            <Button
+              variant="tertiary"
+              onPress={() => router.push('/delivery/prepare')}
+            >
+              <ClipboardList className="h-4 w-4" aria-hidden />
+              Preparar entregas
+            </Button>
+            <Button variant="primary" onPress={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Nueva entrega
+            </Button>
+          </>
         }
       />
 

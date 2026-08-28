@@ -13,6 +13,7 @@ import {
   ShoppingBag,
   Truck,
   Tag,
+  ClipboardList,
   FileSpreadsheet,
   ReceiptIcon,
   ChartColumn,
@@ -60,6 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { name: 'Compras', href: '/purchases', icon: ShoppingBag },
       { name: 'Paquetes', href: '/packages', icon: Package },
+      { name: 'Preparar entregas', href: '/delivery/prepare', icon: ClipboardList },
       { name: 'Entrega', href: '/delivery', icon: Truck },
     ],
   },
@@ -87,8 +89,22 @@ export function AdminNav({
 }) {
   const pathname = usePathname();
 
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`);
+  // Un item con href más específico gana (p. ej. /delivery/prepare no
+  // debe marcar también /delivery como activo).
+  const allHrefs = [
+    ...NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href)),
+    ...BOTTOM_ITEMS.map((i) => i.href),
+  ];
+  const isActive = (href: string) => {
+    if (pathname === href) return true;
+    if (!pathname.startsWith(`${href}/`)) return false;
+    return !allHrefs.some(
+      (other) =>
+        other !== href &&
+        other.startsWith(`${href}/`) &&
+        (pathname === other || pathname.startsWith(`${other}/`))
+    );
+  };
 
   const groups = NAV_GROUPS.map((group) => ({
     ...group,

@@ -145,6 +145,7 @@ Grupos: `(auth)` para login (sin shell), `(admin)` para el panel (con sidebar/he
 | `/packages/[id]` | `src/app/(admin)/packages/[id]/page.tsx` + `package-detail-client.tsx` | Recepción de productos | admin, logistical |
 | `/delivery` | `src/app/(admin)/delivery/page.tsx` + `delivery-client.tsx` | CRUD entregas + pago | admin, agent (ver), logistical |
 | `/delivery/[id]` | `src/app/(admin)/delivery/[id]/page.tsx` + `delivery-detail-client.tsx` | Productos entregados | admin, agent (ver), logistical |
+| `/delivery/prepare` | `src/app/(admin)/delivery/prepare/page.tsx` + `prepare-client.tsx` | Mesa de preparación: productos recibidos sin entregar agrupados por cliente (con procedencia de paquetes y aviso de entregas pendientes); selección con cantidades y creación de la entrega en un paso | admin, agent (ver), logistical |
 | `/invoices` | `src/app/(admin)/invoices/page.tsx` + `invoices-client.tsx` | Facturas de costos de envío (tags) | admin, accountant |
 | `/expenses` | `src/app/(admin)/expenses/page.tsx` + `expenses-client.tsx` | Registro de gastos | admin, accountant |
 | `/balance` | `src/app/(admin)/balance/page.tsx` + `balance-client.tsx` | Balances periódicos manuales | admin, accountant |
@@ -213,6 +214,7 @@ Grupos: `(auth)` para login (sin shell), `(admin)` para el panel (con sidebar/he
 | `createProductAction` / `updateProductAction` (→ `upsertProduct`) | ídem | Crea/edita producto con cascada de costos server-side (`computeProductCost`), deriva status, y `refreshOrderTotals` (transacción: suma `totalCost`, recomputa payStatus, recalcula balance) | Product, Order, CustomUser | `productFormSchema` |
 | `deleteProductAction` | ídem | Borra producto + refresca totales de la orden | Product, Order | P2003 si tiene compras/recepciones/entregas |
 | `createDeliveryAction` / `updateDeliveryAction` | `(admin)/delivery/actions.ts` | Alta/edición de entrega; deriva `weightCost` y `managerProfit` server-side, payStatus, gestión de `paymentDate` (sella al pasar de 0, preserva en ediciones, limpia si vuelve a 0); recalcula balance | DeliverReceip, Category, CustomUser | `deliveryFormSchema` |
+| `createPreparedDeliveryAction` | ídem | Flujo `/delivery/prepare`: crea la entrega Y sus `ProductDelivery` en una sola transacción (deriva costos, recompute por producto, recalcula balance); si un producto ya no tiene unidades disponibles no se crea nada | DeliverReceip, ProductDelivery, Product, CustomUser | `preparedDeliverySchema`; sin duplicados; productos del cliente; `amount ≤ recibido − entregado` |
 | `confirmDeliveryPaymentAction` | ídem | Pago acumulativo de entrega (espejo de `add_payment()`), transaccional | DeliverReceip, CustomUser | mismas que órdenes |
 | `deleteDeliveryAction` | ídem | Borra entrega; recalcula balance | DeliverReceip | P2003 |
 | `addDeliveredProductAction` / `removeDeliveredProductAction` | ídem | Alta/baja de `ProductDelivery` + `recomputeProductAmounts` | ProductDelivery, Product | entero > 0; `amount ≤ recibido − entregado` |
@@ -310,6 +312,7 @@ Otras fórmulas de negocio que viven en actions/páginas:
 1. Logístico crea la entrega: cliente, categoría, peso → `weightCost` y `managerProfit` derivados; foto opcional; pago inicial opcional.
 2. En `/delivery/[id]` añade productos entregados (tope: recibido − entregado) → producto puede pasar a `Entregado`.
 3. Pago vía `PaymentPanel` (igual que órdenes).
+4. Flujo recomendado: `/delivery/prepare` lista todo lo recibido sin entregar agrupado por cliente (procedencia de paquetes incluida, todo preseleccionado), y `createPreparedDeliveryAction` crea la entrega con sus productos en una sola transacción; redirige a `/delivery/[id]`.
 
 **Pagos (órdenes y entregas):**
 1. Botón `$` en la fila → `PaymentPanel`: costo pendiente vs saldo disponible del cliente.

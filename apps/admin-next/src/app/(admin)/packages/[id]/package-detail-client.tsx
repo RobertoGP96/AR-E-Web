@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   ArrowLeft,
+  ClipboardList,
   Plus,
   Trash2,
   PackageCheck,
@@ -145,13 +146,20 @@ export function PackageDetailClient({
 
   return (
     <div className="space-y-6">
-      <div className="animate-in fade-in slide-in-from-top-1 duration-300">
+      <div className="animate-in fade-in slide-in-from-top-1 duration-300 flex flex-wrap items-center justify-between gap-2">
         <Link
           href="/packages"
           className="inline-flex items-center gap-1 rounded-md text-sm text-muted transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Volver a paquetes
+        </Link>
+        <Link
+          href="/delivery/prepare"
+          className="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-accent transition-colors hover:text-accent/80"
+        >
+          <ClipboardList className="h-4 w-4" aria-hidden />
+          Preparar entregas
         </Link>
       </div>
 

@@ -19,6 +19,7 @@ import {
   ChartColumn,
   Receipt,
   ChevronRight,
+  ClipboardList,
   FileSpreadsheet,
   type LucideIcon,
 } from 'lucide-react';
@@ -32,6 +33,7 @@ const ROUTE_NAMES: Record<string, string> = {
   '/purchases': 'Compras',
   '/packages': 'Paquetes',
   '/delivery': 'Entrega',
+  '/delivery/prepare': 'Preparar entregas',
   '/orders': 'Órdenes',
   '/settings': 'Configuración',
   '/profile': 'Mi Perfil',
@@ -50,6 +52,7 @@ const ROUTE_ICONS: Record<string, LucideIcon> = {
   '/purchases': ShoppingBag,
   '/packages': PackageCheck,
   '/delivery': Truck,
+  '/delivery/prepare': ClipboardList,
   '/orders': ShoppingCart,
   '/settings': Settings,
   '/profile': UserCircle,

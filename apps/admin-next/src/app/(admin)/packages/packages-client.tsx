@@ -8,6 +8,7 @@ import {
   Pencil,
   Trash2,
   Box,
+  ClipboardList,
   PackageCheck,
   PackageSearch,
   CalendarDays,
@@ -151,10 +152,19 @@ export function PackagesClient({
         title="Paquetes"
         subtitle="Gestiona todos los paquetes en tránsito y entregados"
         actions={
-          <Button variant="primary" onPress={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" aria-hidden />
-            Nuevo paquete
-          </Button>
+          <>
+            <Button
+              variant="tertiary"
+              onPress={() => router.push('/delivery/prepare')}
+            >
+              <ClipboardList className="h-4 w-4" aria-hidden />
+              Preparar entregas
+            </Button>
+            <Button variant="primary" onPress={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Nuevo paquete
+            </Button>
+          </>
         }
       />
 
