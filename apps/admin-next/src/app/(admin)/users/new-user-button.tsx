@@ -33,7 +33,9 @@ export function NewUserButton({
         onClose={() => setOpen(false)}
         onSuccess={() => {
           setOpen(false);
-          toast.success('Usuario creado');
+          toast.success('Usuario creado', {
+            description: 'El nuevo usuario ya aparece en la lista.',
+          });
           router.refresh();
         }}
       />

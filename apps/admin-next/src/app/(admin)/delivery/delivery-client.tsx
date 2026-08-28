@@ -88,7 +88,9 @@ export function DeliveryClient({
 
   function openPayment(row: DeliveryRow) {
     if (row.paymentStatus === 'Pagado') {
-      toast.info(`La entrega #${row.id} ya está marcada como Pagada`);
+      toast.info(`Entrega #${row.id} ya pagada`, {
+        description: `La entrega de ${row.clientName} ya está marcada como Pagada; no hay nada pendiente por cobrar.`,
+      });
       return;
     }
     setPaymentTarget(row);
@@ -424,7 +426,9 @@ export function DeliveryClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Entrega creada');
+          toast.success('Entrega creada', {
+            description: 'La nueva entrega ya aparece en la lista.',
+          });
           router.refresh();
         }}
       />
@@ -438,7 +442,9 @@ export function DeliveryClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Entrega actualizada');
+          toast.success('Entrega actualizada', {
+            description: 'Los cambios de la entrega se guardaron correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -448,7 +454,9 @@ export function DeliveryClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Entrega eliminada');
+          toast.success('Entrega eliminada', {
+            description: 'La entrega se eliminó de forma permanente.',
+          });
           router.refresh();
         }}
       />

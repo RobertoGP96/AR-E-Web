@@ -96,18 +96,28 @@ export function PurchaseDetailClient({
 
   function handleAdd() {
     if (!productId) {
-      toast.error('Selecciona un producto');
+      toast.error('Producto sin seleccionar', {
+        description:
+          'Elige un producto de la lista antes de añadirlo a la compra.',
+      });
       return;
     }
+    const selected = candidates.find((c) => c.id === productId);
     startTransition(async () => {
       const result = await addBuyedProductAction(purchaseId, productId, amount);
       if (result.ok) {
-        toast.success('Producto añadido a la compra');
+        toast.success('Producto añadido a la compra', {
+          description: selected
+            ? `Se añadieron ${amount} unidad(es) de «${selected.name}».`
+            : `Se añadieron ${amount} unidad(es) a la compra.`,
+        });
         setProductId('');
         setAmount(1);
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error('No se pudo añadir el producto', {
+          description: result.error,
+        });
       }
     });
   }
@@ -396,7 +406,9 @@ export function PurchaseDetailClient({
           );
           if (result.ok) {
             setRemoveTarget(null);
-            toast.success('Producto quitado');
+            toast.success('Producto quitado', {
+              description: 'El producto se quitó de la compra.',
+            });
             router.refresh();
           }
           return result;
@@ -409,7 +421,10 @@ export function PurchaseDetailClient({
         onClose={() => setRefundTarget(null)}
         onSuccess={() => {
           setRefundTarget(null);
-          toast.success('Reembolso registrado');
+          toast.success('Reembolso registrado', {
+            description:
+              'El reembolso quedó registrado en la compra correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -460,7 +475,10 @@ function RefundDialog({
         notes
       );
       if (result.ok) onSuccess();
-      else toast.error(result.error);
+      else
+        toast.error('No se pudo registrar el reembolso', {
+          description: result.error,
+        });
     });
   }
 

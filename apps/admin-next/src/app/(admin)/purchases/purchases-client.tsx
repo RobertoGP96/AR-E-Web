@@ -351,7 +351,9 @@ export function PurchasesClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Compra creada');
+          toast.success('Compra creada', {
+            description: 'La nueva compra ya aparece en la lista.',
+          });
           router.refresh();
         }}
       />
@@ -364,7 +366,9 @@ export function PurchasesClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Compra actualizada');
+          toast.success('Compra actualizada', {
+            description: 'Los cambios de la compra se guardaron correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -374,7 +378,9 @@ export function PurchasesClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Compra eliminada');
+          toast.success('Compra eliminada', {
+            description: 'La compra se eliminó de forma permanente.',
+          });
           router.refresh();
         }}
       />

@@ -50,7 +50,10 @@ export function PackageDialog({
     if (!state || state === lastHandledRef.current) return;
     lastHandledRef.current = state;
     if (state.ok) onSuccess();
-    else if (!state.fieldErrors) toast.error(state.error);
+    else if (!state.fieldErrors)
+      toast.error('No se pudo guardar el paquete', {
+        description: state.error,
+      });
   }, [state, onSuccess]);
 
   const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};

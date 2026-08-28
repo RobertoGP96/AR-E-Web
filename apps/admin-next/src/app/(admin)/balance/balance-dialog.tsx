@@ -332,7 +332,10 @@ function BalanceForm({
     if (!state || state === lastHandledRef.current) return;
     lastHandledRef.current = state;
     if (state.ok) onSuccess();
-    else if (!state.fieldErrors) toast.error(state.error);
+    else if (!state.fieldErrors)
+      toast.error('No se pudo guardar el balance', {
+        description: state.error,
+      });
   }, [state, onSuccess]);
 
   const setField = (name: keyof FormValues) => (value: string) =>
@@ -340,11 +343,16 @@ function BalanceForm({
 
   const handleCalculate = async () => {
     if (!values.startDate || !values.endDate) {
-      toast.error('Selecciona las fechas del período');
+      toast.error('Faltan fechas del período', {
+        description:
+          'Selecciona la fecha de inicio y la de fin para poder calcular el balance.',
+      });
       return;
     }
     if (Date.parse(values.endDate) < Date.parse(values.startDate)) {
-      toast.error('La fecha fin debe ser posterior a la fecha inicio');
+      toast.error('Rango de fechas inválido', {
+        description: 'La fecha fin debe ser posterior a la fecha inicio.',
+      });
       return;
     }
     setIsCalculating(true);
@@ -354,7 +362,9 @@ function BalanceForm({
         values.endDate,
       );
       if (!result.ok) {
-        toast.error(result.error);
+        toast.error('No se pudo calcular el período', {
+          description: result.error,
+        });
         return;
       }
       const { data } = result;
@@ -373,7 +383,10 @@ function BalanceForm({
             : `Balance generado automáticamente para el período ${v.startDate} - ${v.endDate}`,
       }));
     } catch {
-      toast.error('No se pudo calcular el período');
+      toast.error('No se pudo calcular el período', {
+        description:
+          'Ocurrió un error inesperado al consultar los datos. Inténtalo de nuevo.',
+      });
     } finally {
       setIsCalculating(false);
     }

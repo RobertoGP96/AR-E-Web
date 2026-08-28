@@ -95,7 +95,9 @@ export function OrdersClient({
 
   function openPayment(row: OrderRow) {
     if (row.payStatus === 'Pagado') {
-      toast.info(`El pedido #${row.id} ya está marcado como Pagado`);
+      toast.info(`Pedido #${row.id} ya pagado`, {
+        description: `El pedido de ${row.clientName} ya está marcado como Pagado; no hay nada pendiente por cobrar.`,
+      });
       return;
     }
     setPaymentTarget(row);
@@ -433,7 +435,11 @@ export function OrdersClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={(newId) => {
           setCreateOpen(false);
-          toast.success('Orden creada');
+          toast.success('Orden creada', {
+            description: newId
+              ? `La orden #${newId} se creó correctamente; abriendo su detalle.`
+              : 'La nueva orden ya aparece en la lista.',
+          });
           if (newId) router.push(`/orders/${newId}`);
           else router.refresh();
         }}
@@ -449,7 +455,9 @@ export function OrdersClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Orden actualizada');
+          toast.success('Orden actualizada', {
+            description: 'Los cambios de la orden se guardaron correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -459,7 +467,10 @@ export function OrdersClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Orden eliminada');
+          toast.success('Orden eliminada', {
+            description:
+              'La orden y sus productos se eliminaron de forma permanente.',
+          });
           router.refresh();
         }}
       />

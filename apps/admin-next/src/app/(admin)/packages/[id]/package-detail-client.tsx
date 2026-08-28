@@ -96,7 +96,10 @@ export function PackageDetailClient({
 
   function handleAdd() {
     if (!productId) {
-      toast.error('Selecciona un producto');
+      toast.error('Producto sin seleccionar', {
+        description:
+          'Elige un producto de la lista antes de marcarlo como recibido.',
+      });
       return;
     }
     startTransition(async () => {
@@ -107,13 +110,19 @@ export function PackageDetailClient({
         observation
       );
       if (result.ok) {
-        toast.success('Producto marcado como recibido');
+        toast.success('Producto marcado como recibido', {
+          description: selected
+            ? `Se registraron ${amount} unidad(es) de «${selected.name}» en el paquete.`
+            : `Se registraron ${amount} unidad(es) en el paquete.`,
+        });
         setProductId('');
         setAmount(1);
         setObservation('');
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error('No se pudo registrar la recepción', {
+          description: result.error,
+        });
       }
     });
   }
@@ -403,7 +412,10 @@ export function PackageDetailClient({
           );
           if (result.ok) {
             setRemoveTarget(null);
-            toast.success('Recepción eliminada');
+            toast.success('Recepción eliminada', {
+              description:
+                'El producto volvió a la lista de pendientes por recibir.',
+            });
             router.refresh();
           }
           return result;

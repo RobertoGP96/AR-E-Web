@@ -284,7 +284,9 @@ export function ExpensesClient({
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Gasto creado');
+          toast.success('Gasto creado', {
+            description: 'El nuevo gasto ya aparece en la lista.',
+          });
           router.refresh();
         }}
       />
@@ -296,7 +298,9 @@ export function ExpensesClient({
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Gasto actualizado');
+          toast.success('Gasto actualizado', {
+            description: 'Los cambios del gasto se guardaron correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -306,7 +310,9 @@ export function ExpensesClient({
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Gasto eliminado');
+          toast.success('Gasto eliminado', {
+            description: 'El gasto se eliminó de forma permanente.',
+          });
           router.refresh();
         }}
       />

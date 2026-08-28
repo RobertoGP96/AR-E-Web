@@ -224,7 +224,9 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {
           setCreateOpen(false);
-          toast.success('Balance creado');
+          toast.success('Balance creado', {
+            description: 'El nuevo balance ya aparece en la lista.',
+          });
           router.refresh();
         }}
       />
@@ -236,7 +238,9 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
-          toast.success('Balance actualizado');
+          toast.success('Balance actualizado', {
+            description: 'Los cambios del balance se guardaron correctamente.',
+          });
           router.refresh();
         }}
       />
@@ -246,7 +250,9 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
         onClose={() => setDeleteTarget(null)}
         onSuccess={() => {
           setDeleteTarget(null);
-          toast.success('Balance eliminado');
+          toast.success('Balance eliminado', {
+            description: 'El balance se eliminó de forma permanente.',
+          });
           router.refresh();
         }}
       />
