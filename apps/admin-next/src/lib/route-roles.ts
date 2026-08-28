@@ -1,8 +1,10 @@
 import { ROLES, STAFF_ROLES } from '@/lib/action-helpers';
 
 /**
- * Page-level RBAC: first path segment → roles that may open it.
- * Mirrors roleAllowedRoutes in apps/admin/src/routes/role-config.ts.
+ * Page-level RBAC: path prefix → roles that may open it. Keys are the
+ * first segment, or "first/second" for settings sub-views (the more
+ * specific key wins). Mirrors roleAllowedRoutes in
+ * apps/admin/src/routes/role-config.ts.
  * Enforced in proxy.ts (edge) and again in (admin)/layout.tsx.
  */
 const ROUTE_ROLES: Record<string, readonly string[]> = {
@@ -26,6 +28,9 @@ const ROUTE_ROLES: Record<string, readonly string[]> = {
   expenses: ROLES.finance,
   analytics: ROLES.finance,
   settings: STAFF_ROLES,
+  'settings/data': ROLES.finance,
+  'settings/import': ['admin'],
+  'settings/system': ['admin'],
   profile: STAFF_ROLES,
 };
 
@@ -38,8 +43,9 @@ export function canAccessPath(
   pathname: string
 ): boolean {
   if (!isStaff(role)) return false;
-  const segment = pathname.split('/')[1] ?? '';
-  const allowed = ROUTE_ROLES[segment];
+  const segments = pathname.split('/').filter(Boolean);
+  const nested = segments.slice(0, 2).join('/');
+  const allowed = ROUTE_ROLES[nested] ?? ROUTE_ROLES[segments[0] ?? ''];
   // Unknown admin-area paths default to staff-only.
   if (!allowed) return true;
   return allowed.includes(role as string);

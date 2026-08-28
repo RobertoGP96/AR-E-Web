@@ -17,7 +17,7 @@ async function main() {
       import('exceljs'),
       import('../src/lib/excel-import/parse'),
       import('../src/lib/excel-import/analyze'),
-      import('../src/app/(admin)/import/schema'),
+      import('../src/app/(admin)/settings/import/schema'),
     ]);
 
   const file = process.argv[2];

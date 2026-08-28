@@ -14,7 +14,6 @@ import {
   Truck,
   Tag,
   ClipboardList,
-  FileSpreadsheet,
   ReceiptIcon,
   ChartColumn,
   ReceiptText,
@@ -46,7 +45,6 @@ const NAV_GROUPS: NavGroup[] = [
       { name: 'Usuarios', href: '/users', icon: Users },
       { name: 'Tiendas', href: '/shops', icon: Store },
       { name: 'Categorías', href: '/categories', icon: Tag },
-      { name: 'Importar Excel', href: '/import', icon: FileSpreadsheet },
     ],
   },
   {

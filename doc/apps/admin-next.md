@@ -99,11 +99,13 @@ Las cantidades se recalculan siempre por agregación de las tablas hijas (`src/l
   4. RBAC por página: si `canAccessPath(role, pathname)` falla (y no es `/unauthorized`) → redirect a `/unauthorized`.
   5. `config.matcher` excluye estáticos de `_next` e imágenes.
 
-**RBAC declarativo** en `src/lib/route-roles.ts` (espejo de `apps/admin/src/routes/role-config.ts`), aplicado sobre el **primer segmento** de la ruta:
+**RBAC declarativo** en `src/lib/route-roles.ts` (espejo de `apps/admin/src/routes/role-config.ts`), aplicado sobre el **primer segmento** de la ruta (o `primero/segundo` para las sub-vistas de `settings`; la clave más específica gana):
 
 | Segmento | Roles permitidos |
 |---|---|
 | `dashboard`, `settings`, `profile` | staff (admin, agent, accountant, logistical) |
+| `settings/data` | admin, accountant (grupo `finance`) |
+| `settings/import`, `settings/system` | admin |
 | `users`, `shops`, `categories`, `purchases` | admin |
 | `orders` | admin, agent |
 | `products` | admin, agent, logistical |
@@ -151,9 +153,11 @@ Grupos: `(auth)` para login (sin shell), `(admin)` para el panel (con sidebar/he
 | `/balance` | `src/app/(admin)/balance/page.tsx` + `balance-client.tsx` | Balances periódicos manuales | admin, accountant |
 | `/client-balances` | `src/app/(admin)/client-balances/page.tsx` + `client-balances-client.tsx` | Balance por cliente (agregado en vivo) | admin, accountant |
 | `/analytics` | `src/app/(admin)/analytics/page.tsx` + `analytics-charts.tsx` | Reportes de 12 meses (Recharts) | admin, accountant |
-| `/settings` | `src/app/(admin)/settings/page.tsx` + `settings-form.tsx` | CommonInformation (tasa de cambio, costo/lb) | staff (edita admin/accountant) |
+| `/settings` | `src/app/(admin)/settings/page.tsx` + `settings-form.tsx` (+ `layout.tsx` + `settings-nav.tsx`: hub con tabs por ruta General/Datos/Importar Excel/Sistema, filtradas por rol) | CommonInformation (tasa de cambio, costo/lb) + enlaces a otros elementos configurables (categorías, tiendas, agentes) | staff (edita admin/accountant) |
+| `/settings/data` | `src/app/(admin)/settings/data/page.tsx` + `data-client.tsx` + `export/route.ts` | Gestión de datos: salva completa JSON, export .xlsx (una hoja por entidad marcada) y CSV por entidad (separador `;`, BOM). Registro de entidades exportables en `src/lib/data-export.ts` (12 entidades, sin contraseñas ni secretos). El GET `/settings/data/export?format=json\|xlsx\|csv&entities=a,b` re-verifica rol | admin, accountant |
+| `/settings/system` | `src/app/(admin)/settings/system/page.tsx` | Estado del sistema: ping/latencia a la BD, registros por entidad, usuarios por rol, versión del panel, entorno, parámetros vigentes | admin |
 | `/profile` | `src/app/(admin)/profile/page.tsx` + `profile-forms.tsx` | Perfil propio + cambio de contraseña | staff |
-| `/import` | `src/app/(admin)/import/page.tsx` + `import-client.tsx` | Importación de embarques desde Excel "AR&E Shipps #NNN" (subir → previsualizar/omitir → importar). Parser/mapeador en `src/lib/excel-import/` (exceljs); actions `analyzeExcelAction`/`runImportAction` (transacción única: shops, cuentas, agentes, clientes con teléfono placeholder `imp-…`, órdenes por cliente, productos, ShoppingReceip por fila "Factura" con coste real, paquetes por tracking, recepciones si hay F. llegada, gastos de la hoja General). Tarifas de tienda replicadas del Excel: Shein 7 % IVA, Amazon +1 %, Temu +3 %, Otras +5 %. Scripts de diagnóstico: `scripts/inspect-import.ts` y `scripts/dry-run-import.ts` (npx tsx). | admin |
+| `/settings/import` | `src/app/(admin)/settings/import/page.tsx` + `import-client.tsx` (antes `/import`; esa ruta ahora redirige aquí) | Importación de embarques desde Excel "AR&E Shipps #NNN" (subir → previsualizar/omitir → importar). Parser/mapeador en `src/lib/excel-import/` (exceljs); actions `analyzeExcelAction`/`runImportAction` (transacción única: shops, cuentas, agentes, clientes con teléfono placeholder `imp-…`, órdenes por cliente, productos, ShoppingReceip por fila "Factura" con coste real, paquetes por tracking, recepciones si hay F. llegada, gastos de la hoja General). Tarifas de tienda replicadas del Excel: Shein 7 % IVA, Amazon +1 %, Temu +3 %, Otras +5 %. Scripts de diagnóstico: `scripts/inspect-import.ts` y `scripts/dry-run-import.ts` (npx tsx). | admin |
 | `/api/auth/[...nextauth]` | `src/app/api/auth/[...nextauth]/route.ts` | Endpoints Auth.js | — |
 | `manifest.webmanifest` | `src/app/manifest.ts` | PWA manifest (standalone, theme `#e8772e`) | Pública |
 | error / not-found | `src/app/error.tsx`, `src/app/not-found.tsx`, `src/app/(admin)/not-found.tsx` | Estados de error 500/404 | — |
