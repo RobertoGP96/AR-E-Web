@@ -50,6 +50,7 @@ export const importAgentSchema = z.object({
 export const importReceiptSchema = z.object({
   key: trimmed(140),
   sheet: z.enum(IMPORT_SHEETS),
+  origin: z.enum(['factura', 'auto']),
   storeName: trimmed(100),
   storeOrderId: z.string().trim().max(100).nullable(),
   account: z.string().trim().max(100).nullable(),

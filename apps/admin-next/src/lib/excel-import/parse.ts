@@ -209,6 +209,7 @@ function parseItemsSheet(ws: Worksheet, spec: SheetSpec): SheetOutput {
         const group: ParsedReceiptGroup = {
           key,
           sheet: spec.sheet,
+          origin: 'factura',
           storeName: spec.store ?? spec.sheet,
           storeOrderId: orderId,
           account,
@@ -224,6 +225,7 @@ function parseItemsSheet(ws: Worksheet, spec: SheetSpec): SheetOutput {
         currentGroup = {
           key,
           sheet: spec.sheet,
+          origin: 'factura',
           storeName: spec.store ?? spec.sheet,
           storeOrderId: null,
           account,
@@ -306,6 +308,7 @@ function parseItemsSheet(ws: Worksheet, spec: SheetSpec): SheetOutput {
           groups.set(groupKey, {
             key: groupKey,
             sheet: spec.sheet,
+            origin: 'factura',
             storeName: storeName ?? spec.sheet,
             storeOrderId: orderId,
             account,
@@ -318,7 +321,8 @@ function parseItemsSheet(ws: Worksheet, spec: SheetSpec): SheetOutput {
       } else {
         issues.push({
           level: 'warning',
-          message: 'Sin ID de pedido: no se vinculará a un recibo de compra.',
+          message:
+            'Sin ID de pedido: se agrupará en una compra por tienda, cuenta y fecha.',
         });
       }
     } else if (spec.grouping === 'sequential') {
@@ -331,7 +335,8 @@ function parseItemsSheet(ws: Worksheet, spec: SheetSpec): SheetOutput {
       } else {
         issues.push({
           level: 'warning',
-          message: 'Sin fila Factura previa: no se vinculará a una compra.',
+          message:
+            'Sin fila Factura previa: se agrupará en una compra por tienda, cuenta y fecha.',
         });
       }
     }
@@ -357,8 +362,48 @@ function parseItemsSheet(ws: Worksheet, spec: SheetSpec): SheetOutput {
       description: desc,
       quantity,
       unitValue: value,
+      rowCost: num(row, C.cost),
       issues,
     });
+  }
+
+  // Agrupación de respaldo: las filas sin pedido explícito (Amazon,
+  // "Otras 5%" y filas sueltas de Shein/Temu) se agrupan en compras por
+  // tienda + cuenta + fecha de compra, para que ningún producto quede
+  // fuera del ciclo compra → paquete → entrega.
+  for (const item of out.items) {
+    if (item.groupKey || !item.storeName) continue;
+    const storeKey = normName(item.storeName).slice(0, 40);
+    const accountKey = item.account
+      ? normName(item.account).slice(0, 40)
+      : 'sin-cuenta';
+    const dateKey = item.buyDate ? item.buyDate.slice(0, 10) : 'sin-fecha';
+    const key = `auto:${spec.sheet}:${storeKey}:${accountKey}:${dateKey}`;
+    let group = groups.get(key);
+    if (!group) {
+      group = {
+        key,
+        sheet: spec.sheet,
+        origin: 'auto',
+        storeName: item.storeName,
+        storeOrderId: null,
+        account: item.account,
+        buyDate: item.buyDate,
+        itemCount: 0,
+        declaredValue: null,
+        realCost: null,
+      };
+      groups.set(key, group);
+    }
+    item.groupKey = key;
+    group.itemCount = (group.itemCount ?? 0) + item.quantity;
+    if (item.unitValue != null) {
+      group.declaredValue =
+        (group.declaredValue ?? 0) + item.unitValue * item.quantity;
+    }
+    if (item.rowCost != null) {
+      group.realCost = (group.realCost ?? 0) + item.rowCost;
+    }
   }
 
   out.receipts = [...groups.values()];

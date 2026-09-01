@@ -181,8 +181,10 @@ async function main() {
     `  Se crearían: ~${payload.items.length} productos, ${new Set(
       payload.items.map((i) => i.client.toLowerCase())
     ).size} órdenes, ${new Set(
-      payload.items.map((i) => i.tracking).filter(Boolean)
-    ).size} paquetes, ${new Set(
+      payload.items
+        .filter((i) => i.packageLabel || i.tracking)
+        .map((i) => `${i.packageLabel ?? ''}::${i.tracking ?? ''}`)
+    ).size} paquetes (por ID paquete + rastreo), ${new Set(
       payload.items.map((i) => i.groupKey).filter(Boolean)
     ).size} compras.`
   );

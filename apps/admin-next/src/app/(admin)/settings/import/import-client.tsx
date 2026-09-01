@@ -899,9 +899,15 @@ export function ImportClient() {
                             </span>
                           ) : null}
                         </td>
-                        <td className="max-w-36 truncate text-xs text-muted">
+                        <td
+                          className="max-w-36 truncate text-xs text-muted"
+                          title={it.groupKey ?? undefined}
+                        >
                           {it.groupKey
-                            ? (it.storeOrderId ?? it.groupKey)
+                            ? (it.storeOrderId ??
+                              (it.groupKey.startsWith('auto:')
+                                ? 'Por tienda/cuenta/fecha'
+                                : it.groupKey))
                             : '—'}
                         </td>
                         <td>
@@ -919,7 +925,7 @@ export function ImportClient() {
 
       <SectionCard
         title={`Compras detectadas (${analysis.receipts.length})`}
-        subtitle="Pedidos reales en tiendas (filas Factura). Solo se crean los que tengan artículos seleccionados."
+        subtitle="Pedidos reales (filas Factura) y compras agrupadas por tienda + cuenta + fecha para las filas sin pedido. Solo se crean las que tengan artículos seleccionados."
       >
         <div className="max-h-72 overflow-auto">
           <table className="data-table">
@@ -937,15 +943,22 @@ export function ImportClient() {
             </thead>
             <tbody>
               {analysis.receipts.map((r) => {
-                const willCreate =
-                  derived.usedGroups.has(r.key) && r.account != null;
+                const willCreate = derived.usedGroups.has(r.key);
                 return (
                   <tr key={r.key} className={willCreate ? '' : 'opacity-45'}>
-                    <td className="max-w-44 truncate font-mono text-xs">
-                      {r.storeOrderId ?? r.key}
+                    <td
+                      className="max-w-44 truncate font-mono text-xs"
+                      title={r.key}
+                    >
+                      {r.storeOrderId ??
+                        (r.origin === 'auto' ? 'Agrupación automática' : r.key)}
                     </td>
                     <td>{r.storeName}</td>
-                    <td>{r.account ?? '—'}</td>
+                    <td>
+                      {r.account ?? (
+                        <span className="text-xs text-muted">Sin cuenta</span>
+                      )}
+                    </td>
                     <td className="text-muted">
                       {r.buyDate ? formatDate(r.buyDate) : '—'}
                     </td>

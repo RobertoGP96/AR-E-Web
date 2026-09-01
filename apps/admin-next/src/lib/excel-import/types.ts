@@ -39,13 +39,21 @@ export interface ParsedItemRow {
   description: string | null;
   quantity: number;
   unitValue: number | null;
+  /** Coste real de la fila (columna Coste), cuando la fila lo trae. */
+  rowCost: number | null;
   issues: RowIssue[];
 }
 
-/** Grupo de compra: una fila "Factura" del Excel (pedido real en la tienda). */
+/**
+ * Grupo de compra: una fila "Factura" del Excel (pedido real en la tienda)
+ * o una agrupación automática por tienda + cuenta + fecha de compra para
+ * las filas sin pedido explícito (ningún producto queda sin compra).
+ */
 export interface ParsedReceiptGroup {
   key: string;
   sheet: ImportSheet;
+  /** 'factura': pedido explícito del Excel; 'auto': tienda+cuenta+fecha. */
+  origin: 'factura' | 'auto';
   storeName: string;
   storeOrderId: string | null;
   account: string | null;

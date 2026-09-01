@@ -322,31 +322,58 @@ export async function runImportAction(
           summary.clientsCreated++;
         }
 
-        // ------ 6. Recibos de compra (pedidos reales en tiendas) ------
+        // ------ 6. Recibos de compra (pedidos reales + agrupaciones) ------
         const usedGroupKeys = new Set(
           data.items.map((i) => i.groupKey).filter(Boolean) as string[]
         );
+        // shoppingAccount es obligatorio en el modelo: los grupos sin
+        // cuenta usan una cuenta genérica "Sin cuenta" por tienda, para
+        // que ningún producto quede fuera de su compra.
+        const FALLBACK_ACCOUNT = 'Sin cuenta';
+        const accountIdFor = async (
+          storeKey: string,
+          shopId: bigint,
+          account: string | null
+        ): Promise<bigint> => {
+          if (account) {
+            const found = accountIdByKey.get(
+              `${storeKey}::${normName(account)}`
+            );
+            if (found) return found;
+          }
+          const fallbackKey = `${storeKey}::${normName(FALLBACK_ACCOUNT)}`;
+          let id = accountIdByKey.get(fallbackKey);
+          if (!id) {
+            const created = await tx.buyingAccounts.create({
+              data: { accountName: FALLBACK_ACCOUNT, shopId },
+              select: { id: true },
+            });
+            id = created.id;
+            accountIdByKey.set(fallbackKey, id);
+            summary.accountsCreated++;
+          }
+          return id;
+        };
+
         const receiptIdByKey = new Map<string, bigint>();
         for (const receipt of data.receipts) {
           if (!usedGroupKeys.has(receipt.key)) continue;
-          const shopId = shopIdByKey.get(normName(receipt.storeName));
-          const accountId = receipt.account
-            ? accountIdByKey.get(
-                `${normName(receipt.storeName)}::${normName(receipt.account)}`
-              )
-            : undefined;
-          // shoppingAccount es obligatorio en el modelo: sin cuenta no hay recibo.
-          if (!shopId || !accountId) continue;
+          const storeKey = normName(receipt.storeName);
+          const shopId = shopIdByKey.get(storeKey);
+          if (!shopId) continue;
+          const accountId = await accountIdFor(
+            storeKey,
+            shopId,
+            receipt.account
+          );
+          const total = receipt.realCost ?? receipt.declaredValue ?? 0;
           const created = await tx.shoppingReceip.create({
             data: {
               shopOfBuyId: shopId,
               shoppingAccountId: accountId,
-              statusOfShopping:
-                receipt.realCost != null && receipt.realCost > 0
-                  ? 'Pagado'
-                  : 'No pagado',
+              statusOfShopping: total > 0 ? 'Pagado' : 'No pagado',
               buyDate: toDate(receipt.buyDate),
-              totalCostOfPurchase: receipt.realCost ?? 0,
+              totalCostOfPurchase: total,
               cardId: receipt.storeOrderId
                 ? `Pedido ${receipt.storeOrderId}`
                 : null,
@@ -357,16 +384,32 @@ export async function runImportAction(
           summary.receiptsCreated++;
         }
 
-        // ------ 7. Paquetes (por número de rastreo) ------
-        const trackings = new Map<
-          string,
-          { store: string; arrival: string | null }
-        >();
+        // ------ 7. Paquetes (por ID de paquete + número de rastreo) ------
+        // La identidad de un paquete es la pareja (etiqueta "ID Paquete",
+        // rastreo): filas con la misma pareja caen en el mismo paquete.
+        interface PkgInfo {
+          label: string | null;
+          tracking: string | null;
+          store: string;
+          arrival: string | null;
+        }
+        const pkgKeyOf = (i: {
+          packageLabel: string | null;
+          tracking: string | null;
+        }): string | null =>
+          i.packageLabel || i.tracking
+            ? `${i.packageLabel ? normName(i.packageLabel) : ''}::${i.tracking ?? ''}`
+            : null;
+
+        const packages = new Map<string, PkgInfo>();
         for (const item of data.items) {
-          if (!item.tracking) continue;
-          const prev = trackings.get(item.tracking);
+          const key = pkgKeyOf(item);
+          if (!key) continue;
+          const prev = packages.get(key);
           if (!prev) {
-            trackings.set(item.tracking, {
+            packages.set(key, {
+              label: item.packageLabel,
+              tracking: item.tracking,
               store: item.storeName,
               arrival: item.arrivalDate,
             });
@@ -375,28 +418,48 @@ export async function runImportAction(
           }
         }
 
-        const packageIdByTracking = new Map<string, bigint>();
-        if (trackings.size > 0) {
+        // numberOfTracking es único: combina etiqueta y rastreo; si solo
+        // hay etiqueta, se antepone el número de embarque para distinguir
+        // el "#9" de un embarque del "#9" de otro.
+        const trackingNumberOf = (p: PkgInfo): string => {
+          if (p.label && p.tracking) {
+            return clip(`${p.label} · ${p.tracking}`, 100);
+          }
+          if (p.tracking) return clip(p.tracking, 100);
+          return clip(
+            `${data.shipmentTag ?? data.fileName} · ${p.label}`,
+            100
+          );
+        };
+
+        const packageIdByKey = new Map<string, bigint>();
+        if (packages.size > 0) {
+          const numbers = [...packages.values()].map(trackingNumberOf);
           const existingPackages = await tx.package.findMany({
-            where: { numberOfTracking: { in: [...trackings.keys()] } },
+            where: { numberOfTracking: { in: numbers } },
             select: { id: true, numberOfTracking: true },
           });
-          for (const p of existingPackages) {
-            packageIdByTracking.set(p.numberOfTracking, p.id);
-          }
-          for (const [tracking, info] of trackings) {
-            if (packageIdByTracking.has(tracking)) continue;
-            const created = await tx.package.create({
-              data: {
-                agencyName: clip(info.store, 100),
-                numberOfTracking: clip(tracking, 100),
-                statusOfProcessing: info.arrival ? 'Recibido' : 'Enviado',
-                arrivalDate: toDate(info.arrival),
-              },
-              select: { id: true },
-            });
-            packageIdByTracking.set(tracking, created.id);
-            summary.packagesCreated++;
+          const idByNumber = new Map(
+            existingPackages.map((p) => [p.numberOfTracking, p.id])
+          );
+          for (const [key, info] of packages) {
+            const number = trackingNumberOf(info);
+            let id = idByNumber.get(number);
+            if (!id) {
+              const created = await tx.package.create({
+                data: {
+                  agencyName: clip(info.store, 100),
+                  numberOfTracking: number,
+                  statusOfProcessing: info.arrival ? 'Recibido' : 'Enviado',
+                  arrivalDate: toDate(info.arrival),
+                },
+                select: { id: true },
+              });
+              id = created.id;
+              idByNumber.set(number, id);
+              summary.packagesCreated++;
+            }
+            packageIdByKey.set(key, id);
           }
         }
 
@@ -452,7 +515,11 @@ export async function runImportAction(
             });
             orderTotal += cost.totalCost;
 
-            const received = item.arrivalDate ? item.quantity : 0;
+            // Un producto empaquetado (etiqueta o rastreo) ya llegó al
+            // almacén aunque la fila no traiga fecha de llegada.
+            const pkgKey = pkgKeyOf(item);
+            const received =
+              item.arrivalDate || pkgKey ? item.quantity : 0;
             const productId = randomUUID();
             const name =
               item.description ??
@@ -470,6 +537,9 @@ export async function runImportAction(
               sku: item.sku ? clip(item.sku, 100) : null,
               shopId,
               orderId: order.id,
+              description: item.description
+                ? clip(item.description, 200)
+                : null,
               observation: clip(observationParts.join(' · '), 200),
               amountRequested: item.quantity,
               amountPurchased: item.quantity,
@@ -500,8 +570,8 @@ export async function runImportAction(
               receivedRows.push({
                 originalProductId: productId,
                 amountReceived: received,
-                packageId: item.tracking
-                  ? (packageIdByTracking.get(item.tracking) ?? null)
+                packageId: pkgKey
+                  ? (packageIdByKey.get(pkgKey) ?? null)
                   : null,
                 observation: clip(importNote, 200),
               });
