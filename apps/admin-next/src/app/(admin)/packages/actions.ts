@@ -5,6 +5,11 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { recomputeProductAmounts } from '@/lib/product-status';
 import {
+  addUnitsToOpenBag,
+  countUnitsInOpenBags,
+  pullUnitsFromOpenBags,
+} from '@/lib/open-bags';
+import {
   requireRole,
   zodFieldErrors,
   parseId,
@@ -16,9 +21,13 @@ import {
   PACKAGE_STATUSES,
 } from './schema';
 import type { ArrivalBatchInput, PackageStatus } from './schema';
+import type { BagSummary } from '@/lib/open-bags';
 
 export type { ActionResult } from '@/lib/action-helpers';
 import type { ActionResult } from '@/lib/action-helpers';
+
+/** Resultado de registrar llegadas: a qué bolsas cayeron las unidades. */
+export type ArrivalsResult = ActionResult & { bags?: BagSummary[] };
 
 export async function createPackageAction(
   _prev: ActionResult | undefined,
@@ -188,14 +197,16 @@ export async function deletePackageAction(id: string): Promise<ActionResult> {
 /**
  * Lote de /delivery/prepare (fase «Revisar paquetes»): registra de una
  * vez todas las llegadas marcadas en un paquete (N filas de
- * ProductReceived) y opcionalmente deja el paquete en otro estado
- * (Enviado → Recibido al marcar la primera llegada). Transaccional: si
- * algún producto ya no tiene unidades compradas pendientes de recibir
- * (otra sesión se adelantó), no se registra nada.
+ * ProductReceived), echa cada unidad a la bolsa abierta del
+ * cliente+categoría (creándola si hace falta) y opcionalmente deja el
+ * paquete en otro estado (Enviado → Recibido al marcar la primera
+ * llegada). Transaccional: si algún producto ya no tiene unidades
+ * compradas pendientes de recibir (otra sesión se adelantó) o no tiene
+ * categoría, no se registra nada.
  */
 export async function registerArrivalsAction(
   input: ArrivalBatchInput
-): Promise<ActionResult> {
+): Promise<ArrivalsResult> {
   const { denied } = await requireRole(ROLES.packages);
   if (denied) return denied;
 
@@ -229,6 +240,14 @@ export async function registerArrivalsAction(
           name: true,
           amountPurchased: true,
           amountReceived: true,
+          categoryId: true,
+          category: { select: { name: true } },
+          order: {
+            select: {
+              clientId: true,
+              client: { select: { name: true, lastName: true } },
+            },
+          },
         },
       });
       const byId = new Map(products.map((p) => [p.id, p]));
@@ -242,6 +261,13 @@ export async function registerArrivalsAction(
             error: `Solo quedan ${Math.max(0, remaining)} unidad(es) de «${p.name}» compradas sin recibir`,
           };
         }
+        // La categoría decide en qué bolsa cae el producto.
+        if (p.categoryId === null) {
+          return {
+            ok: false as const,
+            error: `«${p.name}» no tiene categoría asignada; asígnala en su orden antes de procesarlo`,
+          };
+        }
       }
 
       await tx.productReceived.createMany({
@@ -252,6 +278,33 @@ export async function registerArrivalsAction(
           observation: i.observation ?? null,
         })),
       });
+
+      const bags = new Map<string, BagSummary>();
+      for (const item of d.items) {
+        const p = byId.get(item.productId)!;
+        const { bagId, created } = await addUnitsToOpenBag(tx, {
+          productId: item.productId,
+          clientId: p.order.clientId,
+          categoryId: p.categoryId!,
+          amount: item.amount,
+        });
+        const key = bagId.toString();
+        const entry = bags.get(key);
+        if (entry) {
+          entry.units += item.amount;
+          entry.created = entry.created || created;
+        } else {
+          bags.set(key, {
+            deliveryId: key,
+            clientName:
+              `${p.order.client.name} ${p.order.client.lastName}`.trim(),
+            categoryName: p.category?.name ?? '',
+            units: item.amount,
+            created,
+          });
+        }
+      }
+
       for (const item of d.items) {
         await recomputeProductAmounts(item.productId, tx);
       }
@@ -261,7 +314,7 @@ export async function registerArrivalsAction(
           data: { statusOfProcessing: d.setStatus },
         });
       }
-      return { ok: true as const };
+      return { ok: true as const, bags: [...bags.values()] };
     },
     // Un lote grande recalcula muchos productos sobre el driver de
     // Neon; el timeout por defecto (5 s) se queda corto.
@@ -273,23 +326,26 @@ export async function registerArrivalsAction(
   revalidatePath('/packages');
   revalidatePath(`/packages/${d.packageId}`);
   revalidatePath('/delivery/prepare');
+  revalidatePath('/delivery');
   revalidatePath('/orders');
   revalidatePath('/products');
-  return { ok: true };
+  return result;
 }
 
 /**
  * Product reception: registering a ProductReceived row is what moves a
  * product from "Comprado" to "Recibido" (via recomputeProductAmounts)
  * and makes it a candidate for deliveries. Mirrors the Django flow the
- * Vite admin drives through /packages/:id/manage-products.
+ * Vite admin drives through /packages/:id/manage-products. Igual que el
+ * lote de llegadas, la unidad recibida cae en la bolsa abierta del
+ * cliente+categoría.
  */
 export async function addReceivedProductAction(
   packageId: string,
   productId: string,
   amount: number,
   observation?: string
-): Promise<ActionResult> {
+): Promise<ArrivalsResult> {
   const { denied } = await requireRole(ROLES.packages);
   if (denied) return denied;
 
@@ -303,42 +359,87 @@ export async function addReceivedProductAction(
     return { ok: false, error: 'Observation must be 200 characters or fewer' };
   }
 
-  const [pkg, product] = await Promise.all([
-    prisma.package.findUnique({ where: { id: pid }, select: { id: true } }),
-    prisma.product.findUnique({
-      where: { id: productId },
-      select: { amountPurchased: true, amountReceived: true, name: true },
-    }),
-  ]);
-  if (!pkg) return { ok: false, error: 'Package not found' };
-  if (!product) return { ok: false, error: 'Product not found' };
+  const result = await prisma.$transaction(async (tx) => {
+    const [pkg, product] = await Promise.all([
+      tx.package.findUnique({ where: { id: pid }, select: { id: true } }),
+      tx.product.findUnique({
+        where: { id: productId },
+        select: {
+          amountPurchased: true,
+          amountReceived: true,
+          name: true,
+          categoryId: true,
+          category: { select: { name: true } },
+          order: {
+            select: {
+              clientId: true,
+              client: { select: { name: true, lastName: true } },
+            },
+          },
+        },
+      }),
+    ]);
+    if (!pkg) return { ok: false as const, error: 'Package not found' };
+    if (!product) return { ok: false as const, error: 'Product not found' };
 
-  const remaining = product.amountPurchased - product.amountReceived;
-  if (amount > remaining) {
-    return {
-      ok: false,
-      error: `Only ${Math.max(0, remaining)} unit(s) of "${product.name}" are purchased but not yet received`,
+    const remaining = product.amountPurchased - product.amountReceived;
+    if (amount > remaining) {
+      return {
+        ok: false as const,
+        error: `Only ${Math.max(0, remaining)} unit(s) of "${product.name}" are purchased but not yet received`,
+      };
+    }
+    if (product.categoryId === null) {
+      return {
+        ok: false as const,
+        error: `«${product.name}» no tiene categoría asignada; asígnala en su orden antes de procesarlo`,
+      };
+    }
+
+    await tx.productReceived.create({
+      data: {
+        packageId: pid,
+        originalProductId: productId,
+        amountReceived: amount,
+        observation: note || null,
+      },
+    });
+    const { bagId, created } = await addUnitsToOpenBag(tx, {
+      productId,
+      clientId: product.order.clientId,
+      categoryId: product.categoryId,
+      amount,
+    });
+    await recomputeProductAmounts(productId, tx);
+
+    const bag: BagSummary = {
+      deliveryId: bagId.toString(),
+      clientName:
+        `${product.order.client.name} ${product.order.client.lastName}`.trim(),
+      categoryName: product.category?.name ?? '',
+      units: amount,
+      created,
     };
-  }
-
-  await prisma.productReceived.create({
-    data: {
-      packageId: pid,
-      originalProductId: productId,
-      amountReceived: amount,
-      observation: note || null,
-    },
+    return { ok: true as const, bags: [bag] };
   });
-  await recomputeProductAmounts(productId);
+
+  if (!result.ok) return result;
 
   revalidatePath(`/packages/${packageId}`);
   revalidatePath('/packages');
   revalidatePath('/delivery/prepare');
+  revalidatePath('/delivery');
   revalidatePath('/orders');
   revalidatePath('/products');
-  return { ok: true };
+  return result;
 }
 
+/**
+ * Deshacer una recepción retira sus unidades de las bolsas abiertas del
+ * cliente+categoría. Si ya están en una entrega pesada o despachada
+ * (la bolsa se cerró), se bloquea: hay que sacarlas de esa entrega
+ * primero para no dejar entregado > recibido.
+ */
 export async function removeReceivedProductAction(
   packageId: string,
   productReceivedId: string
@@ -349,19 +450,66 @@ export async function removeReceivedProductAction(
   const rowId = parseId(productReceivedId);
   if (!rowId) return { ok: false, error: 'Invalid row id' };
 
-  const row = await prisma.productReceived.findUnique({
-    where: { id: rowId },
-    select: { originalProductId: true },
-  });
-  if (!row) return { ok: false, error: 'Received product not found' };
+  const result = await prisma.$transaction(async (tx) => {
+    const row = await tx.productReceived.findUnique({
+      where: { id: rowId },
+      select: {
+        amountReceived: true,
+        originalProductId: true,
+        originalProduct: {
+          select: {
+            name: true,
+            categoryId: true,
+            amountReceived: true,
+            amountDelivered: true,
+            order: { select: { clientId: true } },
+          },
+        },
+      },
+    });
+    if (!row) {
+      return { ok: false as const, error: 'Received product not found' };
+    }
+    const p = row.originalProduct;
 
-  await prisma.productReceived.delete({ where: { id: rowId } });
-  await recomputeProductAmounts(row.originalProductId);
+    const inOpenBags =
+      p.categoryId === null
+        ? 0
+        : await countUnitsInOpenBags(tx, {
+            productId: row.originalProductId,
+            clientId: p.order.clientId,
+            categoryId: p.categoryId,
+          });
+    const pullable = Math.min(inOpenBags, row.amountReceived);
+    const newReceived = p.amountReceived - row.amountReceived;
+    const newDelivered = p.amountDelivered - pullable;
+    if (newDelivered > newReceived) {
+      return {
+        ok: false as const,
+        error: `No se puede eliminar: ${newDelivered - newReceived} unidad(es) de «${p.name}» ya están en una entrega pesada o despachada. Quítalas de esa entrega primero.`,
+      };
+    }
+
+    if (pullable > 0 && p.categoryId !== null) {
+      await pullUnitsFromOpenBags(tx, {
+        productId: row.originalProductId,
+        clientId: p.order.clientId,
+        categoryId: p.categoryId,
+        amount: row.amountReceived,
+      });
+    }
+    await tx.productReceived.delete({ where: { id: rowId } });
+    await recomputeProductAmounts(row.originalProductId, tx);
+    return { ok: true as const };
+  });
+
+  if (!result.ok) return result;
 
   revalidatePath(`/packages/${packageId}`);
   revalidatePath('/packages');
   revalidatePath('/delivery/prepare');
+  revalidatePath('/delivery');
   revalidatePath('/orders');
   revalidatePath('/products');
-  return { ok: true };
+  return result;
 }

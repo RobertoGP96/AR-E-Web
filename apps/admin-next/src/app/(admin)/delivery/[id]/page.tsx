@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { parseId } from '@/lib/action-helpers';
 import { DeliveryDetailClient } from './delivery-detail-client';
 import {
   fromDbDeliveryStatus,
@@ -24,7 +26,14 @@ export default async function DeliveryDetailPage({ params }: PageProps) {
   const delivery = await prisma.deliverReceip.findUnique({
     where: { id: deliveryId },
     include: {
-      client: { select: { id: true, name: true, lastName: true } },
+      client: {
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          assignedAgentId: true,
+        },
+      },
       category: { select: { name: true } },
       deliveredProducts: {
         include: {
@@ -35,6 +44,15 @@ export default async function DeliveryDetailPage({ params }: PageProps) {
     },
   });
   if (!delivery) notFound();
+
+  // Un agente solo ve las entregas de sus clientes asignados.
+  const session = await auth();
+  if (session?.user?.role === 'agent') {
+    const agentId = parseId(session.user.id);
+    if (agentId === null || delivery.client.assignedAgentId !== agentId) {
+      notFound();
+    }
+  }
 
   // Candidate products: those in the client's orders that still have
   // received-but-not-delivered units.

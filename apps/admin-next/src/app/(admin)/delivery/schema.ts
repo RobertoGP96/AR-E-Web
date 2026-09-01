@@ -56,34 +56,6 @@ export const deliveryFormSchema = z.object({
 
 export type DeliveryFormInput = z.infer<typeof deliveryFormSchema>;
 
-// Payload de /delivery/prepare: la entrega se crea junto con sus
-// productos en una sola transacción (createPreparedDeliveryAction).
-export const preparedDeliverySchema = z.object({
-  clientId: z.string().min(1, 'Selecciona un cliente'),
-  categoryId: z
-    .string()
-    .optional()
-    .transform((v) => (v && v.length > 0 ? v : null)),
-  weight: z.coerce.number().min(0, 'El peso debe ser ≥ 0'),
-  deliverDate: z
-    .string()
-    .min(1, 'La fecha es obligatoria')
-    .refine((s) => !Number.isNaN(Date.parse(s)), 'Fecha inválida'),
-  items: z
-    .array(
-      z.object({
-        productId: z.string().min(1),
-        amount: z
-          .number()
-          .int('La cantidad debe ser un entero')
-          .positive('La cantidad debe ser mayor que 0'),
-      })
-    )
-    .min(1, 'Selecciona al menos un producto'),
-});
-
-export type PreparedDeliveryInput = z.input<typeof preparedDeliverySchema>;
-
 export interface DeliveryRow {
   id: string;
   clientId: string;
