@@ -3,6 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DollarSign } from 'lucide-react';
 
+const ROLE_SUBTITLES: Record<string, string> = {
+  admin: 'Panel de Administración · Resumen General',
+  agent: 'Panel de Agente · Mi Resumen',
+  accountant: 'Panel de Contabilidad · Resumen Financiero',
+  logistical: 'Panel de Logística · Operaciones del Día',
+};
+
 /**
  * Greeting header + live clock/calendar card + exchange-rate card,
  * ported from the Vite admin's Dashboard.tsx and ExchangeRateCard.tsx.
@@ -53,9 +60,7 @@ export function DashboardGreeting({
             {greeting}
           </h1>
           <p className="text-sm text-muted md:text-base">
-            {role === 'agent'
-              ? 'Panel de Agente · Mi Resumen'
-              : 'Panel de Administración · Resumen General'}
+            {ROLE_SUBTITLES[role] ?? ROLE_SUBTITLES.admin}
           </p>
         </div>
         <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
