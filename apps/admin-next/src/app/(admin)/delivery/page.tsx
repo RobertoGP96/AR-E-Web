@@ -1,5 +1,7 @@
 import type { Prisma } from '@prisma/client';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { parseId } from '@/lib/action-helpers';
 import { TablePagination } from '@/components/table-pagination';
 import { parsePagination } from '@/lib/pagination';
 import { DeliveryClient } from './delivery-client';
@@ -52,7 +54,24 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
   const fromFilter = parseDateParam(from);
   const toFilter = parseDateParam(to);
 
+  // Un agente solo ve las entregas de sus clientes asignados.
+  const session = await auth();
+  const agentId =
+    session?.user?.role === 'agent'
+      ? parseId(session.user.id ?? '')
+      : null;
+
   const { page, perPage, skip } = parsePagination({ page: pageParam, per });
+  const clientWhere: Prisma.CustomUserWhereInput = {
+    ...(agentId !== null && { assignedAgentId: agentId }),
+    ...(search && {
+      OR: [
+        { name: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { phoneNumber: { contains: search, mode: 'insensitive' } },
+      ],
+    }),
+  };
   const where: Prisma.DeliverReceipWhereInput = {
     ...(statusFilter && {
       status: toDbDeliveryStatus(statusFilter),
@@ -64,15 +83,7 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
         ...(toFilter && { lte: new Date(`${toFilter}T23:59:59.999`) }),
       },
     }),
-    ...(search && {
-      client: {
-        OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { lastName: { contains: search, mode: 'insensitive' } },
-          { phoneNumber: { contains: search, mode: 'insensitive' } },
-        ],
-      },
-    }),
+    ...((agentId !== null || search) && { client: clientWhere }),
   };
 
   const [deliveries, clients, categories, totalCount] = await Promise.all([
@@ -87,7 +98,10 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
       take: perPage,
     }),
     prisma.customUser.findMany({
-      where: { role: 'client' },
+      where: {
+        role: 'client',
+        ...(agentId !== null && { assignedAgentId: agentId }),
+      },
       select: { id: true, name: true, lastName: true, phoneNumber: true },
       orderBy: { name: 'asc' },
       take: 1000,

@@ -18,6 +18,7 @@ import {
   PackageSearch,
   Plus,
   StickyNote,
+  Tag,
   Trash2,
   Truck,
 } from 'lucide-react';
@@ -30,6 +31,7 @@ import {
 } from '../../packages/actions';
 import { formatDate } from '@/lib/format';
 import { PackageStatusBadge } from '@/components/status-badges';
+import { describeBags } from '@/lib/open-bags';
 import {
   StatCard,
   ConfirmModal,
@@ -212,10 +214,11 @@ export function ReviewPackagesStep({
         items,
       });
       if (result.ok) {
+        const bagsText = describeBags(result.bags);
         toast.success('Llegadas registradas', {
           description: `${items.length} producto(s) · ${units} unidad(es) en ${selectedPackage.tracking}.${
-            bumpToReceived ? ' El paquete pasó a «Recibido».' : ''
-          }`,
+            bagsText ? ` En bolsas: ${bagsText}.` : ''
+          }${bumpToReceived ? ' El paquete pasó a «Recibido».' : ''}`,
         });
         clearMarks();
         router.refresh();
@@ -236,21 +239,23 @@ export function ReviewPackagesStep({
     const picked = qty > 0;
     const unpurchased = c.requested - c.purchased;
     const noteOpen = picked && (openNotes[c.id] ?? false);
+    // Sin categoría no hay bolsa destino: se bloquea hasta asignarla.
+    const markable = canWrite && c.categoryName !== null;
     return (
       <li key={c.id}>
         <div
-          onClick={canWrite ? () => toggleCandidate(c) : undefined}
+          onClick={markable ? () => toggleCandidate(c) : undefined}
           className={`surface-card flex flex-wrap items-center gap-3 p-3 transition-all duration-150 ${
-            canWrite ? 'cursor-pointer' : ''
+            markable ? 'cursor-pointer' : ''
           } ${
             picked
               ? 'border-accent/60 ring-1 ring-accent/30'
-              : canWrite
+              : markable
                 ? 'hover:border-accent/40'
                 : ''
           }`}
         >
-          {canWrite ? (
+          {markable ? (
             <button
               type="button"
               aria-pressed={picked}
@@ -277,6 +282,17 @@ export function ReviewPackagesStep({
               <span className="truncate font-medium text-foreground/80">
                 {c.clientName}
               </span>
+              {c.categoryName !== null ? (
+                <span className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-1.5 py-0.5 font-medium text-accent">
+                  <Tag className="h-3 w-3" aria-hidden />
+                  {c.categoryName}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-md bg-warning-soft px-1.5 py-0.5 font-medium text-warning-soft-foreground">
+                  <Tag className="h-3 w-3" aria-hidden />
+                  Sin categoría — asígnala en la orden para procesarlo
+                </span>
+              )}
               <Link
                 href={`/orders/${c.orderId}`}
                 onClick={stopRowClick}
@@ -777,8 +793,9 @@ export function ReviewPackagesStep({
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-2 text-[11px] text-muted">
                       <span>
-                        Lo que no marques seguirá pendiente y podrás
-                        recibirlo en otro paquete o división.
+                        Cada producto caerá solo en la bolsa de su cliente
+                        y categoría. Lo que no marques seguirá pendiente y
+                        podrás recibirlo en otro paquete o división.
                       </span>
                       {selectedPackage.status === 'Enviado' ? (
                         <span>
@@ -819,7 +836,8 @@ export function ReviewPackagesStep({
               <strong className="text-foreground">
                 {removeTarget.productName}
               </strong>{' '}
-              ({removeTarget.clientName}). El estado del producto se
+              ({removeTarget.clientName}). Sus unidades saldrán de la
+              bolsa abierta del cliente y el estado del producto se
               recalculará.
             </>
           ) : null

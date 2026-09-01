@@ -47,10 +47,9 @@ export type OrderFormInput = z.infer<typeof orderFormSchema>;
 export const productFormSchema = z.object({
   name: z.string().trim().min(1, 'Required').max(100),
   shopId: z.string().min(1, 'Select a shop'),
-  categoryId: z
-    .string()
-    .optional()
-    .transform((v) => (v && v.length > 0 ? v : null)),
+  // Obligatoria: la categoría decide en qué bolsa (entrega) cae el
+  // producto al procesarse en /delivery/prepare.
+  categoryId: z.string().min(1, 'Selecciona una categoría'),
   link: z
     .string()
     .trim()

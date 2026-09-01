@@ -23,6 +23,7 @@ import {
   removeReceivedProductAction,
 } from '../actions';
 import { formatDate } from '@/lib/format';
+import { describeBags } from '@/lib/open-bags';
 import { PackageStatusBadge } from '@/components/status-badges';
 import {
   StatCard,
@@ -111,10 +112,13 @@ export function PackageDetailClient({
         observation
       );
       if (result.ok) {
+        const bagsText = describeBags(result.bags);
         toast.success('Producto marcado como recibido', {
-          description: selected
-            ? `Se registraron ${amount} unidad(es) de «${selected.name}» en el paquete.`
-            : `Se registraron ${amount} unidad(es) en el paquete.`,
+          description: `${
+            selected
+              ? `Se registraron ${amount} unidad(es) de «${selected.name}» en el paquete.`
+              : `Se registraron ${amount} unidad(es) en el paquete.`
+          }${bagsText ? ` En bolsa: ${bagsText}.` : ''}`,
         });
         setProductId('');
         setAmount(1);

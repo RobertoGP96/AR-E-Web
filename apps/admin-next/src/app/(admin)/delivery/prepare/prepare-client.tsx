@@ -2,12 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ClipboardList, Eye, PackageSearch, Truck } from 'lucide-react';
+import {
+  ClipboardList,
+  Eye,
+  PackageSearch,
+  ShoppingBag,
+  Truck,
+} from 'lucide-react';
 import { Button, Tabs } from '@heroui/react';
 import { PageHeader } from '@/components/ui';
 import { ReviewPackagesStep } from './review-packages-step';
-import { BuildDeliveriesStep } from './build-deliveries-step';
-import type { CategoryOption } from '../schema';
+import { BagsStep } from './bags-step';
 import type {
   ArrivalCandidate,
   PrepareClientGroup,
@@ -18,7 +23,6 @@ interface PrepareDeliveryClientProps {
   reviewPackages: ReviewPackage[];
   candidates: ArrivalCandidate[];
   groups: PrepareClientGroup[];
-  categoryOptions: CategoryOption[];
   canWrite: boolean;
   canWritePackages: boolean;
 }
@@ -28,17 +32,16 @@ type StepKey = 'packages' | 'deliveries';
 /**
  * Workspace de preparación en dos fases, calcado del proceso físico:
  * primero se revisan los paquetes uno a uno marcando qué llegó en cada
- * bulto, y con lo verificado se arman las entregas de cada cliente
- * (parciales si aún hay mercancía en camino). Las dos fases quedan
- * montadas a la vez — cambiar de pestaña no pierde las marcas — por lo
- * que los paneles de Tabs son solo el conmutador (mismo patrón que
- * SettingsNav).
+ * bulto — cada unidad marcada cae sola en la bolsa (entrega) de su
+ * cliente+categoría — y en la mesa de bolsas se ajusta su contenido y
+ * se pesan para cerrarlas. Las dos fases quedan montadas a la vez —
+ * cambiar de pestaña no pierde las marcas — por lo que los paneles de
+ * Tabs son solo el conmutador (mismo patrón que SettingsNav).
  */
 export function PrepareDeliveryClient({
   reviewPackages,
   candidates,
   groups,
-  categoryOptions,
   canWrite,
   canWritePackages,
 }: PrepareDeliveryClientProps) {
@@ -67,8 +70,8 @@ export function PrepareDeliveryClient({
     },
     {
       key: 'deliveries',
-      label: '2 · Entregas',
-      icon: Truck,
+      label: '2 · Bolsas',
+      icon: ShoppingBag,
       badge: groups.length,
     },
   ];
@@ -78,7 +81,7 @@ export function PrepareDeliveryClient({
       <PageHeader
         icon={ClipboardList}
         title="Preparar entregas"
-        subtitle="Revisa los paquetes marcando lo que llegó y arma las entregas de cada cliente"
+        subtitle="Marca lo que llegó en cada paquete — cada producto cae solo en la bolsa de su cliente — y pesa las bolsas para cerrarlas"
         actions={
           <Button variant="tertiary" onPress={() => router.push('/delivery')}>
             <Truck className="h-4 w-4" aria-hidden />
@@ -90,8 +93,8 @@ export function PrepareDeliveryClient({
       {!canWrite && !canWritePackages ? (
         <div className="surface-card flex items-center gap-2.5 border-accent/30 bg-accent-soft/30 p-3 text-sm text-foreground">
           <Eye className="h-4 w-4 shrink-0 text-accent" aria-hidden />
-          Modo lectura: tu rol permite revisar los paquetes y los productos
-          pendientes, pero no registrar llegadas ni crear entregas.
+          Modo lectura: puedes ver los paquetes y las bolsas en preparación
+          de tus clientes, pero no registrar llegadas ni pesar bolsas.
         </div>
       ) : null}
 
@@ -140,9 +143,8 @@ export function PrepareDeliveryClient({
         />
       </div>
       <div className={step === 'deliveries' ? '' : 'hidden'}>
-        <BuildDeliveriesStep
+        <BagsStep
           groups={groups}
-          categoryOptions={categoryOptions}
           canWrite={canWrite}
           onGoToPackages={() => setStep('packages')}
         />

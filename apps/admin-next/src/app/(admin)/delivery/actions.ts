@@ -7,6 +7,10 @@ import { computePayStatus, round2 } from '@/lib/order-cost';
 import { recalculateClientBalance } from '@/lib/balance';
 import { recomputeProductAmounts } from '@/lib/product-status';
 import {
+  addUnitsToOpenBag,
+  deleteBagIfEmpty,
+} from '@/lib/open-bags';
+import {
   requireRole,
   zodFieldErrors,
   parseId,
@@ -14,14 +18,16 @@ import {
 } from '@/lib/action-helpers';
 import {
   deliveryFormSchema,
-  preparedDeliverySchema,
   toDbDeliveryStatus,
   toDbPayStatus,
-  type PreparedDeliveryInput,
 } from './schema';
+import type { BagSummary } from '@/lib/open-bags';
 
 export type { ActionResult } from '@/lib/action-helpers';
 import type { ActionResult } from '@/lib/action-helpers';
+
+/** Resultado de echar sueltos a bolsas: a qué bolsas cayeron. */
+export type BagFillResult = ActionResult & { bags?: BagSummary[] };
 
 /**
  * weight_cost  = weight × Category.client_shipping_charge
@@ -118,42 +124,187 @@ export async function createDeliveryAction(
 }
 
 /**
- * Flujo de /delivery/prepare: crea la entrega Y asocia los productos
- * seleccionados en una sola transacción. Equivale a createDeliveryAction
- * seguido de N × addDeliveredProductAction, pero atómico: si algún
- * producto ya no tiene unidades disponibles (otra entrega se le
- * adelantó) no se crea nada.
+ * Pesar una bolsa del flujo /delivery/prepare. Registrar un peso > 0 es
+ * lo que cierra la bolsa: deja de ser candidata al auto-llenado (las
+ * llegadas posteriores de esa categoría abren otra) y aquí nacen el
+ * costo por peso y la ganancia del gestor. El estado de pago se
+ * recalcula contra el nuevo costo con los pagos ya registrados.
  */
-export async function createPreparedDeliveryAction(
-  input: PreparedDeliveryInput
+export async function registerBagWeightAction(
+  id: string,
+  weight: number
 ): Promise<ActionResult> {
   const { denied } = await requireRole(ROLES.delivery);
   if (denied) return denied;
 
-  const parsed = preparedDeliverySchema.safeParse(input);
-  if (!parsed.success) {
+  const deliveryId = parseId(id);
+  if (!deliveryId) return { ok: false, error: 'Invalid delivery id' };
+  if (!Number.isFinite(weight) || weight <= 0) {
+    return { ok: false, error: 'El peso debe ser mayor que 0' };
+  }
+
+  const delivery = await prisma.deliverReceip.findUnique({
+    where: { id: deliveryId },
+    select: {
+      clientId: true,
+      categoryId: true,
+      status: true,
+      paymentAmount: true,
+      balanceApplied: true,
+    },
+  });
+  if (!delivery) return { ok: false, error: 'Delivery not found' };
+  if (delivery.status !== toDbDeliveryStatus('Pendiente')) {
     return {
       ok: false,
-      error: parsed.error.issues[0]?.message ?? 'Datos inválidos',
+      error: 'Solo se pesan entregas en estado «Pendiente»',
     };
   }
-  const d = parsed.data;
-  const clientId = parseId(d.clientId);
-  if (!clientId) return { ok: false, error: 'Invalid client id' };
-  const categoryId = d.categoryId ? parseId(d.categoryId) : null;
-  if (d.categoryId && !categoryId) {
-    return { ok: false, error: 'Invalid category id' };
+
+  const w = round2(weight);
+  const { weightCost, managerProfit } = await deriveCosts(
+    delivery.clientId,
+    delivery.categoryId,
+    w
+  );
+  const payStatus = computePayStatus(
+    weightCost,
+    delivery.paymentAmount,
+    delivery.balanceApplied
+  );
+
+  await prisma.deliverReceip.update({
+    where: { id: deliveryId },
+    data: {
+      weight: w,
+      weightCost,
+      managerProfit,
+      paymentStatus: toDbPayStatus(payStatus),
+    },
+  });
+  await recalculateClientBalance(delivery.clientId);
+
+  revalidatePath('/delivery');
+  revalidatePath(`/delivery/${id}`);
+  revalidatePath('/delivery/prepare');
+  return { ok: true, id };
+}
+
+/**
+ * Ajuste manual de una bolsa abierta (peso 0): fijar las unidades de una
+ * fila o quitarla con amount 0. Cubre el error físico de echar algo en
+ * la bolsa equivocada; las unidades retiradas vuelven a «recibido sin
+ * bolsa». Si la bolsa queda vacía se borra.
+ */
+export async function adjustBagItemAction(
+  productDeliveryId: string,
+  amount: number
+): Promise<ActionResult> {
+  const { denied } = await requireRole(ROLES.delivery);
+  if (denied) return denied;
+
+  const rowId = parseId(productDeliveryId);
+  if (!rowId) return { ok: false, error: 'Invalid row id' };
+  if (!Number.isInteger(amount) || amount < 0) {
+    return { ok: false, error: 'La cantidad debe ser un entero ≥ 0' };
   }
-  const productIds = d.items.map((i) => i.productId);
+
+  const result = await prisma.$transaction(async (tx) => {
+    const row = await tx.productDelivery.findUnique({
+      where: { id: rowId },
+      select: {
+        amountDelivered: true,
+        deliverReceipId: true,
+        originalProductId: true,
+        deliverReceip: { select: { status: true, weight: true } },
+        originalProduct: {
+          select: {
+            name: true,
+            amountReceived: true,
+            amountDelivered: true,
+          },
+        },
+      },
+    });
+    if (!row || row.deliverReceipId === null || !row.deliverReceip) {
+      return { ok: false as const, error: 'Producto no encontrado en la bolsa' };
+    }
+    if (
+      row.deliverReceip.status !== toDbDeliveryStatus('Pendiente') ||
+      row.deliverReceip.weight !== 0
+    ) {
+      return {
+        ok: false as const,
+        error:
+          'La bolsa ya está pesada o despachada; edítala desde el detalle de la entrega',
+      };
+    }
+    if (amount === row.amountDelivered) return { ok: true as const };
+
+    const delta = amount - row.amountDelivered;
+    if (delta > 0) {
+      const available =
+        row.originalProduct.amountReceived -
+        row.originalProduct.amountDelivered;
+      if (delta > available) {
+        return {
+          ok: false as const,
+          error: `Solo hay ${Math.max(0, available)} unidad(es) de «${row.originalProduct.name}» recibidas sin bolsa`,
+        };
+      }
+    }
+
+    if (amount === 0) {
+      await tx.productDelivery.delete({ where: { id: rowId } });
+    } else {
+      await tx.productDelivery.update({
+        where: { id: rowId },
+        data: { amountDelivered: amount },
+      });
+    }
+    await recomputeProductAmounts(row.originalProductId, tx);
+    await deleteBagIfEmpty(tx, row.deliverReceipId);
+    return { ok: true as const };
+  });
+
+  if (!result.ok) return result;
+
+  revalidatePath('/delivery');
+  revalidatePath('/delivery/prepare');
+  revalidatePath('/orders');
+  revalidatePath('/products');
+  return { ok: true };
+}
+
+/**
+ * Echar a mano unidades recibidas que quedaron sueltas (recibidas antes
+ * del auto-llenado, o retiradas de una bolsa) a la bolsa abierta de su
+ * cliente+categoría, creándola si no existe. Mismo destino que el
+ * auto-llenado de registerArrivalsAction.
+ */
+export async function addLooseToBagAction(
+  items: { productId: string; amount: number }[]
+): Promise<BagFillResult> {
+  const { denied } = await requireRole(ROLES.delivery);
+  if (denied) return denied;
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return { ok: false, error: 'Selecciona al menos un producto' };
+  }
+  for (const item of items) {
+    if (
+      typeof item.productId !== 'string' ||
+      item.productId.length === 0 ||
+      !Number.isInteger(item.amount) ||
+      item.amount <= 0
+    ) {
+      return { ok: false, error: 'Datos inválidos' };
+    }
+  }
+  const productIds = items.map((i) => i.productId);
   if (new Set(productIds).size !== productIds.length) {
     return { ok: false, error: 'Hay productos repetidos en la selección' };
   }
-
-  const { weightCost, managerProfit } = await deriveCosts(
-    clientId,
-    categoryId,
-    d.weight
-  );
 
   const result = await prisma.$transaction(
     async (tx) => {
@@ -164,59 +315,66 @@ export async function createPreparedDeliveryAction(
           name: true,
           amountReceived: true,
           amountDelivered: true,
-          order: { select: { clientId: true } },
+          categoryId: true,
+          category: { select: { name: true } },
+          order: {
+            select: {
+              clientId: true,
+              client: { select: { name: true, lastName: true } },
+            },
+          },
         },
       });
       const byId = new Map(products.map((p) => [p.id, p]));
-      for (const item of d.items) {
+      for (const item of items) {
         const p = byId.get(item.productId);
         if (!p) return { ok: false as const, error: 'Producto no encontrado' };
-        if (p.order.clientId !== clientId) {
+        const available = p.amountReceived - p.amountDelivered;
+        if (item.amount > available) {
           return {
             ok: false as const,
-            error: `«${p.name}» no pertenece a este cliente`,
+            error: `Solo quedan ${Math.max(0, available)} unidad(es) de «${p.name}» recibidas sin bolsa`,
           };
         }
-        const remaining = p.amountReceived - p.amountDelivered;
-        if (item.amount > remaining) {
+        if (p.categoryId === null) {
           return {
             ok: false as const,
-            error: `Solo quedan ${remaining} unidad(es) de «${p.name}» por entregar`,
+            error: `«${p.name}» no tiene categoría asignada; asígnala en su orden para poder embolsarlo`,
           };
         }
       }
 
-      const delivery = await tx.deliverReceip.create({
-        data: {
-          clientId,
-          categoryId,
-          weight: d.weight,
-          status: toDbDeliveryStatus('Pendiente'),
-          paymentStatus: toDbPayStatus(computePayStatus(weightCost, 0, 0)),
-          paymentAmount: 0,
-          balanceApplied: 0,
-          paymentDate: null,
-          deliverDate: new Date(d.deliverDate),
-          deliverPicture: null,
-          weightCost,
-          managerProfit,
-        },
-        select: { id: true },
-      });
-      await tx.productDelivery.createMany({
-        data: d.items.map((i) => ({
-          deliverReceipId: delivery.id,
-          originalProductId: i.productId,
-          amountDelivered: i.amount,
-        })),
-      });
-      for (const item of d.items) {
+      const bags = new Map<string, BagSummary>();
+      for (const item of items) {
+        const p = byId.get(item.productId)!;
+        const { bagId, created } = await addUnitsToOpenBag(tx, {
+          productId: item.productId,
+          clientId: p.order.clientId,
+          categoryId: p.categoryId!,
+          amount: item.amount,
+        });
+        const key = bagId.toString();
+        const entry = bags.get(key);
+        if (entry) {
+          entry.units += item.amount;
+          entry.created = entry.created || created;
+        } else {
+          bags.set(key, {
+            deliveryId: key,
+            clientName:
+              `${p.order.client.name} ${p.order.client.lastName}`.trim(),
+            categoryName: p.category?.name ?? '',
+            units: item.amount,
+            created,
+          });
+        }
+      }
+      for (const item of items) {
         await recomputeProductAmounts(item.productId, tx);
       }
-      await recalculateClientBalance(clientId, tx);
-      return { ok: true as const, id: delivery.id.toString() };
+      return { ok: true as const, bags: [...bags.values()] };
     },
-    // Una entrega grande recalcula muchos productos sobre el driver de
+    // Un lote grande recalcula muchos productos sobre el driver de
     // Neon; el timeout por defecto (5 s) se queda corto.
     { timeout: 60_000, maxWait: 10_000 }
   );
@@ -227,7 +385,7 @@ export async function createPreparedDeliveryAction(
   revalidatePath('/delivery/prepare');
   revalidatePath('/orders');
   revalidatePath('/products');
-  return { ok: true, id: result.id };
+  return result;
 }
 
 export async function updateDeliveryAction(

@@ -311,10 +311,8 @@ async function upsertProduct(
   const d = parsed.data;
   const shopId = parseId(d.shopId);
   if (!shopId) return { ok: false, error: 'Invalid shop id' };
-  const categoryId = d.categoryId ? parseId(d.categoryId) : null;
-  if (d.categoryId && !categoryId) {
-    return { ok: false, error: 'Invalid category id' };
-  }
+  const categoryId = parseId(d.categoryId);
+  if (!categoryId) return { ok: false, error: 'Invalid category id' };
 
   const cost = computeProductCost({
     shopCost: d.shopCost,

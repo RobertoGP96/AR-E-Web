@@ -141,12 +141,15 @@ export function ProductDialog({
               ))}
             </Select>
           </Field>
-          <Field label="Categoría (opcional)">
+          {/* Obligatoria: la categoría decide en qué bolsa (entrega) cae
+              el producto al procesarse en /delivery/prepare. */}
+          <Field label="Categoría">
             <Select
               name="categoryId"
               defaultValue={product?.categoryId ?? ''}
+              required
             >
-              <option value="">— Ninguna —</option>
+              <option value="">Selecciona una categoría…</option>
               {categoryOptions.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.label}
