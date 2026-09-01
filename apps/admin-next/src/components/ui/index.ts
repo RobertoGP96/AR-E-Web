@@ -15,6 +15,8 @@ export {
 } from './search-select';
 export { PageHeader } from './page-header';
 export { StatCard, type StatTone } from './stat-card';
+export { ChartCard } from './chart-card';
+export { KpiCard, type KpiTone, type KpiDelta } from './kpi-card';
 export {
   ResponsiveTable,
   MobileCard,
