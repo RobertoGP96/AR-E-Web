@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Activity,
   Database,
+  Eraser,
   FileSpreadsheet,
   Settings,
   SlidersHorizontal,
@@ -39,6 +40,12 @@ const SECTIONS: SettingsSection[] = [
     label: 'Importar',
     subtitle: 'Incorpora los datos de un libro de embarque AR&E Shipps',
     icon: FileSpreadsheet,
+  },
+  {
+    href: '/settings/cleanup',
+    label: 'Limpieza',
+    subtitle: 'Elimina o vacía los datos del sistema de forma controlada',
+    icon: Eraser,
   },
   {
     href: '/settings/system',

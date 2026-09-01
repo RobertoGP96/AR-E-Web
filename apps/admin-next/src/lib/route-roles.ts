@@ -30,6 +30,7 @@ const ROUTE_ROLES: Record<string, readonly string[]> = {
   settings: STAFF_ROLES,
   'settings/data': ROLES.finance,
   'settings/import': ['admin'],
+  'settings/cleanup': ['admin'],
   'settings/system': ['admin'],
   profile: STAFF_ROLES,
 };
