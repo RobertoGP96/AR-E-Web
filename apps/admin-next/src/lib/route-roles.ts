@@ -1,4 +1,4 @@
-import { ROLES, STAFF_ROLES } from '@/lib/action-helpers';
+import { ROLES, STAFF_ROLES } from '@/lib/roles';
 
 /**
  * Page-level RBAC: path prefix → roles that may open it. Keys are the
