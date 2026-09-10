@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { CleanupClient } from './cleanup-client';
 
 export const dynamic = 'force-dynamic';
+// Los vaciados masivos corren en una transacción de hasta 120 s.
+export const maxDuration = 120;
 
 /** Configuración → Limpieza: eliminar o vaciar datos del sistema. */
 export default async function CleanupPage() {
