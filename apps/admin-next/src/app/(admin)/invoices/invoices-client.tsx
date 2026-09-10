@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Plus,
   Pencil,
@@ -28,7 +27,6 @@ interface InvoicesClientProps {
 }
 
 export function InvoicesClient({ initialRows }: InvoicesClientProps) {
-  const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<InvoiceRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<InvoiceRow | null>(null);
@@ -169,7 +167,6 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
           toast.success('Factura creada', {
             description: 'La nueva factura ya aparece en la lista.',
           });
-          router.refresh();
         }}
       />
 
@@ -183,7 +180,6 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
           toast.success('Factura actualizada', {
             description: 'Los cambios de la factura se guardaron correctamente.',
           });
-          router.refresh();
         }}
       />
 
@@ -195,7 +191,6 @@ export function InvoicesClient({ initialRows }: InvoicesClientProps) {
           toast.success('Factura eliminada', {
             description: 'La factura se eliminó de forma permanente.',
           });
-          router.refresh();
         }}
       />
     </div>

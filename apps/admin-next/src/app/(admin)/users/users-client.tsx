@@ -123,7 +123,7 @@ export function UsersClient({
     else params.delete(key);
     params.delete('page');
     startTransition(() => {
-      router.replace(`/users?${params.toString()}`);
+      router.replace(`/users?${params.toString()}`, { scroll: false });
     });
   }
 
@@ -141,7 +141,6 @@ export function UsersClient({
               : `${row.name} puede volver a acceder al sistema.`,
           }
         );
-        router.refresh();
       } else {
         toast.error(
           `No se pudo ${row.isActive ? 'desactivar' : 'activar'} el usuario`,
@@ -160,7 +159,6 @@ export function UsersClient({
         toast.success('Usuario verificado', {
           description: `La cuenta de ${row.name} quedó verificada.`,
         });
-        router.refresh();
       } else {
         toast.error('No se pudo verificar el usuario', {
           description: result.error,
@@ -291,7 +289,7 @@ export function UsersClient({
             params.delete('verified');
             params.delete('page');
             startTransition(() => {
-              router.replace(`/users?${params.toString()}`);
+              router.replace(`/users?${params.toString()}`, { scroll: false });
             });
           }}
         >
@@ -457,7 +455,6 @@ export function UsersClient({
           toast.success('Usuario actualizado', {
             description: 'Los cambios del usuario se guardaron correctamente.',
           });
-          router.refresh();
         }}
       />
 
@@ -481,7 +478,6 @@ export function UsersClient({
           toast.success('Usuario eliminado', {
             description: 'La cuenta se eliminó de forma permanente.',
           });
-          router.refresh();
         }}
       />
     </div>

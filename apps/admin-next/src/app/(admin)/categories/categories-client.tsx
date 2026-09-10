@@ -46,7 +46,7 @@ export function CategoriesClient({
     if (next) params.set('q', next);
     else params.delete('q');
     startTransition(() => {
-      router.replace(`/categories?${params.toString()}`);
+      router.replace(`/categories?${params.toString()}`, { scroll: false });
     });
   }
 
@@ -189,7 +189,6 @@ export function CategoriesClient({
           toast.success('Categoría creada', {
             description: 'La nueva categoría ya está disponible.',
           });
-          router.refresh();
         }}
       />
 
@@ -204,7 +203,6 @@ export function CategoriesClient({
             description:
               'Los cambios de la categoría se guardaron correctamente.',
           });
-          router.refresh();
         }}
       />
 
@@ -216,7 +214,6 @@ export function CategoriesClient({
           toast.success('Categoría eliminada', {
             description: 'La categoría se eliminó de forma permanente.',
           });
-          router.refresh();
         }}
       />
     </div>

@@ -89,7 +89,7 @@ export function OrdersClient({
     else params.delete(key);
     params.delete('page');
     startTransition(() => {
-      router.replace(`/orders?${params.toString()}`);
+      router.replace(`/orders?${params.toString()}`, { scroll: false });
     });
   }
 
@@ -246,7 +246,7 @@ export function OrdersClient({
               params.delete(key);
             }
             startTransition(() => {
-              router.replace(`/orders?${params.toString()}`);
+              router.replace(`/orders?${params.toString()}`, { scroll: false });
             });
           }}
         >
@@ -441,7 +441,6 @@ export function OrdersClient({
               : 'La nueva orden ya aparece en la lista.',
           });
           if (newId) router.push(`/orders/${newId}`);
-          else router.refresh();
         }}
       />
 
@@ -458,7 +457,6 @@ export function OrdersClient({
           toast.success('Orden actualizada', {
             description: 'Los cambios de la orden se guardaron correctamente.',
           });
-          router.refresh();
         }}
       />
 
@@ -471,7 +469,6 @@ export function OrdersClient({
             description:
               'La orden y sus productos se eliminaron de forma permanente.',
           });
-          router.refresh();
         }}
       />
       {paymentTarget ? (

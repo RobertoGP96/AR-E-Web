@@ -70,7 +70,7 @@ export function PurchasesClient({
     else params.delete(key);
     params.delete('page');
     startTransition(() => {
-      router.replace(`/purchases?${params.toString()}`);
+      router.replace(`/purchases?${params.toString()}`, { scroll: false });
     });
   }
 
@@ -191,7 +191,7 @@ export function PurchasesClient({
               params.delete(key);
             }
             startTransition(() => {
-              router.replace(`/purchases?${params.toString()}`);
+              router.replace(`/purchases?${params.toString()}`, { scroll: false });
             });
           }}
         >
@@ -354,7 +354,6 @@ export function PurchasesClient({
           toast.success('Compra creada', {
             description: 'La nueva compra ya aparece en la lista.',
           });
-          router.refresh();
         }}
       />
 
@@ -369,7 +368,6 @@ export function PurchasesClient({
           toast.success('Compra actualizada', {
             description: 'Los cambios de la compra se guardaron correctamente.',
           });
-          router.refresh();
         }}
       />
 
@@ -381,7 +379,6 @@ export function PurchasesClient({
           toast.success('Compra eliminada', {
             description: 'La compra se eliminó de forma permanente.',
           });
-          router.refresh();
         }}
       />
     </div>

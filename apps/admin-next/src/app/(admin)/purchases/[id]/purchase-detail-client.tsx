@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -71,7 +70,6 @@ export function PurchaseDetailClient({
   buyedProducts,
   candidates,
 }: PurchaseDetailClientProps) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [productId, setProductId] = useState('');
   const [clientFilter, setClientFilter] = useState('');
@@ -113,7 +111,6 @@ export function PurchaseDetailClient({
         });
         setProductId('');
         setAmount(1);
-        router.refresh();
       } else {
         toast.error('No se pudo añadir el producto', {
           description: result.error,
@@ -409,7 +406,6 @@ export function PurchaseDetailClient({
             toast.success('Producto quitado', {
               description: 'El producto se quitó de la compra.',
             });
-            router.refresh();
           }
           return result;
         }}
@@ -425,7 +421,6 @@ export function PurchaseDetailClient({
             description:
               'El reembolso quedó registrado en la compra correctamente.',
           });
-          router.refresh();
         }}
       />
     </div>

@@ -83,7 +83,7 @@ export function DeliveryClient({
     else params.delete(key);
     params.delete('page');
     startTransition(() => {
-      router.replace(`/delivery?${params.toString()}`);
+      router.replace(`/delivery?${params.toString()}`, { scroll: false });
     });
   }
 
@@ -240,7 +240,7 @@ export function DeliveryClient({
               params.delete(key);
             }
             startTransition(() => {
-              router.replace(`/delivery?${params.toString()}`);
+              router.replace(`/delivery?${params.toString()}`, { scroll: false });
             });
           }}
         >
@@ -439,7 +439,6 @@ export function DeliveryClient({
           toast.success('Entrega creada', {
             description: 'La nueva entrega ya aparece en la lista.',
           });
-          router.refresh();
         }}
       />
 
@@ -455,7 +454,6 @@ export function DeliveryClient({
           toast.success('Entrega actualizada', {
             description: 'Los cambios de la entrega se guardaron correctamente.',
           });
-          router.refresh();
         }}
       />
 
@@ -467,7 +465,6 @@ export function DeliveryClient({
           toast.success('Entrega eliminada', {
             description: 'La entrega se eliminó de forma permanente.',
           });
-          router.refresh();
         }}
       />
       {paymentTarget ? (

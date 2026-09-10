@@ -1,31 +1,48 @@
 import { prisma } from '@/lib/prisma';
 import { PackagesClient } from './packages-client';
+import { TablePagination } from '@/components/table-pagination';
+import { parsePagination } from '@/lib/pagination';
 import type { PackageRow, PackageStatus } from './schema';
 
 interface PageProps {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    page?: string;
+    per?: string;
+  }>;
 }
 
 export default async function PackagesPage({ searchParams }: PageProps) {
-  const { q, status } = await searchParams;
+  const { q, status, page: pageParam, per } = await searchParams;
+  const { page, perPage, skip } = parsePagination({ page: pageParam, per });
   const search = q?.trim() ?? '';
   const statusFilter =
     status === 'Enviado' || status === 'Recibido' || status === 'Procesado'
       ? (status as PackageStatus)
       : null;
 
-  const packages = await prisma.package.findMany({
-    where: {
-      ...(search && {
-        OR: [
-          { agencyName: { contains: search, mode: 'insensitive' } },
-          { numberOfTracking: { contains: search, mode: 'insensitive' } },
-        ],
-      }),
-      ...(statusFilter && { statusOfProcessing: statusFilter }),
-    },
-    orderBy: { arrivalDate: 'desc' },
-  });
+  const where = {
+    ...(search && {
+      OR: [
+        { agencyName: { contains: search, mode: 'insensitive' as const } },
+        {
+          numberOfTracking: { contains: search, mode: 'insensitive' as const },
+        },
+      ],
+    }),
+    ...(statusFilter && { statusOfProcessing: statusFilter }),
+  };
+
+  const [packages, totalCount] = await Promise.all([
+    prisma.package.findMany({
+      where,
+      orderBy: [{ arrivalDate: 'desc' }, { id: 'desc' }],
+      skip,
+      take: perPage,
+    }),
+    prisma.package.count({ where }),
+  ]);
 
   const rows: PackageRow[] = packages.map((p) => ({
     id: p.id.toString(),
@@ -39,10 +56,13 @@ export default async function PackagesPage({ searchParams }: PageProps) {
   }));
 
   return (
-    <PackagesClient
-      initialRows={rows}
-      initialQuery={search}
-      initialStatus={statusFilter}
-    />
+    <>
+      <PackagesClient
+        initialRows={rows}
+        initialQuery={search}
+        initialStatus={statusFilter}
+      />
+      <TablePagination page={page} perPage={perPage} total={totalCount} />
+    </>
   );
 }

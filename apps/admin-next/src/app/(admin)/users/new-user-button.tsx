@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { Button } from '@heroui/react';
@@ -17,7 +16,6 @@ export function NewUserButton({
 }: {
   agentOptions: AgentOption[];
 }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   return (
@@ -36,7 +34,6 @@ export function NewUserButton({
           toast.success('Usuario creado', {
             description: 'El nuevo usuario ya aparece en la lista.',
           });
-          router.refresh();
         }}
       />
     </>

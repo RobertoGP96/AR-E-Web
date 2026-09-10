@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   ArrowRightLeft,
   Handshake,
@@ -81,7 +80,6 @@ export function DistributionClient({
   agents: DistAgentRow[];
   clients: DistClientRow[];
 }) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [filter, setFilter] = useState<AgentFilter>('all');
   const [search, setSearch] = useState('');
@@ -166,7 +164,6 @@ export function DistributionClient({
         });
         setSelectedIds(new Set());
         setTarget('');
-        router.refresh();
       } else {
         toast.error('No se pudo reasignar', {
           description: result.error,

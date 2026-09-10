@@ -98,7 +98,7 @@ export function ExpensesClient({
     else params.delete(key);
     params.delete('page');
     startTransition(() => {
-      router.replace(`/expenses?${params.toString()}`);
+      router.replace(`/expenses?${params.toString()}`, { scroll: false });
     });
   }
 
@@ -287,7 +287,6 @@ export function ExpensesClient({
           toast.success('Gasto creado', {
             description: 'El nuevo gasto ya aparece en la lista.',
           });
-          router.refresh();
         }}
       />
 
@@ -301,7 +300,6 @@ export function ExpensesClient({
           toast.success('Gasto actualizado', {
             description: 'Los cambios del gasto se guardaron correctamente.',
           });
-          router.refresh();
         }}
       />
 
@@ -313,7 +311,6 @@ export function ExpensesClient({
           toast.success('Gasto eliminado', {
             description: 'El gasto se eliminó de forma permanente.',
           });
-          router.refresh();
         }}
       />
     </div>

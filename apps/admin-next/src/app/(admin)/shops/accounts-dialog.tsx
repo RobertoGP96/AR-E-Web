@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { Plus, Trash2, KeyRound } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { Button, Tooltip } from '@heroui/react';
@@ -34,7 +33,6 @@ export function AccountsDialog({ shop, onClose }: AccountsDialogProps) {
 }
 
 function AccountsBody({ shop }: { shop: ShopRow }) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [newName, setNewName] = useState('');
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -49,7 +47,6 @@ function AccountsBody({ shop }: { shop: ShopRow }) {
           description: `«${name}» se añadió a las cuentas de ${shop.name}.`,
         });
         setNewName('');
-        router.refresh();
       } else {
         toast.error('No se pudo añadir la cuenta', {
           description: result.error,
@@ -67,7 +64,6 @@ function AccountsBody({ shop }: { shop: ShopRow }) {
         toast.success('Cuenta renombrada', {
           description: `«${original}» ahora se llama «${draft}».`,
         });
-        router.refresh();
       } else {
         toast.error('No se pudo renombrar la cuenta', {
           description: result.error,
@@ -83,7 +79,6 @@ function AccountsBody({ shop }: { shop: ShopRow }) {
         toast.success('Cuenta eliminada', {
           description: `La cuenta se quitó de ${shop.name}.`,
         });
-        router.refresh();
       } else {
         toast.error('No se pudo eliminar la cuenta', {
           description: result.error,
