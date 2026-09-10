@@ -216,6 +216,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         self.save(update_fields=['is_verified', 'is_active', 'verification_secret'])
 
     class Meta:
+        # Índices para los filtros/ordenaciones del panel (admin-next y
+        # admin Vite filtran por estado y fecha en cada lista).
+        indexes = [
+            models.Index(fields=['role'], name='api_customuser_role_idx'),
+        ]
         ordering = ['-created_at']
         verbose_name = "Usuario"
         verbose_name_plural = "Usuarios"

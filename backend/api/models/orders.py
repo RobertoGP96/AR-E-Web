@@ -295,6 +295,13 @@ class Order(models.Model):
         return self.has_pending_delivery
 
     class Meta:
+        # Índices para los filtros/ordenaciones del panel (admin-next y
+        # admin Vite filtran por estado y fecha en cada lista).
+        indexes = [
+            models.Index(fields=['status'], name='api_order_status_idx'),
+            models.Index(fields=['pay_status'], name='api_order_pay_status_idx'),
+            models.Index(fields=['-created_at'], name='api_order_created_at_idx'),
+        ]
         ordering = ['-created_at']
 
     def save(self, *args, **kwargs):
