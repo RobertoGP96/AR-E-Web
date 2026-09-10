@@ -42,6 +42,11 @@ class Expense(models.Model):
     objects = models.Manager()
 
     class Meta:
+        # Índices para los filtros/ordenaciones del panel (admin-next y
+        # admin Vite filtran por estado y fecha en cada lista).
+        indexes = [
+            models.Index(fields=['-date'], name='api_expense_date_idx'),
+        ]
         ordering = ["-date"]
         verbose_name = "Gasto"
         verbose_name_plural = "Gastos"

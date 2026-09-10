@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   // serverless bundle includes workspace-hoisted dependencies.
   outputFileTracingRoot: path.join(__dirname, '../../'),
 
+  // React Compiler: memoización automática de los ~80 componentes
+  // cliente (tablas, diálogos, mesa de preparación) sin useMemo manual.
+  reactCompiler: true,
+
   experimental: {
     // React <ViewTransition> on route navigations — used by
     // app/(admin)/template.tsx for the page enter/exit animation.

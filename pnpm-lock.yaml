@@ -273,7 +273,7 @@ importers:
         version: 0.539.0(react@19.2.4)
       next:
         specifier: 16.2.6
-        version: 16.2.6(@babel/core@7.29.0)(react-dom@19.2.4)(react@19.2.4)
+        version: 16.2.6(@babel/core@7.29.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4)(react@19.2.4)
       next-auth:
         specifier: 5.0.0-beta.31
         version: 5.0.0-beta.31(next@16.2.6)(react@19.2.4)
@@ -314,6 +314,9 @@ importers:
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
+      babel-plugin-react-compiler:
+        specifier: 1.0.0
+        version: 1.0.0
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -5397,6 +5400,11 @@ packages:
     engines: {node: '>= 0.4'}
     dev: true
 
+  /babel-plugin-react-compiler@1.0.0:
+    resolution: {integrity: sha512-Ixm8tFfoKKIPYdCCKYTsqv+Fd4IJ0DQqMyEimo+pxUOMUR9cVPlwTrFt9Avu+3cb6Zp3mAzl+t1MrG2fxxKsxw==}
+    dependencies:
+      '@babel/types': 7.29.0
+
   /balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
@@ -8086,7 +8094,7 @@ packages:
         optional: true
     dependencies:
       '@auth/core': 0.41.2
-      next: 16.2.6(@babel/core@7.29.0)(react-dom@19.2.4)(react@19.2.4)
+      next: 16.2.6(@babel/core@7.29.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4)(react@19.2.4)
       react: 19.2.4
     dev: false
 
@@ -8100,7 +8108,7 @@ packages:
       react-dom: 19.2.0(react@19.2.0)
     dev: false
 
-  /next@16.2.6(@babel/core@7.29.0)(react-dom@19.2.4)(react@19.2.4):
+  /next@16.2.6(@babel/core@7.29.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4)(react@19.2.4):
     resolution: {integrity: sha512-qOVgKJg1+At15NpeUP+eJgCHvTCgXsogweq87Ri/Ix7PkqQHg4sdaXmSFqKlgaIXE4kW0g25LE68W87UANlHtw==}
     engines: {node: '>=20.9.0'}
     hasBin: true
@@ -8123,6 +8131,7 @@ packages:
     dependencies:
       '@next/env': 16.2.6
       '@swc/helpers': 0.5.15
+      babel-plugin-react-compiler: 1.0.0
       baseline-browser-mapping: 2.10.30
       caniuse-lite: 1.0.30001747
       postcss: 8.4.31

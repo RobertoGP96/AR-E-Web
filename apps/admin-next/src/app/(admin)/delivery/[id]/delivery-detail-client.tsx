@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -75,7 +74,6 @@ export function DeliveryDetailClient({
   deliveredProducts,
   candidates,
 }: DeliveryDetailClientProps) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [productId, setProductId] = useState('');
   const [amount, setAmount] = useState(1);
@@ -105,7 +103,6 @@ export function DeliveryDetailClient({
         });
         setProductId('');
         setAmount(1);
-        router.refresh();
       } else {
         toast.error('No se pudo añadir el producto', {
           description: result.error,
@@ -121,7 +118,6 @@ export function DeliveryDetailClient({
         toast.success('Producto quitado', {
           description: 'El producto se quitó de la entrega.',
         });
-        router.refresh();
       } else {
         toast.error('No se pudo quitar el producto', {
           description: result.error,

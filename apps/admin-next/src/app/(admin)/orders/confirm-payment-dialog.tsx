@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { toast } from '@/lib/toast';
 import { PaymentPanel } from '@/components/payment-panel';
 import { confirmOrderPaymentAction } from './actions';
@@ -14,7 +13,6 @@ export function ConfirmPaymentDialog({
   order: OrderRow;
   onClose: () => void;
 }) {
-  const router = useRouter();
   const pendingCost = Math.max(
     0,
     order.totalCosts - order.receivedValueOfClient - order.balanceApplied
@@ -32,7 +30,6 @@ export function ConfirmPaymentDialog({
         toast.success(`Pago confirmado para el pedido #${order.id}`, {
           description: `Se registró ${formatCurrency(amount)} como cantidad recibida.`,
         });
-        router.refresh();
         onClose();
       }}
       onClose={onClose}

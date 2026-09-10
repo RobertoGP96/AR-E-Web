@@ -63,7 +63,7 @@ export function PackagesClient({
     else params.delete(key);
     params.delete('page');
     startTransition(() => {
-      router.replace(`/packages?${params.toString()}`);
+      router.replace(`/packages?${params.toString()}`, { scroll: false });
     });
   }
 
@@ -77,7 +77,6 @@ export function PackagesClient({
         toast.success('Estado actualizado', {
           description: `El paquete ${row.numberOfTracking} pasó a estado «${status}».`,
         });
-        router.refresh();
       } else {
         toast.error('No se pudo cambiar el estado', {
           description: result.error,
@@ -306,7 +305,6 @@ export function PackagesClient({
           toast.success('Paquete creado', {
             description: 'El nuevo paquete ya aparece en la lista.',
           });
-          router.refresh();
         }}
       />
 
@@ -320,7 +318,6 @@ export function PackagesClient({
           toast.success('Paquete actualizado', {
             description: 'Los cambios del paquete se guardaron correctamente.',
           });
-          router.refresh();
         }}
       />
 
@@ -332,7 +329,6 @@ export function PackagesClient({
           toast.success('Paquete eliminado', {
             description: 'El paquete se eliminó de forma permanente.',
           });
-          router.refresh();
         }}
       />
     </div>

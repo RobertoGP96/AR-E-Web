@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -61,7 +60,6 @@ export function OrderDetailClient({
   shopOptions,
   categoryOptions,
 }: OrderDetailClientProps) {
-  const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ProductRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProductRow | null>(null);
@@ -288,7 +286,6 @@ export function OrderDetailClient({
           toast.success('Producto añadido', {
             description: 'El producto se añadió a la orden correctamente.',
           });
-          router.refresh();
         }}
       />
 
@@ -305,7 +302,6 @@ export function OrderDetailClient({
           toast.success('Producto actualizado', {
             description: 'Los cambios del producto se guardaron correctamente.',
           });
-          router.refresh();
         }}
       />
 
@@ -318,7 +314,6 @@ export function OrderDetailClient({
           toast.success('Producto eliminado', {
             description: 'El producto se quitó de la orden.',
           });
-          router.refresh();
         }}
       />
     </div>

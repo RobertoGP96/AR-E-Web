@@ -184,6 +184,11 @@ class ShoppingReceip(models.Model):
         super().delete(*args, **kwargs)
 
     class Meta:
+        # Índices para los filtros/ordenaciones del panel (admin-next y
+        # admin Vite filtran por estado y fecha en cada lista).
+        indexes = [
+            models.Index(fields=['-buy_date'], name='api_shopping_buy_date_idx'),
+        ]
         ordering = ['-buy_date']
         verbose_name = "Recibo de Compra"
         verbose_name_plural = "Recibos de Compra"

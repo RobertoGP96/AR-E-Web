@@ -90,7 +90,7 @@ export function BalancesClient({
     if (value) params.set(key, value);
     else params.delete(key);
     startTransition(() => {
-      router.replace(`/users?${params.toString()}`);
+      router.replace(`/users?${params.toString()}`, { scroll: false });
     });
   }
 

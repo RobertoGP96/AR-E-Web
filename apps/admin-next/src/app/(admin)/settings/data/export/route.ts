@@ -1,4 +1,7 @@
 import ExcelJS from 'exceljs';
+
+// Una salva completa lee todas las tablas y arma el libro en memoria.
+export const maxDuration = 120;
 import { auth } from '@/auth';
 import { ROLES } from '@/lib/action-helpers';
 import {

@@ -307,7 +307,7 @@ export function ProductsClient({
     }
     params.delete('page');
     startTransition(() => {
-      router.replace(`/products?${params.toString()}`);
+      router.replace(`/products?${params.toString()}`, { scroll: false });
     });
   }
 

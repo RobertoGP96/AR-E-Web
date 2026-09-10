@@ -1,4 +1,5 @@
 import { auth } from '@/auth';
+import { STAFF_ROLES } from '@/lib/roles';
 
 export type ActionFailure = {
   ok: false;
@@ -20,28 +21,11 @@ type Guard =
   | { denied: ActionFailure; user: null }
   | { denied: null; user: SessionUser };
 
-/**
- * Role sets mirror apps/admin/src/routes/role-config.ts (the Vite admin),
- * which is the RBAC source of truth for this system. Write access per
- * domain is granted in each actions.ts via requireRole(ROLES.<domain>).
- */
-export const STAFF_ROLES = [
-  'admin',
-  'agent',
-  'accountant',
-  'logistical',
-] as const;
-
-export const ROLES = {
-  users: ['admin'],
-  shops: ['admin'],
-  categories: ['admin'],
-  purchases: ['admin'],
-  orders: ['admin', 'agent'],
-  delivery: ['admin', 'logistical'],
-  packages: ['admin', 'logistical'],
-  finance: ['admin', 'accountant'], // balance, invoices, expenses, settings
-} as const satisfies Record<string, readonly string[]>;
+// Los conjuntos de roles viven en src/lib/roles.ts (módulo puro, sin
+// imports) para que los componentes cliente puedan usarlos sin arrastrar
+// `@/auth` → Prisma al bundle del navegador. Se re-exportan por
+// compatibilidad con las actions existentes.
+export { ROLES, STAFF_ROLES } from '@/lib/roles';
 
 export async function requireRole(
   allowed: readonly string[]

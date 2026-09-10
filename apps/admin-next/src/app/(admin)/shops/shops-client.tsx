@@ -44,8 +44,9 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
   const [accountsShopId, setAccountsShopId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  // Always hand the dialog the FRESH row (router.refresh() replaces
-  // initialRows) so newly added accounts appear without reopening.
+  // Always hand the dialog the FRESH row (the actions revalidate /shops,
+  // which replaces initialRows) so newly added accounts appear without
+  // reopening.
   const accountsShop =
     initialRows.find((r) => r.id === accountsShopId) ?? null;
 
@@ -54,7 +55,7 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
     if (next) params.set('q', next);
     else params.delete('q');
     startTransition(() => {
-      router.replace(`/shops?${params.toString()}`);
+      router.replace(`/shops?${params.toString()}`, { scroll: false });
     });
   }
 
@@ -72,7 +73,6 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
               : `${row.name} vuelve a estar disponible para compras.`,
           }
         );
-        router.refresh();
       } else {
         toast.error(
           `No se pudo ${row.isActive ? 'desactivar' : 'activar'} la tienda`,
@@ -284,7 +284,6 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
           toast.success('Tienda creada', {
             description: 'La nueva tienda ya aparece en la lista.',
           });
-          router.refresh();
         }}
       />
 
@@ -298,7 +297,6 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
           toast.success('Tienda actualizada', {
             description: 'Los cambios de la tienda se guardaron correctamente.',
           });
-          router.refresh();
         }}
       />
 
@@ -311,7 +309,6 @@ export function ShopsClient({ initialRows, initialQuery }: ShopsClientProps) {
             description:
               'La tienda y sus cuentas de compra se eliminaron de forma permanente.',
           });
-          router.refresh();
         }}
       />
 

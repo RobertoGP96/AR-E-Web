@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { canAccessPath } from '@/lib/route-roles';
+import { LinkPending } from './link-pending';
 
 interface BottomNavItem {
   name: string;
@@ -79,12 +80,15 @@ export function BottomNav({ role }: { role: string }) {
                     : 'text-sidebar-foreground/70 hover:text-white active:scale-95'
                 }`}
               >
-                <Icon
-                  className={`h-5 w-5 shrink-0 transition-transform duration-200 ${
-                    active ? 'scale-110' : ''
-                  }`}
-                  aria-hidden
-                />
+                <span className="relative">
+                  <Icon
+                    className={`h-5 w-5 shrink-0 transition-transform duration-200 ${
+                      active ? 'scale-110' : ''
+                    }`}
+                    aria-hidden
+                  />
+                  <LinkPending className="absolute -right-2 -top-1.5 h-3 w-3" />
+                </span>
                 <span className="max-w-full truncate">{item.name}</span>
               </Link>
             </li>

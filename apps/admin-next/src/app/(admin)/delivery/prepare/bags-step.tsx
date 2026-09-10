@@ -123,9 +123,10 @@ export function BagsStep({ groups, canWrite, onGoToPackages }: BagsStepProps) {
         setLooseQty({});
       } else {
         toast.error('No se pudo embolsar', { description: result.error });
+        // La action solo revalida al tener éxito; si falló, los
+        // disponibles pueden haber cambiado desde otra sesión.
+        router.refresh();
       }
-      // En ambos casos los disponibles pueden haber cambiado.
-      router.refresh();
     });
   }
 
@@ -711,7 +712,6 @@ export function BagsStep({ groups, canWrite, onGoToPackages }: BagsStepProps) {
             toast.success('Bolsa pesada y cerrada', {
               description: `${weighTarget.categoryName ?? 'Sin categoría'} · ${weightNum.toFixed(2)} lb → ${formatCurrency(round2(weightNum * weighTarget.chargePerLb))}.`,
             });
-            router.refresh();
           }
           return result;
         }}
@@ -753,7 +753,6 @@ export function BagsStep({ groups, canWrite, onGoToPackages }: BagsStepProps) {
             toast.success('Producto fuera de la bolsa', {
               description: `${removeTarget.item.name} volvió a «Recibido sin bolsa».`,
             });
-            router.refresh();
           }
           return result;
         }}

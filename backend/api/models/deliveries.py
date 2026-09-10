@@ -145,6 +145,13 @@ class DeliverReceip(models.Model):
         super().delete(*args, **kwargs)
 
     class Meta:
+        # Índices para los filtros/ordenaciones del panel (admin-next y
+        # admin Vite filtran por estado y fecha en cada lista).
+        indexes = [
+            models.Index(fields=['status'], name='api_deliver_status_idx'),
+            models.Index(fields=['payment_status'], name='api_deliver_pay_status_idx'),
+            models.Index(fields=['-deliver_date'], name='api_deliver_date_idx'),
+        ]
         ordering = ['-deliver_date']
         verbose_name = "Recibo de Entrega"
         verbose_name_plural = "Recibos de Entrega"
@@ -179,6 +186,12 @@ class Package(models.Model):
         super().delete(*args, **kwargs)
 
     class Meta:
+        # Índices para los filtros/ordenaciones del panel (admin-next y
+        # admin Vite filtran por estado y fecha en cada lista).
+        indexes = [
+            models.Index(fields=['status_of_processing'], name='api_package_status_idx'),
+            models.Index(fields=['-arrival_date'], name='api_package_arrival_idx'),
+        ]
         ordering = ['-created_at']
         verbose_name = "Paquete"
         verbose_name_plural = "Paquetes"

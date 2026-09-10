@@ -156,6 +156,12 @@ class Product(models.Model):
         return round(base_profit + self.own_taxes, 2)
 
     class Meta:
+        # Índices para los filtros/ordenaciones del panel (admin-next y
+        # admin Vite filtran por estado y fecha en cada lista).
+        indexes = [
+            models.Index(fields=['status'], name='api_product_status_idx'),
+            models.Index(fields=['-created_at'], name='api_product_created_at_idx'),
+        ]
         ordering = ['-created_at']
 
 

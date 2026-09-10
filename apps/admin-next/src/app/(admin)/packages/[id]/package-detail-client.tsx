@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -72,7 +71,6 @@ export function PackageDetailClient({
   receivedProducts,
   candidates,
 }: PackageDetailClientProps) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [productId, setProductId] = useState('');
   const [clientFilter, setClientFilter] = useState('');
@@ -123,7 +121,6 @@ export function PackageDetailClient({
         setProductId('');
         setAmount(1);
         setObservation('');
-        router.refresh();
       } else {
         toast.error('No se pudo registrar la recepción', {
           description: result.error,
@@ -428,7 +425,6 @@ export function PackageDetailClient({
               description:
                 'El producto volvió a la lista de pendientes por recibir.',
             });
-            router.refresh();
           }
           return result;
         }}

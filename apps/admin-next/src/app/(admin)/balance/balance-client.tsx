@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Plus,
   Pencil,
@@ -34,7 +33,6 @@ function profit(row: BalanceRow): number {
 }
 
 export function BalanceClient({ initialRows }: BalanceClientProps) {
-  const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<BalanceRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BalanceRow | null>(null);
@@ -227,7 +225,6 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
           toast.success('Balance creado', {
             description: 'El nuevo balance ya aparece en la lista.',
           });
-          router.refresh();
         }}
       />
 
@@ -241,7 +238,6 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
           toast.success('Balance actualizado', {
             description: 'Los cambios del balance se guardaron correctamente.',
           });
-          router.refresh();
         }}
       />
 
@@ -253,7 +249,6 @@ export function BalanceClient({ initialRows }: BalanceClientProps) {
           toast.success('Balance eliminado', {
             description: 'El balance se eliminó de forma permanente.',
           });
-          router.refresh();
         }}
       />
     </div>

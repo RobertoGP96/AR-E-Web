@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { canAccessPath } from '@/lib/route-roles';
+import { LinkPending } from './link-pending';
 
 interface NavItem {
   name: string;
@@ -142,6 +143,7 @@ export function AdminNav({
             aria-hidden
           />
           <span className="truncate">{item.name}</span>
+          <LinkPending className="ml-auto" />
         </Link>
       </li>
     );

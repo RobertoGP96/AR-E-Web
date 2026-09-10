@@ -221,7 +221,6 @@ export function ReviewPackagesStep({
           }${bumpToReceived ? ' El paquete pasó a «Recibido».' : ''}`,
         });
         clearMarks();
-        router.refresh();
       } else {
         toast.error('No se pudo registrar las llegadas', {
           description: result.error,
@@ -856,7 +855,6 @@ export function ReviewPackagesStep({
               description:
                 'El producto volvió a la lista de pendientes por llegar.',
             });
-            router.refresh();
           }
           return result;
         }}
@@ -893,7 +891,6 @@ export function ReviewPackagesStep({
             toast.success('Paquete procesado', {
               description: `La revisión de ${selectedPackage.tracking} quedó cerrada.`,
             });
-            router.refresh();
           }
           return result;
         }}
