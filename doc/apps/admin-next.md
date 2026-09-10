@@ -162,7 +162,7 @@ Grupos: `(auth)` para login (sin shell), `(admin)` para el panel (con sidebar/he
 | `manifest.webmanifest` | `src/app/manifest.ts` | PWA manifest (standalone, theme `#e8772e`) | Pública |
 | error / not-found | `src/app/error.tsx`, `src/app/not-found.tsx`, `src/app/(admin)/not-found.tsx` | Estados de error 500/404 | — |
 
-**Patrón de página estándar** (se repite en casi todos los dominios): `page.tsx` es un Server Component que (1) parsea `searchParams` (`q`, filtros, `page`, `per` vía `parsePagination`), (2) construye un `where` Prisma, (3) ejecuta `Promise.all` de consultas (filas + opciones de selects + count), (4) serializa BigInt/Date a strings y (5) renderiza `<XClient initialRows=... />` + `<TablePagination />`. El cliente (`*-client.tsx`) maneja búsqueda/filtros escribiendo la URL (`router.replace` dentro de `startTransition`) y abre diálogos de crear/editar/eliminar; tras cada éxito llama `router.refresh()` y muestra un toast de sonner.
+**Patrón de página estándar** (se repite en casi todos los dominios): `page.tsx` es un Server Component que (1) parsea `searchParams` (`q`, filtros, `page`, `per` vía `parsePagination`), (2) construye un `where` Prisma, (3) ejecuta `Promise.all` de consultas (filas + opciones de selects + count), (4) serializa BigInt/Date a strings y (5) renderiza `<XClient initialRows=... />` + `<TablePagination />`. El cliente (`*-client.tsx`) maneja búsqueda/filtros escribiendo la URL (`router.replace` dentro de `startTransition`) y abre diálogos de crear/editar/eliminar; tras cada éxito muestra un toast (Sileo); la action ya revalida la ruta con `revalidatePath`, así que la respuesta trae el árbol actualizado y NO se llama `router.refresh()` (solo en rutas de error, que no revalidan).
 
 ### Detalle por página
 
