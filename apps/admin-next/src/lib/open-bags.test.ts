@@ -33,7 +33,7 @@ interface Row {
 function fakeDb(seed: { bags?: Bag[]; rows?: Row[] } = {}) {
   const bags: Bag[] = [...(seed.bags ?? [])];
   const rows: Row[] = [...(seed.rows ?? [])];
-  let nextId = 100n;
+  let nextId = BigInt(100);
 
   const bagMatches = (b: Bag, where: Record<string, unknown>) =>
     Object.entries(where).every(([k, v]) => b[k as keyof Bag] === v);
@@ -120,12 +120,12 @@ function fakeDb(seed: { bags?: Bag[]; rows?: Row[] } = {}) {
   };
 }
 
-const CLIENT = 7n;
-const CAT = 3n;
+const CLIENT = BigInt(7);
+const CAT = BigInt(3);
 
 function bag(over: Partial<Bag> = {}): Bag {
   return {
-    id: 1n,
+    id: BigInt(1),
     clientId: CLIENT,
     categoryId: CAT,
     status: 'Pendiente',
@@ -194,12 +194,16 @@ describe('addUnitsToOpenBag', () => {
 describe('countUnitsInOpenBags / pullUnitsFromOpenBags', () => {
   function seeded() {
     return fakeDb({
-      bags: [bag({ id: 1n }), bag({ id: 2n }), bag({ id: 3n, weight: 2 })],
+      bags: [
+        bag({ id: BigInt(1) }),
+        bag({ id: BigInt(2) }),
+        bag({ id: BigInt(3), weight: 2 }),
+      ],
       rows: [
-        row(10n, 1n, 'p1', 3),
-        row(11n, 2n, 'p1', 2),
-        row(12n, 3n, 'p1', 5), // entrega ya pesada
-        row(13n, 2n, 'p2', 1),
+        row(BigInt(10), BigInt(1), 'p1', 3),
+        row(BigInt(11), BigInt(2), 'p1', 2),
+        row(BigInt(12), BigInt(3), 'p1', 5), // entrega ya pesada
+        row(BigInt(13), BigInt(2), 'p2', 1),
       ],
     });
   }
@@ -224,16 +228,16 @@ describe('countUnitsInOpenBags / pullUnitsFromOpenBags', () => {
     });
     expect(pulled).toBe(4);
     // Bolsa 2 (más nueva): 2 → 0 (fila borrada); bolsa 1: 3 → 1.
-    expect(rows.find((r) => r.id === 11n)).toBeUndefined();
-    expect(rows.find((r) => r.id === 10n)?.amountDelivered).toBe(1);
-    expect(rows.find((r) => r.id === 12n)?.amountDelivered).toBe(5);
+    expect(rows.find((r) => r.id === BigInt(11))).toBeUndefined();
+    expect(rows.find((r) => r.id === BigInt(10))?.amountDelivered).toBe(1);
+    expect(rows.find((r) => r.id === BigInt(12))?.amountDelivered).toBe(5);
   });
 
   it('devuelve lo que pudo retirar cuando no alcanza y borra bolsas vacías', async () => {
     const { db, bags, rows } = seeded();
     // Sin p2, la bolsa 2 queda vacía tras retirar p1.
     rows.splice(
-      rows.findIndex((r) => r.id === 13n),
+      rows.findIndex((r) => r.id === BigInt(13)),
       1
     );
     const pulled = await pullUnitsFromOpenBags(db, {
@@ -243,26 +247,26 @@ describe('countUnitsInOpenBags / pullUnitsFromOpenBags', () => {
       amount: 9,
     });
     expect(pulled).toBe(5);
-    expect(bags.map((b) => b.id)).toEqual([3n]);
+    expect(bags.map((b) => b.id)).toEqual([BigInt(3)]);
   });
 });
 
 describe('deleteBagIfEmpty', () => {
   it('borra una bolsa abierta sin filas ni pagos', async () => {
     const { db, bags } = fakeDb({ bags: [bag()] });
-    expect(await deleteBagIfEmpty(db, 1n)).toBe(true);
+    expect(await deleteBagIfEmpty(db, BigInt(1))).toBe(true);
     expect(bags).toHaveLength(0);
   });
 
   it('no borra si tiene filas, pagos o ya está pesada', async () => {
-    const withRows = fakeDb({ bags: [bag()], rows: [row(9n, 1n, 'p', 1)] });
-    expect(await deleteBagIfEmpty(withRows.db, 1n)).toBe(false);
+    const withRows = fakeDb({ bags: [bag()], rows: [row(BigInt(9), BigInt(1), 'p', 1)] });
+    expect(await deleteBagIfEmpty(withRows.db, BigInt(1))).toBe(false);
 
     const paid = fakeDb({ bags: [bag({ paymentAmount: 10 })] });
-    expect(await deleteBagIfEmpty(paid.db, 1n)).toBe(false);
+    expect(await deleteBagIfEmpty(paid.db, BigInt(1))).toBe(false);
 
     const weighed = fakeDb({ bags: [bag({ weight: 1.2 })] });
-    expect(await deleteBagIfEmpty(weighed.db, 1n)).toBe(false);
+    expect(await deleteBagIfEmpty(weighed.db, BigInt(1))).toBe(false);
     expect(weighed.bags).toHaveLength(1);
   });
 });
