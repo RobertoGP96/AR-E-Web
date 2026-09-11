@@ -93,7 +93,12 @@ export function TextArea({
   );
 }
 
-/** Primary submit button with pending spinner (HeroUI Button). */
+/**
+ * Primary submit button with pending spinner (HeroUI Button).
+ * `isPending` (react-aria) bloquea el reenvío conservando el foco y
+ * anuncia el estado; el spinner va en `color="current"` porque el
+ * color por defecto (acento) es invisible sobre el botón primario.
+ */
 export function SubmitButton({
   isPending,
   children,
@@ -109,12 +114,12 @@ export function SubmitButton({
     <Button
       type="submit"
       variant="primary"
-      isDisabled={isPending}
+      isPending={isPending}
       className={className}
     >
       {isPending ? (
         <>
-          <Spinner size="sm" aria-hidden />
+          <Spinner size="sm" color="current" aria-hidden />
           {pendingText}
         </>
       ) : (
