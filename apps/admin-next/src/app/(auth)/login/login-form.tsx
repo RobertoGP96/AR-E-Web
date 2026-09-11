@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState, useTransition } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Alert, Button, Checkbox, Input, Label, Spinner } from '@heroui/react';
@@ -14,8 +15,9 @@ interface LoginFormProps {
 
 export function LoginForm({ nextPath, initialError }: LoginFormProps) {
   const router = useRouter();
+  // isPending cubre la navegación al panel tras un login correcto; el
+  // envío en sí lo reporta useFormStatus dentro de LoginSubmitButton.
   const [isPending, startTransition] = useTransition();
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | undefined>(initialError);
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -25,11 +27,8 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier.trim()) ||
     /^\+?\d[\d\s-]{5,}$/.test(identifier.trim());
 
-  const busy = submitting || isPending;
-
   async function handleSubmit(formData: FormData) {
     setError(undefined);
-    setSubmitting(true);
     const id = String(formData.get('identifier') ?? '');
     const pw = String(formData.get('password') ?? '');
 
@@ -40,7 +39,6 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
     });
 
     if (!result || result.error) {
-      setSubmitting(false);
       setError('Email/teléfono o contraseña incorrectos.');
       return;
     }
@@ -168,29 +166,7 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
         ) : null}
 
         <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards delay-300 duration-500">
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            fullWidth
-            isDisabled={busy}
-            className="group h-12 rounded-xl text-base"
-          >
-            {busy ? (
-              <>
-                <Spinner size="sm" aria-hidden />
-                Iniciando sesión...
-              </>
-            ) : (
-              <>
-                Iniciar sesión
-                <ArrowRight
-                  className="h-4 w-4 transition-transform duration-200 motion-safe:group-hover:translate-x-0.5"
-                  aria-hidden
-                />
-              </>
-            )}
-          </Button>
+          <LoginSubmitButton navigating={isPending} />
         </div>
       </form>
 
@@ -198,5 +174,45 @@ export function LoginForm({ nextPath, initialError }: LoginFormProps) {
         Usa el mismo usuario y contraseña del sistema AR-E.
       </p>
     </div>
+  );
+}
+
+/**
+ * Botón de envío con loader. `useFormStatus` reporta el envío del
+ * formulario (comprobación de credenciales) y `navigating` cubre la
+ * redirección al panel: el loader no desaparece entre ambas fases.
+ * `isPending` (react-aria) bloquea el reenvío, mantiene el foco y
+ * anuncia el estado a lectores de pantalla. El spinner va en
+ * `color="current"`: el color por defecto es el naranja de acento,
+ * invisible sobre el propio botón primario.
+ */
+function LoginSubmitButton({ navigating }: { navigating: boolean }) {
+  const { pending } = useFormStatus();
+  const busy = pending || navigating;
+
+  return (
+    <Button
+      type="submit"
+      variant="primary"
+      size="lg"
+      fullWidth
+      isPending={busy}
+      className="group h-12 rounded-xl text-base"
+    >
+      {busy ? (
+        <>
+          <Spinner size="sm" color="current" aria-hidden />
+          Iniciando sesión…
+        </>
+      ) : (
+        <>
+          Iniciar sesión
+          <ArrowRight
+            className="h-4 w-4 transition-transform duration-200 motion-safe:group-hover:translate-x-0.5"
+            aria-hidden
+          />
+        </>
+      )}
+    </Button>
   );
 }
