@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { parseId } from '@/lib/action-helpers';
 import { TablePagination } from '@/components/table-pagination';
 import { parsePagination } from '@/lib/pagination';
-import { DeliveryClient } from './delivery-client';
+import { DeliveryClient } from '../delivery-client';
 import {
   DELIVERY_STATUSES,
   PAY_STATUSES,
@@ -19,7 +19,7 @@ import {
   type DeliveryRow,
   type DeliveryStatus,
   type PayStatus,
-} from './schema';
+} from '../schema';
 
 interface PageProps {
   searchParams: Promise<{

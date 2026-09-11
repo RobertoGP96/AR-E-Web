@@ -1,7 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { OrdersClient } from './orders-client';
+import { OrdersClient } from '../orders-client';
 import { TablePagination } from '@/components/table-pagination';
 import { parsePagination } from '@/lib/pagination';
 import {
@@ -16,7 +16,7 @@ import {
   type OrderStatus,
   type PayStatus,
   type SelectOption,
-} from './schema';
+} from '../schema';
 
 interface PageProps {
   searchParams: Promise<{

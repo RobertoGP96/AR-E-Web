@@ -1,8 +1,8 @@
 import { prisma } from '@/lib/prisma';
-import { PackagesClient } from './packages-client';
+import { PackagesClient } from '../packages-client';
 import { TablePagination } from '@/components/table-pagination';
 import { parsePagination } from '@/lib/pagination';
-import type { PackageRow, PackageStatus } from './schema';
+import type { PackageRow, PackageStatus } from '../schema';
 
 interface PageProps {
   searchParams: Promise<{

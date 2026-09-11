@@ -1,84 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard,
-  Users,
-  Package,
-  Package2,
-  ShoppingCart,
-  Settings,
-  Store,
-  ShoppingBag,
-  Truck,
-  Tag,
-  ClipboardList,
-  ReceiptIcon,
-  ChartColumn,
-  ReceiptText,
-  BaggageClaim,
-  type LucideIcon,
-} from 'lucide-react';
 import { canAccessPath } from '@/lib/route-roles';
-import { LinkPending } from './link-pending';
+import {
+  NAV_GROUPS,
+  SIDEBAR_FOOTER,
+  isSectionActive,
+  type NavSection,
+} from '@/lib/navigation';
+import { useOptimisticPathname } from './use-optimistic-pathname';
 
-interface NavItem {
-  name: string;
-  href: string;
-  icon: LucideIcon;
-}
-
-interface NavGroup {
-  title: string;
-  items: NavItem[];
-}
-
-/** Same grouping and labels as the Vite admin's AsideNav. */
-const NAV_GROUPS: NavGroup[] = [
-  {
-    title: 'Dashboard',
-    items: [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }],
-  },
-  {
-    title: 'Gestión',
-    items: [
-      { name: 'Usuarios', href: '/users', icon: Users },
-      { name: 'Tiendas', href: '/shops', icon: Store },
-      { name: 'Categorías', href: '/categories', icon: Tag },
-    ],
-  },
-  {
-    title: 'Órdenes y Productos',
-    items: [
-      { name: 'Órdenes', href: '/orders', icon: ShoppingCart },
-      { name: 'Productos', href: '/products', icon: Package2 },
-    ],
-  },
-  {
-    title: 'Logística',
-    items: [
-      { name: 'Compras', href: '/purchases', icon: ShoppingBag },
-      { name: 'Paquetes', href: '/packages', icon: Package },
-      { name: 'Preparar entregas', href: '/delivery/prepare', icon: ClipboardList },
-      { name: 'Entrega', href: '/delivery', icon: Truck },
-    ],
-  },
-  {
-    title: 'Finanzas',
-    items: [
-      { name: 'Costos de Envío', href: '/invoices', icon: BaggageClaim },
-      { name: 'Registro de Gastos', href: '/expenses', icon: ReceiptText },
-      { name: 'Balance General', href: '/balance', icon: ReceiptIcon },
-      { name: 'Análisis', href: '/analytics', icon: ChartColumn },
-    ],
-  },
-];
-
-const BOTTOM_ITEMS: NavItem[] = [
-  { name: 'Configuración', href: '/settings', icon: Settings },
-];
-
+/**
+ * Sidebar (escritorio) y contenido del drawer (móvil). La sección
+ * pulsada se marca activa al instante (useOptimisticPathname) y el
+ * contenido lo cubre el esqueleto de la ruta destino — sin spinners
+ * en el menú.
+ */
 export function AdminNav({
   role,
   onNavigate,
@@ -86,42 +23,28 @@ export function AdminNav({
   role: string;
   onNavigate?: () => void;
 }) {
-  const pathname = usePathname();
-
-  // Un item con href más específico gana (p. ej. /delivery/prepare no
-  // debe marcar también /delivery como activo).
-  const allHrefs = [
-    ...NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href)),
-    ...BOTTOM_ITEMS.map((i) => i.href),
-  ];
-  const isActive = (href: string) => {
-    if (pathname === href) return true;
-    if (!pathname.startsWith(`${href}/`)) return false;
-    return !allHrefs.some(
-      (other) =>
-        other !== href &&
-        other.startsWith(`${href}/`) &&
-        (pathname === other || pathname.startsWith(`${other}/`))
-    );
-  };
+  const [pathname, markPending] = useOptimisticPathname();
 
   const groups = NAV_GROUPS.map((group) => ({
     ...group,
     items: group.items.filter((item) => canAccessPath(role, item.href)),
   })).filter((group) => group.items.length > 0);
 
-  const bottomItems = BOTTOM_ITEMS.filter((item) =>
+  const footerItems = SIDEBAR_FOOTER.filter((item) =>
     canAccessPath(role, item.href)
   );
 
-  function renderItem(item: NavItem) {
+  function renderItem(item: NavSection) {
     const Icon = item.icon;
-    const active = isActive(item.href);
+    const active = isSectionActive(pathname, item.href);
     return (
       <li key={item.href}>
         <Link
           href={item.href}
-          onClick={onNavigate}
+          onClick={(event) => {
+            markPending(item.href, event);
+            onNavigate?.();
+          }}
           aria-current={active ? 'page' : undefined}
           className={`group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all duration-150 ${
             active
@@ -142,8 +65,7 @@ export function AdminNav({
             }`}
             aria-hidden
           />
-          <span className="truncate">{item.name}</span>
-          <LinkPending className="ml-auto" />
+          <span className="truncate">{item.label}</span>
         </Link>
       </li>
     );
@@ -160,7 +82,7 @@ export function AdminNav({
         </div>
       ))}
       <div className="mt-auto border-t border-sidebar-border pt-2">
-        <ul className="space-y-0.5">{bottomItems.map(renderItem)}</ul>
+        <ul className="space-y-0.5">{footerItems.map(renderItem)}</ul>
       </div>
     </nav>
   );
