@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { TablePagination } from '@/components/table-pagination';
 import { parsePagination } from '@/lib/pagination';
-import { PurchasesClient } from './purchases-client';
+import { PurchasesClient } from '../purchases-client';
 import {
   PAY_STATUSES,
   fromDbPayStatus,
@@ -10,7 +10,7 @@ import {
   type PayStatus,
   type PurchaseRow,
   type ShopWithAccounts,
-} from './schema';
+} from '../schema';
 
 interface PageProps {
   searchParams: Promise<{

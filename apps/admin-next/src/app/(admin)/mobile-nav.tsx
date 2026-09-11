@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import { Menu } from 'lucide-react';
 import { Button, Drawer } from '@heroui/react';
 import { AdminNav } from './admin-nav';
 import { UserMenu } from './user-menu';
+import { useMobileNav } from './mobile-nav-context';
 
 /**
  * Mobile navigation: HeroUI drawer (animated slide-in, focus trap,
@@ -13,6 +13,9 @@ import { UserMenu } from './user-menu';
  * sidebar, over the near-black brand surface. The UserMenu footer
  * mirrors the desktop sidebar — on mobile it is the only way to
  * reach Perfil / Cerrar sesión.
+ *
+ * El estado abierto/cerrado vive en MobileNavProvider: también lo abre
+ * el hueco "Más" de la barra inferior (BottomNav).
  */
 export function MobileNav({
   role,
@@ -23,7 +26,7 @@ export function MobileNav({
   name: string;
   email?: string | null;
 }) {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useMobileNav();
 
   return (
     <div className="md:hidden">
@@ -36,10 +39,15 @@ export function MobileNav({
         <Menu className="h-5 w-5" aria-hidden />
       </Button>
 
-      <Drawer.Backdrop isOpen={open} onOpenChange={setOpen}>
+      {/* backdrop-blur: la página queda desenfocada tras el panel */}
+      <Drawer.Backdrop
+        isOpen={open}
+        onOpenChange={setOpen}
+        className="bg-black/40 backdrop-blur-sm"
+      >
         <Drawer.Content
           placement="left"
-          className="w-72 max-w-[85vw] bg-sidebar p-0 text-sidebar-foreground"
+          className="w-72 max-w-[85vw] bg-sidebar/92 p-0 text-sidebar-foreground backdrop-blur-xl backdrop-saturate-150"
         >
           <Drawer.Dialog className="flex h-full flex-col bg-transparent p-0">
             <div className="flex shrink-0 items-center justify-between border-b border-sidebar-border px-4 py-3">

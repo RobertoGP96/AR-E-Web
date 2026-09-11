@@ -8,6 +8,7 @@ import { GlobalSearch } from './global-search';
 import { NotificationsBell } from './notifications-bell';
 import { AdminNav } from './admin-nav';
 import { BottomNav } from './bottom-nav';
+import { MobileNavProvider } from './mobile-nav-context';
 import { Breadcrumbs } from './breadcrumbs';
 
 export default async function AdminLayout({
@@ -28,6 +29,7 @@ export default async function AdminLayout({
   const { name, email, role } = session.user;
 
   return (
+    <MobileNavProvider>
     <div className="flex h-dvh overflow-hidden">
       {/* Sidebar — the black third of the black/orange/white identity */}
       <aside className="hidden w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
@@ -66,5 +68,6 @@ export default async function AdminLayout({
         <BottomNav role={role} />
       </div>
     </div>
+    </MobileNavProvider>
   );
 }
