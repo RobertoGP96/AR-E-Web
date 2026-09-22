@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireRole, ROLES } from '@/lib/action-helpers';
+import { recomputeAllProductStatuses } from '@/lib/product-status';
 import type { ActionFailure } from '@/lib/action-helpers';
 
 export type PurgeResult = { ok: true; deleted: number } | ActionFailure;
@@ -35,47 +36,6 @@ const scopeSchema = z.enum([
 export type PurgeScope = z.infer<typeof scopeSchema>;
 
 type Db = Prisma.TransactionClient;
-
-/**
- * Recalcula el estado de TODOS los productos a partir de sus
- * contadores, con la misma lógica de deriveProductStatus() pero en
- * cuatro UPDATE masivos (los tres estados avanzados son mutuamente
- * excluyentes, así que el orden solo pisa el 'Encargado' inicial).
- */
-async function recomputeAllProductStatuses(tx: Db): Promise<void> {
-  const f = prisma.product.fields;
-  await tx.product.updateMany({ data: { status: 'Encargado' } });
-  await tx.product.updateMany({
-    where: {
-      AND: [
-        { amountPurchased: { gt: 0, gte: f.amountRequested } },
-        { amountReceived: { lt: f.amountRequested } },
-      ],
-    },
-    data: { status: 'Comprado' },
-  });
-  await tx.product.updateMany({
-    where: {
-      AND: [
-        { amountPurchased: { gte: f.amountRequested } },
-        { amountReceived: { gt: 0, gte: f.amountRequested } },
-        { amountDelivered: { lt: f.amountReceived } },
-      ],
-    },
-    data: { status: 'Recibido' },
-  });
-  await tx.product.updateMany({
-    where: {
-      AND: [
-        { amountPurchased: { gte: f.amountRequested } },
-        { amountReceived: { gte: f.amountRequested } },
-        { amountDelivered: { gt: 0, gte: f.amountReceived } },
-        { amountDelivered: { gte: f.amountPurchased } },
-      ],
-    },
-    data: { status: 'Entregado' },
-  });
-}
 
 async function purgePurchaseRows(tx: Db): Promise<number> {
   const rows = await tx.productBuyed.deleteMany({});

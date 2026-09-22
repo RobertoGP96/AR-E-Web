@@ -89,7 +89,7 @@ export async function LogisticalDashboard({ role }: { role: string }) {
     prisma.deliverReceip.count({
       where: { deliverDate: { gte: todayStart, lt: tomorrowStart } },
     }),
-    prisma.deliverReceip.count({ where: { status: 'Pendiente' } }),
+    prisma.deliverReceip.count({ where: { status: 'Pendiente', weight: { gt: 0 } } }),
     prisma.deliverReceip.count({ where: { status: 'En transito' } }),
     prisma.deliverReceip.count({ where: { status: 'Fallida' } }),
     prisma.deliverReceip.aggregate({

@@ -158,6 +158,7 @@ export function PrepareDeliveryClient({
       <div className={step === 'deliveries' ? '' : 'hidden'}>
         <BagsStep
           groups={groups}
+          role={role}
           canWrite={canWrite}
           onGoToPackages={() => setStep('packages')}
         />

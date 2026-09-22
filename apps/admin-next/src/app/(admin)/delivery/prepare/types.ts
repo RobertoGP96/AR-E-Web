@@ -37,6 +37,7 @@ export interface WeighedDelivery {
   weight: number;
   weightCost: number;
   deliverDate: string;
+  productCount: number;
 }
 
 /** Producto con unidades recibidas que no están en ninguna bolsa. */

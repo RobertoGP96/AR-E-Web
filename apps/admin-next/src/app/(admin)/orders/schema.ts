@@ -112,6 +112,8 @@ export interface ProductRow {
   amountPurchased: number;
   amountReceived: number;
   amountDelivered: number;
+  /** Unidades en bolsas/entregas no entregadas (RN-011). */
+  inTransit?: number;
   status: string;
   shopCost: number;
   shopDeliveryCost: number;

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
+import { loadInTransitUnits } from '@/lib/product-status';
 import { loadPendingShopsOfOrder } from '../../purchases/queries';
 import { OrderDetailClient } from './order-detail-client';
 import {
@@ -59,6 +60,8 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
   if (!order) notFound();
 
+  const inTransit = await loadInTransitUnits(order.products.map((p) => p.id));
+
   const products: ProductRow[] = order.products.map((p) => ({
     id: p.id,
     name: p.name,
@@ -73,6 +76,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
     amountPurchased: p.amountPurchased,
     amountReceived: p.amountReceived,
     amountDelivered: p.amountDelivered,
+    inTransit: inTransit.get(p.id) ?? 0,
     status: p.status,
     shopCost: p.shopCost,
     shopDeliveryCost: p.shopDeliveryCost,

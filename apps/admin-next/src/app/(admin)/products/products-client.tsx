@@ -52,6 +52,8 @@ export interface ProductRow {
   amountPurchased: number;
   amountReceived: number;
   amountDelivered: number;
+  /** Unidades en bolsas/entregas no entregadas (RN-011). */
+  inTransit: number;
   totalCost: number;
   link: string | null;
 }
@@ -640,7 +642,7 @@ export function ProductsClient({
                     ) : null}
                     {show('status') ? (
                       <td>
-                        <ProductStatusBadge status={row.status} />
+                        <ProductStatusBadge status={row.status} inTransit={row.inTransit} />
                       </td>
                     ) : null}
                     {show('amounts') ? (
@@ -684,7 +686,7 @@ export function ProductsClient({
                     ? `${row.clientName} · ${row.shopName} · ${row.sku}`
                     : `${row.clientName} · ${row.shopName}`
                 }
-                badges={<ProductStatusBadge status={row.status} />}
+                badges={<ProductStatusBadge status={row.status} inTransit={row.inTransit} />}
                 rows={[
                   {
                     icon: ClipboardList,

@@ -240,7 +240,7 @@ export function OrderDetailClient({
                       {formatCurrency(p.shopCost)}
                     </td>
                     <td>
-                      <ProductStatusBadge status={p.status} />
+                      <ProductStatusBadge status={p.status} inTransit={p.inTransit} />
                     </td>
                     <td className="font-semibold tabular-nums">
                       {formatCurrency(p.totalCost)}
@@ -280,7 +280,7 @@ export function OrderDetailClient({
                 key={p.id}
                 title={p.name}
                 subtitle={p.categoryName ?? undefined}
-                badges={<ProductStatusBadge status={p.status} />}
+                badges={<ProductStatusBadge status={p.status} inTransit={p.inTransit} />}
                 rows={[
                   { icon: Store, label: 'Tienda', value: p.shopName },
                   { label: 'Cantidad', value: p.amountRequested },

@@ -1,15 +1,25 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { computePayStatus, round2 } from '@/lib/order-cost';
 import { recalculateClientBalance } from '@/lib/balance';
-import { recomputeProductAmounts } from '@/lib/product-status';
+import {
+  recomputeProductAmounts,
+  recomputeProductsOfDelivery,
+} from '@/lib/product-status';
 import {
   addUnitsToOpenBag,
   deleteBagIfEmpty,
+  emptyOpenBag,
 } from '@/lib/open-bags';
+import {
+  affectsProductStatus,
+  deliveryPhase,
+  nextDeliveryStatus,
+  type DeliveryAction,
+} from '@/lib/delivery-status';
 import {
   requireRole,
   zodFieldErrors,
@@ -17,118 +27,305 @@ import {
   ROLES,
 } from '@/lib/action-helpers';
 import {
-  deliveryFormSchema,
+  assembleDeliverySchema,
+  deliverSchema,
+  deliveryEditSchema,
+  deliveryItemsSchema,
   toDbDeliveryStatus,
   toDbPayStatus,
+  type AssembleDeliveryInput,
+  type DeliverInput,
+  type DeliveryItemsInput,
+  type ReceivedCandidate,
 } from './schema';
 import type { BagSummary } from '@/lib/open-bags';
 
 export type { ActionResult } from '@/lib/action-helpers';
 import type { ActionResult } from '@/lib/action-helpers';
 
-/** Resultado de echar sueltos a bolsas: a qué bolsas cayeron. */
+type Db = Prisma.TransactionClient;
+
+/** Resultado de echar unidades a bolsas: a qué bolsas cayeron. */
 export type BagFillResult = ActionResult & { bags?: BagSummary[] };
 
+const TX_OPTIONS = { timeout: 60_000, maxWait: 10_000 } as const;
+
+function revalidateDeliveryViews(deliveryId?: string) {
+  revalidatePath('/delivery');
+  if (deliveryId) revalidatePath(`/delivery/${deliveryId}`);
+  revalidatePath('/delivery/prepare');
+  revalidatePath('/orders');
+  revalidatePath('/products');
+  revalidatePath('/dashboard');
+}
+
 /**
- * weight_cost  = weight × Category.client_shipping_charge
- * manager_profit = weight × client.assignedAgent.agent_profit (0 if none)
- * Both are user-overridable in the Django/Vite UI but auto-derived from
- * these formulas; this app treats the formula as the source of truth.
+ * RN-002 / RN-003:
+ *   weight_cost    = weight × Category.client_shipping_charge
+ *   manager_profit = weight × client.assignedAgent.agent_profit (0 si no hay)
  */
 async function deriveCosts(
+  db: Db,
   clientId: bigint,
   categoryId: bigint | null,
   weight: number
 ): Promise<{ weightCost: number; managerProfit: number }> {
   const [category, client] = await Promise.all([
     categoryId
-      ? prisma.category.findUnique({
+      ? db.category.findUnique({
           where: { id: categoryId },
           select: { clientShippingCharge: true },
         })
       : Promise.resolve(null),
-    prisma.customUser.findUnique({
+    db.customUser.findUnique({
       where: { id: clientId },
       select: { assignedAgent: { select: { agentProfit: true } } },
     }),
   ]);
-  const weightCost = round2(
-    weight * (category?.clientShippingCharge ?? 0)
-  );
-  const managerProfit = round2(
-    weight * (client?.assignedAgent?.agentProfit ?? 0)
-  );
-  return { weightCost, managerProfit };
+  return {
+    weightCost: round2(weight * (category?.clientShippingCharge ?? 0)),
+    managerProfit: round2(weight * (client?.assignedAgent?.agentProfit ?? 0)),
+  };
 }
 
-function parse(formData: FormData) {
-  return deliveryFormSchema.safeParse({
-    clientId: formData.get('clientId'),
-    categoryId: formData.get('categoryId') ?? '',
-    weight: formData.get('weight'),
-    status: formData.get('status'),
-    deliverDate: formData.get('deliverDate'),
-    deliverPicture: formData.get('deliverPicture') ?? '',
-  });
-}
-
-export async function createDeliveryAction(
-  _prev: ActionResult | undefined,
-  formData: FormData
-): Promise<ActionResult> {
-  const { denied } = await requireRole(ROLES.delivery);
-  if (denied) return denied;
-
-  const parsed = parse(formData);
-  if (!parsed.success) {
-    return {
-      ok: false,
-      error: 'Validation failed',
-      fieldErrors: zodFieldErrors(parsed.error.issues),
-    };
-  }
-  const d = parsed.data;
-  const clientId = parseId(d.clientId);
-  if (!clientId) return { ok: false, error: 'Invalid client id' };
-  const categoryId = d.categoryId ? parseId(d.categoryId) : null;
-  if (d.categoryId && !categoryId) {
-    return { ok: false, error: 'Invalid category id' };
-  }
+/** Cierra una bolsa con su peso: fija costos y estado de pago (INV-003). */
+async function closeBagWithWeight(
+  db: Db,
+  delivery: {
+    id: bigint;
+    clientId: bigint;
+    categoryId: bigint | null;
+    paymentAmount: number;
+    balanceApplied: number;
+  },
+  weight: number
+): Promise<void> {
+  const w = round2(weight);
   const { weightCost, managerProfit } = await deriveCosts(
-    clientId,
-    categoryId,
-    d.weight
+    db,
+    delivery.clientId,
+    delivery.categoryId,
+    w
   );
-
-  // Los pagos se registran después con confirmDeliveryPaymentAction.
-  await prisma.deliverReceip.create({
+  await db.deliverReceip.update({
+    where: { id: delivery.id },
     data: {
-      clientId,
-      categoryId,
-      weight: d.weight,
-      status: toDbDeliveryStatus(d.status),
-      paymentStatus: toDbPayStatus(computePayStatus(weightCost, 0, 0)),
-      paymentAmount: 0,
-      balanceApplied: 0,
-      paymentDate: null,
-      deliverDate: new Date(d.deliverDate),
-      deliverPicture: d.deliverPicture,
+      weight: w,
       weightCost,
       managerProfit,
+      paymentStatus: toDbPayStatus(
+        computePayStatus(weightCost, delivery.paymentAmount, delivery.balanceApplied)
+      ),
     },
   });
-  await recalculateClientBalance(clientId);
-
-  revalidatePath('/delivery');
-  return { ok: true };
+  await recalculateClientBalance(delivery.clientId, db);
 }
 
 /**
- * Pesar una bolsa del flujo /delivery/prepare. Registrar un peso > 0 es
- * lo que cierra la bolsa: deja de ser candidata al auto-llenado (las
- * llegadas posteriores de esa categoría abren otra) y aquí nacen el
- * costo por peso y la ganancia del gestor. El estado de pago se
- * recalcula contra el nuevo costo con los pagos ya registrados.
+ * Echa unidades recibidas de un cliente a sus bolsas abiertas (una por
+ * categoría), validando en la transacción disponible y categoría.
+ */
+async function fillBags(
+  db: Db,
+  items: { productId: string; amount: number }[],
+  expectClientId?: bigint
+): Promise<
+  { ok: true; bags: BagSummary[]; bagIds: bigint[] } | { ok: false; error: string }
+> {
+  const ids = items.map((i) => i.productId);
+  if (new Set(ids).size !== ids.length) {
+    return { ok: false, error: 'Hay productos repetidos en la selección' };
+  }
+  const products = await db.product.findMany({
+    where: { id: { in: ids } },
+    select: {
+      id: true,
+      name: true,
+      amountReceived: true,
+      amountDelivered: true,
+      categoryId: true,
+      category: { select: { name: true } },
+      order: {
+        select: {
+          clientId: true,
+          client: { select: { name: true, lastName: true } },
+        },
+      },
+    },
+  });
+  const byId = new Map(products.map((p) => [p.id, p]));
+  for (const item of items) {
+    const p = byId.get(item.productId);
+    if (!p) return { ok: false, error: 'Producto no encontrado' };
+    if (expectClientId !== undefined && p.order.clientId !== expectClientId) {
+      return { ok: false, error: `«${p.name}» no pertenece a este cliente` };
+    }
+    const available = p.amountReceived - p.amountDelivered;
+    if (item.amount > available) {
+      return {
+        ok: false,
+        error: `Solo quedan ${Math.max(0, available)} unidad(es) de «${p.name}» recibidas sin embolsar`,
+      };
+    }
+    if (p.categoryId === null) {
+      return {
+        ok: false,
+        error: `«${p.name}» no tiene categoría asignada; asígnala para poder embolsarlo`,
+      };
+    }
+  }
+
+  const bags = new Map<string, BagSummary>();
+  for (const item of items) {
+    const p = byId.get(item.productId)!;
+    const { bagId, created } = await addUnitsToOpenBag(db, {
+      productId: item.productId,
+      clientId: p.order.clientId,
+      categoryId: p.categoryId!,
+      amount: item.amount,
+    });
+    const key = bagId.toString();
+    const entry = bags.get(key);
+    if (entry) {
+      entry.units += item.amount;
+      entry.created = entry.created || created;
+    } else {
+      bags.set(key, {
+        deliveryId: key,
+        clientName: `${p.order.client.name} ${p.order.client.lastName}`.trim(),
+        categoryName: p.category?.name ?? '',
+        units: item.amount,
+        created,
+      });
+    }
+  }
+  for (const item of items) {
+    await recomputeProductAmounts(item.productId, db);
+  }
+  return {
+    ok: true,
+    bags: [...bags.values()],
+    bagIds: [...bags.keys()].map((k) => BigInt(k)),
+  };
+}
+
+/** Recibidos sin entregar de un cliente (para «Armar entrega»). */
+export async function listReceivedForClientAction(
+  clientId: string
+): Promise<{ ok: true; items: ReceivedCandidate[] } | { ok: false; error: string }> {
+  const { denied } = await requireRole(ROLES.delivery);
+  if (denied) return denied;
+  const cid = parseId(clientId);
+  if (!cid) return { ok: false, error: 'Cliente inválido' };
+
+  const rows = await prisma.product.findMany({
+    where: {
+      order: { clientId: cid },
+      amountReceived: { gt: 0 },
+    },
+    select: {
+      id: true,
+      name: true,
+      orderId: true,
+      amountReceived: true,
+      amountDelivered: true,
+      categoryId: true,
+      category: { select: { name: true, clientShippingCharge: true } },
+    },
+    orderBy: [{ category: { name: 'asc' } }, { name: 'asc' }],
+    take: 500,
+  });
+  return {
+    ok: true,
+    items: rows
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        orderId: p.orderId.toString(),
+        categoryId: p.categoryId ? p.categoryId.toString() : null,
+        categoryName: p.category?.name ?? null,
+        chargePerLb: p.category?.clientShippingCharge ?? 0,
+        available: p.amountReceived - p.amountDelivered,
+      }))
+      .filter((p) => p.available > 0),
+  };
+}
+
+/**
+ * «Armar entrega desde recibidos» (ADR-0004): llena la bolsa del
+ * cliente con lo marcado y, si viene peso (una sola categoría), la
+ * cierra en el mismo paso.
+ */
+export async function assembleDeliveryAction(
+  input: AssembleDeliveryInput
+): Promise<BagFillResult> {
+  const { denied } = await requireRole(ROLES.delivery);
+  if (denied) return denied;
+
+  const parsed = assembleDeliverySchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos inválidos' };
+  }
+  const d = parsed.data;
+  const clientId = parseId(d.clientId);
+  if (!clientId) return { ok: false, error: 'Cliente inválido' };
+
+  const result = await prisma.$transaction(async (tx) => {
+    const filled = await fillBags(tx, d.items, clientId);
+    if (!filled.ok) return filled;
+    if (d.weight !== undefined) {
+      if (filled.bagIds.length !== 1) {
+        return {
+          ok: false as const,
+          error:
+            'Para pesar en el mismo paso, los productos deben ser de una sola categoría (una bolsa)',
+        };
+      }
+      const bag = await tx.deliverReceip.findUnique({
+        where: { id: filled.bagIds[0] },
+        select: {
+          id: true,
+          clientId: true,
+          categoryId: true,
+          paymentAmount: true,
+          balanceApplied: true,
+        },
+      });
+      if (bag) await closeBagWithWeight(tx, bag, d.weight);
+    }
+    return { ok: true as const, bags: filled.bags, id: filled.bagIds[0]?.toString() };
+  }, TX_OPTIONS);
+
+  if (!result.ok) return result;
+  revalidateDeliveryViews(result.id);
+  return result;
+}
+
+/** Echar a mano recibidos sueltos a la bolsa abierta de su cliente+categoría. */
+export async function addLooseToBagAction(
+  items: DeliveryItemsInput
+): Promise<BagFillResult> {
+  const { denied } = await requireRole(ROLES.delivery);
+  if (denied) return denied;
+
+  const parsed = deliveryItemsSchema.safeParse(items);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos inválidos' };
+  }
+
+  const result = await prisma.$transaction(
+    (tx) => fillBags(tx, parsed.data),
+    TX_OPTIONS
+  );
+  if (!result.ok) return result;
+  revalidateDeliveryViews();
+  return { ok: true, bags: result.bags };
+}
+
+/**
+ * Pesar una bolsa abierta la cierra (INV-003/INV-004): fija costo por
+ * peso y ganancia del gestor. Una entrega ya pesada solo la corrige un
+ * admin con correctDeliveryWeightAction.
  */
 export async function registerBagWeightAction(
   id: string,
@@ -138,73 +335,97 @@ export async function registerBagWeightAction(
   if (denied) return denied;
 
   const deliveryId = parseId(id);
-  if (!deliveryId) return { ok: false, error: 'Invalid delivery id' };
+  if (!deliveryId) return { ok: false, error: 'Identificador inválido' };
   if (!Number.isFinite(weight) || weight <= 0) {
     return { ok: false, error: 'El peso debe ser mayor que 0' };
   }
 
-  const delivery = await prisma.deliverReceip.findUnique({
-    where: { id: deliveryId },
-    select: {
-      clientId: true,
-      categoryId: true,
-      status: true,
-      paymentAmount: true,
-      balanceApplied: true,
-    },
+  const result = await prisma.$transaction(async (tx) => {
+    const delivery = await tx.deliverReceip.findUnique({
+      where: { id: deliveryId },
+      select: {
+        id: true,
+        clientId: true,
+        categoryId: true,
+        status: true,
+        weight: true,
+        paymentAmount: true,
+        balanceApplied: true,
+        _count: { select: { deliveredProducts: true } },
+      },
+    });
+    if (!delivery) return { ok: false as const, error: 'Entrega no encontrada' };
+    if (deliveryPhase(delivery) !== 'En preparación') {
+      return {
+        ok: false as const,
+        error:
+          'Esta entrega ya está pesada; solo un administrador puede corregir el peso',
+      };
+    }
+    if (delivery._count.deliveredProducts === 0) {
+      return { ok: false as const, error: 'La bolsa está vacía' };
+    }
+    await closeBagWithWeight(tx, delivery, weight);
+    return { ok: true as const };
   });
-  if (!delivery) return { ok: false, error: 'Delivery not found' };
-  if (delivery.status !== toDbDeliveryStatus('Pendiente')) {
-    return {
-      ok: false,
-      error: 'Solo se pesan entregas en estado «Pendiente»',
-    };
+
+  if (!result.ok) return result;
+  revalidateDeliveryViews(id);
+  return { ok: true, id };
+}
+
+/** Corrección de peso por un admin sobre una entrega ya pesada. */
+export async function correctDeliveryWeightAction(
+  id: string,
+  weight: number
+): Promise<ActionResult> {
+  const { denied } = await requireRole(['admin']);
+  if (denied) return denied;
+
+  const deliveryId = parseId(id);
+  if (!deliveryId) return { ok: false, error: 'Identificador inválido' };
+  if (!Number.isFinite(weight) || weight <= 0) {
+    return { ok: false, error: 'El peso debe ser mayor que 0' };
   }
 
-  const w = round2(weight);
-  const { weightCost, managerProfit } = await deriveCosts(
-    delivery.clientId,
-    delivery.categoryId,
-    w
-  );
-  const payStatus = computePayStatus(
-    weightCost,
-    delivery.paymentAmount,
-    delivery.balanceApplied
-  );
-
-  await prisma.deliverReceip.update({
-    where: { id: deliveryId },
-    data: {
-      weight: w,
-      weightCost,
-      managerProfit,
-      paymentStatus: toDbPayStatus(payStatus),
-    },
+  const result = await prisma.$transaction(async (tx) => {
+    const delivery = await tx.deliverReceip.findUnique({
+      where: { id: deliveryId },
+      select: {
+        id: true,
+        clientId: true,
+        categoryId: true,
+        paymentAmount: true,
+        balanceApplied: true,
+      },
+    });
+    if (!delivery) return { ok: false as const, error: 'Entrega no encontrada' };
+    await closeBagWithWeight(tx, delivery, weight);
+    return { ok: true as const };
   });
-  await recalculateClientBalance(delivery.clientId);
 
-  revalidatePath('/delivery');
-  revalidatePath(`/delivery/${id}`);
-  revalidatePath('/delivery/prepare');
+  if (!result.ok) return result;
+  revalidateDeliveryViews(id);
+  revalidatePath('/balance');
   return { ok: true, id };
 }
 
 /**
- * Ajuste manual de una bolsa abierta (peso 0): fijar las unidades de una
- * fila o quitarla con amount 0. Cubre el error físico de echar algo en
- * la bolsa equivocada; las unidades retiradas vuelven a «recibido sin
- * bolsa». Si la bolsa queda vacía se borra.
+ * Ajuste de una fila de entrega: fijar unidades o quitarla (amount 0).
+ * Permitido mientras la entrega esté Pendiente (bolsa abierta o pesada);
+ * un admin también en tránsito; nunca en una entrega ya entregada. Las
+ * unidades retiradas vuelven a «recibido sin bolsa»; la bolsa vacía se
+ * borra.
  */
 export async function adjustBagItemAction(
   productDeliveryId: string,
   amount: number
 ): Promise<ActionResult> {
-  const { denied } = await requireRole(ROLES.delivery);
+  const { denied, user } = await requireRole(ROLES.delivery);
   if (denied) return denied;
 
   const rowId = parseId(productDeliveryId);
-  if (!rowId) return { ok: false, error: 'Invalid row id' };
+  if (!rowId) return { ok: false, error: 'Identificador inválido' };
   if (!Number.isInteger(amount) || amount < 0) {
     return { ok: false, error: 'La cantidad debe ser un entero ≥ 0' };
   }
@@ -218,25 +439,23 @@ export async function adjustBagItemAction(
         originalProductId: true,
         deliverReceip: { select: { status: true, weight: true } },
         originalProduct: {
-          select: {
-            name: true,
-            amountReceived: true,
-            amountDelivered: true,
-          },
+          select: { name: true, amountReceived: true, amountDelivered: true },
         },
       },
     });
     if (!row || row.deliverReceipId === null || !row.deliverReceip) {
-      return { ok: false as const, error: 'Producto no encontrado en la bolsa' };
+      return { ok: false as const, error: 'Producto no encontrado en la entrega' };
     }
-    if (
-      row.deliverReceip.status !== toDbDeliveryStatus('Pendiente') ||
-      row.deliverReceip.weight !== 0
-    ) {
+    const status = row.deliverReceip.status;
+    const editable =
+      status === 'Pendiente' || (status === 'En transito' && user.role === 'admin');
+    if (!editable) {
       return {
         ok: false as const,
         error:
-          'La bolsa ya está pesada o despachada; edítala desde el detalle de la entrega',
+          status === 'Entregado'
+            ? 'La entrega ya fue entregada; reábrela para modificar sus productos'
+            : 'La entrega está en tránsito; devuélvela a pendiente para modificarla',
       };
     }
     if (amount === row.amountDelivered) return { ok: true as const };
@@ -244,8 +463,7 @@ export async function adjustBagItemAction(
     const delta = amount - row.amountDelivered;
     if (delta > 0) {
       const available =
-        row.originalProduct.amountReceived -
-        row.originalProduct.amountDelivered;
+        row.originalProduct.amountReceived - row.originalProduct.amountDelivered;
       if (delta > available) {
         return {
           ok: false as const,
@@ -253,7 +471,6 @@ export async function adjustBagItemAction(
         };
       }
     }
-
     if (amount === 0) {
       await tx.productDelivery.delete({ where: { id: rowId } });
     } else {
@@ -264,130 +481,182 @@ export async function adjustBagItemAction(
     }
     await recomputeProductAmounts(row.originalProductId, tx);
     await deleteBagIfEmpty(tx, row.deliverReceipId);
-    return { ok: true as const };
+    return { ok: true as const, deliveryId: row.deliverReceipId.toString() };
   });
 
   if (!result.ok) return result;
+  revalidateDeliveryViews(result.deliveryId);
+  return { ok: true };
+}
 
-  revalidatePath('/delivery');
-  revalidatePath('/delivery/prepare');
-  revalidatePath('/orders');
-  revalidatePath('/products');
+export async function removeDeliveredProductAction(
+  _deliveryId: string,
+  productDeliveryId: string
+): Promise<ActionResult> {
+  return adjustBagItemAction(productDeliveryId, 0);
+}
+
+/**
+ * Añade recibidos del MISMO cliente (y misma categoría, si la entrega la
+ * tiene) a una entrega Pendiente: bolsa abierta o ya pesada.
+ */
+export async function addProductsToDeliveryAction(
+  deliveryId: string,
+  items: DeliveryItemsInput
+): Promise<ActionResult> {
+  const { denied } = await requireRole(ROLES.delivery);
+  if (denied) return denied;
+
+  const did = parseId(deliveryId);
+  if (!did) return { ok: false, error: 'Identificador inválido' };
+  const parsed = deliveryItemsSchema.safeParse(items);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos inválidos' };
+  }
+  const list = parsed.data;
+  const ids = list.map((i) => i.productId);
+  if (new Set(ids).size !== ids.length) {
+    return { ok: false, error: 'Hay productos repetidos en la selección' };
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const delivery = await tx.deliverReceip.findUnique({
+      where: { id: did },
+      select: { clientId: true, categoryId: true, status: true },
+    });
+    if (!delivery) return { ok: false as const, error: 'Entrega no encontrada' };
+    if (delivery.status !== 'Pendiente') {
+      return {
+        ok: false as const,
+        error: 'Solo se añaden productos a entregas en estado «Pendiente»',
+      };
+    }
+    const products = await tx.product.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        name: true,
+        amountReceived: true,
+        amountDelivered: true,
+        categoryId: true,
+        order: { select: { clientId: true } },
+      },
+    });
+    const byId = new Map(products.map((p) => [p.id, p]));
+    for (const item of list) {
+      const p = byId.get(item.productId);
+      if (!p) return { ok: false as const, error: 'Producto no encontrado' };
+      if (p.order.clientId !== delivery.clientId) {
+        return { ok: false as const, error: `«${p.name}» no es de este cliente` };
+      }
+      if (delivery.categoryId !== null && p.categoryId !== delivery.categoryId) {
+        return {
+          ok: false as const,
+          error: `«${p.name}» es de otra categoría; va en la bolsa de su categoría`,
+        };
+      }
+      const available = p.amountReceived - p.amountDelivered;
+      if (item.amount > available) {
+        return {
+          ok: false as const,
+          error: `Solo quedan ${Math.max(0, available)} unidad(es) de «${p.name}» recibidas sin entregar`,
+        };
+      }
+    }
+    for (const item of list) {
+      const existing = await tx.productDelivery.findFirst({
+        where: { deliverReceipId: did, originalProductId: item.productId },
+        select: { id: true, amountDelivered: true },
+      });
+      if (existing) {
+        await tx.productDelivery.update({
+          where: { id: existing.id },
+          data: { amountDelivered: existing.amountDelivered + item.amount },
+        });
+      } else {
+        await tx.productDelivery.create({
+          data: {
+            deliverReceipId: did,
+            originalProductId: item.productId,
+            amountDelivered: item.amount,
+          },
+        });
+      }
+      await recomputeProductAmounts(item.productId, tx);
+    }
+    return { ok: true as const };
+  }, TX_OPTIONS);
+
+  if (!result.ok) return result;
+  revalidateDeliveryViews(deliveryId);
   return { ok: true };
 }
 
 /**
- * Echar a mano unidades recibidas que quedaron sueltas (recibidas antes
- * del auto-llenado, o retiradas de una bolsa) a la bolsa abierta de su
- * cliente+categoría, creándola si no existe. Mismo destino que el
- * auto-llenado de registerArrivalsAction.
+ * Transición explícita de estado (INV-006). Entrar o salir de
+ * «Entregado» recalcula el estado de todos sus productos (RN-011).
  */
-export async function addLooseToBagAction(
-  items: { productId: string; amount: number }[]
-): Promise<BagFillResult> {
-  const { denied } = await requireRole(ROLES.delivery);
+export async function transitionDeliveryStatusAction(
+  id: string,
+  action: DeliveryAction,
+  payload: DeliverInput = {}
+): Promise<ActionResult> {
+  const { denied, user } = await requireRole(ROLES.delivery);
   if (denied) return denied;
 
-  if (!Array.isArray(items) || items.length === 0) {
-    return { ok: false, error: 'Selecciona al menos un producto' };
+  const deliveryId = parseId(id);
+  if (!deliveryId) return { ok: false, error: 'Identificador inválido' };
+  const parsed = deliverSchema.safeParse(payload);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos inválidos' };
   }
-  for (const item of items) {
-    if (
-      typeof item.productId !== 'string' ||
-      item.productId.length === 0 ||
-      !Number.isInteger(item.amount) ||
-      item.amount <= 0
-    ) {
-      return { ok: false, error: 'Datos inválidos' };
+  const d = parsed.data;
+
+  const result = await prisma.$transaction(async (tx) => {
+    const delivery = await tx.deliverReceip.findUnique({
+      where: { id: deliveryId },
+      select: {
+        status: true,
+        weight: true,
+        deliverPicture: true,
+        _count: { select: { deliveredProducts: true } },
+      },
+    });
+    if (!delivery) return { ok: false as const, error: 'Entrega no encontrada' };
+    const next = nextDeliveryStatus(
+      {
+        status: delivery.status,
+        weight: delivery.weight,
+        productCount: delivery._count.deliveredProducts,
+      },
+      action,
+      user.role
+    );
+    if (!next.ok) return next;
+
+    await tx.deliverReceip.update({
+      where: { id: deliveryId },
+      data: {
+        status: toDbDeliveryStatus(next.to),
+        ...(action === 'deliver' && {
+          deliverDate: d.deliverDate ? new Date(d.deliverDate) : new Date(),
+          deliverPicture: d.deliverPicture ?? delivery.deliverPicture,
+        }),
+      },
+    });
+    let recomputed = 0;
+    if (affectsProductStatus(delivery.status, next.to)) {
+      recomputed = await recomputeProductsOfDelivery(deliveryId, tx);
     }
-  }
-  const productIds = items.map((i) => i.productId);
-  if (new Set(productIds).size !== productIds.length) {
-    return { ok: false, error: 'Hay productos repetidos en la selección' };
-  }
-
-  const result = await prisma.$transaction(
-    async (tx) => {
-      const products = await tx.product.findMany({
-        where: { id: { in: productIds } },
-        select: {
-          id: true,
-          name: true,
-          amountReceived: true,
-          amountDelivered: true,
-          categoryId: true,
-          category: { select: { name: true } },
-          order: {
-            select: {
-              clientId: true,
-              client: { select: { name: true, lastName: true } },
-            },
-          },
-        },
-      });
-      const byId = new Map(products.map((p) => [p.id, p]));
-      for (const item of items) {
-        const p = byId.get(item.productId);
-        if (!p) return { ok: false as const, error: 'Producto no encontrado' };
-        const available = p.amountReceived - p.amountDelivered;
-        if (item.amount > available) {
-          return {
-            ok: false as const,
-            error: `Solo quedan ${Math.max(0, available)} unidad(es) de «${p.name}» recibidas sin bolsa`,
-          };
-        }
-        if (p.categoryId === null) {
-          return {
-            ok: false as const,
-            error: `«${p.name}» no tiene categoría asignada; asígnala en su orden para poder embolsarlo`,
-          };
-        }
-      }
-
-      const bags = new Map<string, BagSummary>();
-      for (const item of items) {
-        const p = byId.get(item.productId)!;
-        const { bagId, created } = await addUnitsToOpenBag(tx, {
-          productId: item.productId,
-          clientId: p.order.clientId,
-          categoryId: p.categoryId!,
-          amount: item.amount,
-        });
-        const key = bagId.toString();
-        const entry = bags.get(key);
-        if (entry) {
-          entry.units += item.amount;
-          entry.created = entry.created || created;
-        } else {
-          bags.set(key, {
-            deliveryId: key,
-            clientName:
-              `${p.order.client.name} ${p.order.client.lastName}`.trim(),
-            categoryName: p.category?.name ?? '',
-            units: item.amount,
-            created,
-          });
-        }
-      }
-      for (const item of items) {
-        await recomputeProductAmounts(item.productId, tx);
-      }
-      return { ok: true as const, bags: [...bags.values()] };
-    },
-    // Un lote grande recalcula muchos productos sobre el driver de
-    // Neon; el timeout por defecto (5 s) se queda corto.
-    { timeout: 60_000, maxWait: 10_000 }
-  );
+    return { ok: true as const, to: next.to, recomputed };
+  }, TX_OPTIONS);
 
   if (!result.ok) return result;
-
-  revalidatePath('/delivery');
-  revalidatePath('/delivery/prepare');
-  revalidatePath('/orders');
-  revalidatePath('/products');
-  return result;
+  revalidateDeliveryViews(id);
+  return { ok: true, id };
 }
 
+/** Edición de fecha y foto (el resto cambia por acciones explícitas). */
 export async function updateDeliveryAction(
   _prev: ActionResult | undefined,
   formData: FormData
@@ -396,70 +665,32 @@ export async function updateDeliveryAction(
   if (denied) return denied;
 
   const id = parseId(formData.get('id'));
-  if (!id) return { ok: false, error: 'Missing or invalid id' };
+  if (!id) return { ok: false, error: 'Identificador inválido' };
 
-  const parsed = parse(formData);
+  const parsed = deliveryEditSchema.safeParse({
+    deliverDate: formData.get('deliverDate'),
+    deliverPicture: formData.get('deliverPicture') ?? '',
+  });
   if (!parsed.success) {
     return {
       ok: false,
-      error: 'Validation failed',
+      error: 'Revisa los campos marcados',
       fieldErrors: zodFieldErrors(parsed.error.issues),
     };
   }
-  const d = parsed.data;
-
-  const existing = await prisma.deliverReceip.findUnique({
-    where: { id },
-    select: {
-      clientId: true,
-      paymentAmount: true,
-      balanceApplied: true,
-    },
-  });
-  if (!existing) return { ok: false, error: 'Delivery not found' };
-
-  const clientId = parseId(d.clientId);
-  if (!clientId) return { ok: false, error: 'Invalid client id' };
-  const categoryId = d.categoryId ? parseId(d.categoryId) : null;
-  if (d.categoryId && !categoryId) {
-    return { ok: false, error: 'Invalid category id' };
+  try {
+    await prisma.deliverReceip.update({
+      where: { id },
+      data: {
+        deliverDate: new Date(parsed.data.deliverDate),
+        deliverPicture: parsed.data.deliverPicture,
+      },
+    });
+  } catch {
+    return { ok: false, error: 'Entrega no encontrada' };
   }
-  const { weightCost, managerProfit } = await deriveCosts(
-    clientId,
-    categoryId,
-    d.weight
-  );
-  // Los montos pagados no se editan aquí (confirmDeliveryPaymentAction
-  // los acumula), pero el costo por peso puede cambiar con el peso o la
-  // categoría, así que el estado de pago se recalcula contra el nuevo
-  // total con los pagos ya registrados.
-  const payStatus = computePayStatus(
-    weightCost,
-    existing.paymentAmount,
-    existing.balanceApplied
-  );
-
-  await prisma.deliverReceip.update({
-    where: { id },
-    data: {
-      clientId,
-      categoryId,
-      weight: d.weight,
-      status: toDbDeliveryStatus(d.status),
-      paymentStatus: toDbPayStatus(payStatus),
-      deliverDate: new Date(d.deliverDate),
-      deliverPicture: d.deliverPicture,
-      weightCost,
-      managerProfit,
-    },
-  });
-
-  await recalculateClientBalance(existing.clientId);
-  if (existing.clientId !== clientId) {
-    await recalculateClientBalance(clientId);
-  }
-
   revalidatePath('/delivery');
+  revalidatePath(`/delivery/${id}`);
   return { ok: true };
 }
 
@@ -468,7 +699,7 @@ export async function updateDeliveryAction(
  * in api/models/deliveries.py: payment_amount and balance_applied
  * ACCUMULATE, payment_status is recomputed against weight_cost (or
  * forced to Pagado), payment_date is stamped. Transactional with the
- * client-balance recalculation.
+ * client-balance recalculation. No se cobra una bolsa sin peso.
  */
 export async function confirmDeliveryPaymentAction(
   id: string,
@@ -480,7 +711,7 @@ export async function confirmDeliveryPaymentAction(
   if (denied) return denied;
 
   const deliveryId = parseId(id);
-  if (!deliveryId) return { ok: false, error: 'Invalid delivery id' };
+  if (!deliveryId) return { ok: false, error: 'Identificador inválido' };
   if (!Number.isFinite(amount) || amount < 0) {
     return { ok: false, error: 'El monto no puede ser negativo' };
   }
@@ -495,15 +726,18 @@ export async function confirmDeliveryPaymentAction(
     const delivery = await tx.deliverReceip.findUnique({
       where: { id: deliveryId },
       select: {
+        weight: true,
         weightCost: true,
         paymentAmount: true,
         balanceApplied: true,
-        paymentDate: true,
         clientId: true,
         client: { select: { balance: true } },
       },
     });
-    if (!delivery) return { ok: false as const, error: 'Delivery not found' };
+    if (!delivery) return { ok: false as const, error: 'Entrega no encontrada' };
+    if (!(delivery.weight > 0)) {
+      return { ok: false as const, error: 'Pesa la bolsa antes de cobrarla' };
+    }
 
     const available = Math.max(0, delivery.client.balance);
     if (applyBalance > available) {
@@ -533,108 +767,64 @@ export async function confirmDeliveryPaymentAction(
   });
 
   if (!result.ok) return result;
-
   revalidatePath('/delivery');
   revalidatePath(`/delivery/${id}`);
+  revalidatePath('/dashboard');
   return { ok: true };
 }
 
-export async function deleteDeliveryAction(
-  id: string
-): Promise<ActionResult> {
+/**
+ * Borrar una entrega: una bolsa abierta se vacía (sus unidades vuelven
+ * a «recibido sin bolsa») y se borra; una entrega con pagos nunca; una
+ * pesada con productos exige quitarlos antes.
+ */
+export async function deleteDeliveryAction(id: string): Promise<ActionResult> {
   const { denied } = await requireRole(ROLES.delivery);
   if (denied) return denied;
 
   const did = parseId(id);
-  if (!did) return { ok: false, error: 'Invalid delivery id' };
-  const existing = await prisma.deliverReceip.findUnique({
-    where: { id: did },
-    select: { clientId: true },
-  });
-  if (!existing) return { ok: false, error: 'Delivery not found' };
+  if (!did) return { ok: false, error: 'Identificador inválido' };
 
-  try {
-    await prisma.deliverReceip.delete({ where: { id: did } });
-  } catch (err) {
-    if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
-      err.code === 'P2003'
-    ) {
+  const result = await prisma.$transaction(async (tx) => {
+    const delivery = await tx.deliverReceip.findUnique({
+      where: { id: did },
+      select: {
+        clientId: true,
+        status: true,
+        weight: true,
+        paymentAmount: true,
+        balanceApplied: true,
+        _count: { select: { deliveredProducts: true } },
+      },
+    });
+    if (!delivery) return { ok: false as const, error: 'Entrega no encontrada' };
+    if (delivery.paymentAmount > 0 || delivery.balanceApplied > 0) {
       return {
-        ok: false,
-        error: 'Cannot delete: delivery has linked delivered products',
+        ok: false as const,
+        error: 'La entrega tiene pagos registrados y no se puede eliminar',
       };
     }
-    throw err;
-  }
-  await recalculateClientBalance(existing.clientId);
+    if (deliveryPhase(delivery) === 'En preparación') {
+      const productIds = await emptyOpenBag(tx, did);
+      for (const pid of productIds) await recomputeProductAmounts(pid, tx);
+      // emptyOpenBag ya borró la bolsa si quedó vacía.
+      const still = await tx.deliverReceip.findUnique({ where: { id: did }, select: { id: true } });
+      if (still) await tx.deliverReceip.delete({ where: { id: did } });
+    } else {
+      if (delivery._count.deliveredProducts > 0) {
+        return {
+          ok: false as const,
+          error:
+            'La entrega tiene productos: quítalos (o reábrela) antes de eliminarla',
+        };
+      }
+      await tx.deliverReceip.delete({ where: { id: did } });
+    }
+    await recalculateClientBalance(delivery.clientId, tx);
+    return { ok: true as const };
+  }, TX_OPTIONS);
 
-  revalidatePath('/delivery');
-  return { ok: true };
-}
-
-export async function addDeliveredProductAction(
-  deliveryId: string,
-  productId: string,
-  amount: number
-): Promise<ActionResult> {
-  const { denied } = await requireRole(ROLES.delivery);
-  if (denied) return denied;
-
-  const did = parseId(deliveryId);
-  if (!did) return { ok: false, error: 'Invalid delivery id' };
-  if (!Number.isInteger(amount) || amount <= 0) {
-    return { ok: false, error: 'Amount must be a positive integer' };
-  }
-
-  const product = await prisma.product.findUnique({
-    where: { id: productId },
-    select: { amountReceived: true, amountDelivered: true, name: true },
-  });
-  if (!product) return { ok: false, error: 'Product not found' };
-
-  const remaining = product.amountReceived - product.amountDelivered;
-  if (amount > remaining) {
-    return {
-      ok: false,
-      error: `Only ${remaining} unit(s) of "${product.name}" are received but not yet delivered`,
-    };
-  }
-
-  await prisma.productDelivery.create({
-    data: {
-      deliverReceipId: did,
-      originalProductId: productId,
-      amountDelivered: amount,
-    },
-  });
-  await recomputeProductAmounts(productId);
-
-  revalidatePath(`/delivery/${deliveryId}`);
-  revalidatePath('/orders');
-  return { ok: true };
-}
-
-export async function removeDeliveredProductAction(
-  deliveryId: string,
-  productDeliveryId: string
-): Promise<ActionResult> {
-  const { denied } = await requireRole(ROLES.delivery);
-  if (denied) return denied;
-
-  const rowId = parseId(productDeliveryId);
-  if (!rowId) return { ok: false, error: 'Invalid row id' };
-
-  const row = await prisma.productDelivery.findUnique({
-    where: { id: rowId },
-    select: { originalProductId: true },
-  });
-  if (!row) return { ok: false, error: 'Delivered product not found' };
-
-  await prisma.productDelivery.delete({ where: { id: rowId } });
-  await recomputeProductAmounts(row.originalProductId);
-
-  revalidatePath(`/delivery/${deliveryId}`);
-  revalidatePath('/orders');
+  if (!result.ok) return result;
+  revalidateDeliveryViews();
   return { ok: true };
 }

@@ -166,6 +166,7 @@ export default async function PrepareDeliveryPage({ searchParams }: PageProps) {
           weight: true,
           weightCost: true,
           category: { select: { name: true } },
+          _count: { select: { deliveredProducts: true } },
         },
         orderBy: { deliverDate: 'desc' },
       }),
@@ -305,6 +306,7 @@ export default async function PrepareDeliveryPage({ searchParams }: PageProps) {
       weight: dlv.weight,
       weightCost: dlv.weightCost,
       deliverDate: dlv.deliverDate.toISOString(),
+      productCount: dlv._count.deliveredProducts,
     };
     group.weighed.push(view);
   }

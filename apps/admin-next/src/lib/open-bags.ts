@@ -218,3 +218,19 @@ export async function deleteBagIfEmpty(
   await db.deliverReceip.delete({ where: { id: bagId } });
   return true;
 }
+
+/**
+ * Vacía una bolsa abierta (todas sus filas) y la borra; devuelve los
+ * productIds afectados para que el caller los recompute.
+ */
+export async function emptyOpenBag(db: Db, bagId: bigint): Promise<string[]> {
+  const rows = await db.productDelivery.findMany({
+    where: { deliverReceipId: bagId },
+    select: { id: true, originalProductId: true },
+  });
+  for (const row of rows) {
+    await db.productDelivery.delete({ where: { id: row.id } });
+  }
+  await deleteBagIfEmpty(db, bagId);
+  return [...new Set(rows.map((r) => r.originalProductId))];
+}

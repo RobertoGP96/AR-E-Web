@@ -72,16 +72,27 @@ export function PayStatusBadge({ status }: { status: string }) {
   return <StatusChip config={config} label={status} />;
 }
 
+/** Fases de la entrega: la bolsa abierta (Pendiente con peso 0) es «En preparación». */
 const DELIVERY_STATUS: Record<string, BadgeConfig> = {
+  'En preparación': { color: 'warning', icon: ShoppingBag },
   Pendiente: { color: 'default', icon: Clock },
   'En transito': { color: 'accent', icon: Truck, label: 'En tránsito' },
   Entregado: { color: 'success', icon: CheckCircle2 },
   Fallida: { color: 'danger', icon: XCircle },
 };
 
-export function DeliveryStatusBadge({ status }: { status: string }) {
-  const config = DELIVERY_STATUS[status] ?? DELIVERY_STATUS.Pendiente;
-  return <StatusChip config={config} label={status} />;
+export function DeliveryStatusBadge({
+  status,
+  weight,
+}: {
+  status: string;
+  /** Con peso 0 y estado Pendiente se muestra «En preparación». */
+  weight?: number;
+}) {
+  const phase =
+    status === 'Pendiente' && weight === 0 ? 'En preparación' : status;
+  const config = DELIVERY_STATUS[phase] ?? DELIVERY_STATUS.Pendiente;
+  return <StatusChip config={config} label={phase} />;
 }
 
 const PACKAGE_STATUS: Record<string, BadgeConfig> = {
@@ -103,9 +114,32 @@ const PRODUCT_STATUS: Record<string, BadgeConfig> = {
   Entregado: { color: 'success', icon: Truck },
 };
 
-export function ProductStatusBadge({ status }: { status: string }) {
+export function ProductStatusBadge({
+  status,
+  inTransit,
+}: {
+  status: string;
+  /** Unidades en bolsas/entregas aún no entregadas (RN-011). */
+  inTransit?: number;
+}) {
   const config = PRODUCT_STATUS[status] ?? PRODUCT_STATUS.Encargado;
-  return <StatusChip config={config} label={status} />;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1">
+      <StatusChip config={config} label={status} />
+      {inTransit && inTransit > 0 ? (
+        <Chip
+          color="warning"
+          variant="soft"
+          size="sm"
+          className="whitespace-nowrap"
+          title="Unidades en una bolsa o entrega en curso"
+        >
+          <Truck className="h-3.5 w-3.5" aria-hidden />
+          <Chip.Label>En entrega ×{inTransit}</Chip.Label>
+        </Chip>
+      ) : null}
+    </span>
+  );
 }
 
 /** Solid-fill pay chip used by Purchases. */

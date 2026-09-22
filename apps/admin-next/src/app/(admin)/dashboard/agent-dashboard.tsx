@@ -119,12 +119,14 @@ export async function AgentDashboard({
     prisma.deliverReceip.count({
       where: {
         status: { in: ['Pendiente', 'En transito'] },
+        weight: { gt: 0 },
         client: { assignedAgentId: agentId },
       },
     }),
     prisma.deliverReceip.findMany({
       where: {
         status: { in: ['Pendiente', 'En transito'] },
+        weight: { gt: 0 },
         client: { assignedAgentId: agentId },
       },
       select: {

@@ -27,8 +27,9 @@ export function DeleteDeliveryDialog({
             Se eliminará la entrega de{' '}
             <strong className="text-foreground">{delivery.clientName}</strong> (
             {formatCurrency(delivery.weightCost)}) y se recalculará su balance.
-            Fallará si tiene productos entregados vinculados. Esta acción no se
-            puede deshacer.
+            Si es una bolsa en preparación, sus unidades vuelven a «recibido sin
+            bolsa»; una entrega pesada debe estar sin productos y sin pagos.
+            Esta acción no se puede deshacer.
           </>
         ) : null
       }
