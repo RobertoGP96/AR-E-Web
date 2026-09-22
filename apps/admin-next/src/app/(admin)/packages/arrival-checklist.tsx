@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { PackageCheck } from 'lucide-react';
 import { toast } from '@/lib/toast';
@@ -19,15 +19,28 @@ import { Select, TextInput } from '@/components/ui';
 import { registerArrivalsAction } from './actions';
 import type { ArrivalCandidate, CategoryChoice } from './types';
 
+export interface ArrivalItemInput {
+  productId: string;
+  amount: number;
+  observation?: string;
+}
+
 interface ArrivalChecklistProps {
-  packageId: string;
-  packageLabel: string;
-  packageStatus: string;
+  /** Paquete destino; vacío en modo «collect» (paquete aún no creado). */
+  packageId?: string;
+  packageLabel?: string;
+  packageStatus?: string;
   candidates: ArrivalCandidate[];
   truncated?: boolean;
   categories: CategoryChoice[];
   canWrite: boolean;
   onRegistered?: () => void;
+  /**
+   * Modo «collect»: no registra nada; entrega la selección al padre
+   * (p. ej. /packages/new, que crea el paquete y registra en una sola
+   * transacción). Oculta la barra de envío propia.
+   */
+  onCollect?: (items: ArrivalItemInput[]) => void;
 }
 
 /**
@@ -37,14 +50,15 @@ interface ArrivalChecklistProps {
  * por /packages/[id] y la fase «Paquetes» de /delivery/prepare.
  */
 export function ArrivalChecklist({
-  packageId,
-  packageLabel,
-  packageStatus,
+  packageId = '',
+  packageLabel = '',
+  packageStatus = 'Enviado',
   candidates,
   truncated,
   categories,
   canWrite,
   onRegistered,
+  onCollect,
 }: ArrivalChecklistProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -114,6 +128,18 @@ export function ArrivalChecklist({
     [rawSelection, groups]
   );
   const summary = useMemo(() => summarize(groups, selection), [groups, selection]);
+
+  const collected = useMemo(
+    () =>
+      pickedItems(selection).map((i) => ({
+        ...i,
+        observation: notes[i.productId]?.trim() || undefined,
+      })),
+    [selection, notes]
+  );
+  useEffect(() => {
+    onCollect?.(collected);
+  }, [collected, onCollect]);
 
   function register() {
     const items = pickedItems(selection).map((i) => ({
@@ -232,7 +258,7 @@ export function ArrivalChecklist({
         )}
       />
 
-      {writable && candidates.length > 0 ? (
+      {writable && !onCollect && candidates.length > 0 ? (
         <ChecklistSubmitBar
           title="Llegadas marcadas"
           summary={`${summary.items} producto${summary.items === 1 ? '' : 's'} · ${summary.units} unidad${summary.units === 1 ? '' : 'es'}`}

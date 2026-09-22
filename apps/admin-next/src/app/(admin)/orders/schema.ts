@@ -81,6 +81,38 @@ export const productFormSchema = z.object({
 
 export type ProductFormInput = z.infer<typeof productFormSchema>;
 
+/** Producto enviado como JSON desde /orders/new (varios a la vez). */
+export const productDraftSchema = z.object({
+  name: z.string().trim().min(1, 'El nombre es obligatorio').max(100, 'Máximo 100'),
+  shopId: z.string().min(1, 'Selecciona una tienda'),
+  categoryId: z.string().min(1, 'Selecciona una categoría'),
+  link: z.string().trim().max(200).optional().transform((v) => (v && v.length > 0 ? v : null)),
+  sku: z.string().trim().max(100).optional().transform((v) => (v && v.length > 0 ? v : null)),
+  description: z.string().trim().max(200).optional().transform((v) => (v && v.length > 0 ? v : null)),
+  amountRequested: z.number().int('Cantidad entera').min(1, 'Mínimo 1'),
+  shopCost: z.number().min(0, 'Debe ser ≥ 0'),
+  shopDeliveryCost: z.number().min(0).default(0),
+  shopTaxes: z.number().min(0).max(100).default(0),
+  chargeIva: z.boolean().default(true),
+  addedTaxes: z.number().min(0).default(0),
+  ownTaxes: z.number().min(0).default(0),
+});
+export type ProductDraftInput = z.input<typeof productDraftSchema>;
+
+export const orderWithProductsSchema = z.object({
+  clientId: z.string().min(1, 'Selecciona un cliente'),
+  salesManagerId: z.string().optional().transform((v) => (v && v.length > 0 ? v : null)),
+  observations: z.string().trim().max(2000).optional().transform((v) => (v && v.length > 0 ? v : null)),
+  products: z.array(productDraftSchema).min(1, 'Añade al menos un producto').max(200, 'Máximo 200 productos'),
+});
+export type OrderWithProductsInput = z.input<typeof orderWithProductsSchema>;
+
+export const addProductsSchema = z.object({
+  orderId: z.string().regex(/^\d{1,19}$/, 'Orden inválida'),
+  products: z.array(productDraftSchema).min(1, 'Añade al menos un producto').max(200),
+});
+export type AddProductsInput = z.input<typeof addProductsSchema>;
+
 export interface OrderRow {
   id: string;
   clientName: string;

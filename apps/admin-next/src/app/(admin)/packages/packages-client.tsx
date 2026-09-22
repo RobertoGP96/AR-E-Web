@@ -48,7 +48,6 @@ export function PackagesClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<PackageRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PackageRow | null>(null);
   function setParam(key: string, value: string | null) {
@@ -123,7 +122,7 @@ export function PackagesClient({
               <ClipboardList className="h-4 w-4" aria-hidden />
               Preparar entregas
             </Button>
-            <Button variant="primary" onPress={() => setCreateOpen(true)}>
+            <Button variant="primary" onPress={() => router.push('/packages/new')}>
               <Plus className="h-4 w-4" aria-hidden />
               Nuevo paquete
             </Button>
@@ -265,19 +264,6 @@ export function PackagesClient({
             ))
           )
         }
-      />
-
-      <PackageDialog
-        open={createOpen}
-        mode="create"
-        role={role}
-        onClose={() => setCreateOpen(false)}
-        onSuccess={() => {
-          setCreateOpen(false);
-          toast.success('Paquete creado', {
-            description: 'Marca qué productos llegaron en él para recibirlos.',
-          });
-        }}
       />
 
       <PackageDialog

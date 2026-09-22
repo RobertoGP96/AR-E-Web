@@ -23,8 +23,9 @@ import {
   packageFormSchema,
   packageStatusSchema,
   arrivalBatchSchema,
+  packageWithArrivalsSchema,
 } from './schema';
-import type { ArrivalBatchInput } from './schema';
+import type { ArrivalBatchInput, PackageWithArrivalsInput } from './schema';
 import type { BagSummary } from '@/lib/open-bags';
 
 export type { ActionResult } from '@/lib/action-helpers';
@@ -236,6 +237,121 @@ export async function deletePackageAction(id: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+
+type ArrivalItem = { productId: string; amount: number; observation?: string | null };
+
+/**
+ * Núcleo del lote de llegadas, reutilizado por registerArrivalsAction y
+ * por la creación de paquete con llegadas. Debe correr dentro de una
+ * transacción.
+ */
+async function registerArrivalsInTx(
+  tx: Prisma.TransactionClient,
+  pid: bigint,
+  items: ArrivalItem[]
+): Promise<
+  | { ok: true; bags: BagSummary[]; statusChanged: boolean }
+  | { ok: false; error: string }
+> {
+  const productIds = items.map((i) => i.productId);
+  const pkg = await tx.package.findUnique({
+    where: { id: pid },
+    select: { id: true, statusOfProcessing: true },
+  });
+  if (!pkg) return { ok: false, error: 'Paquete no encontrado' };
+  if (pkg.statusOfProcessing === 'Procesado') {
+    return {
+      ok: false,
+      error:
+        'La revisión de este paquete está cerrada; un administrador puede reabrirla',
+    };
+  }
+
+  const products = await tx.product.findMany({
+    where: { id: { in: productIds } },
+    select: {
+      id: true,
+      name: true,
+      amountPurchased: true,
+      amountReceived: true,
+      categoryId: true,
+      category: { select: { name: true } },
+      order: {
+        select: {
+          clientId: true,
+          client: { select: { name: true, lastName: true } },
+        },
+      },
+    },
+  });
+  const byId = new Map(products.map((p) => [p.id, p]));
+  for (const item of items) {
+    const p = byId.get(item.productId);
+    if (!p) return { ok: false, error: 'Producto no encontrado' };
+    const remaining = p.amountPurchased - p.amountReceived;
+    if (item.amount > remaining) {
+      return {
+        ok: false,
+        error: `Solo quedan ${Math.max(0, remaining)} unidad(es) de «${p.name}» compradas sin recibir`,
+      };
+    }
+    // La categoría decide en qué bolsa cae el producto (INV-002).
+    if (p.categoryId === null) {
+      return {
+        ok: false,
+        error: `«${p.name}» no tiene categoría asignada; asígnala desde el checklist antes de procesarlo`,
+      };
+    }
+  }
+
+  await tx.productReceived.createMany({
+    data: items.map((i) => ({
+      packageId: pid,
+      originalProductId: i.productId,
+      amountReceived: i.amount,
+      observation: i.observation ?? null,
+    })),
+  });
+
+  const bags = new Map<string, BagSummary>();
+  for (const item of items) {
+    const p = byId.get(item.productId)!;
+    const { bagId, created } = await addUnitsToOpenBag(tx, {
+      productId: item.productId,
+      clientId: p.order.clientId,
+      categoryId: p.categoryId!,
+      amount: item.amount,
+    });
+    const key = bagId.toString();
+    const entry = bags.get(key);
+    if (entry) {
+      entry.units += item.amount;
+      entry.created = entry.created || created;
+    } else {
+      bags.set(key, {
+        deliveryId: key,
+        clientName: `${p.order.client.name} ${p.order.client.lastName}`.trim(),
+        categoryName: p.category?.name ?? '',
+        units: item.amount,
+        created,
+      });
+    }
+  }
+
+  for (const item of items) {
+    await recomputeProductAmounts(item.productId, tx);
+  }
+  let statusChanged = false;
+  if (pkg.statusOfProcessing === 'Enviado') {
+    await tx.package.update({
+      where: { id: pid },
+      data: { statusOfProcessing: 'Recibido' },
+    });
+    statusChanged = true;
+  }
+  return { ok: true, bags: [...bags.values()], statusChanged };
+}
+
 /**
  * Lote de llegadas de un paquete: N filas de ProductReceived, cada
  * unidad cae en la bolsa abierta de su cliente+categoría (creándola si
@@ -266,105 +382,7 @@ export async function registerArrivalsAction(
   }
 
   const result = await prisma.$transaction(
-    async (tx) => {
-      const pkg = await tx.package.findUnique({
-        where: { id: pid },
-        select: { id: true, statusOfProcessing: true },
-      });
-      if (!pkg) return { ok: false as const, error: 'Paquete no encontrado' };
-      if (pkg.statusOfProcessing === 'Procesado') {
-        return {
-          ok: false as const,
-          error:
-            'La revisión de este paquete está cerrada; un administrador puede reabrirla',
-        };
-      }
-
-      const products = await tx.product.findMany({
-        where: { id: { in: productIds } },
-        select: {
-          id: true,
-          name: true,
-          amountPurchased: true,
-          amountReceived: true,
-          categoryId: true,
-          category: { select: { name: true } },
-          order: {
-            select: {
-              clientId: true,
-              client: { select: { name: true, lastName: true } },
-            },
-          },
-        },
-      });
-      const byId = new Map(products.map((p) => [p.id, p]));
-      for (const item of d.items) {
-        const p = byId.get(item.productId);
-        if (!p) return { ok: false as const, error: 'Producto no encontrado' };
-        const remaining = p.amountPurchased - p.amountReceived;
-        if (item.amount > remaining) {
-          return {
-            ok: false as const,
-            error: `Solo quedan ${Math.max(0, remaining)} unidad(es) de «${p.name}» compradas sin recibir`,
-          };
-        }
-        // La categoría decide en qué bolsa cae el producto (INV-002).
-        if (p.categoryId === null) {
-          return {
-            ok: false as const,
-            error: `«${p.name}» no tiene categoría asignada; asígnala desde el checklist antes de procesarlo`,
-          };
-        }
-      }
-
-      await tx.productReceived.createMany({
-        data: d.items.map((i) => ({
-          packageId: pid,
-          originalProductId: i.productId,
-          amountReceived: i.amount,
-          observation: i.observation ?? null,
-        })),
-      });
-
-      const bags = new Map<string, BagSummary>();
-      for (const item of d.items) {
-        const p = byId.get(item.productId)!;
-        const { bagId, created } = await addUnitsToOpenBag(tx, {
-          productId: item.productId,
-          clientId: p.order.clientId,
-          categoryId: p.categoryId!,
-          amount: item.amount,
-        });
-        const key = bagId.toString();
-        const entry = bags.get(key);
-        if (entry) {
-          entry.units += item.amount;
-          entry.created = entry.created || created;
-        } else {
-          bags.set(key, {
-            deliveryId: key,
-            clientName:
-              `${p.order.client.name} ${p.order.client.lastName}`.trim(),
-            categoryName: p.category?.name ?? '',
-            units: item.amount,
-            created,
-          });
-        }
-      }
-
-      for (const item of d.items) {
-        await recomputeProductAmounts(item.productId, tx);
-      }
-      let statusChanged = false;
-      if (pkg.statusOfProcessing === 'Enviado') {
-        await tx.package.update({
-          where: { id: pid },
-          data: { statusOfProcessing: 'Recibido' },
-        });
-        statusChanged = true;
-      }
-      return { ok: true as const, bags: [...bags.values()], statusChanged };
-    },
+    (tx) => registerArrivalsInTx(tx, pid, d.items),
     // Un lote grande recalcula muchos productos sobre el driver de
     // Neon; el timeout por defecto (5 s) se queda corto.
     { timeout: 60_000, maxWait: 10_000 }
@@ -448,5 +466,76 @@ export async function removeReceivedProductAction(
 
   if (!result.ok) return result;
   revalidateReceptionViews(packageId);
+  return result;
+}
+
+/** Error de validación del lote que fuerza el rollback de la transacción. */
+class ArrivalsError extends Error {}
+
+/**
+ * Alta de paquete con sus llegadas en la misma vista (/packages/new):
+ * crea el paquete y registra el lote en UNA transacción; si no hay
+ * llegadas marcadas, solo crea el paquete.
+ */
+export async function createPackageWithArrivalsAction(
+  input: PackageWithArrivalsInput
+): Promise<ArrivalsResult> {
+  const { denied } = await requireRole(ROLES.packages);
+  if (denied) return denied;
+
+  const parsed = packageWithArrivalsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? 'Datos inválidos',
+      fieldErrors: zodFieldErrors(parsed.error.issues),
+    };
+  }
+  const d = parsed.data;
+  const ids = d.items.map((i) => i.productId);
+  if (new Set(ids).size !== ids.length) {
+    return { ok: false, error: 'Hay productos repetidos en la selección' };
+  }
+
+  let result: { ok: true; id: string; bags: BagSummary[] };
+  try {
+    result = await prisma.$transaction(
+      async (tx) => {
+        const created = await tx.package.create({
+          data: {
+            agencyName: d.agencyName,
+            numberOfTracking: d.numberOfTracking,
+            statusOfProcessing:
+              d.alreadyArrived || d.items.length > 0 ? 'Recibido' : 'Enviado',
+            arrivalDate: new Date(d.arrivalDate),
+            packagePicture: d.packagePicture,
+          },
+          select: { id: true },
+        });
+        if (d.items.length === 0) {
+          return { ok: true as const, id: created.id.toString(), bags: [] };
+        }
+        const arrivals = await registerArrivalsInTx(tx, created.id, d.items);
+        if (!arrivals.ok) throw new ArrivalsError(arrivals.error);
+        return { ok: true as const, id: created.id.toString(), bags: arrivals.bags };
+      },
+      { timeout: 60_000, maxWait: 10_000 }
+    );
+  } catch (err) {
+    if (err instanceof ArrivalsError) return { ok: false, error: err.message };
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === 'P2002'
+    ) {
+      return {
+        ok: false,
+        error: 'Ya existe un paquete con ese número de tracking',
+        fieldErrors: { numberOfTracking: 'Ya existe' },
+      };
+    }
+    throw err;
+  }
+
+  revalidateReceptionViews(result.id);
   return result;
 }

@@ -69,7 +69,10 @@ export type DeliveryItemsInput = z.input<typeof deliveryItemsSchema>;
 export const assembleDeliverySchema = z.object({
   clientId: z.string().min(1, 'Selecciona un cliente'),
   items: deliveryItemsSchema,
-  weight: z.number().positive('El peso debe ser mayor que 0').optional(),
+  /** Peso por categoría (categoryId → lb) para cerrar esas bolsas en el mismo paso. */
+  weights: z
+    .record(z.string(), z.number().positive('El peso debe ser mayor que 0'))
+    .optional(),
 });
 export type AssembleDeliveryInput = z.input<typeof assembleDeliverySchema>;
 

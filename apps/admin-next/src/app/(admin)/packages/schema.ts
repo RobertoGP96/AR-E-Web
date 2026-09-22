@@ -64,6 +64,25 @@ export const arrivalBatchSchema = z.object({
 
 export type ArrivalBatchInput = z.input<typeof arrivalBatchSchema>;
 
+/** Alta de paquete con llegadas en la misma vista (/packages/new). */
+export const packageWithArrivalsSchema = z.object({
+  agencyName: z.string().trim().min(1, 'Obligatorio').max(100, 'Máximo 100'),
+  numberOfTracking: z.string().trim().min(1, 'Obligatorio').max(100, 'Máximo 100'),
+  arrivalDate: z
+    .string()
+    .min(1, 'Obligatoria')
+    .refine((s) => !Number.isNaN(Date.parse(s)), 'Fecha inválida'),
+  packagePicture: z
+    .string()
+    .trim()
+    .max(1000)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null)),
+  alreadyArrived: z.boolean().default(true),
+  items: arrivalBatchSchema.shape.items.min(0).max(500, 'Máximo 500 productos por lote'),
+});
+export type PackageWithArrivalsInput = z.input<typeof packageWithArrivalsSchema>;
+
 export interface PackageRow {
   id: string;
   agencyName: string;

@@ -23,7 +23,6 @@ import { Button, Tooltip } from '@heroui/react';
 import { DeliveryDialog } from './delivery-dialog';
 import { DeleteDeliveryDialog } from './delete-dialog';
 import { ConfirmDeliveryPaymentDialog } from './confirm-payment-dialog';
-import { AssembleDeliveryDialog } from './assemble-delivery-dialog';
 import { DeliveryActionsBar } from './delivery-actions-bar';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { DeliveryStatusBadge, PayStatusBadge } from '@/components/status-badges';
@@ -42,7 +41,6 @@ import {
 import {
   DELIVERY_PHASES,
   PAY_STATUSES,
-  type ClientOption,
   type DeliveryPhase,
   type DeliveryRow,
   type PayStatus,
@@ -50,7 +48,6 @@ import {
 
 interface DeliveryClientProps {
   initialRows: DeliveryRow[];
-  clientOptions: ClientOption[];
   role: string;
   /** Bolsas abiertas (fuera de la lista por defecto). */
   openBagCount: number;
@@ -65,7 +62,6 @@ interface DeliveryClientProps {
 
 export function DeliveryClient({
   initialRows,
-  clientOptions,
   role,
   openBagCount,
   initialFilters,
@@ -73,7 +69,6 @@ export function DeliveryClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [assembleOpen, setAssembleOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<DeliveryRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeliveryRow | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<DeliveryRow | null>(null);
@@ -245,7 +240,7 @@ export function DeliveryClient({
               ) : null}
             </Button>
             {canWrite ? (
-              <Button variant="primary" onPress={() => setAssembleOpen(true)}>
+              <Button variant="primary" onPress={() => router.push('/delivery/new')}>
                 <PackagePlus className="h-4 w-4" aria-hidden />
                 Armar entrega
               </Button>
@@ -453,12 +448,6 @@ export function DeliveryClient({
           </button>
         </p>
       ) : null}
-
-      <AssembleDeliveryDialog
-        open={assembleOpen}
-        clientOptions={clientOptions}
-        onClose={() => setAssembleOpen(false)}
-      />
 
       <DeliveryDialog
         open={editTarget !== null}

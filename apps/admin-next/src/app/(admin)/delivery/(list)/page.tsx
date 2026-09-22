@@ -12,7 +12,6 @@ import {
   fromDbDeliveryStatus,
   fromDbPayStatus,
   toDbPayStatus,
-  type ClientOption,
   type DbDeliveryStatus,
   type DbPayStatus,
   type DeliveryPhase,
@@ -88,7 +87,7 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
     ...((agentId !== null || search) && { client: clientWhere }),
   };
 
-  const [deliveries, clients, totalCount, openBags] = await Promise.all([
+  const [deliveries, totalCount, openBags] = await Promise.all([
     prisma.deliverReceip.findMany({
       where,
       include: {
@@ -106,15 +105,6 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
       orderBy: [{ deliverDate: 'desc' }, { id: 'desc' }],
       skip,
       take: perPage,
-    }),
-    prisma.customUser.findMany({
-      where: {
-        role: 'client',
-        ...(agentId !== null && { assignedAgentId: agentId }),
-      },
-      select: { id: true, name: true, lastName: true, phoneNumber: true },
-      orderBy: { name: 'asc' },
-      take: 1000,
     }),
     prisma.deliverReceip.count({ where }),
     prisma.deliverReceip.count({
@@ -148,17 +138,10 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
     agentProfit: d.client.assignedAgent?.agentProfit ?? 0,
   }));
 
-  const clientOptions: ClientOption[] = clients.map((c) => ({
-    id: c.id.toString(),
-    label: `${c.name} ${c.lastName}`.trim(),
-    phoneNumber: c.phoneNumber,
-  }));
-
   return (
     <>
       <DeliveryClient
         initialRows={rows}
-        clientOptions={clientOptions}
         role={role}
         openBagCount={openBags}
         initialFilters={{

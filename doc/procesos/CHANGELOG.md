@@ -36,3 +36,9 @@ Primera versión de la especificación como fuente única de verdad. Sustituye a
 Sin cambios de reglas. Actualización de `conformidad.md` tras implementar en admin-next las fases 1 a 4 del rediseño (compra desde productos pendientes, recepción unificada con máquina de estados de paquete, entregas con un solo camino y RN-011, endurecimiento transaccional y RN-012 derivada). Ver la sección «Actualización 2026-09-22» de la matriz.
 
 **Apps impactadas:** admin-next.
+
+## 1.0.2 — 2026-09-22
+
+Sin cambios de reglas. Altas con sus productos en la misma vista en admin-next: `/orders/new` (orden + productos en línea, `createOrderWithProductsAction`), `/packages/new` (paquete + llegadas, `createPackageWithArrivalsAction`), `/delivery/new` (entrega armada desde recibidos con peso por categoría, `assembleDeliveryAction` con `weights`). Los diálogos de creación de orden, paquete y entrega desaparecen; quedan los de edición. Procedimientos de agente y logístico actualizados.
+
+**Apps impactadas:** admin-next.

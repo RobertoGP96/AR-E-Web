@@ -68,7 +68,6 @@ export function OrdersClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<OrderRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<OrderRow | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<OrderRow | null>(null);
@@ -169,7 +168,7 @@ export function OrdersClient({
         title="Órdenes"
         subtitle="Gestión de todas las órdenes del sistema"
         actions={
-          <Button variant="primary" onPress={() => setCreateOpen(true)}>
+          <Button variant="primary" onPress={() => router.push('/orders/new')}>
             <Plus className="h-4 w-4" aria-hidden />
             Nueva orden
           </Button>
@@ -424,24 +423,6 @@ export function OrdersClient({
             ))
           )
         }
-      />
-
-      <OrderDialog
-        open={createOpen}
-        mode="create"
-        clientOptions={clientOptions}
-        managerOptions={managerOptions}
-        currentUser={currentUser}
-        onClose={() => setCreateOpen(false)}
-        onSuccess={(newId) => {
-          setCreateOpen(false);
-          toast.success('Orden creada', {
-            description: newId
-              ? `La orden #${newId} se creó correctamente; abriendo su detalle.`
-              : 'La nueva orden ya aparece en la lista.',
-          });
-          if (newId) router.push(`/orders/${newId}`);
-        }}
       />
 
       <OrderDialog

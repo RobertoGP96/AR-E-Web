@@ -115,9 +115,9 @@ export function ReviewPackagesStep({
           </p>
         </div>
         {canWrite ? (
-          <Button variant="primary" onPress={() => router.push('/packages')}>
+          <Button variant="primary" onPress={() => router.push('/packages/new')}>
             <Package className="h-4 w-4" aria-hidden />
-            Ir a paquetes
+            Registrar un paquete
           </Button>
         ) : null}
       </div>

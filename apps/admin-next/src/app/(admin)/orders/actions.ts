@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import {
   computeProductCost,
@@ -20,7 +21,12 @@ import {
 import {
   orderFormSchema,
   productFormSchema,
+  productDraftSchema,
+  orderWithProductsSchema,
+  addProductsSchema,
   toDbPayStatus,
+  type OrderWithProductsInput,
+  type AddProductsInput,
 } from './schema';
 
 export type { ActionResult } from '@/lib/action-helpers';
@@ -32,37 +38,40 @@ import type { ActionResult } from '@/lib/action-helpers';
  * mutation so the cached total stays correct. Runs as one transaction
  * so concurrent product edits cannot persist a stale total.
  */
-async function refreshOrderTotals(orderId: bigint): Promise<void> {
-  await prisma.$transaction(async (tx) => {
-    const products = await tx.product.findMany({
-      where: { orderId },
-      select: { totalCost: true },
-    });
-    const totalCosts = round2(
-      products.reduce((sum, p) => sum + p.totalCost, 0)
-    );
-    const order = await tx.order.findUnique({
-      where: { id: orderId },
-      select: {
-        receivedValueOfClient: true,
-        balanceApplied: true,
-        clientId: true,
-      },
-    });
-    if (!order) return;
-    const payStatus = computePayStatus(
-      totalCosts,
-      order.receivedValueOfClient,
-      order.balanceApplied
-    );
-    await tx.order.update({
-      where: { id: orderId },
-      data: { totalCosts, payStatus: toDbPayStatus(payStatus) },
-    });
-    // RN-012: añadir/quitar/editar productos puede cambiar el estado.
-    await recomputeOrderStatus(orderId, tx);
-    await recalculateClientBalance(order.clientId, tx);
+async function refreshOrderTotalsInTx(
+  tx: Prisma.TransactionClient,
+  orderId: bigint
+): Promise<void> {
+  const products = await tx.product.findMany({
+    where: { orderId },
+    select: { totalCost: true },
   });
+  const totalCosts = round2(products.reduce((sum, p) => sum + p.totalCost, 0));
+  const order = await tx.order.findUnique({
+    where: { id: orderId },
+    select: {
+      receivedValueOfClient: true,
+      balanceApplied: true,
+      clientId: true,
+    },
+  });
+  if (!order) return;
+  const payStatus = computePayStatus(
+    totalCosts,
+    order.receivedValueOfClient,
+    order.balanceApplied
+  );
+  await tx.order.update({
+    where: { id: orderId },
+    data: { totalCosts, payStatus: toDbPayStatus(payStatus) },
+  });
+  // RN-012: añadir/quitar/editar productos puede cambiar el estado.
+  await recomputeOrderStatus(orderId, tx);
+  await recalculateClientBalance(order.clientId, tx);
+}
+
+async function refreshOrderTotals(orderId: bigint): Promise<void> {
+  await prisma.$transaction((tx) => refreshOrderTotalsInTx(tx, orderId));
 }
 
 export async function createOrderAction(
@@ -475,5 +484,153 @@ export async function deleteProductAction(
   await refreshOrderTotals(oid);
   revalidatePath(`/orders/${orderId}`);
   revalidatePath('/orders');
+  return { ok: true };
+}
+
+/** Datos de producto listos para Prisma a partir de un borrador validado. */
+function productDataFromDraft(d: ProductDraftParsed) {
+  const shopId = parseId(d.shopId);
+  const categoryId = parseId(d.categoryId);
+  if (!shopId || !categoryId) return null;
+  const cost = computeProductCost({
+    shopCost: d.shopCost,
+    amountRequested: d.amountRequested,
+    shopDeliveryCost: d.shopDeliveryCost,
+    shopTaxes: d.shopTaxes,
+    chargeIva: d.chargeIva,
+    addedTaxes: d.addedTaxes,
+    ownTaxes: d.ownTaxes,
+  });
+  return {
+    name: d.name,
+    shopId,
+    categoryId,
+    link: d.link,
+    sku: d.sku,
+    description: d.description,
+    amountRequested: d.amountRequested,
+    shopCost: round2(d.shopCost),
+    shopDeliveryCost: round2(d.shopDeliveryCost),
+    shopTaxes: d.shopTaxes,
+    chargeIva: d.chargeIva,
+    baseTax: cost.baseTax,
+    shopTaxAmount: cost.shopTaxAmount,
+    ownTaxes: cost.ownTaxes,
+    addedTaxes: cost.addedTaxes,
+    totalCost: cost.totalCost,
+    status: deriveProductStatus(d.amountRequested, 0, 0, 0),
+  };
+}
+
+type ProductDraftParsed = z.output<typeof productDraftSchema>;
+
+/**
+ * Alta de orden con sus productos en la misma vista (/orders/new): una
+ * sola transacción crea la orden, todos los productos con su cascada
+ * de costos, el total y el balance del cliente.
+ */
+export async function createOrderWithProductsAction(
+  input: OrderWithProductsInput
+): Promise<ActionResult> {
+  const { denied, user } = await requireRole(ROLES.orders);
+  if (denied) return denied;
+
+  const parsed = orderWithProductsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? 'Datos inválidos',
+      fieldErrors: zodFieldErrors(parsed.error.issues),
+    };
+  }
+  const d = parsed.data;
+  const clientId = parseId(d.clientId);
+  if (!clientId) return { ok: false, error: 'Cliente inválido' };
+  const managerRaw = user.role === 'agent' ? user.id : d.salesManagerId;
+  const salesManagerId = managerRaw ? parseId(managerRaw) : null;
+  if (managerRaw && !salesManagerId) return { ok: false, error: 'Agente inválido' };
+
+  const rows = d.products.map(productDataFromDraft);
+  if (rows.some((r) => r === null)) {
+    return { ok: false, error: 'Tienda o categoría inválida en algún producto' };
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const client = await tx.customUser.findUnique({
+      where: { id: clientId },
+      select: { role: true },
+    });
+    if (!client || client.role !== 'client') {
+      return { ok: false as const, error: 'Cliente no encontrado' };
+    }
+    const order = await tx.order.create({
+      data: {
+        clientId,
+        salesManagerId,
+        status: 'Encargado',
+        observations: d.observations,
+        receivedValueOfClient: 0,
+        balanceApplied: 0,
+        payStatus: toDbPayStatus(computePayStatus(0, 0, 0)),
+      },
+      select: { id: true },
+    });
+    await tx.product.createMany({
+      data: rows.map((r) => ({ ...r!, orderId: order.id })),
+    });
+    await refreshOrderTotalsInTx(tx, order.id);
+    return { ok: true as const, id: order.id.toString() };
+  }, { timeout: 60_000, maxWait: 10_000 });
+
+  if (!result.ok) return result;
+  revalidatePath('/orders');
+  revalidatePath('/products');
+  revalidatePath('/purchases/new');
+  return { ok: true, id: result.id };
+}
+
+/** Añade varios productos a una orden existente (detalle de la orden). */
+export async function addProductsToOrderAction(
+  input: AddProductsInput
+): Promise<ActionResult> {
+  const { denied } = await requireRole(ROLES.orders);
+  if (denied) return denied;
+
+  const parsed = addProductsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? 'Datos inválidos',
+    };
+  }
+  const d = parsed.data;
+  const orderId = parseId(d.orderId);
+  if (!orderId) return { ok: false, error: 'Orden inválida' };
+  const rows = d.products.map(productDataFromDraft);
+  if (rows.some((r) => r === null)) {
+    return { ok: false, error: 'Tienda o categoría inválida en algún producto' };
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      select: { status: true },
+    });
+    if (!order) return { ok: false as const, error: 'Orden no encontrada' };
+    if (order.status === 'Cancelado') {
+      return { ok: false as const, error: 'La orden está cancelada' };
+    }
+    await tx.product.createMany({
+      data: rows.map((r) => ({ ...r!, orderId })),
+    });
+    await refreshOrderTotalsInTx(tx, orderId);
+    return { ok: true as const };
+  }, { timeout: 60_000, maxWait: 10_000 });
+
+  if (!result.ok) return result;
+  revalidatePath('/orders');
+  revalidatePath(`/orders/${d.orderId}`);
+  revalidatePath('/products');
+  revalidatePath('/purchases/new');
   return { ok: true };
 }

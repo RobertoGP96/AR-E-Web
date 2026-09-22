@@ -649,6 +649,15 @@ export function BagsStep({ groups, role, canWrite, onGoToPackages }: BagsStepPro
                       />
                       Recibido sin bolsa
                     </h3>
+                    {canWrite ? (
+                      <Link
+                        href={`/delivery/new?client=${selectedGroup.clientId}`}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                      >
+                        Armar entrega con estos
+                        <ExternalLink className="h-3 w-3" aria-hidden />
+                      </Link>
+                    ) : null}
                     {canWrite &&
                     selectedGroup.loose.some((p) => p.categoryId !== null) ? (
                       <Button

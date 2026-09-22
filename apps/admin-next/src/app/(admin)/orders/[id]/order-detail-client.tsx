@@ -19,6 +19,7 @@ import {
 import { toast } from '@/lib/toast';
 import { Button, Tooltip } from '@heroui/react';
 import { ProductDialog } from './product-dialog';
+import { AddProductsDialog } from './add-products-dialog';
 import { ProductDeleteDialog } from './product-delete-dialog';
 import { formatCurrency } from '@/lib/format';
 import {
@@ -197,7 +198,7 @@ export function OrderDetailClient({
           ) : null}
           <Button variant="primary" onPress={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden />
-            Añadir producto
+            Añadir productos
           </Button>
         </div>
       </div>
@@ -301,17 +302,16 @@ export function OrderDetailClient({
         }
       />
 
-      <ProductDialog
+      <AddProductsDialog
         open={createOpen}
-        mode="create"
         orderId={orderId}
         shopOptions={shopOptions}
         categoryOptions={categoryOptions}
         onClose={() => setCreateOpen(false)}
-        onSuccess={() => {
+        onSuccess={(count) => {
           setCreateOpen(false);
-          toast.success('Producto añadido', {
-            description: 'El producto se añadió a la orden correctamente.',
+          toast.success(count === 1 ? 'Producto añadido' : `${count} productos añadidos`, {
+            description: 'El total de la orden se recalculó.',
           });
         }}
       />

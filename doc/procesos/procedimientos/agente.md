@@ -9,12 +9,12 @@ Pantallas de admin-next: `/dashboard`, `/orders`, `/orders/[id]`, `/products`, `
 
 ## 2. Crear la orden
 
-1. `/orders` → "Nueva orden". Elige el cliente (solo verás tus clientes). El campo gestor se rellena contigo.
+1. `/orders` → "Nueva orden" abre `/orders/new`: elige el cliente (solo verás tus clientes; el gestor se rellena contigo) y añade todos los productos en la misma pantalla, con el costo calculado por fila y el total en la barra inferior. Un solo botón crea la orden con sus productos.
 2. Guarda. La orden nace `Encargado` / `No pagado` con costo 0.
 
 ## 3. Añadir productos
 
-En `/orders/[id]` → "Añadir producto", por cada artículo:
+Para añadir más productos después: `/orders/[id]` → "Añadir productos" (varios a la vez). Por cada artículo:
 
 1. Tienda, nombre, enlace, SKU, cantidad pedida (> 0).
 2. Precio unitario en la tienda, envío de la tienda (por línea), IVA activado o no, tarifa de tienda (%), impuestos adicionales y propios.

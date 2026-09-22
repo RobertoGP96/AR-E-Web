@@ -4,7 +4,7 @@ Pantallas de admin-next: `/packages`, `/packages/[id]`, `/delivery/prepare`, `/d
 
 ## 1. Registrar el paquete
 
-1. `/packages` → "Nuevo paquete": agencia, número de seguimiento, fecha estimada. Nace `Enviado`.
+1. `/packages` → "Nuevo paquete" abre `/packages/new`: agencia, número de seguimiento, fecha y, en la misma pantalla, el checklist de lo que llegó en el bulto. "Crear paquete y registrar llegadas" hace ambas cosas en una transacción (el paquete nace `Recibido`); sin llegadas marcadas nace `Enviado` o `Recibido` según la casilla "ya está en el almacén".
 2. Si ya lo tienes en el almacén, marca "Ya está en el almacén": nace `Recibido`.
 3. "Guardar y marcar llegadas" te lleva a `/delivery/prepare?package=<id>` con el paquete preseleccionado.
 
@@ -31,7 +31,7 @@ En `/delivery/prepare` fase 2 (o `/delivery` con el filtro "En preparación"):
 
 Para unidades recibidas que no están en ninguna bolsa (importaciones antiguas, unidades sacadas):
 
-1. `/delivery` → "Armar entrega desde recibidos" → elige cliente.
+1. `/delivery` → "Armar entrega" abre `/delivery/new` → elige cliente (también desde la mesa de bolsas con "Armar entrega con estos").
 2. Marca unidades por categoría; se crea una entrega (bolsa) por categoría.
 3. Indica el peso si ya lo tienes: la entrega nace pesada. Si no, queda "En preparación" y la pesas después.
 

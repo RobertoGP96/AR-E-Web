@@ -273,16 +273,11 @@ export async function assembleDeliveryAction(
   const result = await prisma.$transaction(async (tx) => {
     const filled = await fillBags(tx, d.items, clientId);
     if (!filled.ok) return filled;
-    if (d.weight !== undefined) {
-      if (filled.bagIds.length !== 1) {
-        return {
-          ok: false as const,
-          error:
-            'Para pesar en el mismo paso, los productos deben ser de una sola categoría (una bolsa)',
-        };
-      }
-      const bag = await tx.deliverReceip.findUnique({
-        where: { id: filled.bagIds[0] },
+    const weights = d.weights ?? {};
+    let closed = 0;
+    if (Object.keys(weights).length > 0) {
+      const bags = await tx.deliverReceip.findMany({
+        where: { id: { in: filled.bagIds } },
         select: {
           id: true,
           clientId: true,
@@ -291,9 +286,20 @@ export async function assembleDeliveryAction(
           balanceApplied: true,
         },
       });
-      if (bag) await closeBagWithWeight(tx, bag, d.weight);
+      for (const bag of bags) {
+        const w = bag.categoryId ? weights[bag.categoryId.toString()] : undefined;
+        if (w && w > 0) {
+          await closeBagWithWeight(tx, bag, w);
+          closed += 1;
+        }
+      }
     }
-    return { ok: true as const, bags: filled.bags, id: filled.bagIds[0]?.toString() };
+    return {
+      ok: true as const,
+      bags: filled.bags,
+      closed,
+      id: filled.bagIds.length === 1 ? filled.bagIds[0].toString() : undefined,
+    };
   }, TX_OPTIONS);
 
   if (!result.ok) return result;
