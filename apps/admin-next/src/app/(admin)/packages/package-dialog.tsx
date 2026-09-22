@@ -176,9 +176,7 @@ export function PackageDialog({
           </Button>
           {mode === 'create' ? (
             <>
-              <SubmitButton isPending={isPending} className="sm:order-none">
-                Guardar
-              </SubmitButton>
+              <SubmitButton isPending={isPending}>Guardar</SubmitButton>
               <Button
                 type="submit"
                 variant="primary"

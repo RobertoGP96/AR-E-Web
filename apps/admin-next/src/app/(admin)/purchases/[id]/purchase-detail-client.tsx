@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -70,6 +71,7 @@ export function PurchaseDetailClient({
   justCreated,
   fromOrderId,
 }: PurchaseDetailClientProps) {
+  const router = useRouter();
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [bannerOpen, setBannerOpen] = useState(justCreated);
@@ -164,7 +166,7 @@ export function PurchaseDetailClient({
               <Button
                 variant="primary"
                 size="sm"
-                onPress={() => (window.location.href = '/packages')}
+                onPress={() => router.push('/packages')}
               >
                 <Package className="h-4 w-4" aria-hidden />
                 Registrar paquete

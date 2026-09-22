@@ -173,7 +173,7 @@ export function ArrivalChecklist({
         emptyMessage="No hay productos comprados pendientes de llegar. Todo lo comprado ya fue marcado como recibido."
         searchPlaceholder="Buscar producto, cliente u orden…"
         toolbar={
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex">
             {shops.length > 1 ? (
               <Select
                 value={shopFilter}
@@ -182,7 +182,7 @@ export function ArrivalChecklist({
                   setPurchaseFilter('');
                 }}
                 aria-label="Filtrar por tienda"
-                className="w-40"
+                className="sm:w-44"
               >
                 <option value="">Todas las tiendas</option>
                 {shops.map(([id, name]) => (
@@ -197,7 +197,7 @@ export function ArrivalChecklist({
                 value={purchaseFilter}
                 onChange={(e) => setPurchaseFilter(e.target.value)}
                 aria-label="Filtrar por compra"
-                className="w-36"
+                className="sm:w-40"
               >
                 <option value="">Todas las compras</option>
                 {purchases.map((id) => (

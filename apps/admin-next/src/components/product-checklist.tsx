@@ -3,15 +3,8 @@
 import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import {
-  ChevronDown,
-  ExternalLink,
-  Minus,
-  Plus,
-  Search,
-} from 'lucide-react';
-import { Button, Checkbox } from '@heroui/react';
-import { TextInput } from '@/components/ui';
+import { ChevronDown, ExternalLink, Minus, Plus } from 'lucide-react';
+import { Button, Checkbox, SearchField } from '@heroui/react';
 import {
   filterGroups,
   groupState,
@@ -175,7 +168,10 @@ export function ProductChecklist({
             ) : null}
           </div>
 
-          <div className="ml-auto flex items-center gap-2" onClick={stop}>
+          <div
+            className="flex w-full items-center justify-between gap-2 sm:ml-auto sm:w-auto sm:justify-end"
+            onClick={stop}
+          >
             {itemAction ? itemAction(item) : null}
             {picked && !readOnly ? (
               <div className="flex items-center gap-1">
@@ -221,7 +217,7 @@ export function ProductChecklist({
           </div>
 
           {renderItemExtra && picked ? (
-            <div className="basis-full pl-8" onClick={stop}>
+            <div className="basis-full sm:pl-8" onClick={stop}>
               {renderItemExtra(item, qty)}
             </div>
           ) : null}
@@ -233,20 +229,19 @@ export function ProductChecklist({
   return (
     <div className={`space-y-3 ${className ?? ''}`}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-        <div className="relative flex-1">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
-            aria-hidden
-          />
-          <TextInput
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={searchPlaceholder}
-            aria-label={searchPlaceholder}
-            className="pl-9"
-          />
-        </div>
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          aria-label={searchPlaceholder}
+          fullWidth
+          className="flex-1"
+        >
+          <SearchField.Group className="w-full">
+            <SearchField.SearchIcon />
+            <SearchField.Input placeholder={searchPlaceholder} />
+            <SearchField.ClearButton aria-label="Limpiar búsqueda" />
+          </SearchField.Group>
+        </SearchField>
         {toolbar}
         {!readOnly && summary.items > 0 ? (
           <Button
