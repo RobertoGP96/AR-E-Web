@@ -55,6 +55,9 @@ export async function addUnitsToOpenBag(
   }
 ): Promise<{ bagId: bigint; created: boolean }> {
   let created = false;
+  // Dos sesiones que reciben a la vez para el mismo cliente+categoría
+  // no deben abrir dos bolsas: bloqueo de aviso por transacción.
+  await db.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`bag:${input.clientId}:${input.categoryId}`}))`;
   let bag = await db.deliverReceip.findFirst({
     where: {
       clientId: input.clientId,

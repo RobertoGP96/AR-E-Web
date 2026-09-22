@@ -6,6 +6,7 @@ import {
   deriveProductStatus,
   estimateBuyedCost,
   estimatePurchaseTotal,
+  deriveOrderStatus,
 } from './order-cost';
 
 describe('round2', () => {
@@ -152,5 +153,18 @@ describe('RN-004 estimateBuyedCost', () => {
         { product, units: 2 },
       ])
     ).toBe(86.62);
+  });
+});
+
+describe('RN-012 deriveOrderStatus', () => {
+  it('respects Cancelado and empty orders', () => {
+    expect(deriveOrderStatus('Cancelado', ['Entregado'])).toBe('Cancelado');
+    expect(deriveOrderStatus('Procesando', [])).toBe('Procesando');
+  });
+
+  it('derives Completado / Procesando / Encargado', () => {
+    expect(deriveOrderStatus('Encargado', ['Entregado', 'Entregado'])).toBe('Completado');
+    expect(deriveOrderStatus('Encargado', ['Entregado', 'Comprado'])).toBe('Procesando');
+    expect(deriveOrderStatus('Procesando', ['Encargado', 'Encargado'])).toBe('Encargado');
   });
 });

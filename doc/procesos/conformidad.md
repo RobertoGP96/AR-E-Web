@@ -77,3 +77,30 @@ Leyenda: ✅ cumple · ❌ no cumple (con identificador del bug del plan: B* Dja
 | C5-C8 | docs | condiciones de `Recibido`/`Entregado` y `pending_delivery`/`is_fully_delivered` definidas distinto en 3 docs | Resuelto por RN-010/RN-011; docs en `legacy/` |
 | C1/C2 | docs | cantidad no multiplica; IVA solo sobre precio | Resuelto por RN-001 |
 | C12 | docs | endpoint de entregas mal documentado | Resuelto en glosario/conformidad |
+
+## Actualización 2026-09-22 — fases 1 a 4 implementadas en admin-next
+
+Tras el rediseño (rama `claude/proceso-compra-paquete-entrega`), las celdas de **admin-next** de las tablas anteriores quedan así. Django, admin Vite y la app cliente no cambian.
+
+| Regla / invariante | Estado en admin-next | Dónde | Test |
+|---|---|---|---|
+| RN-004 estimación de compra parcial | ✅ | `src/lib/order-cost.ts` `estimateBuyedCost`, `estimatePurchaseTotal`; `/purchases/new` y `addPurchaseItemsAction` | `order-cost.test.ts` |
+| RN-011 solo cuentan entregas `Entregado` | ✅ | `src/lib/product-status.ts` `deriveAmounts` (agregado `deliveredFinal`); `transitionDeliveryStatusAction` recomputa los productos de la entrega; chip «En entrega ×n» | `product-status.test.ts`, `spec-cases.test.ts` |
+| RN-012 estado de orden derivado | ✅ | `src/lib/order-cost.ts` `deriveOrderStatus`; `recomputeOrderStatus` se ejecuta tras cada recompute de producto y en `refreshOrderTotals` (corrige el equivalente a B26); `Cancelado` se respeta | `order-cost.test.ts` |
+| INV-001 (quitar/reembolsar compra) | ✅ | `src/lib/purchase-rules.ts` `canRemoveBuyed`, `canRefund`; actions en transacción | `purchase-rules.test.ts` |
+| INV-002 categoría obligatoria | ✅ | `AssignCategoryPopover` + `assignProductCategoryAction` desbloquean productos sin categoría desde el checklist de llegadas | — |
+| INV-003 bolsa = Pendiente peso 0 | ✅ | `deleteBagIfEmpty` en todos los caminos (`adjustBagItemAction`, `removeDeliveredProductAction`, `deleteDeliveryAction` vacía la bolsa); `pg_advisory_xact_lock` en `addUnitsToOpenBag` evita bolsas duplicadas; bolsas fuera de `/delivery`, dashboards y balance por rango | `open-bags.test.ts` |
+| INV-004 no re-pesar salvo admin | ✅ | `registerBagWeightAction` exige fase «En preparación»; `correctDeliveryWeightAction` solo admin | — |
+| INV-005 producto de su tienda / su cliente | ✅ | `validateBatch` en compras; `fillBags` y `addProductsToDeliveryAction` en entregas | — |
+| INV-006 transiciones explícitas | ✅ | `src/lib/package-status.ts`, `src/lib/delivery-status.ts`; sin select libre de estado en paquetes ni entregas | `package-status.test.ts`, `delivery-status.test.ts` |
+| ES-paquete | ✅ | `transitionPackageStatusAction`; `Enviado→Recibido` automático en `registerArrivalsAction` | `package-status.test.ts` |
+| ES-entrega | ✅ | `transitionDeliveryStatusAction` (despachar, entregar con fecha real y foto, fallida, reintentar, devolver, reabrir admin) | `delivery-status.test.ts` |
+| N2 borrados con hijos | ✅ | Compras, paquetes, entregas y órdenes borran hijos explícitamente o bloquean con mensaje claro | — |
+| N3 importados sin categoría | ✅ (mitigado) | asignación rápida de categoría en recepción; la importación sigue sin pedir categoría | — |
+| N5 escrituras no atómicas | ✅ | todas las actions de compras, paquetes, entregas y órdenes en `$transaction` | — |
+| N7 bolsas en contadores | ✅ | `logistical/admin/agent-dashboard.tsx`, `balance/actions.ts`, `/delivery` por defecto | — |
+| N9 agente en fase 1 | ✅ | `loadArrivalCandidates({ agentId })`; paquetes filtrados a los que tienen recepciones de sus clientes | — |
+| N10 `deliverDate` | ✅ | «Marcar entregada» fija la fecha real | — |
+| Mantenimiento | ✅ | Configuración → Sistema → «Recalcular estados de productos» (`recomputeAllProductsAction`) | — |
+
+Pendiente en admin-next: informe de invariantes sobre la BD en `/settings/system` (solo hay recompute), paridad de RN-011/RN-012 en Django (deuda ADR-0001/ADR-0005).

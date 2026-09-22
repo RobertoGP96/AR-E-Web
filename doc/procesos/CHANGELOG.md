@@ -30,3 +30,9 @@ Primera versión de la especificación como fuente única de verdad. Sustituye a
 - `conformidad.md` registra el estado inicial: las reglas nuevas (RN-011, ES-paquete, ES-entrega, INV-004, INV-006) y varios invariantes no se cumplen todavía en admin-next; se corrigen en las fases 1 a 4 del plan de rediseño. Django, admin Vite y la app cliente mantienen los bugs B1–B33 y contradicciones C1–C18 documentados.
 
 **Apps impactadas:** admin-next (fases 1–4), documentación de todas las apps (`doc/apps/*.md` enlazan aquí). Sin cambios de comportamiento en Django, admin Vite ni app cliente en esta versión.
+
+## 1.0.1 — 2026-09-22
+
+Sin cambios de reglas. Actualización de `conformidad.md` tras implementar en admin-next las fases 1 a 4 del rediseño (compra desde productos pendientes, recepción unificada con máquina de estados de paquete, entregas con un solo camino y RN-011, endurecimiento transaccional y RN-012 derivada). Ver la sección «Actualización 2026-09-22» de la matriz.
+
+**Apps impactadas:** admin-next.

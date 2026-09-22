@@ -1,6 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
-import { deriveProductStatus, type ProductStatus } from '@/lib/order-cost';
+import {
+  deriveOrderStatus,
+  deriveProductStatus,
+  type ProductStatus,
+} from '@/lib/order-cost';
 
 type Db = Prisma.TransactionClient;
 
@@ -80,7 +84,7 @@ export async function recomputeProductAmounts(
       }),
       db.product.findUnique({
         where: { id: productId },
-        select: { amountRequested: true },
+        select: { amountRequested: true, orderId: true },
       }),
     ]);
 
@@ -96,12 +100,29 @@ export async function recomputeProductAmounts(
     });
 
     await db.product.update({ where: { id: productId }, data: next });
+    await recomputeOrderStatus(product.orderId, db);
   };
 
   if (tx) {
     await run(tx);
   } else {
     await prisma.$transaction(run);
+  }
+}
+
+/** RN-012: estado de la orden derivado del de sus productos (Cancelado se respeta). */
+export async function recomputeOrderStatus(orderId: bigint, db: Db): Promise<void> {
+  const order = await db.order.findUnique({
+    where: { id: orderId },
+    select: { status: true, products: { select: { status: true } } },
+  });
+  if (!order) return;
+  const next = deriveOrderStatus(
+    order.status,
+    order.products.map((p) => p.status)
+  );
+  if (next !== order.status) {
+    await db.order.update({ where: { id: orderId }, data: { status: next } });
   }
 }
 
@@ -194,6 +215,21 @@ export async function recomputeAllProductStatuses(
       updates
         .slice(i, i + batch)
         .map((u) => db.product.update({ where: { id: u.id }, data: u.data }))
+    );
+  }
+  // RN-012: órdenes derivadas de los estados recién escritos.
+  const orders = await db.order.findMany({
+    where: { status: { not: 'Cancelado' } },
+    select: { id: true, status: true, products: { select: { status: true } } },
+  });
+  const orderUpdates = orders
+    .map((o) => ({ id: o.id, next: deriveOrderStatus(o.status, o.products.map((p) => p.status)) , cur: o.status }))
+    .filter((o) => o.next !== o.cur);
+  for (let i = 0; i < orderUpdates.length; i += batch) {
+    await Promise.all(
+      orderUpdates
+        .slice(i, i + batch)
+        .map((o) => db.order.update({ where: { id: o.id }, data: { status: o.next } }))
     );
   }
   return counts;

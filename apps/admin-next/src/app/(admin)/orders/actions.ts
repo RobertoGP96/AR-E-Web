@@ -10,6 +10,7 @@ import {
   round2,
 } from '@/lib/order-cost';
 import { recalculateClientBalance } from '@/lib/balance';
+import { recomputeOrderStatus } from '@/lib/product-status';
 import {
   requireRole,
   zodFieldErrors,
@@ -58,6 +59,8 @@ async function refreshOrderTotals(orderId: bigint): Promise<void> {
       where: { id: orderId },
       data: { totalCosts, payStatus: toDbPayStatus(payStatus) },
     });
+    // RN-012: añadir/quitar/editar productos puede cambiar el estado.
+    await recomputeOrderStatus(orderId, tx);
     await recalculateClientBalance(order.clientId, tx);
   });
 }
@@ -93,18 +96,22 @@ export async function createOrderAction(
     return { ok: false, error: 'Invalid sales manager id' };
   }
 
-  const order = await prisma.order.create({
-    data: {
-      clientId,
-      salesManagerId,
-      status: d.status,
-      observations: d.observations,
-      receivedValueOfClient: 0,
-      balanceApplied: 0,
-      payStatus: toDbPayStatus(computePayStatus(0, 0, 0)),
-    },
+  const order = await prisma.$transaction(async (tx) => {
+    const created = await tx.order.create({
+      data: {
+        clientId,
+        salesManagerId,
+        status: d.status,
+        observations: d.observations,
+        receivedValueOfClient: 0,
+        balanceApplied: 0,
+        payStatus: toDbPayStatus(computePayStatus(0, 0, 0)),
+      },
+      select: { id: true },
+    });
+    await recalculateClientBalance(clientId, tx);
+    return created;
   });
-  await recalculateClientBalance(clientId);
 
   revalidatePath('/orders');
   return { ok: true, id: order.id.toString() };
@@ -144,29 +151,36 @@ export async function updateOrderAction(
     return { ok: false, error: 'Invalid sales manager id' };
   }
 
-  const existing = await prisma.order.findUnique({
-    where: { id: orderId },
-    select: { totalCosts: true, clientId: true },
-  });
-  if (!existing) return { ok: false, error: 'Order not found' };
+  const result = await prisma.$transaction(async (tx) => {
+    const existing = await tx.order.findUnique({
+      where: { id: orderId },
+      select: { totalCosts: true, clientId: true },
+    });
+    if (!existing) return { ok: false as const, error: 'Orden no encontrada' };
 
-  // receivedValueOfClient / balanceApplied / payStatus no se tocan
-  // aquí: los pagos se registran con confirmOrderPaymentAction.
-  await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      clientId,
-      salesManagerId,
-      status: d.status,
-      observations: d.observations,
-    },
-  });
+    // receivedValueOfClient / balanceApplied / payStatus no se tocan
+    // aquí: los pagos se registran con confirmOrderPaymentAction.
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        clientId,
+        salesManagerId,
+        status: d.status,
+        observations: d.observations,
+      },
+    });
+    // El estado manual solo vale para cancelar/reactivar; el resto se
+    // deriva de los productos (RN-012).
+    await recomputeOrderStatus(orderId, tx);
 
-  // Client may have changed — recalc both old and new.
-  await recalculateClientBalance(existing.clientId);
-  if (existing.clientId !== clientId) {
-    await recalculateClientBalance(clientId);
-  }
+    // Client may have changed — recalc both old and new.
+    await recalculateClientBalance(existing.clientId, tx);
+    if (existing.clientId !== clientId) {
+      await recalculateClientBalance(clientId, tx);
+    }
+    return { ok: true as const };
+  });
+  if (!result.ok) return result;
 
   revalidatePath('/orders');
   revalidatePath(`/orders/${orderId.toString()}`);
@@ -254,30 +268,43 @@ export async function deleteOrderAction(id: string): Promise<ActionResult> {
   if (denied) return denied;
 
   const orderId = parseId(id);
-  if (!orderId) return { ok: false, error: 'Invalid order id' };
-  const existing = await prisma.order.findUnique({
-    where: { id: orderId },
-    select: { clientId: true },
-  });
-  if (!existing) return { ok: false, error: 'Order not found' };
+  if (!orderId) return { ok: false, error: 'Identificador inválido' };
 
-  try {
-    await prisma.order.delete({ where: { id: orderId } });
-  } catch (err) {
-    if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
-      err.code === 'P2003'
-    ) {
+  // Las FK de la BD (de Django) no tienen cascada: los productos se
+  // borran explícitamente, y solo si ninguno tiene compras, recepciones
+  // o entregas.
+  const result = await prisma.$transaction(async (tx) => {
+    const existing = await tx.order.findUnique({
+      where: { id: orderId },
+      select: {
+        clientId: true,
+        products: {
+          select: {
+            name: true,
+            _count: { select: { buys: true, receiveds: true, delivers: true } },
+          },
+        },
+      },
+    });
+    if (!existing) return { ok: false as const, error: 'Orden no encontrada' };
+    const busy = existing.products.find(
+      (p) => p._count.buys + p._count.receiveds + p._count.delivers > 0
+    );
+    if (busy) {
       return {
-        ok: false,
-        error: 'Cannot delete: order has linked purchases or deliveries',
+        ok: false as const,
+        error: `No se puede eliminar: «${busy.name}» tiene compras, recepciones o entregas. Cancela la orden en su lugar.`,
       };
     }
-    throw err;
-  }
-  await recalculateClientBalance(existing.clientId);
+    await tx.product.deleteMany({ where: { orderId } });
+    await tx.order.delete({ where: { id: orderId } });
+    await recalculateClientBalance(existing.clientId, tx);
+    return { ok: true as const };
+  });
+  if (!result.ok) return result;
 
   revalidatePath('/orders');
+  revalidatePath('/products');
   return { ok: true };
 }
 
@@ -438,7 +465,7 @@ export async function deleteProductAction(
         return {
           ok: false,
           error:
-            'Cannot delete: product has linked purchases, receptions, or deliveries',
+            'No se puede eliminar: el producto tiene compras, recepciones o entregas',
         };
       }
     }
