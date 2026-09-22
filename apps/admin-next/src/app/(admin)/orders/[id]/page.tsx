@@ -1,5 +1,9 @@
 import { notFound } from 'next/navigation';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { ROLES } from '@/lib/roles';
+import { loadInTransitUnits } from '@/lib/product-status';
+import { loadPendingShopsOfOrder } from '../../purchases/queries';
 import { OrderDetailClient } from './order-detail-client';
 import {
   fromDbPayStatus,
@@ -22,7 +26,12 @@ export default async function OrderDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const [order, shops, categories] = await Promise.all([
+  const session = await auth();
+  const canPurchase = (ROLES.purchases as readonly string[]).includes(
+    session?.user?.role ?? ''
+  );
+
+  const [order, shops, categories, purchaseTargets] = await Promise.all([
     prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -46,9 +55,12 @@ export default async function OrderDetailPage({ params }: PageProps) {
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),
+    canPurchase ? loadPendingShopsOfOrder(orderId) : Promise.resolve([]),
   ]);
 
   if (!order) notFound();
+
+  const inTransit = await loadInTransitUnits(order.products.map((p) => p.id));
 
   const products: ProductRow[] = order.products.map((p) => ({
     id: p.id,
@@ -64,6 +76,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
     amountPurchased: p.amountPurchased,
     amountReceived: p.amountReceived,
     amountDelivered: p.amountDelivered,
+    inTransit: inTransit.get(p.id) ?? 0,
     status: p.status,
     shopCost: p.shopCost,
     shopDeliveryCost: p.shopDeliveryCost,
@@ -105,6 +118,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
       products={products}
       shopOptions={shopOptions}
       categoryOptions={categoryOptions}
+      purchaseTargets={order.status === 'Cancelado' ? [] : purchaseTargets}
     />
   );
 }

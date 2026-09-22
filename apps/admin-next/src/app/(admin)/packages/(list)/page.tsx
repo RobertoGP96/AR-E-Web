@@ -1,3 +1,4 @@
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { PackagesClient } from '../packages-client';
 import { TablePagination } from '@/components/table-pagination';
@@ -37,6 +38,7 @@ export default async function PackagesPage({ searchParams }: PageProps) {
   const [packages, totalCount] = await Promise.all([
     prisma.package.findMany({
       where,
+      include: { _count: { select: { packageProducts: true } } },
       orderBy: [{ arrivalDate: 'desc' }, { id: 'desc' }],
       skip,
       take: perPage,
@@ -53,7 +55,10 @@ export default async function PackagesPage({ searchParams }: PageProps) {
     packagePicture: p.packagePicture,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
+    receptionCount: p._count.packageProducts,
   }));
+  const session = await auth();
+  const role = session?.user?.role ?? '';
 
   return (
     <>
@@ -61,6 +66,7 @@ export default async function PackagesPage({ searchParams }: PageProps) {
         initialRows={rows}
         initialQuery={search}
         initialStatus={statusFilter}
+        role={role}
       />
       <TablePagination page={page} perPage={perPage} total={totalCount} />
     </>

@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { loadInTransitUnits } from '@/lib/product-status';
 import { ProductsClient } from './products-client';
 import { TablePagination } from '@/components/table-pagination';
 import { parsePagination } from '@/lib/pagination';
@@ -150,6 +151,8 @@ export default async function ProductsPage({ searchParams }: PageProps) {
     prisma.product.count({ where }),
   ]);
 
+  const inTransit = await loadInTransitUnits(products.map((p) => p.id));
+
   // Límites globales del slider de precio (no dependen de los filtros
   // activos para que el rango no "salte" al filtrar).
   const priceBounds = {
@@ -173,6 +176,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
         amountPurchased: p.amountPurchased,
         amountReceived: p.amountReceived,
         amountDelivered: p.amountDelivered,
+        inTransit: inTransit.get(p.id) ?? 0,
         totalCost: p.totalCost,
         link: p.link,
       }))}

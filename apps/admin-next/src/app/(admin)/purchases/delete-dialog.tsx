@@ -28,9 +28,12 @@ export function DeletePurchaseDialog({
             <strong className="text-foreground">
               {formatCurrency(purchase.totalCostOfPurchase)}
             </strong>{' '}
-            en {purchase.shopName} ({formatDate(purchase.buyDate)}). La
-            eliminación fallará si tiene productos comprados vinculados. Esta
-            acción no se puede deshacer.
+            en {purchase.shopName} ({formatDate(purchase.buyDate)}) junto con
+            sus {purchase.productCount} producto
+            {purchase.productCount === 1 ? '' : 's'} comprado
+            {purchase.productCount === 1 ? '' : 's'}, y se recalculará el
+            estado de cada producto. Se bloqueará si alguna unidad ya fue
+            recibida. Esta acción no se puede deshacer.
           </>
         ) : null
       }

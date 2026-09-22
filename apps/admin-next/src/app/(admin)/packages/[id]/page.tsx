@@ -1,6 +1,14 @@
 import { notFound } from 'next/navigation';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { parseId } from '@/lib/action-helpers';
+import { ROLES } from '@/lib/roles';
 import { PackageDetailClient } from './package-detail-client';
+import {
+  loadArrivalCandidates,
+  loadCategoryChoices,
+  loadReceptions,
+} from '../queries';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -15,77 +23,40 @@ export default async function PackageDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const pkg = await prisma.package.findUnique({
-    where: { id: packageId },
-    include: {
-      packageProducts: {
-        include: {
-          originalProduct: {
-            select: {
-              name: true,
-              order: {
-                select: {
-                  id: true,
-                  client: { select: { name: true, lastName: true } },
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: 'asc' },
-      },
-    },
-  });
+  const session = await auth();
+  const role = session?.user?.role ?? '';
+  const canWrite = (ROLES.packages as readonly string[]).includes(role);
+  const agentId = role === 'agent' ? parseId(session?.user?.id ?? '') : null;
+
+  const pkg = await prisma.package.findUnique({ where: { id: packageId } });
   if (!pkg) notFound();
 
-  // Candidate products: purchased units that have not been received yet
-  // (in any package — reception is what moves them to "Recibido").
-  const candidateProducts = await prisma.product.findMany({
-    where: { amountPurchased: { gt: 0 } },
-    select: {
-      id: true,
-      name: true,
-      amountPurchased: true,
-      amountReceived: true,
-      order: {
-        select: {
-          clientId: true,
-          client: { select: { name: true, lastName: true } },
-        },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 500,
-  });
+  const [receptions, arrivals, categories] = await Promise.all([
+    loadReceptions([packageId]),
+    loadArrivalCandidates({ agentId }),
+    loadCategoryChoices(),
+  ]);
 
   return (
     <PackageDetailClient
-      packageId={pkg.id.toString()}
-      header={{
-        agencyName: pkg.agencyName,
-        numberOfTracking: pkg.numberOfTracking,
+      role={role}
+      canWrite={canWrite}
+      pkg={{
+        id: pkg.id.toString(),
+        agency: pkg.agencyName,
+        tracking: pkg.numberOfTracking,
         status: pkg.statusOfProcessing,
         arrivalDate: pkg.arrivalDate.toISOString(),
         packagePicture: pkg.packagePicture,
+        receptions: receptions.get(pkg.id.toString()) ?? [],
+        unitsMarked: (receptions.get(pkg.id.toString()) ?? []).reduce(
+          (s, r) => s + r.amount,
+          0
+        ),
       }}
-      receivedProducts={pkg.packageProducts.map((rp) => ({
-        id: rp.id.toString(),
-        productName: rp.originalProduct.name,
-        clientName:
-          `${rp.originalProduct.order.client.name} ${rp.originalProduct.order.client.lastName}`.trim(),
-        amountReceived: rp.amountReceived,
-        observation: rp.observation,
-      }))}
-      candidates={candidateProducts
-        .map((p) => ({
-          id: p.id,
-          name: p.name,
-          clientId: p.order.clientId.toString(),
-          clientName:
-            `${p.order.client.name} ${p.order.client.lastName}`.trim(),
-          remaining: p.amountPurchased - p.amountReceived,
-        }))
-        .filter((p) => p.remaining > 0)}
+      candidates={arrivals.candidates}
+      truncated={arrivals.truncated}
+      categories={categories}
     />
   );
 }

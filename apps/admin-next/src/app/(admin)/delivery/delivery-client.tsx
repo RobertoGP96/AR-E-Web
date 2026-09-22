@@ -4,13 +4,14 @@ import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Plus,
   Pencil,
   Trash2,
   Truck,
   ClipboardList,
   DollarSign,
   ExternalLink,
+  PackagePlus,
+  ShoppingBag,
   Tag,
   Weight,
   TrendingUp,
@@ -22,6 +23,7 @@ import { Button, Tooltip } from '@heroui/react';
 import { DeliveryDialog } from './delivery-dialog';
 import { DeleteDeliveryDialog } from './delete-dialog';
 import { ConfirmDeliveryPaymentDialog } from './confirm-payment-dialog';
+import { DeliveryActionsBar } from './delivery-actions-bar';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { DeliveryStatusBadge, PayStatusBadge } from '@/components/status-badges';
 import { PictureHover } from '@/components/picture-hover';
@@ -37,22 +39,21 @@ import {
   TableEmpty,
 } from '@/components/ui';
 import {
-  DELIVERY_STATUSES,
+  DELIVERY_PHASES,
   PAY_STATUSES,
-  type CategoryOption,
-  type ClientOption,
+  type DeliveryPhase,
   type DeliveryRow,
-  type DeliveryStatus,
   type PayStatus,
 } from './schema';
 
 interface DeliveryClientProps {
   initialRows: DeliveryRow[];
-  clientOptions: ClientOption[];
-  categoryOptions: CategoryOption[];
+  role: string;
+  /** Bolsas abiertas (fuera de la lista por defecto). */
+  openBagCount: number;
   initialFilters: {
     q: string;
-    status: DeliveryStatus | null;
+    status: DeliveryPhase | null;
     pay: PayStatus | null;
     from: string | null;
     to: string | null;
@@ -61,14 +62,13 @@ interface DeliveryClientProps {
 
 export function DeliveryClient({
   initialRows,
-  clientOptions,
-  categoryOptions,
+  role,
+  openBagCount,
   initialFilters,
 }: DeliveryClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<DeliveryRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeliveryRow | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<DeliveryRow | null>(null);
@@ -76,6 +76,8 @@ export function DeliveryClient({
   // no dependa del roundtrip al servidor que actualiza initialFilters.
   const [fromValue, setFromValue] = useState(initialFilters.from ?? '');
   const [toValue, setToValue] = useState(initialFilters.to ?? '');
+
+  const canWrite = role === 'admin' || role === 'logistical';
 
   function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -88,9 +90,15 @@ export function DeliveryClient({
   }
 
   function openPayment(row: DeliveryRow) {
+    if (row.phase === 'En preparación') {
+      toast.info('Bolsa sin pesar', {
+        description: 'Pesa la bolsa en «Preparar entregas» antes de cobrarla.',
+      });
+      return;
+    }
     if (row.paymentStatus === 'Pagado') {
       toast.info(`Entrega #${row.id} ya pagada`, {
-        description: `La entrega de ${row.clientName} ya está marcada como Pagada; no hay nada pendiente por cobrar.`,
+        description: `La entrega de ${row.clientName} ya está marcada como Pagada.`,
       });
       return;
     }
@@ -99,23 +107,25 @@ export function DeliveryClient({
 
   const rowActions = (row: DeliveryRow) => (
     <>
-      <Tooltip delay={500}>
-        <Button
-          variant="ghost"
-          size="sm"
-          isIconOnly
-          aria-label="Confirmar pago"
-          onPress={() => openPayment(row)}
-          className={
-            row.paymentStatus === 'Pagado'
-              ? 'text-muted/40'
-              : 'text-success-soft-foreground hover:bg-success-soft'
-          }
-        >
-          <DollarSign className="h-4 w-4" aria-hidden />
-        </Button>
-        <Tooltip.Content>Confirmar pago</Tooltip.Content>
-      </Tooltip>
+      {canWrite ? (
+        <Tooltip delay={500}>
+          <Button
+            variant="ghost"
+            size="sm"
+            isIconOnly
+            aria-label="Confirmar pago"
+            onPress={() => openPayment(row)}
+            className={
+              row.paymentStatus === 'Pagado' || row.phase === 'En preparación'
+                ? 'text-muted/40'
+                : 'text-success-soft-foreground hover:bg-success-soft'
+            }
+          >
+            <DollarSign className="h-4 w-4" aria-hidden />
+          </Button>
+          <Tooltip.Content>Confirmar pago</Tooltip.Content>
+        </Tooltip>
+      ) : null}
       <Tooltip delay={500}>
         <Button
           variant="ghost"
@@ -128,53 +138,113 @@ export function DeliveryClient({
         </Button>
         <Tooltip.Content>Ver detalles</Tooltip.Content>
       </Tooltip>
-      <Tooltip delay={500}>
-        <Button
-          variant="ghost"
-          size="sm"
-          isIconOnly
-          aria-label="Editar entrega"
-          onPress={() => setEditTarget(row)}
-        >
-          <Pencil className="h-4 w-4" aria-hidden />
-        </Button>
-        <Tooltip.Content>Editar</Tooltip.Content>
-      </Tooltip>
-      <Tooltip delay={500}>
-        <Button
-          variant="ghost"
-          size="sm"
-          isIconOnly
-          aria-label="Eliminar entrega"
-          onPress={() => setDeleteTarget(row)}
-          className="hover:bg-danger-soft hover:text-danger"
-        >
-          <Trash2 className="h-4 w-4" aria-hidden />
-        </Button>
-        <Tooltip.Content>Eliminar</Tooltip.Content>
-      </Tooltip>
+      {canWrite ? (
+        <>
+          <Tooltip delay={500}>
+            <Button
+              variant="ghost"
+              size="sm"
+              isIconOnly
+              aria-label="Editar entrega"
+              onPress={() => setEditTarget(row)}
+            >
+              <Pencil className="h-4 w-4" aria-hidden />
+            </Button>
+            <Tooltip.Content>Editar fecha o foto</Tooltip.Content>
+          </Tooltip>
+          <Tooltip delay={500}>
+            <Button
+              variant="ghost"
+              size="sm"
+              isIconOnly
+              aria-label="Eliminar entrega"
+              onPress={() => setDeleteTarget(row)}
+              className="hover:bg-danger-soft hover:text-danger"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden />
+            </Button>
+            <Tooltip.Content>Eliminar</Tooltip.Content>
+          </Tooltip>
+        </>
+      ) : null}
     </>
   );
+
+  const phaseActions = (row: DeliveryRow) =>
+    canWrite ? (
+      <DeliveryActionsBar
+        delivery={{
+          id: row.id,
+          clientName: row.clientName,
+          categoryName: row.categoryName,
+          status: row.status,
+          weight: row.weight,
+          productCount: row.productCount,
+          chargePerLb: row.chargePerLb,
+          agentProfit: row.agentProfit,
+          deliverPicture: row.deliverPicture,
+        }}
+        role={role}
+        compact
+      />
+    ) : null;
+
+  const activeFilters = [
+    ...(initialFilters.status
+      ? [{ key: 'status', label: initialFilters.status, onRemove: () => setParam('status', null) }]
+      : []),
+    ...(initialFilters.pay
+      ? [{ key: 'pay', label: initialFilters.pay, onRemove: () => setParam('pay', null) }]
+      : []),
+    ...(initialFilters.from
+      ? [
+          {
+            key: 'from',
+            label: `Desde ${initialFilters.from}`,
+            onRemove: () => {
+              setFromValue('');
+              setParam('from', null);
+            },
+          },
+        ]
+      : []),
+    ...(initialFilters.to
+      ? [
+          {
+            key: 'to',
+            label: `Hasta ${initialFilters.to}`,
+            onRemove: () => {
+              setToValue('');
+              setParam('to', null);
+            },
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="space-y-5">
       <PageHeader
         icon={Truck}
         title="Entregas"
-        subtitle="Gestiona las entregas y sus pagos"
+        subtitle="Bolsas pesadas listas para despachar, entregar y cobrar"
         actions={
           <>
-            <Button
-              variant="tertiary"
-              onPress={() => router.push('/delivery/prepare')}
-            >
+            <Button variant="tertiary" onPress={() => router.push('/delivery/prepare')}>
               <ClipboardList className="h-4 w-4" aria-hidden />
               Preparar entregas
+              {openBagCount > 0 ? (
+                <span className="rounded-full bg-accent-soft px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-accent">
+                  {openBagCount}
+                </span>
+              ) : null}
             </Button>
-            <Button variant="primary" onPress={() => setCreateOpen(true)}>
-              <Plus className="h-4 w-4" aria-hidden />
-              Nueva entrega
-            </Button>
+            {canWrite ? (
+              <Button variant="primary" onPress={() => router.push('/delivery/new')}>
+                <PackagePlus className="h-4 w-4" aria-hidden />
+                Armar entrega
+              </Button>
+            ) : null}
           </>
         }
       />
@@ -187,70 +257,25 @@ export function DeliveryClient({
         />
         <FilterPopover
           title="Filtros de entregas"
-          subtitle="Filtra entregas por estado, pago y fecha"
-          activeFilters={[
-            ...(initialFilters.status
-              ? [
-                  {
-                    key: 'status',
-                    label: initialFilters.status,
-                    onRemove: () => setParam('status', null),
-                  },
-                ]
-              : []),
-            ...(initialFilters.pay
-              ? [
-                  {
-                    key: 'pay',
-                    label: initialFilters.pay,
-                    onRemove: () => setParam('pay', null),
-                  },
-                ]
-              : []),
-            ...(initialFilters.from
-              ? [
-                  {
-                    key: 'from',
-                    label: `Desde ${initialFilters.from}`,
-                    onRemove: () => {
-                      setFromValue('');
-                      setParam('from', null);
-                    },
-                  },
-                ]
-              : []),
-            ...(initialFilters.to
-              ? [
-                  {
-                    key: 'to',
-                    label: `Hasta ${initialFilters.to}`,
-                    onRemove: () => {
-                      setToValue('');
-                      setParam('to', null);
-                    },
-                  },
-                ]
-              : []),
-          ]}
+          subtitle="Filtra entregas por fase, pago y fecha"
+          activeFilters={activeFilters}
           onClear={() => {
             setFromValue('');
             setToValue('');
             const params = new URLSearchParams(searchParams.toString());
-            for (const key of ['status', 'pay', 'from', 'to', 'page']) {
-              params.delete(key);
-            }
+            for (const key of ['status', 'pay', 'from', 'to', 'page']) params.delete(key);
             startTransition(() => {
               router.replace(`/delivery?${params.toString()}`, { scroll: false });
             });
           }}
         >
-          <Field label="Estado">
+          <Field label="Fase" hint="Sin filtro se ocultan las bolsas en preparación">
             <Select
               value={initialFilters.status ?? ''}
               onChange={(e) => setParam('status', e.target.value || null)}
             >
-              <option value="">Todos los estados</option>
-              {DELIVERY_STATUSES.map((s) => (
+              <option value="">Todas (sin bolsas)</option>
+              {DELIVERY_PHASES.map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>
@@ -306,20 +331,23 @@ export function DeliveryClient({
                 <th>Categoría</th>
                 <th>Peso</th>
                 <th>Costo</th>
-                <th>Ganancia</th>
-                <th>Estado</th>
+                <th>Fase</th>
                 <th>Pago</th>
                 <th>Fecha</th>
-                <th>Captura</th>
+                <th>Siguiente paso</th>
                 <th className="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {initialRows.length === 0 ? (
                 <TableEmpty
-                  colSpan={10}
+                  colSpan={9}
                   icon={PackageSearch}
-                  message={isPending ? 'Cargando…' : 'No hay entregas.'}
+                  message={
+                    isPending
+                      ? 'Cargando…'
+                      : 'No hay entregas. Las bolsas se crean al recibir mercancía y se pesan en «Preparar entregas».'
+                  }
                 />
               ) : (
                 initialRows.map((row) => (
@@ -331,32 +359,28 @@ export function DeliveryClient({
                       >
                         {row.clientName}
                       </Link>
+                      <span className="block text-xs text-muted">
+                        #{row.id} · {row.productCount} producto{row.productCount === 1 ? '' : 's'}
+                      </span>
                     </td>
                     <td className="text-muted">
-                      {row.categoryName ?? (
-                        <span className="italic text-muted/60">—</span>
-                      )}
+                      {row.categoryName ?? <span className="italic text-muted/60">—</span>}
                     </td>
-                    <td className="tabular-nums">{row.weight.toFixed(2)}</td>
+                    <td className="tabular-nums">{row.weight.toFixed(2)} lb</td>
                     <td className="font-semibold tabular-nums">
                       {formatCurrency(row.weightCost)}
-                    </td>
-                    <td className="tabular-nums text-muted">
-                      {formatCurrency(row.managerProfit)}
+                      <span className="block text-xs font-normal text-muted">
+                        gestor {formatCurrency(row.managerProfit)}
+                      </span>
                     </td>
                     <td>
-                      <DeliveryStatusBadge status={row.status} />
+                      <DeliveryStatusBadge status={row.status} weight={row.weight} />
                     </td>
                     <td>
                       <PayStatusBadge status={row.paymentStatus} />
                     </td>
                     <td className="text-muted">{formatDate(row.deliverDate)}</td>
-                    <td>
-                      <PictureHover
-                        url={row.deliverPicture}
-                        alt={`Captura de la entrega ${row.id}`}
-                      />
-                    </td>
+                    <td>{phaseActions(row)}</td>
                     <td className="text-right">
                       <div className="inline-flex gap-0.5">{rowActions(row)}</div>
                     </td>
@@ -369,58 +393,40 @@ export function DeliveryClient({
         cards={
           initialRows.length === 0 ? (
             <div className="surface-card p-8 text-center text-sm text-muted">
-              {isPending ? 'Cargando…' : 'No hay entregas.'}
+              {isPending ? 'Cargando…' : 'No hay entregas. Las bolsas se crean al recibir mercancía.'}
             </div>
           ) : (
             initialRows.map((row) => (
               <MobileCard
                 key={row.id}
                 title={row.clientName}
-                subtitle={`Entrega #${row.id}`}
+                subtitle={`Entrega #${row.id} · ${row.productCount} producto${row.productCount === 1 ? '' : 's'}`}
                 media={
-                  <PictureHover
-                    url={row.deliverPicture}
-                    alt={`Captura de la entrega ${row.id}`}
-                  />
+                  <PictureHover url={row.deliverPicture} alt={`Captura de la entrega ${row.id}`} />
                 }
                 badges={
                   <>
-                    <DeliveryStatusBadge status={row.status} />
+                    <DeliveryStatusBadge status={row.status} weight={row.weight} />
                     <PayStatusBadge status={row.paymentStatus} />
                   </>
                 }
                 rows={[
-                  {
-                    icon: Tag,
-                    label: 'Categoría',
-                    value: row.categoryName ?? '—',
-                  },
-                  {
-                    icon: Weight,
-                    label: 'Peso',
-                    value: `${row.weight.toFixed(2)} lb`,
-                  },
+                  { icon: Tag, label: 'Categoría', value: row.categoryName ?? '—' },
+                  { icon: Weight, label: 'Peso', value: `${row.weight.toFixed(2)} lb` },
                   {
                     icon: DollarSign,
                     label: 'Costo',
-                    value: (
-                      <span className="font-semibold">
-                        {formatCurrency(row.weightCost)}
-                      </span>
-                    ),
+                    value: <span className="font-semibold">{formatCurrency(row.weightCost)}</span>,
                   },
-                  {
-                    icon: TrendingUp,
-                    label: 'Ganancia',
-                    value: formatCurrency(row.managerProfit),
-                  },
-                  {
-                    icon: CalendarDays,
-                    label: 'Fecha',
-                    value: formatDate(row.deliverDate),
-                  },
+                  { icon: TrendingUp, label: 'Gestor', value: formatCurrency(row.managerProfit) },
+                  { icon: CalendarDays, label: 'Fecha', value: formatDate(row.deliverDate) },
                 ]}
-                actions={rowActions(row)}
+                actions={
+                  <div className="flex w-full flex-col gap-2">
+                    <div className="flex justify-end gap-1">{rowActions(row)}</div>
+                    <div onClick={(e) => e.stopPropagation()}>{phaseActions(row)}</div>
+                  </div>
+                }
                 onClick={() => router.push(`/delivery/${row.id}`)}
               />
             ))
@@ -428,31 +434,29 @@ export function DeliveryClient({
         }
       />
 
-      <DeliveryDialog
-        open={createOpen}
-        mode="create"
-        clientOptions={clientOptions}
-        categoryOptions={categoryOptions}
-        onClose={() => setCreateOpen(false)}
-        onSuccess={() => {
-          setCreateOpen(false);
-          toast.success('Entrega creada', {
-            description: 'La nueva entrega ya aparece en la lista.',
-          });
-        }}
-      />
+      {openBagCount > 0 && !initialFilters.status ? (
+        <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
+          <ShoppingBag className="h-3.5 w-3.5" aria-hidden />
+          {openBagCount} bolsa{openBagCount === 1 ? '' : 's'} en preparación
+          {openBagCount === 1 ? ' no se muestra' : ' no se muestran'} aquí.{' '}
+          <button
+            type="button"
+            onClick={() => setParam('status', 'En preparación')}
+            className="font-medium text-accent hover:underline"
+          >
+            Verlas
+          </button>
+        </p>
+      ) : null}
 
       <DeliveryDialog
         open={editTarget !== null}
-        mode="edit"
         delivery={editTarget ?? undefined}
-        clientOptions={clientOptions}
-        categoryOptions={categoryOptions}
         onClose={() => setEditTarget(null)}
         onSuccess={() => {
           setEditTarget(null);
           toast.success('Entrega actualizada', {
-            description: 'Los cambios de la entrega se guardaron correctamente.',
+            description: 'La fecha y la foto se guardaron.',
           });
         }}
       />
@@ -463,7 +467,7 @@ export function DeliveryClient({
         onSuccess={() => {
           setDeleteTarget(null);
           toast.success('Entrega eliminada', {
-            description: 'La entrega se eliminó de forma permanente.',
+            description: 'La entrega se eliminó y sus unidades volvieron a «recibido sin bolsa».',
           });
         }}
       />

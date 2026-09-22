@@ -55,6 +55,9 @@ export async function addUnitsToOpenBag(
   }
 ): Promise<{ bagId: bigint; created: boolean }> {
   let created = false;
+  // Dos sesiones que reciben a la vez para el mismo cliente+categoría
+  // no deben abrir dos bolsas: bloqueo de aviso por transacción.
+  await db.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`bag:${input.clientId}:${input.categoryId}`}))`;
   let bag = await db.deliverReceip.findFirst({
     where: {
       clientId: input.clientId,
@@ -217,4 +220,20 @@ export async function deleteBagIfEmpty(
   }
   await db.deliverReceip.delete({ where: { id: bagId } });
   return true;
+}
+
+/**
+ * Vacía una bolsa abierta (todas sus filas) y la borra; devuelve los
+ * productIds afectados para que el caller los recompute.
+ */
+export async function emptyOpenBag(db: Db, bagId: bigint): Promise<string[]> {
+  const rows = await db.productDelivery.findMany({
+    where: { deliverReceipId: bagId },
+    select: { id: true, originalProductId: true },
+  });
+  for (const row of rows) {
+    await db.productDelivery.delete({ where: { id: row.id } });
+  }
+  await deleteBagIfEmpty(db, bagId);
+  return [...new Set(rows.map((r) => r.originalProductId))];
 }

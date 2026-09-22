@@ -1,0 +1,79 @@
+[
+  {
+    "id": "RN-020-01",
+    "regla": "RN-020",
+    "descripcion": "Sin pagos: No pagado.",
+    "input": { "totalCosts": 100, "receivedValueOfClient": 0, "balanceApplied": 0 },
+    "expected": "No pagado"
+  },
+  {
+    "id": "RN-020-02",
+    "regla": "RN-020",
+    "descripcion": "Pago en efectivo por la mitad del costo: Parcial.",
+    "input": { "totalCosts": 100, "receivedValueOfClient": 50, "balanceApplied": 0 },
+    "expected": "Parcial"
+  },
+  {
+    "id": "RN-020-03",
+    "regla": "RN-020",
+    "descripcion": "Pago exacto en efectivo: Pagado.",
+    "input": { "totalCosts": 100, "receivedValueOfClient": 100, "balanceApplied": 0 },
+    "expected": "Pagado"
+  },
+  {
+    "id": "RN-020-04",
+    "regla": "RN-020",
+    "descripcion": "Efectivo 60 + saldo aplicado 40 cubren el costo: Pagado (el saldo aplicado cuenta para el estado de pago).",
+    "input": { "totalCosts": 100, "receivedValueOfClient": 60, "balanceApplied": 40 },
+    "expected": "Pagado"
+  },
+  {
+    "id": "RN-020-05",
+    "regla": "RN-020",
+    "descripcion": "Solo saldo aplicado (30) sin efectivo: Parcial.",
+    "input": { "totalCosts": 100, "receivedValueOfClient": 0, "balanceApplied": 30 },
+    "expected": "Parcial"
+  },
+  {
+    "id": "RN-020-06",
+    "regla": "RN-020",
+    "descripcion": "Costo 0 y sin pagos: No pagado (nunca Pagado con costo 0).",
+    "input": { "totalCosts": 0, "receivedValueOfClient": 0, "balanceApplied": 0 },
+    "expected": "No pagado"
+  },
+  {
+    "id": "RN-020-07",
+    "regla": "RN-020",
+    "descripcion": "Costo 0 pero se registró un pago de 10: Parcial, porque Pagado exige costo > 0.",
+    "input": { "totalCosts": 0, "receivedValueOfClient": 10, "balanceApplied": 0 },
+    "expected": "Parcial"
+  },
+  {
+    "id": "RN-020-08",
+    "regla": "RN-020",
+    "descripcion": "Sobrepago (120 sobre 100): Pagado; el exceso queda como saldo a favor en el balance (RN-021).",
+    "input": { "totalCosts": 100, "receivedValueOfClient": 120, "balanceApplied": 0 },
+    "expected": "Pagado"
+  },
+  {
+    "id": "RN-020-09",
+    "regla": "RN-020",
+    "descripcion": "Redondeo a 2 decimales antes de comparar: 99.999 se redondea a 100.00 y 100 lo cubre.",
+    "input": { "totalCosts": 99.999, "receivedValueOfClient": 100, "balanceApplied": 0 },
+    "expected": "Pagado"
+  },
+  {
+    "id": "RN-020-10",
+    "regla": "RN-020",
+    "descripcion": "Efectivo 33.33 + saldo 33.33 = 66.66 < 100: Parcial.",
+    "input": { "totalCosts": 100, "receivedValueOfClient": 33.33, "balanceApplied": 33.33 },
+    "expected": "Parcial"
+  },
+  {
+    "id": "RN-020-11",
+    "regla": "RN-020",
+    "descripcion": "Todo el costo cubierto con saldo aplicado, sin efectivo: Pagado.",
+    "input": { "totalCosts": 100, "receivedValueOfClient": 0, "balanceApplied": 100 },
+    "expected": "Pagado"
+  }
+]

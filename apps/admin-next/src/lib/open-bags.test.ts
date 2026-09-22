@@ -54,6 +54,9 @@ function fakeDb(seed: { bags?: Bag[]; rows?: Row[] } = {}) {
     a.id < b.id ? 1 : a.id > b.id ? -1 : 0;
 
   const db = {
+    async $executeRaw() {
+      return 0;
+    },
     deliverReceip: {
       async findFirst(args: { where: Record<string, unknown> }) {
         const hits = bags.filter((b) => bagMatches(b, args.where));

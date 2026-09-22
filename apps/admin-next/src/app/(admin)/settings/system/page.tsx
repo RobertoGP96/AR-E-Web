@@ -12,6 +12,7 @@ import { prisma } from '@/lib/prisma';
 import { StatCard } from '@/components/ui';
 import { formatDate } from '@/lib/format';
 import pkg from '../../../../../package.json';
+import { MaintenanceActions } from './maintenance-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -176,7 +177,7 @@ export default async function SystemPage() {
         />
       </div>
 
-      <div className="grid items-start gap-5 lg:grid-cols-3">
+      <div className="grid items-start gap-5 lg:grid-cols-2 xl:grid-cols-4">
         <InfoCard title="Registros por entidad">
           <dl className="space-y-2.5">
             {entityCounts.map((e) => (
@@ -202,6 +203,10 @@ export default async function SystemPage() {
                 />
               ))}
           </dl>
+        </InfoCard>
+
+        <InfoCard title="Mantenimiento">
+          <MaintenanceActions />
         </InfoCard>
 
         <InfoCard title="Aplicación">

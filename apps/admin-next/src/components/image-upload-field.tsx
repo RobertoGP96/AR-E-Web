@@ -11,6 +11,9 @@ interface ImageUploadFieldProps {
   name: string;
   label: string;
   defaultUrl?: string | null;
+  /** En móvil abre la cámara directamente (p. ej. 'environment'). */
+  capture?: 'environment' | 'user';
+  buttonLabel?: string;
 }
 
 /**
@@ -21,6 +24,8 @@ export function ImageUploadField({
   name,
   label,
   defaultUrl,
+  capture,
+  buttonLabel = 'Subir una imagen',
 }: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -82,7 +87,7 @@ export function ImageUploadField({
           ) : (
             <>
               <Upload className="h-4 w-4" aria-hidden />
-              Subir una imagen
+              {buttonLabel}
             </>
           )}
         </button>
@@ -92,6 +97,7 @@ export function ImageUploadField({
         ref={inputRef}
         type="file"
         accept="image/*"
+        capture={capture}
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];

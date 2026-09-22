@@ -2,6 +2,8 @@
 
 Referencia completa de las tres aplicaciones del monorepo, generada por lectura directa del código (agosto 2026). Objetivo: preservar los flujos y descripciones de cada app para mantenimiento y desarrollos futuros (en particular, el rediseño del design system de `apps/admin-next`).
 
+> **Fuente de verdad de los procesos: [`doc/procesos/`](../procesos/README.md).** Reglas (`RN-nnn`), invariantes (`INV-nnn`), máquinas de estado (`ES-<entidad>`), roles, procedimientos por rol, decisiones (`ADR-nnnn`), matriz de conformidad y casos de prueba compartidos viven allí. Los documentos de esta carpeta describen **cómo implementa cada app** esas reglas y no las redefinen; ante cualquier diferencia manda `doc/procesos/`. Los documentos sueltos anteriores están en [`doc/legacy/`](../legacy/README.md) y no deben usarse.
+
 | Documento | App | Resumen |
 |---|---|---|
 | [client.md](client.md) | `apps/client` | App pública para clientes (React 19 + Vite + shadcn/ui). Landing, precios/calculadora, tiendas, registro/login por teléfono, lista local de productos, seguimiento de órdenes y entregas. Consume la API Django (`/arye_system/`). |

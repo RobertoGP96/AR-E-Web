@@ -1,0 +1,58 @@
+[
+  {
+    "id": "RN-001-01",
+    "regla": "RN-001",
+    "descripcion": "Cascada simple sin IVA ni tarifa: 10 x 2 + 5 de envío.",
+    "input": { "shopCost": 10, "amountRequested": 2, "shopDeliveryCost": 5, "shopTaxes": 0, "chargeIva": false, "addedTaxes": 0, "ownTaxes": 0 },
+    "expected": { "baseTax": 0, "shopTaxAmount": 0, "totalCost": 25 }
+  },
+  {
+    "id": "RN-001-02",
+    "regla": "RN-001",
+    "descripcion": "IVA activo (7 %) sobre la base, sin tarifa de tienda.",
+    "input": { "shopCost": 100, "amountRequested": 1, "shopDeliveryCost": 0, "shopTaxes": 0, "chargeIva": true, "addedTaxes": 0, "ownTaxes": 0 },
+    "expected": { "baseTax": 7, "shopTaxAmount": 0, "totalCost": 107 }
+  },
+  {
+    "id": "RN-001-03",
+    "regla": "RN-001",
+    "descripcion": "IVA activo y tarifa de tienda 3 %: la tarifa se aplica sobre base + IVA (210 + 14.70 = 224.70; 224.70 x 3 % = 6.741).",
+    "input": { "shopCost": 100, "amountRequested": 2, "shopDeliveryCost": 10, "shopTaxes": 3, "chargeIva": true, "addedTaxes": 0, "ownTaxes": 0 },
+    "expected": { "baseTax": 14.7, "shopTaxAmount": 6.74, "totalCost": 231.44 }
+  },
+  {
+    "id": "RN-001-04",
+    "regla": "RN-001",
+    "descripcion": "IVA desactivado con tarifa de tienda 5 %: la tarifa se aplica solo sobre la base (160 x 5 % = 8).",
+    "input": { "shopCost": 50, "amountRequested": 3, "shopDeliveryCost": 10, "shopTaxes": 5, "chargeIva": false, "addedTaxes": 0, "ownTaxes": 0 },
+    "expected": { "baseTax": 0, "shopTaxAmount": 8, "totalCost": 168 }
+  },
+  {
+    "id": "RN-001-05",
+    "regla": "RN-001",
+    "descripcion": "Impuestos adicionales y propios se suman al final, sin IVA ni tarifa sobre ellos (20 + 1.40 + 2.50 + 3).",
+    "input": { "shopCost": 20, "amountRequested": 1, "shopDeliveryCost": 0, "shopTaxes": 0, "chargeIva": true, "addedTaxes": 2.5, "ownTaxes": 3 },
+    "expected": { "baseTax": 1.4, "shopTaxAmount": 0, "totalCost": 26.9 }
+  },
+  {
+    "id": "RN-001-06",
+    "regla": "RN-001",
+    "descripcion": "Caso completo con decimales: 12.99 x 3 + 4.99 = 43.96; IVA 3.0772; tarifa 5 % sobre 47.0372 = 2.35186; + 1 + 0.5 = 50.88906, redondeado a 50.89.",
+    "input": { "shopCost": 12.99, "amountRequested": 3, "shopDeliveryCost": 4.99, "shopTaxes": 5, "chargeIva": true, "addedTaxes": 1, "ownTaxes": 0.5 },
+    "expected": { "baseTax": 3.08, "shopTaxAmount": 2.35, "totalCost": 50.89 }
+  },
+  {
+    "id": "RN-001-07",
+    "regla": "RN-001",
+    "descripcion": "Redondeo de coma flotante: 0.1 x 3 = 0.30000000000000004 debe quedar en 0.30.",
+    "input": { "shopCost": 0.1, "amountRequested": 3, "shopDeliveryCost": 0, "shopTaxes": 0, "chargeIva": false, "addedTaxes": 0, "ownTaxes": 0 },
+    "expected": { "baseTax": 0, "shopTaxAmount": 0, "totalCost": 0.3 }
+  },
+  {
+    "id": "RN-001-08",
+    "regla": "RN-001",
+    "descripcion": "IVA y tarifa 4 % con precio decimal: 33.33 + 2.3331 = 35.6631; x 4 % = 1.426524; total 37.089624 -> 37.09.",
+    "input": { "shopCost": 33.33, "amountRequested": 1, "shopDeliveryCost": 0, "shopTaxes": 4, "chargeIva": true, "addedTaxes": 0, "ownTaxes": 0 },
+    "expected": { "baseTax": 2.33, "shopTaxAmount": 1.43, "totalCost": 37.09 }
+  }
+]

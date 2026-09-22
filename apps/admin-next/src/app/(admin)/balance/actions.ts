@@ -99,7 +99,8 @@ export async function calculateBalanceRangeAction(
       _count: { _all: true },
     }),
     prisma.deliverReceip.aggregate({
-      where: { deliverDate: inRange },
+      // Las bolsas abiertas (peso 0) aún no son entregas.
+      where: { deliverDate: inRange, weight: { gt: 0 } },
       _sum: { weight: true, weightCost: true },
       _count: { _all: true },
     }),

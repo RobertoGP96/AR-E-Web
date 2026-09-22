@@ -17,9 +17,9 @@ import { toast } from '@/lib/toast';
 import { Button, Tooltip } from '@heroui/react';
 import { PackageDialog } from './package-dialog';
 import { DeletePackageDialog } from './delete-dialog';
-import { setPackageStatusAction } from './actions';
 import { formatDate } from '@/lib/format';
 import { PictureHover } from '@/components/picture-hover';
+import { PackageStatusBadge } from '@/components/status-badges';
 import { FilterPopover } from '@/components/filter-popover';
 import {
   PageHeader,
@@ -36,27 +36,20 @@ interface PackagesClientProps {
   initialRows: PackageRow[];
   initialQuery: string;
   initialStatus: PackageStatus | null;
+  role: string;
 }
-
-const STATUS_STYLES: Record<PackageStatus, string> = {
-  Enviado: 'bg-accent-soft text-accent-soft-foreground',
-  Recibido: 'bg-warning-soft text-warning-soft-foreground',
-  Procesado: 'bg-success-soft text-success-soft-foreground',
-};
 
 export function PackagesClient({
   initialRows,
   initialQuery,
   initialStatus,
+  role,
 }: PackagesClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<PackageRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PackageRow | null>(null);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-
   function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
@@ -67,41 +60,6 @@ export function PackagesClient({
     });
   }
 
-  function handleStatusChange(row: PackageRow, status: PackageStatus) {
-    if (row.statusOfProcessing === status) return;
-    setUpdatingId(row.id);
-    startTransition(async () => {
-      const result = await setPackageStatusAction(row.id, status);
-      setUpdatingId(null);
-      if (result.ok) {
-        toast.success('Estado actualizado', {
-          description: `El paquete ${row.numberOfTracking} pasó a estado «${status}».`,
-        });
-      } else {
-        toast.error('No se pudo cambiar el estado', {
-          description: result.error,
-        });
-      }
-    });
-  }
-
-  const statusSelect = (row: PackageRow) => (
-    <Select
-      value={row.statusOfProcessing}
-      onChange={(e) => handleStatusChange(row, e.target.value as PackageStatus)}
-      disabled={updatingId === row.id}
-      aria-label={`Estado del paquete ${row.numberOfTracking}`}
-      className="w-auto"
-      triggerClassName={`w-auto min-h-0 rounded-full border-0 px-2.5 py-1 font-medium shadow-none [&_[data-slot=select-value]]:text-xs ${STATUS_STYLES[row.statusOfProcessing]}`}
-    >
-      {PACKAGE_STATUSES.map((s) => (
-        <option key={s} value={s}>
-          {s}
-        </option>
-      ))}
-    </Select>
-  );
-
   const rowActions = (row: PackageRow) => (
     <>
       <Tooltip delay={500}>
@@ -109,12 +67,12 @@ export function PackagesClient({
           variant="ghost"
           size="sm"
           isIconOnly
-          aria-label={`Recepción de ${row.numberOfTracking}`}
+          aria-label={`Marcar llegadas de ${row.numberOfTracking}`}
           onPress={() => router.push(`/packages/${row.id}`)}
         >
           <PackageCheck className="h-4 w-4" aria-hidden />
         </Button>
-        <Tooltip.Content>Recepción de productos</Tooltip.Content>
+        <Tooltip.Content>Marcar llegadas</Tooltip.Content>
       </Tooltip>
       <Tooltip delay={500}>
         <Button
@@ -135,11 +93,16 @@ export function PackagesClient({
           isIconOnly
           aria-label={`Eliminar ${row.numberOfTracking}`}
           onPress={() => setDeleteTarget(row)}
+          isDisabled={row.receptionCount > 0}
           className="hover:bg-danger-soft hover:text-danger"
         >
           <Trash2 className="h-4 w-4" aria-hidden />
         </Button>
-        <Tooltip.Content>Eliminar</Tooltip.Content>
+        <Tooltip.Content>
+          {row.receptionCount > 0
+            ? 'Tiene recepciones: elimínalas antes'
+            : 'Eliminar'}
+        </Tooltip.Content>
       </Tooltip>
     </>
   );
@@ -159,7 +122,7 @@ export function PackagesClient({
               <ClipboardList className="h-4 w-4" aria-hidden />
               Preparar entregas
             </Button>
-            <Button variant="primary" onPress={() => setCreateOpen(true)}>
+            <Button variant="primary" onPress={() => router.push('/packages/new')}>
               <Plus className="h-4 w-4" aria-hidden />
               Nuevo paquete
             </Button>
@@ -238,7 +201,17 @@ export function PackagesClient({
                     </td>
                     <td className="text-foreground">{row.agencyName}</td>
                     <td className="text-muted">{formatDate(row.arrivalDate)}</td>
-                    <td>{statusSelect(row)}</td>
+                    <td>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <PackageStatusBadge status={row.statusOfProcessing} />
+                        {row.receptionCount > 0 ? (
+                          <span className="text-xs tabular-nums text-muted">
+                            {row.receptionCount} recepci
+                            {row.receptionCount === 1 ? 'ón' : 'ones'}
+                          </span>
+                        ) : null}
+                      </div>
+                    </td>
                     <td>
                       <PictureHover
                         url={row.packagePicture}
@@ -267,6 +240,7 @@ export function PackagesClient({
                 subtitle={
                   <span className="font-mono">{row.numberOfTracking}</span>
                 }
+                badges={<PackageStatusBadge status={row.statusOfProcessing} />}
                 media={
                   <PictureHover
                     url={row.packagePicture}
@@ -280,12 +254,8 @@ export function PackagesClient({
                     value: formatDate(row.arrivalDate),
                   },
                   {
-                    label: 'Estado',
-                    value: (
-                      <span onClick={(e) => e.stopPropagation()}>
-                        {statusSelect(row)}
-                      </span>
-                    ),
+                    label: 'Recepciones',
+                    value: row.receptionCount,
                   },
                 ]}
                 actions={rowActions(row)}
@@ -297,20 +267,9 @@ export function PackagesClient({
       />
 
       <PackageDialog
-        open={createOpen}
-        mode="create"
-        onClose={() => setCreateOpen(false)}
-        onSuccess={() => {
-          setCreateOpen(false);
-          toast.success('Paquete creado', {
-            description: 'El nuevo paquete ya aparece en la lista.',
-          });
-        }}
-      />
-
-      <PackageDialog
         open={editTarget !== null}
         mode="edit"
+        role={role}
         pkg={editTarget ?? undefined}
         onClose={() => setEditTarget(null)}
         onSuccess={() => {

@@ -1,14 +1,20 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { estimateBuyedCost } from '@/lib/order-cost';
 import { PurchaseDetailClient } from './purchase-detail-client';
-import { fromDbPayStatus, type DbPayStatus } from '../schema';
+import { loadPendingCandidates, loadShopOptions } from '../queries';
+import { fromDbPayStatus, type DbPayStatus, type PurchaseRow } from '../schema';
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ created?: string; order?: string }>;
 }
 
-export default async function PurchaseDetailPage({ params }: PageProps) {
-  const { id } = await params;
+export default async function PurchaseDetailPage({
+  params,
+  searchParams,
+}: PageProps) {
+  const [{ id }, { created, order }] = await Promise.all([params, searchParams]);
   let purchaseId: bigint;
   try {
     purchaseId = BigInt(id);
@@ -22,61 +28,76 @@ export default async function PurchaseDetailPage({ params }: PageProps) {
       shopOfBuy: { select: { id: true, name: true } },
       shoppingAccount: { select: { accountName: true } },
       buyedProducts: {
-        include: { originalProduct: { select: { name: true } } },
+        include: {
+          originalProduct: {
+            select: {
+              name: true,
+              orderId: true,
+              amountRequested: true,
+              amountReceived: true,
+              shopCost: true,
+              shopDeliveryCost: true,
+              shopTaxes: true,
+              chargeIva: true,
+              addedTaxes: true,
+              ownTaxes: true,
+              totalCost: true,
+              order: {
+                select: { client: { select: { name: true, lastName: true } } },
+              },
+            },
+          },
+        },
         orderBy: { createdAt: 'asc' },
       },
     },
   });
   if (!purchase) notFound();
 
-  // Candidate products to add: products sold from the same shop that
-  // are still "Encargado" (units pending purchase — a fully purchased
-  // product leaves that status via deriveProductStatus).
-  const candidateProducts = await prisma.product.findMany({
-    where: { shopId: purchase.shopOfBuyId, status: 'Encargado' },
-    select: {
-      id: true,
-      name: true,
-      amountRequested: true,
-      amountPurchased: true,
-      order: {
-        select: {
-          clientId: true,
-          client: { select: { name: true, lastName: true } },
-        },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 500,
-  });
+  const [candidates, shopOptions] = await Promise.all([
+    loadPendingCandidates(purchase.shopOfBuyId),
+    loadShopOptions(),
+  ]);
+
+  const row: PurchaseRow = {
+    id: purchase.id.toString(),
+    shopOfBuyId: purchase.shopOfBuyId.toString(),
+    shopName: purchase.shopOfBuy.name,
+    shoppingAccountId: purchase.shoppingAccountId.toString(),
+    accountName: purchase.shoppingAccount.accountName,
+    statusOfShopping: fromDbPayStatus(purchase.statusOfShopping as DbPayStatus),
+    cardId: purchase.cardId,
+    buyDate: purchase.buyDate.toISOString(),
+    totalCostOfPurchase: purchase.totalCostOfPurchase,
+    productCount: purchase.buyedProducts.length,
+  };
 
   return (
     <PurchaseDetailClient
-      purchaseId={purchase.id.toString()}
-      header={{
-        shopName: purchase.shopOfBuy.name,
-        accountName: purchase.shoppingAccount.accountName,
-        status: fromDbPayStatus(purchase.statusOfShopping as DbPayStatus),
-        totalCostOfPurchase: purchase.totalCostOfPurchase,
-      }}
-      buyedProducts={purchase.buyedProducts.map((bp) => ({
-        id: bp.id.toString(),
-        productName: bp.originalProduct.name,
-        amountBuyed: bp.amountBuyed,
-        quantityRefuned: bp.quantityRefuned,
-        isRefunded: bp.isRefunded,
-        refundAmount: bp.refundAmount,
-      }))}
-      candidates={candidateProducts
-        .map((p) => ({
-          id: p.id,
-          name: p.name,
-          clientId: p.order.clientId.toString(),
-          clientName:
-            `${p.order.client.name} ${p.order.client.lastName}`.trim(),
-          pending: Math.max(0, p.amountRequested - p.amountPurchased),
-        }))
-        .filter((p) => p.pending > 0)}
+      purchase={row}
+      shopOptions={shopOptions}
+      buyedProducts={purchase.buyedProducts.map((bp) => {
+        const p = bp.originalProduct;
+        return {
+          id: bp.id.toString(),
+          productName: p.name,
+          orderId: p.orderId.toString(),
+          clientName: `${p.order.client.name} ${p.order.client.lastName}`.trim(),
+          amountBuyed: bp.amountBuyed,
+          quantityRefuned: bp.quantityRefuned,
+          isRefunded: bp.isRefunded,
+          refundAmount: bp.refundAmount,
+          refundNotes: bp.refundNotes,
+          receivedOfProduct: p.amountReceived,
+          estimate: estimateBuyedCost(
+            { ...p, amountRequested: p.amountRequested },
+            bp.amountBuyed
+          ),
+        };
+      })}
+      candidates={candidates}
+      justCreated={created === '1'}
+      fromOrderId={order && /^\d+$/.test(order) ? order : null}
     />
   );
 }

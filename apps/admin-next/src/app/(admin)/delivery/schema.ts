@@ -1,16 +1,16 @@
 import { z } from 'zod';
+import {
+  DELIVERY_PHASES,
+  DELIVERY_STATUSES,
+  type DeliveryPhase,
+  type DeliveryStatus,
+} from '@/lib/delivery-status';
+
+export { DELIVERY_PHASES, DELIVERY_STATUSES, type DeliveryPhase, type DeliveryStatus };
 
 // The status/payment_status columns are VARCHAR in the Django-owned DB
 // and store the display strings verbatim ("En transito", "No pagado"),
 // so DB and UI values are identical and the mappers are pass-throughs.
-export const DELIVERY_STATUSES = [
-  'Pendiente',
-  'En transito',
-  'Entregado',
-  'Fallida',
-] as const;
-export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
-
 export type DbDeliveryStatus = DeliveryStatus;
 
 export function toDbDeliveryStatus(s: DeliveryStatus): DbDeliveryStatus {
@@ -31,30 +31,57 @@ export function fromDbPayStatus(p: DbPayStatus): PayStatus {
   return p;
 }
 
-// Los montos de pago (monto pagado / saldo aplicado) NO viajan en este
-// formulario: se gestionan con la acción de confirmar pago, igual que
-// en órdenes.
-export const deliveryFormSchema = z.object({
-  clientId: z.string().min(1, 'Select a client'),
-  categoryId: z
-    .string()
-    .optional()
-    .transform((v) => (v && v.length > 0 ? v : null)),
-  weight: z.coerce.number().min(0, 'Must be ≥ 0'),
-  status: z.enum(DELIVERY_STATUSES),
-  deliverDate: z
-    .string()
-    .min(1, 'Required')
-    .refine((s) => !Number.isNaN(Date.parse(s)), 'Invalid date'),
-  deliverPicture: z
-    .string()
-    .trim()
-    .max(1000)
-    .optional()
-    .transform((v) => (v && v.length > 0 ? v : null)),
-});
+const pictureSchema = z
+  .string()
+  .trim()
+  .max(1000)
+  .optional()
+  .transform((v) => (v && v.length > 0 ? v : null));
 
-export type DeliveryFormInput = z.infer<typeof deliveryFormSchema>;
+const dateSchema = z
+  .string()
+  .min(1, 'Obligatoria')
+  .refine((s) => !Number.isNaN(Date.parse(s)), 'Fecha inválida');
+
+/**
+ * Edición de la cabecera: solo fecha y foto. El estado cambia por
+ * transiciones explícitas y el peso por «Pesar»/«Corregir peso».
+ */
+export const deliveryEditSchema = z.object({
+  deliverDate: dateSchema,
+  deliverPicture: pictureSchema,
+});
+export type DeliveryEditInput = z.infer<typeof deliveryEditSchema>;
+
+/** Lote de productos (recibidos sin entregar) para una entrega. */
+export const deliveryItemsSchema = z
+  .array(
+    z.object({
+      productId: z.string().min(1),
+      amount: z.number().int('Cantidad entera').positive('Mínimo 1'),
+    })
+  )
+  .min(1, 'Marca al menos un producto')
+  .max(500, 'Máximo 500 productos');
+export type DeliveryItemsInput = z.input<typeof deliveryItemsSchema>;
+
+/** «Armar entrega desde recibidos»: llena la bolsa del cliente y, si viene peso, la cierra. */
+export const assembleDeliverySchema = z.object({
+  clientId: z.string().min(1, 'Selecciona un cliente'),
+  items: deliveryItemsSchema,
+  /** Peso por categoría (categoryId → lb) para cerrar esas bolsas en el mismo paso. */
+  weights: z
+    .record(z.string(), z.number().positive('El peso debe ser mayor que 0'))
+    .optional(),
+});
+export type AssembleDeliveryInput = z.input<typeof assembleDeliverySchema>;
+
+/** Datos de «Marcar entregada». */
+export const deliverSchema = z.object({
+  deliverDate: dateSchema.optional(),
+  deliverPicture: pictureSchema,
+});
+export type DeliverInput = z.input<typeof deliverSchema>;
 
 export interface DeliveryRow {
   id: string;
@@ -65,6 +92,7 @@ export interface DeliveryRow {
   categoryName: string | null;
   weight: number;
   status: DeliveryStatus;
+  phase: DeliveryPhase;
   paymentStatus: PayStatus;
   weightCost: number;
   managerProfit: number;
@@ -72,6 +100,10 @@ export interface DeliveryRow {
   balanceApplied: number;
   deliverDate: string;
   deliverPicture: string | null;
+  productCount: number;
+  /** Tarifa $/lb de la categoría y ganancia/lb del agente (previews). */
+  chargePerLb: number;
+  agentProfit: number;
 }
 
 export interface ClientOption {
@@ -84,4 +116,16 @@ export interface CategoryOption {
   id: string;
   label: string;
   clientShippingCharge: number;
+}
+
+/** Producto recibido sin entregar de un cliente (para armar entregas). */
+export interface ReceivedCandidate {
+  id: string;
+  name: string;
+  orderId: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  chargePerLb: number;
+  /** recibido − entregado. */
+  available: number;
 }

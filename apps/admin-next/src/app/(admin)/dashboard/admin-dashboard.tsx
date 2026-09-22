@@ -151,7 +151,7 @@ export async function AdminDashboard({ role }: { role: string }) {
     prisma.customUser.count({ where: { role: 'agent', isActive: true } }),
     prisma.deliverReceip.aggregate({ _sum: { managerProfit: true } }),
     prisma.productBuyed.aggregate({ _sum: { refundAmount: true } }),
-    prisma.deliverReceip.count({ where: { status: 'Pendiente' } }),
+    prisma.deliverReceip.count({ where: { status: 'Pendiente', weight: { gt: 0 } } }),
     prisma.deliverReceip.count({ where: { status: 'En transito' } }),
     prisma.package.count({
       where: { statusOfProcessing: { in: ['Enviado', 'Recibido'] } },

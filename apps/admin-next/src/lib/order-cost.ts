@@ -107,3 +107,60 @@ export function deriveProductStatus(
   }
   return 'Encargado';
 }
+
+/**
+ * RN-004 — Estimación del costo de una compra parcial. Espejo de
+ * ShoppingReceip._calculate_product_cost (backend/api/models/shops.py):
+ * si se compran todas las unidades pedidas vale el totalCost del
+ * producto; si no, la cascada se recalcula con las unidades compradas
+ * (envío e impuestos fijos completos, no prorrateados).
+ */
+export interface BuyedCostInput extends ProductCostInput {
+  totalCost: number;
+}
+
+export function estimateBuyedCost(
+  product: BuyedCostInput,
+  unitsBuyed: number
+): number {
+  if (!Number.isFinite(unitsBuyed) || unitsBuyed <= 0) return 0;
+  if (unitsBuyed === product.amountRequested) return round2(product.totalCost);
+  return computeProductCost({ ...product, amountRequested: unitsBuyed })
+    .totalCost;
+}
+
+export function estimatePurchaseTotal(
+  rows: { product: BuyedCostInput; units: number }[]
+): number {
+  return round2(
+    rows.reduce((sum, r) => sum + estimateBuyedCost(r.product, r.units), 0)
+  );
+}
+
+export type OrderStatus = 'Encargado' | 'Procesando' | 'Completado' | 'Cancelado';
+
+/**
+ * RN-012 — Estado de la orden derivado de sus productos. Espejo de
+ * Order.update_status_based_on_products() (api/models/orders.py):
+ * Cancelado se respeta; sin productos no cambia; todos Entregado →
+ * Completado; alguno Comprado/Recibido/Entregado → Procesando; si no
+ * Encargado.
+ */
+export function deriveOrderStatus(
+  current: string,
+  productStatuses: readonly string[]
+): OrderStatus {
+  if (current === 'Cancelado') return 'Cancelado';
+  if (productStatuses.length === 0) {
+    return (['Encargado', 'Procesando', 'Completado'] as const).includes(
+      current as 'Encargado' | 'Procesando' | 'Completado'
+    )
+      ? (current as OrderStatus)
+      : 'Encargado';
+  }
+  if (productStatuses.every((s) => s === 'Entregado')) return 'Completado';
+  if (productStatuses.some((s) => s === 'Comprado' || s === 'Recibido' || s === 'Entregado')) {
+    return 'Procesando';
+  }
+  return 'Encargado';
+}

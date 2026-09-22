@@ -8,6 +8,8 @@ import {
   zodFieldErrors,
   ROLES,
 } from '@/lib/action-helpers';
+import { recomputeAllProductStatuses } from '@/lib/product-status';
+import type { ProductStatus } from '@/lib/order-cost';
 
 export type { ActionResult } from '@/lib/action-helpers';
 import type { ActionResult } from '@/lib/action-helpers';
@@ -62,4 +64,23 @@ export async function updateCommonInfoAction(
 
   revalidatePath('/settings');
   return { ok: true };
+}
+
+/**
+ * Mantenimiento: recalcula cantidades y estado de TODOS los productos
+ * con la regla vigente (RN-010/RN-011). Necesario tras un despliegue
+ * que cambie la derivación o tras una limpieza de datos.
+ */
+export async function recomputeAllProductsAction(): Promise<
+  { ok: true; counts: Record<ProductStatus, number> } | { ok: false; error: string }
+> {
+  const { denied } = await requireRole(['admin']);
+  if (denied) return denied;
+
+  const counts = await prisma.$transaction(
+    (tx) => recomputeAllProductStatuses(tx),
+    { timeout: 120_000, maxWait: 10_000 }
+  );
+  revalidatePath('/', 'layout');
+  return { ok: true, counts };
 }

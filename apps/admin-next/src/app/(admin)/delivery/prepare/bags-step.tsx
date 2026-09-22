@@ -31,6 +31,7 @@ import { round2 } from '@/lib/order-cost';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { StatCard, ConfirmModal, TextInput } from '@/components/ui';
 import { DeliveryStatusBadge } from '@/components/status-badges';
+import { DeliveryActionsBar } from '../delivery-actions-bar';
 import { describeBags } from '@/lib/open-bags';
 import type {
   BagItem,
@@ -41,6 +42,7 @@ import type {
 
 interface BagsStepProps {
   groups: PrepareClientGroup[];
+  role: string;
   /** Permiso de escritura sobre entregas (admin / logístico). */
   canWrite: boolean;
   onGoToPackages: () => void;
@@ -62,7 +64,7 @@ function initials(name: string): string {
  * cada bolsa. Registrar el peso la cierra: fija costo y ganancia, y la
  * mercancía posterior de esa categoría abre una bolsa nueva.
  */
-export function BagsStep({ groups, canWrite, onGoToPackages }: BagsStepProps) {
+export function BagsStep({ groups, role, canWrite, onGoToPackages }: BagsStepProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -556,26 +558,47 @@ export function BagsStep({ groups, canWrite, onGoToPackages }: BagsStepProps) {
                   </span>
                 </div>
                 {selectedGroup.weighed.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-default/60 px-3 py-2 text-xs text-muted">
-                    <Truck className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    <span className="font-medium text-foreground">
-                      Ya pesadas sin entregar:
+                  <div className="mt-3 space-y-2 rounded-lg border border-border bg-default/60 px-3 py-2 text-xs text-muted">
+                    <span className="flex items-center gap-1.5 font-medium text-foreground">
+                      <Truck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      Ya pesadas sin entregar
                     </span>
                     {selectedGroup.weighed.map((dlv) => (
-                      <Link
+                      <div
                         key={dlv.id}
-                        href={`/delivery/${dlv.id}`}
-                        className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 font-semibold text-foreground transition-colors hover:text-accent"
+                        className="flex flex-wrap items-center gap-2 rounded-md bg-surface px-2 py-1.5"
                       >
-                        {dlv.categoryName ?? 'Sin categoría'} ·{' '}
-                        <span className="tabular-nums">
-                          {dlv.weight.toFixed(2)} lb ·{' '}
-                          {formatCurrency(dlv.weightCost)}
-                        </span>{' '}
-                        · {formatDate(dlv.deliverDate)}
-                        <DeliveryStatusBadge status={dlv.status} />
-                        <ExternalLink className="h-3 w-3" aria-hidden />
-                      </Link>
+                        <Link
+                          href={`/delivery/${dlv.id}`}
+                          className="inline-flex min-w-0 flex-1 items-center gap-1 font-semibold text-foreground transition-colors hover:text-accent"
+                        >
+                          {dlv.categoryName ?? 'Sin categoría'} ·{' '}
+                          <span className="tabular-nums">
+                            {dlv.weight.toFixed(2)} lb ·{' '}
+                            {formatCurrency(dlv.weightCost)}
+                          </span>{' '}
+                          · {formatDate(dlv.deliverDate)}
+                          <DeliveryStatusBadge status={dlv.status} weight={dlv.weight} />
+                          <ExternalLink className="h-3 w-3" aria-hidden />
+                        </Link>
+                        {canWrite ? (
+                          <DeliveryActionsBar
+                            delivery={{
+                              id: dlv.id,
+                              clientName: selectedGroup.clientName,
+                              categoryName: dlv.categoryName,
+                              status: dlv.status,
+                              weight: dlv.weight,
+                              productCount: dlv.productCount,
+                              chargePerLb: 0,
+                              agentProfit: selectedGroup.agentProfit,
+                              deliverPicture: null,
+                            }}
+                            role={role}
+                            compact
+                          />
+                        ) : null}
+                      </div>
                     ))}
                   </div>
                 ) : null}
@@ -626,6 +649,15 @@ export function BagsStep({ groups, canWrite, onGoToPackages }: BagsStepProps) {
                       />
                       Recibido sin bolsa
                     </h3>
+                    {canWrite ? (
+                      <Link
+                        href={`/delivery/new?client=${selectedGroup.clientId}`}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                      >
+                        Armar entrega con estos
+                        <ExternalLink className="h-3 w-3" aria-hidden />
+                      </Link>
+                    ) : null}
                     {canWrite &&
                     selectedGroup.loose.some((p) => p.categoryId !== null) ? (
                       <Button

@@ -56,7 +56,6 @@ export function PurchasesClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<PurchaseRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PurchaseRow | null>(null);
   // Los date inputs son controlados con estado local para que escribir
@@ -128,7 +127,7 @@ export function PurchasesClient({
         title="Compras"
         subtitle="Gestión de las compras en tiendas"
         actions={
-          <Button variant="primary" onPress={() => setCreateOpen(true)}>
+          <Button variant="primary" onPress={() => router.push('/purchases/new')}>
             <Plus className="h-4 w-4" aria-hidden />
             Nueva compra
           </Button>
@@ -345,21 +344,7 @@ export function PurchasesClient({
       />
 
       <PurchaseDialog
-        open={createOpen}
-        mode="create"
-        shopOptions={shopOptions}
-        onClose={() => setCreateOpen(false)}
-        onSuccess={() => {
-          setCreateOpen(false);
-          toast.success('Compra creada', {
-            description: 'La nueva compra ya aparece en la lista.',
-          });
-        }}
-      />
-
-      <PurchaseDialog
         open={editTarget !== null}
-        mode="edit"
         purchase={editTarget ?? undefined}
         shopOptions={shopOptions}
         onClose={() => setEditTarget(null)}

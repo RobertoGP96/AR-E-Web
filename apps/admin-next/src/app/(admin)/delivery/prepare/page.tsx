@@ -2,15 +2,22 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { ROLES, parseId } from '@/lib/action-helpers';
 import { PrepareDeliveryClient } from './prepare-client';
+import {
+  loadArrivalCandidates,
+  loadCategoryChoices,
+  loadReceptions,
+} from '../../packages/queries';
 import type {
-  ArrivalCandidate,
   LooseProduct,
   OpenBag,
-  PackageReception,
   PrepareClientGroup,
   ReviewPackage,
   WeighedDelivery,
 } from './types';
+
+interface PageProps {
+  searchParams: Promise<{ package?: string }>;
+}
 
 /**
  * Mesa de trabajo del logístico, calcada del proceso físico: (1) revisar
@@ -21,7 +28,8 @@ import type {
  * bolsa, lo que la cierra y fija su costo. Un agente solo ve las bolsas
  * y mercancía de sus clientes asignados.
  */
-export default async function PrepareDeliveryPage() {
+export default async function PrepareDeliveryPage({ searchParams }: PageProps) {
+  const { package: packageParam } = await searchParams;
   const session = await auth();
   const role = session?.user?.role ?? '';
   const canWrite = (ROLES.delivery as readonly string[]).includes(role);
@@ -32,62 +40,37 @@ export default async function PrepareDeliveryPage() {
     role === 'agent' ? parseId(session?.user?.id ?? '') : null;
 
   // Paquetes primero: sus recepciones se buscan por id en la misma pasada.
+  // Un agente solo ve los paquetes con recepciones de sus clientes.
   const packages = await prisma.package.findMany({
+    where:
+      agentId !== null
+        ? {
+            packageProducts: {
+              some: {
+                originalProduct: {
+                  order: { client: { assignedAgentId: agentId } },
+                },
+              },
+            },
+          }
+        : undefined,
     select: {
       id: true,
       agencyName: true,
       numberOfTracking: true,
       statusOfProcessing: true,
       arrivalDate: true,
+      packagePicture: true,
     },
     orderBy: [{ arrivalDate: 'desc' }, { id: 'desc' }],
     take: 150,
   });
 
-  const [receptions, candidateProducts, looseProducts, openBags, weighed] =
+  const [receptionsByPackage, arrivals, categories, looseProducts, openBags, weighed] =
     await Promise.all([
-      prisma.productReceived.findMany({
-        where: { packageId: { in: packages.map((p) => p.id) } },
-        select: {
-          id: true,
-          packageId: true,
-          amountReceived: true,
-          observation: true,
-          originalProduct: {
-            select: {
-              id: true,
-              name: true,
-              order: {
-                select: {
-                  client: { select: { name: true, lastName: true } },
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: 'asc' },
-      }),
-      // Candidatos de llegada: comprados con unidades sin recibir aún.
-      prisma.product.findMany({
-        where: { amountPurchased: { gt: 0 } },
-        select: {
-          id: true,
-          name: true,
-          amountRequested: true,
-          amountPurchased: true,
-          amountReceived: true,
-          category: { select: { name: true } },
-          order: {
-            select: {
-              id: true,
-              clientId: true,
-              client: { select: { name: true, lastName: true } },
-            },
-          },
-        },
-        orderBy: { createdAt: 'asc' },
-        take: 1000,
-      }),
+      loadReceptions(packages.map((p) => p.id)),
+      loadArrivalCandidates({ agentId }),
+      loadCategoryChoices(),
       // Mesa de bolsas: recibidos con unidades sin entregar (sueltos).
       prisma.product.findMany({
         where: {
@@ -183,29 +166,13 @@ export default async function PrepareDeliveryPage() {
           weight: true,
           weightCost: true,
           category: { select: { name: true } },
+          _count: { select: { deliveredProducts: true } },
         },
         orderBy: { deliverDate: 'desc' },
       }),
     ]);
 
   // -------- Fase 1: paquetes con sus llegadas marcadas --------
-  const receptionsByPackage = new Map<string, PackageReception[]>();
-  for (const r of receptions) {
-    if (r.packageId === null) continue;
-    const key = r.packageId.toString();
-    const list = receptionsByPackage.get(key) ?? [];
-    list.push({
-      id: r.id.toString(),
-      productId: r.originalProduct.id,
-      productName: r.originalProduct.name,
-      clientName:
-        `${r.originalProduct.order.client.name} ${r.originalProduct.order.client.lastName}`.trim(),
-      amount: r.amountReceived,
-      observation: r.observation,
-    });
-    receptionsByPackage.set(key, list);
-  }
-
   const reviewPackages: ReviewPackage[] = packages.map((p) => {
     const rows = receptionsByPackage.get(p.id.toString()) ?? [];
     return {
@@ -214,31 +181,13 @@ export default async function PrepareDeliveryPage() {
       tracking: p.numberOfTracking,
       status: p.statusOfProcessing,
       arrivalDate: p.arrivalDate.toISOString(),
+      packagePicture: p.packagePicture,
       receptions: rows,
       unitsMarked: rows.reduce((sum, r) => sum + r.amount, 0),
     };
   });
 
-  const candidates: ArrivalCandidate[] = candidateProducts
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      orderId: p.order.id.toString(),
-      clientId: p.order.clientId.toString(),
-      clientName:
-        `${p.order.client.name} ${p.order.client.lastName}`.trim(),
-      requested: p.amountRequested,
-      purchased: p.amountPurchased,
-      received: p.amountReceived,
-      pendingArrival: p.amountPurchased - p.amountReceived,
-      categoryName: p.category?.name ?? null,
-    }))
-    .filter((p) => p.pendingArrival > 0)
-    .sort(
-      (a, b) =>
-        a.clientName.localeCompare(b.clientName) ||
-        a.name.localeCompare(b.name)
-    );
+  const candidates = arrivals.candidates;
 
   // Unidades en camino por cliente (todas sus compras sin recibir),
   // para avisar en la mesa de bolsas que aún falta mercancía.
@@ -357,6 +306,7 @@ export default async function PrepareDeliveryPage() {
       weight: dlv.weight,
       weightCost: dlv.weightCost,
       deliverDate: dlv.deliverDate.toISOString(),
+      productCount: dlv._count.deliveredProducts,
     };
     group.weighed.push(view);
   }
@@ -378,13 +328,20 @@ export default async function PrepareDeliveryPage() {
       a.clientName.localeCompare(b.clientName)
   );
 
+  const initialPackageId =
+    packageParam && /^\d+$/.test(packageParam) ? packageParam : null;
+
   return (
     <PrepareDeliveryClient
       reviewPackages={reviewPackages}
       candidates={candidates}
+      truncated={arrivals.truncated}
+      categories={categories}
       groups={groups}
+      role={role}
       canWrite={canWrite}
       canWritePackages={canWritePackages}
+      initialPackageId={initialPackageId}
     />
   );
 }

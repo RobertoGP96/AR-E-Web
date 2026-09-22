@@ -1,0 +1,75 @@
+# Tests de conformidad con la especificación de procesos (doc/procesos/).
+# Ambos jobs consumen doc/procesos/casos/*.json: la misma entrada debe dar
+# la misma salida en admin-next (vitest) y en Django (pytest, SQLite).
+name: spec-tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: spec-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  admin-next:
+    name: admin-next (vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+        env:
+          # El postinstall de admin-next ejecuta `prisma generate`; no
+          # necesita conexión, pero Prisma valida que la variable exista.
+          DATABASE_URL: postgresql://spec:spec@localhost:5432/spec
+
+      - name: Tests de admin-next (incluye spec-cases.test.ts)
+        run: pnpm --filter @ar-e-web/admin-next test
+
+  backend:
+    name: backend (pytest, SQLite)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # config/settings/__init__.py elige development.py salvo DJANGO_ENV=production;
+      # development.py usa SQLite cuando DATABASE_URL no está definida.
+      DJANGO_SETTINGS_MODULE: config.settings.development
+      DJANGO_ENV: development
+      SECRET_KEY: spec-tests-not-a-secret
+      DEBUG: "true"
+      ENABLE_EMAIL_VERIFICATION: "false"
+      EMAIL_BACKEND: django.core.mail.backends.locmem.EmailBackend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Instalar dependencias
+        # requirements.txt no incluye el runner de tests; pytest-django
+        # configura Django desde DJANGO_SETTINGS_MODULE y pytest-cov
+        # hace válido el flag --no-cov.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-django pytest-cov
+
+      - name: Tests espejo de la especificación
+        run: python -m pytest api/tests/test_spec_cases.py --no-cov -p no:cacheprovider
