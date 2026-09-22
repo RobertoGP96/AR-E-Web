@@ -65,7 +65,7 @@ Leyenda: ✅ cumple · ❌ no cumple (con identificador del bug del plan: B* Dja
 
 | Id | App | Descripción | Tratamiento |
 |---|---|---|---|
-| B7 | Django | `notify_order_created` / `notify_product_purchased` fallan si la orden no tiene `sales_manager` (recipient no nullable). El test espejo crea órdenes con agente para evitarlo. | Deuda Django |
+| B7 | Django | `notify_order_created` / `notify_product_purchased` fallaban si la orden no tenía `sales_manager` (recipient no nullable). | Corregido (22-sep-2026): `Notification.create_notification` omite la notificación sin destinatario y el aviso a admins tolera órdenes sin agente. |
 | B18/B29 | Django | `ShoppingReceip.delete()` y `ShoppingReceipSerializer.update()` duplican la lógica de señales | Deuda Django |
 | B20/B21 | Django | sin `transaction.atomic` en `add_products` y serializers anidados; pagos sin `select_for_update` | Deuda Django |
 | B9-B14 | Django | `order.assign` (NameError), `BuyingAccounts` campo inexistente, `mark_*` no persisten | Deuda Django |
@@ -104,3 +104,7 @@ Tras el rediseño (rama `claude/proceso-compra-paquete-entrega`), las celdas de 
 | Mantenimiento | ✅ | Configuración → Sistema → «Recalcular estados de productos» (`recomputeAllProductsAction`) | — |
 
 Pendiente en admin-next: informe de invariantes sobre la BD en `/settings/system` (solo hay recompute), paridad de RN-011/RN-012 en Django (deuda ADR-0001/ADR-0005).
+
+## Suite Django heredada (nota de CI)
+
+`python manage.py test` en `backend/` arrastra unos 160 tests heredados rotos por deriva de la API (fixtures con `create_user` sin `phone_number`, rutas y campos que ya no existen, `ProductBuyed` con campos eliminados). Mientras no se saneen, el job `test-backend` de `.github/workflows/jekyll-gh-pages.yml` ejecuta solo los módulos mantenidos (`test_spec_cases`, `test_balance_payments`, `test_invoice_service`, `test_create_admin`), igual que `spec-tests.yml`. El script `api/tests/test_agent_profits.py` era un informe manual que Django recogía como test; ahora es `report_agent_profits.py`.

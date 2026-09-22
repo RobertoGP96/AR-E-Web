@@ -176,6 +176,16 @@ jobs:
       - name: Run maintained tests
         env:
           DJANGO_SETTINGS_MODULE: config.settings.development
+          DJANGO_ENV: development
+          SECRET_KEY: ci-not-a-secret
+          DEBUG: "true"
+          ENABLE_EMAIL_VERIFICATION: "false"
+          EMAIL_BACKEND: django.core.mail.backends.locmem.EmailBackend
         run: |
           cd backend
-          python -m pytest             api/tests/test_spec_cases.py             api/tests/test_balance_payments.py             api/tests/test_invoice_service.py             api/tests/test_create_admin.py             --no-cov -p no:cacheprovider
+          python -m pytest \
+            api/tests/test_spec_cases.py \
+            api/tests/test_balance_payments.py \
+            api/tests/test_invoice_service.py \
+            api/tests/test_create_admin.py \
+            --no-cov -p no:cacheprovider
