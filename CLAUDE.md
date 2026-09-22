@@ -5,6 +5,18 @@
 
 ---
 
+## Fuente de verdad de procesos: `doc/procesos/` — consultar antes de tocar flujos
+
+Toda regla de negocio, estado, transición, fórmula, invariante y permiso del sistema está en `doc/procesos/` (versionado, con identificadores estables `RN-nnn`, `INV-nnn`, `ES-<entidad>`, `ADR-nnnn`). Antes de modificar cualquier flujo (órdenes, compras, paquetes, bolsas, entregas, pagos, balances) en Django, admin-next, admin Vite o la app cliente:
+
+1. Lee `doc/procesos/README.md` (índice y gobierno del cambio), `ciclo-de-vida.md`, y los `estados/*.md` y `reglas/*.md` que aplican.
+2. Si el cambio altera una regla o un estado: ADR nuevo → actualizar regla/estado → `CHANGELOG.md` → `conformidad.md` → casos en `casos/*.json` con `spec-cases.test.ts` (vitest) y `backend/api/tests/test_spec_cases.py` (pytest) en verde. La plantilla de PR lo exige.
+3. Referencia el identificador en el código (`// RN-011`) y en los tests.
+
+Los documentos de `doc/legacy/` están obsoletos y contradictorios; no usarlos. `doc/apps/*.md` describe cómo implementa cada app las reglas y no las redefine.
+
+---
+
 ## Architecture Overview
 
 Three apps share a single repository:

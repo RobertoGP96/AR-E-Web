@@ -1,0 +1,114 @@
+[
+  {
+    "id": "RN-010-01",
+    "regla": "RN-010",
+    "descripcion": "Producto recién encargado: nada comprado, recibido ni entregado.",
+    "input": { "amountRequested": 10, "amountPurchased": 0, "amountReceived": 0, "amountDelivered": 0 },
+    "expected": "Encargado"
+  },
+  {
+    "id": "RN-010-02",
+    "regla": "RN-010",
+    "descripcion": "Comprada la cantidad completa, aún sin recibir.",
+    "input": { "amountRequested": 10, "amountPurchased": 10, "amountReceived": 0, "amountDelivered": 0 },
+    "expected": "Comprado"
+  },
+  {
+    "id": "RN-010-03",
+    "regla": "RN-010",
+    "descripcion": "Comprado y recibido todo, nada entregado todavía.",
+    "input": { "amountRequested": 10, "amountPurchased": 10, "amountReceived": 10, "amountDelivered": 0 },
+    "expected": "Recibido"
+  },
+  {
+    "id": "RN-010-04",
+    "regla": "RN-010",
+    "descripcion": "Ciclo completo: comprado, recibido y entregado todo.",
+    "input": { "amountRequested": 10, "amountPurchased": 10, "amountReceived": 10, "amountDelivered": 10 },
+    "expected": "Entregado"
+  },
+  {
+    "id": "RN-010-05",
+    "regla": "RN-010",
+    "descripcion": "Compra parcial (5 de 10): el producto sigue Encargado hasta completar la compra.",
+    "input": { "amountRequested": 10, "amountPurchased": 5, "amountReceived": 0, "amountDelivered": 0 },
+    "expected": "Encargado"
+  },
+  {
+    "id": "RN-010-06",
+    "regla": "RN-010",
+    "descripcion": "Compra parcial recibida y entregada por completo (5/5/5 de 10): sigue Encargado. Comportamiento vigente documentado (limitación B4): la compra parcial nunca cierra el producto.",
+    "input": { "amountRequested": 10, "amountPurchased": 5, "amountReceived": 5, "amountDelivered": 5 },
+    "expected": "Encargado"
+  },
+  {
+    "id": "RN-010-07",
+    "regla": "RN-010",
+    "descripcion": "Reembolso total: se compraron 10 y se reembolsaron 10, por lo que la cantidad comprada neta es 0 (amountPurchased = suma(amountBuyed) - suma(quantityRefuned)).",
+    "input": { "amountRequested": 10, "amountPurchased": 0, "amountReceived": 0, "amountDelivered": 0, "nota": "amountBuyed=10, quantityRefuned=10" },
+    "expected": "Encargado"
+  },
+  {
+    "id": "RN-010-08",
+    "regla": "RN-010",
+    "descripcion": "Recepción parcial (5 de 10 recibidos) con la compra completa: sigue Comprado.",
+    "input": { "amountRequested": 10, "amountPurchased": 10, "amountReceived": 5, "amountDelivered": 0 },
+    "expected": "Comprado"
+  },
+  {
+    "id": "RN-010-09",
+    "regla": "RN-010",
+    "descripcion": "Entrega parcial (5 de 10 entregados) con todo recibido: sigue Recibido.",
+    "input": { "amountRequested": 10, "amountPurchased": 10, "amountReceived": 10, "amountDelivered": 5 },
+    "expected": "Recibido"
+  },
+  {
+    "id": "RN-010-10",
+    "regla": "RN-010",
+    "descripcion": "Sobrecompra (12 de 10) recibida y entregada por completo: Entregado porque lo entregado cubre lo recibido y lo comprado.",
+    "input": { "amountRequested": 10, "amountPurchased": 12, "amountReceived": 12, "amountDelivered": 12 },
+    "expected": "Entregado"
+  },
+  {
+    "id": "RN-010-11",
+    "regla": "RN-010",
+    "descripcion": "Sobrecompra (12) recibida (12) pero entregadas solo las 10 pedidas: sigue Recibido porque entregado < recibido.",
+    "input": { "amountRequested": 10, "amountPurchased": 12, "amountReceived": 12, "amountDelivered": 10 },
+    "expected": "Recibido"
+  },
+  {
+    "id": "RN-010-12",
+    "regla": "RN-010",
+    "descripcion": "Producto unitario con ciclo completo.",
+    "input": { "amountRequested": 1, "amountPurchased": 1, "amountReceived": 1, "amountDelivered": 1 },
+    "expected": "Entregado"
+  },
+  {
+    "id": "RN-010-13",
+    "regla": "RN-010",
+    "descripcion": "Se recibió más de lo comprado (12 recibidos, 10 comprados) y se entregó todo lo recibido: Entregado. Esta situación viola INV-001 y admin-next la bloquea al recibir; el caso documenta cómo reacciona la derivación si los datos ya existen.",
+    "input": { "amountRequested": 10, "amountPurchased": 10, "amountReceived": 12, "amountDelivered": 12 },
+    "expected": "Entregado"
+  },
+  {
+    "id": "RN-011-01",
+    "regla": "RN-011",
+    "descripcion": "Unidades en una bolsa (entrega Pendiente, peso 0): amountDelivered cuenta 10 asignadas, pero para el estado solo cuentan las entregas Entregado (0). El producto sigue Recibido.",
+    "input": { "amountRequested": 10, "amountPurchased": 10, "amountReceived": 10, "amountDelivered": 10, "amountDeliveredFinal": 0 },
+    "expected": "Recibido"
+  },
+  {
+    "id": "RN-011-02",
+    "regla": "RN-011",
+    "descripcion": "La entrega que contiene las 10 unidades pasa a Entregado: ahora cuentan para el estado y el producto queda Entregado.",
+    "input": { "amountRequested": 10, "amountPurchased": 10, "amountReceived": 10, "amountDelivered": 10, "amountDeliveredFinal": 10 },
+    "expected": "Entregado"
+  },
+  {
+    "id": "RN-011-03",
+    "regla": "RN-011",
+    "descripcion": "10 unidades repartidas en dos entregas: 5 en una entrega Entregado y 5 en una En transito. Solo cuentan 5, el producto sigue Recibido.",
+    "input": { "amountRequested": 10, "amountPurchased": 10, "amountReceived": 10, "amountDelivered": 10, "amountDeliveredFinal": 5 },
+    "expected": "Recibido"
+  }
+]

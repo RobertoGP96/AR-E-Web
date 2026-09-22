@@ -1,0 +1,10 @@
+# Revisores obligatorios por ruta.
+# La especificación de procesos es la fuente de verdad del negocio:
+# cualquier cambio en ella (reglas, estados, ADR, casos, conformidad)
+# requiere revisión del responsable.
+doc/procesos/ @RobertoGP96
+
+# Los tests espejo que consumen doc/procesos/casos/*.json cambian junto con la especificación.
+apps/admin-next/src/lib/spec-cases.test.ts @RobertoGP96
+backend/api/tests/test_spec_cases.py @RobertoGP96
+.github/workflows/spec-tests.yml @RobertoGP96

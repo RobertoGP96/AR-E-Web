@@ -165,9 +165,9 @@ When the backend is running:
 
 | App | Platform | Notes |
 |-----|----------|-------|
-| Admin | Cloudflare Pages | See `apps/admin/CLOUDFLARE_DEPLOYMENT_GUIDE.md` |
-| Client | Vercel | Auto-deploys on push to `main`. See `VERCEL_DEPLOY_CLIENT.md` |
-| Backend | Render.com | PostgreSQL + Gunicorn + WhiteNoise. See `backend/RENDER_DEPLOYMENT_GUIDE.md` |
+| Admin | Cloudflare Pages | See `doc/legacy/CLOUDFLARE_DEPLOYMENT_GUIDE.md` |
+| Client | Vercel | Auto-deploys on push to `main`. See `doc/legacy/VERCEL_DEPLOY_CLIENT.md` |
+| Backend | Render.com | PostgreSQL + Gunicorn + WhiteNoise. See `doc/legacy/RENDER_DEPLOYMENT_GUIDE.md` |
 
 ---
 
@@ -182,11 +182,14 @@ When the backend is running:
 
 ## Additional Documentation
 
+- `doc/procesos/README.md` — **Business process specification (single source of truth)**: rules, states, roles, procedures, ADRs, conformance matrix and shared test cases. Read it before changing any flow.
+- `doc/apps/README.md` — How each app implements those rules
+- `doc/legacy/README.md` — Superseded documents (kept for history only)
 - `backend/README.md` — Backend API details
 - `apps/admin/README.md` — Admin panel details
 - `apps/client/README.md` — Client app details
-- `backend/RENDER_DEPLOYMENT_GUIDE.md` — Backend deployment
-- `VERCEL_DEPLOY_CLIENT.md` — Client app deployment
+- `doc/legacy/RENDER_DEPLOYMENT_GUIDE.md` — Backend deployment
+- `doc/legacy/VERCEL_DEPLOY_CLIENT.md` — Client app deployment
 
 ---
 
