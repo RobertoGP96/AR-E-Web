@@ -254,8 +254,13 @@ class Notification(models.Model):
             expires_at: Fecha de expiración (opcional)
         
         Returns:
-            Notification: Instancia de la notificación creada
+            Notification: Instancia de la notificación creada, o None si no
+            hay destinatario (p. ej. una orden sin agente asignado).
         """
+        # recipient es NOT NULL en la BD: sin destinatario no hay
+        # notificación (antes rompía la transacción de la orden, bug B7).
+        if recipient is None:
+            return None
         notification = cls(
             recipient=recipient,
             sender=sender,

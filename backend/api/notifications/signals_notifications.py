@@ -52,11 +52,16 @@ def notify_order_created(sender, instance, created, **kwargs):
         
         # Notificar a todos los admins
         admins = CustomUser.objects.filter(role='admin')
+        creator = (
+            instance.sales_manager.full_name
+            if instance.sales_manager is not None
+            else 'sin agente asignado'
+        )
         Notification.create_bulk_notifications(
             recipients=admins,
             notification_type=NotificationType.ORDER_CREATED,
             title='Nueva orden en el sistema',
-            message=f'Nueva orden #{instance.id} creada por {instance.sales_manager.full_name}.',
+            message=f'Nueva orden #{instance.id} creada por {creator}.',
             sender=instance.sales_manager,
             priority=NotificationPriority.NORMAL,
             action_url=f'/orders/{instance.id}',

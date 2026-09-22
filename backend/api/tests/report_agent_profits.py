@@ -9,7 +9,7 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
-from api.models import DeliverReceip, User
+from api.models import DeliverReceip, CustomUser as User
 from datetime import datetime, timedelta
 from django.utils import timezone
 
