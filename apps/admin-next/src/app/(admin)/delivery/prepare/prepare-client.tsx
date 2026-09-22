@@ -15,6 +15,7 @@ import { ReviewPackagesStep } from './review-packages-step';
 import { BagsStep } from './bags-step';
 import type {
   ArrivalCandidate,
+  CategoryChoice,
   PrepareClientGroup,
   ReviewPackage,
 } from './types';
@@ -22,9 +23,13 @@ import type {
 interface PrepareDeliveryClientProps {
   reviewPackages: ReviewPackage[];
   candidates: ArrivalCandidate[];
+  truncated: boolean;
+  categories: CategoryChoice[];
   groups: PrepareClientGroup[];
+  role: string;
   canWrite: boolean;
   canWritePackages: boolean;
+  initialPackageId: string | null;
 }
 
 type StepKey = 'packages' | 'deliveries';
@@ -41,9 +46,13 @@ type StepKey = 'packages' | 'deliveries';
 export function PrepareDeliveryClient({
   reviewPackages,
   candidates,
+  truncated,
+  categories,
   groups,
+  role,
   canWrite,
   canWritePackages,
+  initialPackageId,
 }: PrepareDeliveryClientProps) {
   const router = useRouter();
 
@@ -53,7 +62,7 @@ export function PrepareDeliveryClient({
 
   // Se arranca en la fase con trabajo pendiente.
   const [step, setStep] = useState<StepKey>(
-    pendingPackages > 0 ? 'packages' : 'deliveries'
+    initialPackageId || pendingPackages > 0 ? 'packages' : 'deliveries'
   );
 
   const STEPS: {
@@ -138,7 +147,11 @@ export function PrepareDeliveryClient({
         <ReviewPackagesStep
           packages={reviewPackages}
           candidates={candidates}
+          truncated={truncated}
+          categories={categories}
+          role={role}
           canWrite={canWritePackages}
+          initialPackageId={initialPackageId}
           onGoToDeliveries={() => setStep('deliveries')}
         />
       </div>

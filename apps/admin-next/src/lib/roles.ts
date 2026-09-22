@@ -24,5 +24,7 @@ export const ROLES = {
   orders: ['admin', 'agent'],
   delivery: ['admin', 'logistical'],
   packages: ['admin', 'logistical'],
+  /** Asignar categoría a un producto desde recepción/entregas. */
+  categorize: ['admin', 'agent', 'logistical'],
   finance: ['admin', 'accountant'], // balance, invoices, expenses, settings
 } as const satisfies Record<string, readonly string[]>;

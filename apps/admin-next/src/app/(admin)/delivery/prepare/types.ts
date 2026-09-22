@@ -1,45 +1,12 @@
 // Datos serializados que la página server pasa al workspace de
 // preparación de entregas (todos los BigInt/Date ya como string).
 
-/** Recepción ya registrada en un paquete (fila de ProductReceived). */
-export interface PackageReception {
-  id: string;
-  productId: string;
-  productName: string;
-  clientName: string;
-  amount: number;
-  observation: string | null;
-}
-
-/** Paquete listado en la fase de revisión (Enviado | Recibido | Procesado). */
-export interface ReviewPackage {
-  id: string;
-  agency: string;
-  tracking: string;
-  status: string;
-  arrivalDate: string;
-  /** Llegadas ya marcadas en este paquete. */
-  receptions: PackageReception[];
-  /** Σ unidades de las recepciones del paquete. */
-  unitsMarked: number;
-}
-
-/** Producto comprado con unidades aún sin marcar como llegadas. */
-export interface ArrivalCandidate {
-  id: string;
-  name: string;
-  orderId: string;
-  clientId: string;
-  clientName: string;
-  requested: number;
-  purchased: number;
-  received: number;
-  /** comprado − recibido: tope de unidades que se pueden marcar. */
-  pendingArrival: number;
-  /** Categoría del producto: decide en qué bolsa cae al marcarlo.
-   *  null = sin categoría → no se puede procesar hasta asignarla. */
-  categoryName: string | null;
-}
+export type {
+  ArrivalCandidate,
+  CategoryChoice,
+  PackageReception,
+  ReviewPackage,
+} from '../../packages/types';
 
 /** Fila de una bolsa abierta (ProductDelivery de una entrega peso 0). */
 export interface BagItem {

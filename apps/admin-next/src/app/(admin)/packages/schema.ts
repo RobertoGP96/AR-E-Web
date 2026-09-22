@@ -1,32 +1,47 @@
 import { z } from 'zod';
+import { PACKAGE_STATUSES, type PackageStatus } from '@/lib/package-status';
 
-export const PACKAGE_STATUSES = ['Enviado', 'Recibido', 'Procesado'] as const;
-export type PackageStatus = (typeof PACKAGE_STATUSES)[number];
+export { PACKAGE_STATUSES, type PackageStatus };
 
+/**
+ * Cabecera del paquete. El estado no viaja en el formulario: nace
+ * «Enviado» (o «Recibido» si ya está en el almacén) y solo cambia por
+ * las transiciones de `@/lib/package-status` (INV-006).
+ */
 export const packageFormSchema = z.object({
-  agencyName: z.string().trim().min(1, 'Required').max(100, 'Max 100'),
-  numberOfTracking: z.string().trim().min(1, 'Required').max(100, 'Max 100'),
-  statusOfProcessing: z.enum(PACKAGE_STATUSES),
+  agencyName: z.string().trim().min(1, 'Obligatorio').max(100, 'Máximo 100'),
+  numberOfTracking: z
+    .string()
+    .trim()
+    .min(1, 'Obligatorio')
+    .max(100, 'Máximo 100'),
   arrivalDate: z
     .string()
-    .min(1, 'Required')
-    .refine((s) => !Number.isNaN(Date.parse(s)), 'Invalid date'),
+    .min(1, 'Obligatoria')
+    .refine((s) => !Number.isNaN(Date.parse(s)), 'Fecha inválida'),
   packagePicture: z
     .string()
     .trim()
-    .max(1000, 'Too long')
+    .max(1000, 'Demasiado larga')
     .optional()
     .transform((v) => (v && v.length > 0 ? v : null)),
+  /** Solo al crear: el paquete ya está físicamente en el almacén. */
+  alreadyArrived: z
+    .union([z.literal('on'), z.literal('true'), z.literal('false'), z.null()])
+    .optional()
+    .transform((v) => v === 'on' || v === 'true'),
 });
 
 export type PackageFormInput = z.infer<typeof packageFormSchema>;
 
-// Lote de llegadas de /delivery/prepare: varias recepciones marcadas en
-// un mismo paquete se registran de una vez (registerArrivalsAction).
+/** Corrección manual del estado (solo admin, desde el diálogo de edición). */
+export const packageStatusSchema = z.enum(PACKAGE_STATUSES);
+
+// Lote de llegadas: varias recepciones marcadas en un mismo paquete se
+// registran de una vez (registerArrivalsAction). El paso Enviado →
+// Recibido es automático al registrar la primera llegada.
 export const arrivalBatchSchema = z.object({
   packageId: z.string().min(1),
-  /** Estado a dejar en el paquete tras registrar (p. ej. Enviado → Recibido). */
-  setStatus: z.enum(PACKAGE_STATUSES).optional(),
   items: z
     .array(
       z.object({
@@ -43,7 +58,8 @@ export const arrivalBatchSchema = z.object({
           .transform((v) => (v && v.length > 0 ? v : null)),
       })
     )
-    .min(1, 'Marca al menos un producto'),
+    .min(1, 'Marca al menos un producto')
+    .max(500, 'Máximo 500 productos por lote'),
 });
 
 export type ArrivalBatchInput = z.input<typeof arrivalBatchSchema>;
@@ -57,4 +73,6 @@ export interface PackageRow {
   packagePicture: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Recepciones registradas en el paquete. */
+  receptionCount: number;
 }
