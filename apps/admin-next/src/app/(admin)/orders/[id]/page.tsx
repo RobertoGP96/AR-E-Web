@@ -1,5 +1,8 @@
 import { notFound } from 'next/navigation';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { ROLES } from '@/lib/roles';
+import { loadPendingShopsOfOrder } from '../../purchases/queries';
 import { OrderDetailClient } from './order-detail-client';
 import {
   fromDbPayStatus,
@@ -22,7 +25,12 @@ export default async function OrderDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const [order, shops, categories] = await Promise.all([
+  const session = await auth();
+  const canPurchase = (ROLES.purchases as readonly string[]).includes(
+    session?.user?.role ?? ''
+  );
+
+  const [order, shops, categories, purchaseTargets] = await Promise.all([
     prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -46,6 +54,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),
+    canPurchase ? loadPendingShopsOfOrder(orderId) : Promise.resolve([]),
   ]);
 
   if (!order) notFound();
@@ -105,6 +114,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
       products={products}
       shopOptions={shopOptions}
       categoryOptions={categoryOptions}
+      purchaseTargets={order.status === 'Cancelado' ? [] : purchaseTargets}
     />
   );
 }

@@ -13,6 +13,7 @@ import {
   DollarSign,
   Receipt,
   PackageSearch,
+  ShoppingBag,
   Store,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
@@ -45,12 +46,21 @@ interface OrderHeader {
   observations: string | null;
 }
 
+interface PurchaseTarget {
+  shopId: string;
+  shopName: string;
+  products: number;
+  units: number;
+}
+
 interface OrderDetailClientProps {
   orderId: string;
   header: OrderHeader;
   products: ProductRow[];
   shopOptions: SelectOption[];
   categoryOptions: SelectOption[];
+  /** Tiendas con pendientes de comprar (vacío si el usuario no compra). */
+  purchaseTargets: PurchaseTarget[];
 }
 
 export function OrderDetailClient({
@@ -59,6 +69,7 @@ export function OrderDetailClient({
   products,
   shopOptions,
   categoryOptions,
+  purchaseTargets,
 }: OrderDetailClientProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ProductRow | null>(null);
@@ -165,14 +176,30 @@ export function OrderDetailClient({
         </div>
       </header>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">
           Productos
         </h2>
-        <Button variant="primary" onPress={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4" aria-hidden />
-          Añadir producto
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {purchaseTargets.length > 0 ? (
+            <Link
+              href={`/purchases/new?order=${orderId}${
+                purchaseTargets.length === 1
+                  ? `&shop=${purchaseTargets[0].shopId}`
+                  : ''
+              }`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-accent/40 bg-accent-soft px-3 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent/20"
+            >
+              <ShoppingBag className="h-4 w-4" aria-hidden />
+              Comprar pendientes (
+              {purchaseTargets.reduce((s, t) => s + t.units, 0)} u.)
+            </Link>
+          ) : null}
+          <Button variant="primary" onPress={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
+            Añadir producto
+          </Button>
+        </div>
       </div>
 
       <ResponsiveTable

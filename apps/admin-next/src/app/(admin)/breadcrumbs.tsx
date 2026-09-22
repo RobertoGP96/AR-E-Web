@@ -33,6 +33,7 @@ const ROUTE_NAMES: Record<string, string> = {
   '/shops': 'Tiendas',
   '/products': 'Productos',
   '/purchases': 'Compras',
+  '/purchases/new': 'Nueva compra',
   '/packages': 'Paquetes',
   '/delivery': 'Entrega',
   '/delivery/prepare': 'Preparar entregas',

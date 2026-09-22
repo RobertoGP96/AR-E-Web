@@ -1,123 +1,85 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
-  Plus,
+  CalendarDays,
+  CreditCard,
+  ExternalLink,
+  Package,
+  PackagePlus,
+  PackageSearch,
+  Pencil,
+  Receipt,
+  ShoppingBag,
   Trash2,
   Undo2,
-  Receipt,
-  CreditCard,
-  ShoppingBag,
-  PackageSearch,
+  X,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
-import { Button, Tooltip, Chip, Spinner } from '@heroui/react';
-import {
-  addBuyedProductAction,
-  removeBuyedProductAction,
-  refundBuyedProductAction,
-} from '../actions';
-import { formatCurrency } from '@/lib/format';
+import { Button, Chip, Tooltip } from '@heroui/react';
+import { removeBuyedProductAction } from '../actions';
+import { formatCurrency, formatDate } from '@/lib/format';
 import { PurchasePayBadge } from '@/components/status-badges';
 import {
-  AppModal,
   ConfirmModal,
-  Field,
-  SearchSelect,
-  TextInput,
-  TextArea,
   StatCard,
   ResponsiveTable,
   MobileCard,
   TableEmpty,
-  uniqueClientOptions,
 } from '@/components/ui';
+import { PurchaseDialog } from '../purchase-dialog';
+import { AddProductsDialog } from './add-products-dialog';
+import { RefundDialog } from './refund-dialog';
+import type {
+  PendingCandidates,
+  PurchaseRow,
+  ShopWithAccounts,
+} from '../schema';
 
 interface BuyedProduct {
   id: string;
   productName: string;
+  orderId: string;
+  clientName: string;
   amountBuyed: number;
   quantityRefuned: number;
   isRefunded: boolean;
   refundAmount: number;
-}
-
-interface Candidate {
-  id: string;
-  name: string;
-  clientId: string;
-  clientName: string;
-  pending: number;
+  refundNotes: string | null;
+  /** Unidades ya recibidas del producto (bloquean quitar/reembolsar). */
+  receivedOfProduct: number;
+  estimate: number;
 }
 
 interface PurchaseDetailClientProps {
-  purchaseId: string;
-  header: {
-    shopName: string;
-    accountName: string;
-    status: string;
-    totalCostOfPurchase: number;
-  };
+  purchase: PurchaseRow;
+  shopOptions: ShopWithAccounts[];
   buyedProducts: BuyedProduct[];
-  candidates: Candidate[];
+  candidates: PendingCandidates;
+  justCreated: boolean;
+  fromOrderId: string | null;
 }
 
 export function PurchaseDetailClient({
-  purchaseId,
-  header,
+  purchase,
+  shopOptions,
   buyedProducts,
   candidates,
+  justCreated,
+  fromOrderId,
 }: PurchaseDetailClientProps) {
-  const [isPending, startTransition] = useTransition();
-  const [productId, setProductId] = useState('');
-  const [clientFilter, setClientFilter] = useState('');
-  const [amount, setAmount] = useState(1);
+  const [addOpen, setAddOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [bannerOpen, setBannerOpen] = useState(justCreated);
   const [refundTarget, setRefundTarget] = useState<BuyedProduct | null>(null);
   const [removeTarget, setRemoveTarget] = useState<BuyedProduct | null>(null);
 
-  const clientOptions = uniqueClientOptions(candidates);
-  const filteredCandidates = clientFilter
-    ? candidates.filter((c) => c.clientId === clientFilter)
-    : candidates;
-
   const boughtUnits = buyedProducts.reduce((s, bp) => s + bp.amountBuyed, 0);
-  const refundedUnits = buyedProducts.reduce(
-    (s, bp) => s + bp.quantityRefuned,
-    0
-  );
-  const totalRefunded = buyedProducts.reduce(
-    (s, bp) => s + bp.refundAmount,
-    0
-  );
-
-  function handleAdd() {
-    if (!productId) {
-      toast.error('Producto sin seleccionar', {
-        description:
-          'Elige un producto de la lista antes de añadirlo a la compra.',
-      });
-      return;
-    }
-    const selected = candidates.find((c) => c.id === productId);
-    startTransition(async () => {
-      const result = await addBuyedProductAction(purchaseId, productId, amount);
-      if (result.ok) {
-        toast.success('Producto añadido a la compra', {
-          description: selected
-            ? `Se añadieron ${amount} unidad(es) de «${selected.name}».`
-            : `Se añadieron ${amount} unidad(es) a la compra.`,
-        });
-        setProductId('');
-        setAmount(1);
-      } else {
-        toast.error('No se pudo añadir el producto', {
-          description: result.error,
-        });
-      }
-    });
-  }
+  const refundedUnits = buyedProducts.reduce((s, bp) => s + bp.quantityRefuned, 0);
+  const totalRefunded = buyedProducts.reduce((s, bp) => s + bp.refundAmount, 0);
+  const estimatedTotal = buyedProducts.reduce((s, bp) => s + bp.estimate, 0);
 
   const productActions = (bp: BuyedProduct) => (
     <>
@@ -128,6 +90,7 @@ export function PurchaseDetailClient({
           isIconOnly
           aria-label={`Reembolsar ${bp.productName}`}
           onPress={() => setRefundTarget(bp)}
+          isDisabled={bp.amountBuyed - bp.quantityRefuned <= 0}
         >
           <Undo2 className="h-4 w-4" aria-hidden />
         </Button>
@@ -144,7 +107,11 @@ export function PurchaseDetailClient({
         >
           <Trash2 className="h-4 w-4" aria-hidden />
         </Button>
-        <Tooltip.Content>Quitar</Tooltip.Content>
+        <Tooltip.Content>
+          {bp.receivedOfProduct > 0
+            ? 'Quitar (bloqueado si deja recibido > comprado)'
+            : 'Quitar'}
+        </Tooltip.Content>
       </Tooltip>
     </>
   );
@@ -165,7 +132,7 @@ export function PurchaseDetailClient({
 
   return (
     <div className="space-y-6">
-      <div className="animate-in fade-in slide-in-from-top-1 duration-300">
+      <div className="animate-in fade-in slide-in-from-top-1 duration-300 flex flex-wrap items-center justify-between gap-2">
         <Link
           href="/purchases"
           className="inline-flex items-center gap-1 rounded-md text-sm text-muted transition-colors hover:text-foreground"
@@ -173,27 +140,97 @@ export function PurchaseDetailClient({
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Volver a compras
         </Link>
+        <Link
+          href="/packages"
+          className="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-accent transition-colors hover:text-accent/80"
+        >
+          <Package className="h-4 w-4" aria-hidden />
+          Registrar paquete
+        </Link>
       </div>
+
+      {bannerOpen ? (
+        <div className="surface-card animate-in fade-in slide-in-from-top-2 flex flex-wrap items-start gap-3 border-success/30 bg-success-soft/40 p-4 duration-300">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              Compra creada
+            </p>
+            <p className="mt-0.5 text-sm text-muted">
+              Cuando llegue la mercancía, regístrala como paquete y marca las
+              llegadas en «Preparar entregas»: cada producto caerá en la
+              bolsa de su cliente.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onPress={() => (window.location.href = '/packages')}
+              >
+                <Package className="h-4 w-4" aria-hidden />
+                Registrar paquete
+              </Button>
+              {fromOrderId ? (
+                <Link
+                  href={`/orders/${fromOrderId}`}
+                  className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-accent hover:text-accent"
+                >
+                  Volver a la orden #{fromOrderId}
+                </Link>
+              ) : null}
+            </div>
+          </div>
+          <button
+            type="button"
+            aria-label="Cerrar aviso"
+            onClick={() => setBannerOpen(false)}
+            className="rounded-md p-1 text-muted transition-colors hover:text-foreground"
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+      ) : null}
 
       <header className="surface-card animate-in fade-in slide-in-from-top-2 duration-300 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <h1 className="text-xl font-bold tracking-tight text-foreground">
-              {header.shopName}
+              {purchase.shopName}
             </h1>
-            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted">
-              <CreditCard className="h-3.5 w-3.5" aria-hidden />
-              {header.accountName}
+            <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted">
+              <span className="inline-flex items-center gap-1.5">
+                <CreditCard className="h-3.5 w-3.5" aria-hidden />
+                {purchase.accountName}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                {formatDate(purchase.buyDate)}
+              </span>
+              {purchase.cardId ? <span>Tarjeta {purchase.cardId}</span> : null}
             </p>
           </div>
-          <PurchasePayBadge status={header.status} />
+          <div className="flex items-center gap-2">
+            <PurchasePayBadge status={purchase.statusOfShopping} />
+            <Tooltip delay={500}>
+              <Button
+                variant="ghost"
+                size="sm"
+                isIconOnly
+                aria-label="Editar cabecera de la compra"
+                onPress={() => setEditOpen(true)}
+              >
+                <Pencil className="h-4 w-4" aria-hidden />
+              </Button>
+              <Tooltip.Content>Editar cabecera</Tooltip.Content>
+            </Tooltip>
+          </div>
         </div>
 
         <div className="stagger-children mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
             icon={Receipt}
-            label="Total de la compra"
-            value={formatCurrency(header.totalCostOfPurchase)}
+            label="Total pagado"
+            value={formatCurrency(purchase.totalCostOfPurchase)}
+            hint={`Estimado ${formatCurrency(estimatedTotal)}`}
             tone="accent"
           />
           <StatCard
@@ -218,79 +255,21 @@ export function PurchaseDetailClient({
         </div>
       </header>
 
-      <section className="surface-card animate-in fade-in slide-in-from-top-2 duration-300 p-4">
-        <h2 className="mb-3 text-sm font-semibold text-foreground">
-          Añadir producto comprado
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+          Productos comprados
         </h2>
-        {candidates.length === 0 ? (
-          <p className="text-sm text-muted">
-            No hay productos encargados pendientes de comprar en esta tienda.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-            <Field label="Cliente" className="lg:w-56">
-              <SearchSelect
-                value={clientFilter}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setClientFilter(next);
-                  // El producto elegido deja de ser válido si no es
-                  // del cliente filtrado.
-                  if (
-                    next &&
-                    !candidates.some(
-                      (c) => c.id === productId && c.clientId === next
-                    )
-                  ) {
-                    setProductId('');
-                  }
-                }}
-                placeholder="Todos los clientes"
-                searchPlaceholder="Buscar cliente…"
-                options={clientOptions}
-              />
-            </Field>
-            <Field label="Producto" className="flex-1">
-              <SearchSelect
-                value={productId}
-                onChange={(e) => setProductId(e.target.value)}
-                placeholder="— Selecciona —"
-                searchPlaceholder="Buscar producto…"
-                emptyMessage="Sin productos encargados para ese filtro"
-                options={filteredCandidates.map((c) => ({
-                  value: c.id,
-                  label: `${c.name} (${c.pending} pendiente${
-                    c.pending === 1 ? '' : 's'
-                  })`,
-                  description: c.clientName,
-                }))}
-              />
-            </Field>
-            <Field label="Cantidad" className="sm:w-28">
-              <TextInput
-                type="number"
-                min={1}
-                value={amount}
-                onChange={(e) =>
-                  setAmount(Math.max(1, Math.floor(Number(e.target.value) || 1)))
-                }
-              />
-            </Field>
-            <Button
-              variant="primary"
-              onPress={handleAdd}
-              isDisabled={isPending || !productId}
-            >
-              <Plus className="h-4 w-4" aria-hidden />
-              Añadir
-            </Button>
-          </div>
-        )}
-      </section>
-
-      <h2 className="text-lg font-semibold tracking-tight text-foreground">
-        Productos comprados
-      </h2>
+        <Button
+          variant="primary"
+          onPress={() => setAddOpen(true)}
+          isDisabled={candidates.totalProducts === 0}
+          className="w-full sm:w-auto"
+        >
+          <PackagePlus className="h-4 w-4" aria-hidden />
+          Añadir productos
+          {candidates.totalProducts > 0 ? ` (${candidates.totalProducts} pendientes)` : ''}
+        </Button>
+      </div>
 
       <ResponsiveTable
         table={
@@ -298,7 +277,9 @@ export function PurchaseDetailClient({
             <thead>
               <tr>
                 <th>Producto</th>
+                <th>Cliente</th>
                 <th>Comprado</th>
+                <th>Estimado</th>
                 <th>Reembolsado</th>
                 <th className="text-right">Acciones</th>
               </tr>
@@ -306,7 +287,7 @@ export function PurchaseDetailClient({
             <tbody>
               {buyedProducts.length === 0 ? (
                 <TableEmpty
-                  colSpan={4}
+                  colSpan={6}
                   icon={PackageSearch}
                   message="Aún no hay productos comprados en esta compra."
                 />
@@ -321,21 +302,37 @@ export function PurchaseDetailClient({
                         {refundChip(bp)}
                       </div>
                     </td>
-                    <td className="tabular-nums">{bp.amountBuyed}</td>
+                    <td className="text-muted">
+                      <span className="block">{bp.clientName}</span>
+                      <Link
+                        href={`/orders/${bp.orderId}`}
+                        className="inline-flex items-center gap-0.5 text-xs transition-colors hover:text-accent"
+                      >
+                        Orden #{bp.orderId}
+                        <ExternalLink className="h-3 w-3" aria-hidden />
+                      </Link>
+                    </td>
+                    <td className="tabular-nums">
+                      {bp.amountBuyed}
+                      {bp.receivedOfProduct > 0 ? (
+                        <span className="block text-xs text-muted">
+                          {bp.receivedOfProduct} recibida
+                          {bp.receivedOfProduct === 1 ? '' : 's'}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="tabular-nums">{formatCurrency(bp.estimate)}</td>
                     <td>
                       {bp.quantityRefuned > 0 ? (
                         <span className="font-medium tabular-nums text-danger">
-                          {bp.quantityRefuned} (
-                          {formatCurrency(bp.refundAmount)})
+                          {bp.quantityRefuned} ({formatCurrency(bp.refundAmount)})
                         </span>
                       ) : (
                         <span className="text-muted">—</span>
                       )}
                     </td>
                     <td className="text-right">
-                      <div className="inline-flex gap-0.5">
-                        {productActions(bp)}
-                      </div>
+                      <div className="inline-flex gap-0.5">{productActions(bp)}</div>
                     </td>
                   </tr>
                 ))
@@ -353,16 +350,17 @@ export function PurchaseDetailClient({
               <MobileCard
                 key={bp.id}
                 title={bp.productName}
+                subtitle={`${bp.clientName} · Orden #${bp.orderId}`}
                 badges={refundChip(bp)}
                 rows={[
                   { label: 'Comprado', value: bp.amountBuyed },
+                  { label: 'Estimado', value: formatCurrency(bp.estimate) },
                   {
                     label: 'Reembolsado',
                     value:
                       bp.quantityRefuned > 0 ? (
                         <span className="font-medium text-danger">
-                          {bp.quantityRefuned} (
-                          {formatCurrency(bp.refundAmount)})
+                          {bp.quantityRefuned} ({formatCurrency(bp.refundAmount)})
                         </span>
                       ) : (
                         '—'
@@ -376,6 +374,28 @@ export function PurchaseDetailClient({
         }
       />
 
+      <AddProductsDialog
+        open={addOpen}
+        purchaseId={purchase.id}
+        shopName={purchase.shopName}
+        candidates={candidates}
+        onClose={() => setAddOpen(false)}
+        onSuccess={() => setAddOpen(false)}
+      />
+
+      <PurchaseDialog
+        open={editOpen}
+        purchase={purchase}
+        shopOptions={shopOptions}
+        onClose={() => setEditOpen(false)}
+        onSuccess={() => {
+          setEditOpen(false);
+          toast.success('Compra actualizada', {
+            description: 'Los cambios de la cabecera se guardaron.',
+          });
+        }}
+      />
+
       <ConfirmModal
         isOpen={removeTarget !== null}
         onClose={() => setRemoveTarget(null)}
@@ -387,8 +407,11 @@ export function PurchaseDetailClient({
               <strong className="text-foreground">
                 {removeTarget.productName}
               </strong>{' '}
-              ({removeTarget.amountBuyed} unidad(es)) de esta compra. La
-              cantidad comprada del producto original se recalculará.
+              ({removeTarget.amountBuyed} unidad(es)) de esta compra y se
+              recalculará la cantidad comprada del producto.
+              {removeTarget.receivedOfProduct > 0
+                ? ' El producto ya tiene unidades recibidas: se bloqueará si quedaran más recibidas que compradas.'
+                : ''}
             </>
           ) : null
         }
@@ -398,7 +421,7 @@ export function PurchaseDetailClient({
             return { ok: false, error: 'Producto no encontrado' };
           }
           const result = await removeBuyedProductAction(
-            purchaseId,
+            purchase.id,
             removeTarget.id
           );
           if (result.ok) {
@@ -412,166 +435,16 @@ export function PurchaseDetailClient({
       />
 
       <RefundDialog
-        purchaseId={purchaseId}
+        purchaseId={purchase.id}
         row={refundTarget}
         onClose={() => setRefundTarget(null)}
         onSuccess={() => {
           setRefundTarget(null);
           toast.success('Reembolso registrado', {
-            description:
-              'El reembolso quedó registrado en la compra correctamente.',
+            description: 'El reembolso quedó registrado en la compra.',
           });
         }}
       />
     </div>
-  );
-}
-
-function RefundDialog({
-  purchaseId,
-  row,
-  onClose,
-  onSuccess,
-}: {
-  purchaseId: string;
-  row: BuyedProduct | null;
-  onClose: () => void;
-  onSuccess: () => void;
-}) {
-  const [isPending, startTransition] = useTransition();
-  // Refunds accumulate server-side; this dialog records an ADDITIONAL
-  // refund, so it starts at 1/0 and caps at what is left to refund.
-  const refundable = row
-    ? Math.max(0, row.amountBuyed - row.quantityRefuned)
-    : 0;
-  const [quantity, setQuantity] = useState(Math.min(1, refundable));
-  const [amount, setAmount] = useState(0);
-  const [notes, setNotes] = useState('');
-
-  const signature = row?.id ?? 'none';
-  const [lastSignature, setLastSignature] = useState(signature);
-  if (signature !== lastSignature) {
-    setLastSignature(signature);
-    setQuantity(
-      Math.min(1, row ? Math.max(0, row.amountBuyed - row.quantityRefuned) : 0)
-    );
-    setAmount(0);
-    setNotes('');
-  }
-
-  function submit() {
-    if (!row) return;
-    startTransition(async () => {
-      const result = await refundBuyedProductAction(
-        purchaseId,
-        row.id,
-        quantity,
-        amount,
-        notes
-      );
-      if (result.ok) onSuccess();
-      else
-        toast.error('No se pudo registrar el reembolso', {
-          description: result.error,
-        });
-    });
-  }
-
-  return (
-    <AppModal
-      isOpen={row !== null}
-      onClose={onClose}
-      title="Registrar reembolso"
-      description={
-        row
-          ? `${row.productName} — ${row.amountBuyed} comprado(s)${
-              row.quantityRefuned > 0
-                ? `, ${row.quantityRefuned} ya reembolsado(s)`
-                : ''
-            }.`
-          : undefined
-      }
-      icon={<Undo2 className="h-5 w-5" aria-hidden />}
-      size="sm"
-    >
-      <div key={row?.id ?? 'none'} className="space-y-4">
-        <Field
-          label="Cantidad a reembolsar"
-          hint={`Máximo ${refundable}`}
-          required
-        >
-          <TextInput
-            type="number"
-            min={1}
-            max={refundable}
-            value={quantity}
-            onChange={(e) =>
-              setQuantity(
-                Math.max(
-                  1,
-                  Math.min(refundable, Math.floor(Number(e.target.value) || 1))
-                )
-              )
-            }
-          />
-        </Field>
-
-        <Field label="Monto del reembolso">
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
-              $
-            </span>
-            <TextInput
-              type="number"
-              step="0.01"
-              min={0}
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value) || 0)}
-              className="pl-7"
-            />
-          </div>
-        </Field>
-
-        <Field label="Notas (opcional)">
-          <TextArea
-            rows={2}
-            maxLength={500}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-        </Field>
-
-        <div className="rounded-xl border border-danger/25 bg-danger-soft/40 p-3 text-sm">
-          <div className="flex items-center justify-between font-semibold text-danger-soft-foreground">
-            <span>Se reembolsarán {quantity} unidad(es)</span>
-            <span className="tabular-nums">{formatCurrency(amount)}</span>
-          </div>
-          <p className="mt-1 text-xs text-muted">
-            El reembolso reduce la cantidad comprada del producto y puede
-            cambiar su estado.
-          </p>
-        </div>
-
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="tertiary" onPress={onClose} isDisabled={isPending}>
-            Cancelar
-          </Button>
-          <Button
-            variant="danger"
-            onPress={submit}
-            isDisabled={isPending || refundable === 0}
-          >
-            {isPending ? (
-              <>
-                <Spinner size="sm" aria-hidden />
-                Guardando…
-              </>
-            ) : (
-              'Registrar reembolso'
-            )}
-          </Button>
-        </div>
-      </div>
-    </AppModal>
   );
 }

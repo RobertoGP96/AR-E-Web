@@ -4,6 +4,8 @@ import {
   computeProductCost,
   computePayStatus,
   deriveProductStatus,
+  estimateBuyedCost,
+  estimatePurchaseTotal,
 } from './order-cost';
 
 describe('round2', () => {
@@ -117,5 +119,38 @@ describe('deriveProductStatus', () => {
 
   it('falls back to Encargado after a full refund', () => {
     expect(deriveProductStatus(3, 0, 0, 0)).toBe('Encargado');
+  });
+});
+
+describe('RN-004 estimateBuyedCost', () => {
+  const product = {
+    shopCost: 10,
+    amountRequested: 4,
+    shopDeliveryCost: 5,
+    shopTaxes: 5,
+    chargeIva: true,
+    addedTaxes: 1,
+    ownTaxes: 2,
+    totalCost: 55.53,
+  };
+
+  it('uses totalCost when all requested units are bought', () => {
+    expect(estimateBuyedCost(product, 4)).toBe(55.53);
+  });
+
+  it('recomputes the cascade with the bought units otherwise', () => {
+    // base = 20 + 5 = 25; iva = 1.75; tarifa = 26.75 * 0.05 = 1.3375
+    // total = 25 + 1.75 + 1.3375 + 1 + 2 = 31.0875 → 31.09
+    expect(estimateBuyedCost(product, 2)).toBe(31.09);
+  });
+
+  it('returns 0 for no units and sums a purchase', () => {
+    expect(estimateBuyedCost(product, 0)).toBe(0);
+    expect(
+      estimatePurchaseTotal([
+        { product, units: 4 },
+        { product, units: 2 },
+      ])
+    ).toBe(86.62);
   });
 });

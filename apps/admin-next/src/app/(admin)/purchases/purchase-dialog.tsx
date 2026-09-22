@@ -4,11 +4,7 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { ShoppingBag } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { Button } from '@heroui/react';
-import {
-  createPurchaseAction,
-  updatePurchaseAction,
-  type ActionResult,
-} from './actions';
+import { updatePurchaseAction, type ActionResult } from './actions';
 import {
   AppModal,
   Field,
@@ -24,7 +20,6 @@ import {
 
 interface PurchaseDialogProps {
   open: boolean;
-  mode: 'create' | 'edit';
   purchase?: PurchaseRow;
   shopOptions: ShopWithAccounts[];
   onClose: () => void;
@@ -36,26 +31,27 @@ function isoToDateInput(iso: string | undefined): string {
   return iso.slice(0, 10);
 }
 
+/**
+ * Edición de la cabecera de una compra. Las compras nuevas se crean en
+ * /purchases/new a partir de los productos pendientes (ADR-0002).
+ */
 export function PurchaseDialog({
   open,
-  mode,
   purchase,
   shopOptions,
   onClose,
   onSuccess,
 }: PurchaseDialogProps) {
-  const action =
-    mode === 'create' ? createPurchaseAction : updatePurchaseAction;
   const [state, formAction, isPending] = useActionState<
     ActionResult | undefined,
     FormData
-  >(action, undefined);
+  >(updatePurchaseAction, undefined);
   const lastHandledRef = useRef<ActionResult | undefined>(undefined);
 
   // Dependent select: the account list follows the chosen shop.
   const [shopId, setShopId] = useState(purchase?.shopOfBuyId ?? '');
 
-  const signature = `${open}-${mode}-${purchase?.id ?? 'new'}`;
+  const signature = `${open}-${purchase?.id ?? 'none'}`;
   const [lastSignature, setLastSignature] = useState(signature);
   if (signature !== lastSignature) {
     setLastSignature(signature);
@@ -74,35 +70,42 @@ export function PurchaseDialog({
 
   const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
   const accounts = shopOptions.find((s) => s.id === shopId)?.accounts ?? [];
+  const hasProducts = (purchase?.productCount ?? 0) > 0;
 
   return (
     <AppModal
       isOpen={open}
       onClose={onClose}
-      title={mode === 'create' ? 'Nueva compra' : 'Editar compra'}
-      description={
-        mode === 'create'
-          ? 'Registra una compra en una tienda; los productos comprados se gestionan desde el detalle.'
-          : `Compra #${purchase?.id ?? ''} en ${purchase?.shopName ?? ''}`
-      }
+      title="Editar compra"
+      description={`Compra #${purchase?.id ?? ''} en ${purchase?.shopName ?? ''}`}
       icon={<ShoppingBag className="h-5 w-5" aria-hidden />}
       size="lg"
     >
       <form
-        key={mode === 'edit' ? (purchase?.id ?? 'edit') : 'create'}
+        key={purchase?.id ?? 'edit'}
         action={formAction}
         className="space-y-4"
       >
-        {mode === 'edit' && purchase ? (
+        {purchase ? (
           <input type="hidden" name="id" value={purchase.id} />
         ) : null}
 
-        <Field label="Tienda" required error={errors['shopOfBuyId']}>
+        <Field
+          label="Tienda"
+          required
+          error={errors['shopOfBuyId']}
+          hint={
+            hasProducts
+              ? 'La tienda no se puede cambiar: la compra ya tiene productos.'
+              : undefined
+          }
+        >
           <Select
             name="shopOfBuyId"
             value={shopId}
             onChange={(e) => setShopId(e.target.value)}
             required
+            disabled={hasProducts}
             invalid={!!errors['shopOfBuyId']}
           >
             <option value="">— Selecciona una tienda —</option>
@@ -168,7 +171,7 @@ export function PurchaseDialog({
           <Field label="Tarjeta / ID (opcional)">
             <TextInput name="cardId" defaultValue={purchase?.cardId ?? ''} />
           </Field>
-          <Field label="Costo total" error={errors['totalCostOfPurchase']}>
+          <Field label="Costo total pagado" error={errors['totalCostOfPurchase']}>
             <div className="relative">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
                 $
@@ -178,6 +181,7 @@ export function PurchaseDialog({
                 type="number"
                 step="0.01"
                 min="0"
+                inputMode="decimal"
                 defaultValue={purchase?.totalCostOfPurchase.toString() ?? '0'}
                 invalid={!!errors['totalCostOfPurchase']}
                 className="pl-7"
@@ -186,13 +190,7 @@ export function PurchaseDialog({
           </Field>
         </div>
 
-        <p className="text-xs text-muted">
-          La gestión de productos comprados (que actualiza la cantidad
-          comprada y el estado de cada producto) se hace desde el detalle de
-          la compra.
-        </p>
-
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
           <Button variant="tertiary" onPress={onClose}>
             Cancelar
           </Button>
