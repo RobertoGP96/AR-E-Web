@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { getGeneralAdminId } from '@/lib/general-admin';
+import { SALES_MANAGER_ROLES, salesManagerLabel } from '@/lib/order-manager';
 import { parseId } from '@/lib/action-helpers';
 import { ROLES } from '@/lib/roles';
 import { NewOrderClient } from './new-order-client';
@@ -36,9 +38,10 @@ export default async function NewOrderPage() {
       take: 1000,
     }),
     prisma.customUser.findMany({
-      where: { role: { in: ['agent', 'admin'] }, isActive: true },
-      select: { id: true, name: true, lastName: true },
-      orderBy: { name: 'asc' },
+      // ADR-0007: cualquier miembro del personal puede gestionar órdenes.
+      where: { role: { in: [...SALES_MANAGER_ROLES] }, isActive: true },
+      select: { id: true, name: true, lastName: true, role: true },
+      orderBy: [{ role: 'asc' }, { name: 'asc' }],
     }),
     prisma.shop.findMany({
       where: { isActive: true },
@@ -59,8 +62,9 @@ export default async function NewOrderPage() {
   }));
   const managerOptions: SelectOption[] = managers.map((m) => ({
     id: m.id.toString(),
-    label: `${m.name} ${m.lastName}`.trim(),
+    label: salesManagerLabel(`${m.name} ${m.lastName}`, m.role),
   }));
+  const defaultManagerId = await getGeneralAdminId();
   const shopOptions: SelectOption[] = shops.map((s) => ({
     id: s.id.toString(),
     label: s.name,
@@ -75,6 +79,7 @@ export default async function NewOrderPage() {
     <NewOrderClient
       clientOptions={clientOptions}
       managerOptions={managerOptions}
+      defaultManagerId={defaultManagerId}
       shopOptions={shopOptions}
       categoryOptions={categoryOptions}
       currentUser={currentUser}

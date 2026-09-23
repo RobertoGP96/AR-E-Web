@@ -40,6 +40,7 @@ function parseForm(formData: FormData) {
     numberOfTracking: formData.get('numberOfTracking'),
     arrivalDate: formData.get('arrivalDate'),
     packagePicture: formData.get('packagePicture') ?? '',
+    packagePicture2: formData.get('packagePicture2') ?? '',
     alreadyArrived: formData.get('alreadyArrived'),
   });
 }
@@ -80,6 +81,7 @@ export async function createPackageAction(
         statusOfProcessing: d.alreadyArrived ? 'Recibido' : 'Enviado',
         arrivalDate: new Date(d.arrivalDate),
         packagePicture: d.packagePicture,
+        packagePicture2: d.packagePicture2,
       },
       select: { id: true },
     });
@@ -146,6 +148,7 @@ export async function updatePackageAction(
         numberOfTracking: d.numberOfTracking,
         arrivalDate: new Date(d.arrivalDate),
         packagePicture: d.packagePicture,
+        packagePicture2: d.packagePicture2,
         ...(status && { statusOfProcessing: status }),
       },
     });
@@ -509,6 +512,7 @@ export async function createPackageWithArrivalsAction(
               d.alreadyArrived || d.items.length > 0 ? 'Recibido' : 'Enviado',
             arrivalDate: new Date(d.arrivalDate),
             packagePicture: d.packagePicture,
+            packagePicture2: d.packagePicture2,
           },
           select: { id: true },
         });

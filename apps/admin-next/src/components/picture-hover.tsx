@@ -80,3 +80,29 @@ export function PictureHover({
     </span>
   );
 }
+
+/**
+ * Varias capturas en una misma celda (p. ej. las 2 fotos del paquete):
+ * una miniatura por URL presente; el icono «sin captura» si no hay ninguna.
+ */
+export function PictureHoverGroup({
+  urls,
+  alt,
+}: {
+  urls: (string | null | undefined)[];
+  alt: string;
+}) {
+  const list = urls.filter((u): u is string => Boolean(u));
+  if (list.length === 0) return <PictureHover url={null} alt={alt} />;
+  return (
+    <span className="inline-flex items-center gap-1">
+      {list.map((u, i) => (
+        <PictureHover
+          key={`${u}-${i}`}
+          url={u}
+          alt={list.length > 1 ? `${alt} (${i + 1})` : alt}
+        />
+      ))}
+    </span>
+  );
+}

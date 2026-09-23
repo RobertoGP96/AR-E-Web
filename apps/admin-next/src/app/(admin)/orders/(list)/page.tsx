@@ -1,6 +1,8 @@
 import type { Prisma } from '@prisma/client';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { getGeneralAdminId } from '@/lib/general-admin';
+import { SALES_MANAGER_ROLES, salesManagerLabel } from '@/lib/order-manager';
 import { OrdersClient } from '../orders-client';
 import { TablePagination } from '@/components/table-pagination';
 import { parsePagination } from '@/lib/pagination';
@@ -116,9 +118,10 @@ export default async function OrdersPage({ searchParams }: PageProps) {
       take: 1000,
     }),
     prisma.customUser.findMany({
-      where: { role: { in: ['agent', 'admin'] }, isActive: true },
-      select: { id: true, name: true, lastName: true },
-      orderBy: { name: 'asc' },
+      // ADR-0007: cualquier miembro del personal puede gestionar órdenes.
+      where: { role: { in: [...SALES_MANAGER_ROLES] }, isActive: true },
+      select: { id: true, name: true, lastName: true, role: true },
+      orderBy: [{ role: 'asc' }, { name: 'asc' }],
     }),
     prisma.order.count({ where }),
   ]);
@@ -150,8 +153,9 @@ export default async function OrdersPage({ searchParams }: PageProps) {
   }));
   const managerOptions: SelectOption[] = managers.map((m) => ({
     id: m.id.toString(),
-    label: `${m.name} ${m.lastName}`.trim(),
+    label: salesManagerLabel(`${m.name} ${m.lastName}`, m.role),
   }));
+  const defaultManagerId = await getGeneralAdminId();
 
   return (
     <>
@@ -159,6 +163,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
         initialRows={rows}
         clientOptions={clientOptions}
         managerOptions={managerOptions}
+        defaultManagerId={defaultManagerId}
         currentUser={currentUser}
         initialFilters={{
           q: search,

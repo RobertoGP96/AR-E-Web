@@ -53,6 +53,7 @@ export default async function PackagesPage({ searchParams }: PageProps) {
     statusOfProcessing: p.statusOfProcessing as PackageStatus,
     arrivalDate: p.arrivalDate.toISOString(),
     packagePicture: p.packagePicture,
+    packagePicture2: p.packagePicture2,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
     receptionCount: p._count.packageProducts,

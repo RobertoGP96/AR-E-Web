@@ -188,6 +188,11 @@ class PackageSerializer(serializers.ModelSerializer):
         allow_null=True,
         allow_blank=True,
     )
+    package_picture_2 = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
     
     contained_products = ProductReceivedSerializer(
         many=True,
@@ -203,6 +208,7 @@ class PackageSerializer(serializers.ModelSerializer):
             "agency_name",
             "status_of_processing",
             "package_picture",
+            "package_picture_2",
             "arrival_date",
             "contained_products",
             "created_at",
@@ -259,14 +265,15 @@ class PackageSerializer(serializers.ModelSerializer):
         instance.status_of_processing = validated_data.get('status_of_processing', instance.status_of_processing)
         instance.arrival_date = validated_data.get('arrival_date', instance.arrival_date)
         instance.package_picture = validated_data.get('package_picture', instance.package_picture)
+        instance.package_picture_2 = validated_data.get('package_picture_2', instance.package_picture_2)
         instance.save()
 
         return instance
 
     def to_representation(self, instance):
-        """Ensure package_picture is returned as a string."""
+        """Ensure both picture fields are returned as strings."""
         ret = super().to_representation(instance)
-        raw = getattr(instance, 'package_picture', None)
-        
-        ret['package_picture'] = raw if raw is not None else ''
+        for field in ('package_picture', 'package_picture_2'):
+            raw = getattr(instance, field, None)
+            ret[field] = raw if raw is not None else ''
         return ret

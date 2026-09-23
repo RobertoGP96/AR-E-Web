@@ -59,6 +59,7 @@ Leyenda: ✅ cumple · ❌ no cumple (con identificador del bug del plan: B* Dja
 | Compras solo admin | ✅ `permissions/` | ✅ `ROLES.purchases` | ✅ `role-config.ts` | N/A |
 | Agente solo lectura en entregas | ❌ B33 (fugas en `change_status`, `balance_report`) | ✅ actions rechazan; página permite entrar | ✅ botón oculto (`isAgent`) | N/A |
 | Agente ve solo sus clientes | ✅ filtros por `assigned_agent` | ❌ N9 fase 1 de prepare no filtra por agente (fase 2) | ✅ | N/A |
+| Gestor de orden = cualquier personal; admin general por defecto (ADR-0007) | ✅ `api/services/staff_service.py`, `validate_sales_manager_id` ×3 (antes `validate_sales_manager`, que DRF nunca invocaba), `OrderCreateSerializer.create` (`test_sales_manager_assignment.py`) | ✅ `src/lib/order-manager.ts` (`order-manager.test.ts`), `src/lib/general-admin.ts`, `orders/actions.ts` `resolveManager` | ✅ `CreateOrderDialog`/`EditOrderDialog` (lista de personal; admin general por defecto; sin filtro de clientes por gestor) | N/A (solo lectura) |
 | Cliente sin panel | ✅ | ✅ `isStaff` en `proxy.ts` | ✅ logout forzado | ❌ sin guards de ruta en la app cliente |
 
 ## Otros defectos conocidos que afectan al ciclo (sin regla asociada todavía)

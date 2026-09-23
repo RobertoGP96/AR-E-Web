@@ -47,6 +47,8 @@ interface OrdersClientProps {
   initialRows: OrderRow[];
   clientOptions: ClientOption[];
   managerOptions: SelectOption[];
+  /** Admin general: gestor por defecto (ADR-0007). */
+  defaultManagerId: string | null;
   currentUser: CurrentUser;
   initialFilters: {
     q: string;
@@ -62,6 +64,7 @@ export function OrdersClient({
   initialRows,
   clientOptions,
   managerOptions,
+  defaultManagerId,
   currentUser,
   initialFilters,
 }: OrdersClientProps) {
@@ -431,6 +434,7 @@ export function OrdersClient({
         order={editTarget ?? undefined}
         clientOptions={clientOptions}
         managerOptions={managerOptions}
+        defaultManagerId={defaultManagerId}
         currentUser={currentUser}
         onClose={() => setEditTarget(null)}
         onSuccess={() => {

@@ -19,7 +19,6 @@ import {
   Loader2,
   Package,
   CheckCircle2,
-  Image,
 } from "lucide-react";
 import { formatDate } from "@/lib/format-date";
 import { Link, useNavigate } from "react-router-dom";
@@ -41,6 +40,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { QuickImageUpload } from "@/components/images/QuickImageUpload";
+import { getPackagePictures, MAX_PACKAGE_PICTURES } from "@/lib/package-pictures";
 import {
   Dialog,
   DialogContent,
@@ -116,30 +116,23 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
   const updatePackageMutation = useUpdatePackage();
 
-  const isValidImage = (image: unknown): boolean => {
-    if (!image) return false;
-    if (typeof image === "string") return image.trim().length > 0;
-    if (Array.isArray(image)) {
-      return (
-        image.length > 0 &&
-        (typeof image[0] === "string" ? image[0].trim().length > 0 : !!image[0])
-      );
-    }
-    return false;
-  };
-
-  const handleImageUploaded = async (pkg: PackageType, url: string) => {
+  const handleImageUploaded = async (
+    pkg: PackageType,
+    slot: 1 | 2,
+    url: string,
+  ) => {
     try {
-      await updatePackageMutation.mutateAsync({
+      const updated = await updatePackageMutation.mutateAsync({
         id: pkg.id,
-        data: { package_picture: url },
+        data: slot === 1 ? { package_picture: url } : { package_picture_2: url },
       });
-      toast.success("Imagen añadida correctamente");
-      setShowImageDialog(false);
-      setImageDialogPackage(null);
+      toast.success(`Foto ${slot} guardada`);
+      // Mantener el diálogo abierto con los datos frescos para poder
+      // subir la otra foto sin volver a abrirlo.
+      setImageDialogPackage(updated ?? { ...pkg, [slot === 1 ? "package_picture" : "package_picture_2"]: url });
     } catch (err) {
-      console.error("Error actualizando imagen del producto:", err);
-      toast.error("Error al guardar la imagen");
+      console.error("Error actualizando la foto del paquete:", err);
+      toast.error("Error al guardar la foto");
     }
   };
 
@@ -428,48 +421,60 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                     />
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-row gap-2">
-                      {isValidImage(pkg.package_picture) ? (
-                        <HoverCard>
-                          <HoverCardTrigger asChild>
-                            <div className="flex justify-center items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50 cursor-pointer">
-                              <Image className="h-5 w-5 text-gray-500" />
-                            </div>
-                          </HoverCardTrigger>
-                          <HoverCardContent className="w-32 h-32 flex items-center justify-center">
-                            <img
-                              src={(() => {
-                                const pic = pkg.package_picture;
-                                if (!pic) return "";
-                                if (Array.isArray(pic)) {
-                                  const first = pic[0];
-                                  return (
-                                    (typeof first === "string"
-                                      ? first
-                                      : first?.picture) || ""
-                                  );
-                                }
-                                return typeof pic === "string" ? pic : "";
-                              })()}
-                              alt={`Entrega ${pkg.id}`}
-                              className="h-25 w-30 object-cover rounded-md"
-                            />
-                          </HoverCardContent>
-                        </HoverCard>
-                      ) : (
-                        <button
-                          type="button"
-                          className="text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50"
-                          onClick={() => {
-                            setImageDialogPackage(pkg);
-                            setShowImageDialog(true);
-                          }}
-                          title="Subir imagen de paquete"
-                        >
-                          <Camera className="h-5 w-5" />
-                        </button>
-                      )}
-                    </div>
+                    {(() => {
+                      const pictures = getPackagePictures(pkg);
+                      return (
+                        <div className="flex flex-row items-center gap-1.5">
+                          {pictures.map((url, index) => (
+                            <HoverCard key={url}>
+                              <HoverCardTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(url, "_blank", "noopener");
+                                  }}
+                                  title={`Foto ${index + 1} de ${pictures.length}`}
+                                  className="h-8 w-8 overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm hover:border-orange-400"
+                                >
+                                  <img
+                                    src={url}
+                                    alt={`Foto ${index + 1} del paquete ${pkg.number_of_tracking}`}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover"
+                                  />
+                                </button>
+                              </HoverCardTrigger>
+                              <HoverCardContent className="w-40 p-1.5">
+                                <img
+                                  src={url}
+                                  alt={`Foto ${index + 1} del paquete ${pkg.number_of_tracking}`}
+                                  className="h-36 w-full rounded-md object-cover"
+                                />
+                              </HoverCardContent>
+                            </HoverCard>
+                          ))}
+                          {pictures.length < MAX_PACKAGE_PICTURES ? (
+                            <button
+                              type="button"
+                              className="text-gray-600 bg-white rounded-md p-1 border border-gray-100 hover:bg-gray-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setImageDialogPackage(pkg);
+                                setShowImageDialog(true);
+                              }}
+                              title={
+                                pictures.length === 0
+                                  ? "Subir fotos del paquete"
+                                  : "Añadir la segunda foto"
+                              }
+                            >
+                              <Camera className="h-5 w-5" />
+                            </button>
+                          ) : null}
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>
                     <div className="text-right">
@@ -623,22 +628,31 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
           <div className="py-2">
             {imageDialogPackage ? (
-              <QuickImageUpload
-                entityType="products"
-                currentImage={(() => {
-                  const pic = imageDialogPackage.package_picture;
-                  if (!pic) return undefined;
-                  if (Array.isArray(pic)) {
-                    const first = pic[0];
-                    return typeof first === "string" ? first : first?.picture;
-                  }
-                  return typeof pic === "string" ? pic : undefined;
-                })()}
-                onImageUploaded={(url: string) =>
-                  handleImageUploaded(imageDialogPackage, url)
-                }
-                folder={undefined}
-              />
+              (() => {
+                const [first, second] = getPackagePictures(imageDialogPackage);
+                return (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <QuickImageUpload
+                      entityType="products"
+                      label="Foto 1"
+                      currentImage={first}
+                      onImageUploaded={(url: string) =>
+                        handleImageUploaded(imageDialogPackage, 1, url)
+                      }
+                      folder={undefined}
+                    />
+                    <QuickImageUpload
+                      entityType="products"
+                      label="Foto 2"
+                      currentImage={second}
+                      onImageUploaded={(url: string) =>
+                        handleImageUploaded(imageDialogPackage, 2, url)
+                      }
+                      folder={undefined}
+                    />
+                  </div>
+                );
+              })()
             ) : (
               <div className="p-4 text-sm text-gray-500">
                 Producto no seleccionado

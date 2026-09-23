@@ -32,7 +32,7 @@ Un usuario con rol `client` que intenta entrar al panel es expulsado (logout for
 | Operación | admin | agent | accountant | logistical | client | Regla / estado |
 |---|---|---|---|---|---|---|
 | Crear cliente y asignarle agente | X | — | — | — | — | — |
-| Crear orden para un cliente | X | X (propios; `sales_manager` = él mismo) | — | — | — | ES-orden |
+| Crear orden para un cliente | X (gestor: cualquier miembro del personal; por defecto el admin general) | X (propios; `sales_manager` = él mismo) | — | — | — | ES-orden, ADR-0007 |
 | Añadir / editar / quitar productos de una orden | X | X (propios) | — | — | — | RN-001, INV-002 |
 | Cancelar orden | X | X (propios) | — | — | — | ES-orden |
 | Crear compra desde productos pendientes | X | — | — | — | — | ADR-0002, INV-005 |

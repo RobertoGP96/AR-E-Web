@@ -20,6 +20,7 @@ export interface ReviewPackage {
   status: string;
   arrivalDate: string;
   packagePicture: string | null;
+  packagePicture2: string | null;
   /** Llegadas ya marcadas en este paquete. */
   receptions: PackageReception[];
   /** Σ unidades de las recepciones del paquete. */

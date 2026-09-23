@@ -41,15 +41,16 @@ export function NewPackageClient({
   function submit() {
     const form = document.getElementById(formId) as HTMLFormElement | null;
     if (form && !form.reportValidity()) return;
-    const picture = form
-      ? String(new FormData(form).get('packagePicture') ?? '')
-      : '';
+    const fd = form ? new FormData(form) : null;
+    const picture = fd ? String(fd.get('packagePicture') ?? '') : '';
+    const picture2 = fd ? String(fd.get('packagePicture2') ?? '') : '';
     startTransition(async () => {
       const result = await createPackageWithArrivalsAction({
         numberOfTracking: tracking,
         agencyName: agency,
         arrivalDate,
         packagePicture: picture,
+        packagePicture2: picture2,
         alreadyArrived: arrived,
         items,
       });
@@ -140,12 +141,20 @@ export function NewPackageClient({
             </Checkbox>
           </div>
         </div>
-        <ImageUploadField
-          name="packagePicture"
-          label="Foto del paquete (opcional)"
-          capture="environment"
-          buttonLabel="Tomar o subir una foto"
-        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ImageUploadField
+            name="packagePicture"
+            label="Foto 1 (opcional)"
+            capture="environment"
+            buttonLabel="Tomar o subir"
+          />
+          <ImageUploadField
+            name="packagePicture2"
+            label="Foto 2 (opcional)"
+            capture="environment"
+            buttonLabel="Tomar o subir"
+          />
+        </div>
       </form>
 
       {/* -------- 2. Qué llegó -------- */}

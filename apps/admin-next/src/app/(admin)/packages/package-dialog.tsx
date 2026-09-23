@@ -162,13 +162,22 @@ export function PackageDialog({
           </Field>
         ) : null}
 
-        <ImageUploadField
-          name="packagePicture"
-          label="Foto del paquete (opcional)"
-          defaultUrl={pkg?.packagePicture}
-          capture="environment"
-          buttonLabel="Tomar o subir una foto"
-        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ImageUploadField
+            name="packagePicture"
+            label="Foto 1 (opcional)"
+            defaultUrl={pkg?.packagePicture}
+            capture="environment"
+            buttonLabel="Tomar o subir"
+          />
+          <ImageUploadField
+            name="packagePicture2"
+            label="Foto 2 (opcional)"
+            defaultUrl={pkg?.packagePicture2}
+            capture="environment"
+            buttonLabel="Tomar o subir"
+          />
+        </div>
 
         <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
           <Button variant="tertiary" onPress={onClose}>

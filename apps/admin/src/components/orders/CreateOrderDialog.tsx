@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useCreateOrder } from '@/hooks/order';
 import { useUsersByRole } from '@/hooks/user';
 import { toast } from 'sonner';
@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2, CheckCircle2, Truck, XCircle, LoaderIcon, CircleAlert, UserCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/auth';
+import { SALES_MANAGER_ROLES, pickGeneralAdmin, salesManagerLabel } from '@/lib/sales-manager';
 import type { CustomUser } from '@/types';
 
 interface CreateOrderDialogProps {
@@ -35,16 +36,25 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
   const isAgent = currentUser?.role === 'agent';
   const createOrderMutation = useCreateOrder();
 
-  // Obtener usuarios (clientes, agentes y admins)
+  // ADR-0007: cualquier miembro del personal puede ser el gestor.
   const { data: clientsData } = useUsersByRole('client');
-  const { data: agentsData } = useUsersByRole('agent');
   const { data: adminsData } = useUsersByRole('admin');
+  const { data: agentsData } = useUsersByRole('agent');
+  const { data: accountantsData } = useUsersByRole('accountant');
+  const { data: logisticalData } = useUsersByRole('logistical');
 
-  // Combinar agentes y admins en una sola lista
-  const agents = [
-    ...(agentsData?.results || []),
-    ...(adminsData?.results || [])
-  ];
+  const agents = useMemo(
+    () =>
+      [
+        ...(adminsData?.results || []),
+        ...(agentsData?.results || []),
+        ...(accountantsData?.results || []),
+        ...(logisticalData?.results || []),
+      ].filter((u) => (SALES_MANAGER_ROLES as readonly string[]).includes(u.role) && u.is_active !== false),
+    [adminsData?.results, agentsData?.results, accountantsData?.results, logisticalData?.results]
+  );
+  const generalAdminId = useMemo(() => pickGeneralAdmin(adminsData?.results || [])?.id ?? 0, [adminsData?.results]);
+  const [managerTouched, setManagerTouched] = useState(false);
 
   // Estado del formulario — agents auto-set sales_manager_id to themselves
   const [formData, setFormData] = useState({
@@ -55,28 +65,21 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
     status: 'Encargado',
   });
 
-  // Filtrar clientes según el agente seleccionado
+  // ADR-0007: el gestor por defecto es el admin general (solo si el
+  // usuario no lo ha cambiado a mano).
+  useEffect(() => {
+    if (isAgent || managerTouched || !generalAdminId) return;
+    setFormData((prev) => (prev.sales_manager_id === 0 ? { ...prev, sales_manager_id: generalAdminId } : prev));
+  }, [isAgent, managerTouched, generalAdminId]);
+
+  // ADR-0007: el gestor ya no filtra los clientes; se listan todos
+  // ordenados por nombre.
   const filteredClients = useMemo(() => {
     const allClients = clientsData?.results || [];
-    
-    // Filtrar clientes según el agente seleccionado
-    let result = allClients;
-    if (formData.sales_manager_id && formData.sales_manager_id !== 0) {
-      result = allClients.filter(client => {
-        if (!client.assigned_agent) return false;
-        
-        const assignedAgentId = typeof client.assigned_agent === 'object' 
-          ? (client.assigned_agent as CustomUser).id 
-          : client.assigned_agent;
-        return assignedAgentId === formData.sales_manager_id;
-      });
-    }
-    
-    // Ordenar alfabéticamente por nombre
-    return [...result].sort((a, b) => 
+    return [...allClients].sort((a, b) =>
       (a.full_name || '').localeCompare(b.full_name || '')
     );
-  }, [clientsData?.results, formData.sales_manager_id]);
+  }, [clientsData?.results]);
 
   // Funciones para obtener estilos según el estado
   const getOrderStatusStyles = (status: string) => {
@@ -121,10 +124,12 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
 
       toast.success('Pedido creado exitosamente');
 
-      // Resetear formulario — preserve agent's own ID
+      // Resetear formulario — el agente conserva su id; el resto vuelve
+      // al admin general (ADR-0007).
+      setManagerTouched(false);
       setFormData({
         client_id: undefined,
-        sales_manager_id: isAgent && currentUser?.id ? currentUser.id : 0,
+        sales_manager_id: isAgent && currentUser?.id ? currentUser.id : generalAdminId,
         observations: '',
         pay_status: 'No pagado',
         status: 'Encargado',
@@ -152,15 +157,8 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
   };
 
   const handleAgentChange = (value: string) => {
-    const newAgentId = parseInt(value);
-    setFormData((prev) => ({ 
-      ...prev, 
-      sales_manager_id: newAgentId,
-      // Limpiar el cliente seleccionado si no está en la lista filtrada
-      client_id: prev.client_id && filteredClients.find(c => c.id === prev.client_id) 
-        ? prev.client_id 
-        : undefined
-    }));
+    setManagerTouched(true);
+    setFormData((prev) => ({ ...prev, sales_manager_id: parseInt(value) }));
   };
 
   return (
@@ -176,9 +174,9 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
         <form onSubmit={handleSubmit}>
           <div className="max-h-[65vh] overflow-y-auto pr-1">
           <div className="grid grid-cols-2 gap-4 py-4">
-            {/* Agente de Ventas — locked to self for agent role */}
+            {/* Gestor (ADR-0007) — fijado a sí mismo para el agente */}
             <div className="grid gap-2">
-              <Label htmlFor="agent">Agente de Ventas</Label>
+              <Label htmlFor="agent">Gestor</Label>
               {isAgent ? (
                 <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-muted/50">
                   <UserCheck className="h-4 w-4 text-primary" />
@@ -191,15 +189,15 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
                 onValueChange={handleAgentChange}
               >
                 <SelectTrigger id="agent" className="border-gray-200 focus:border-orange-300">
-                  <SelectValue placeholder="Selecciona un agente (opcional)" />
+                  <SelectValue placeholder="Selecciona un gestor" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="0">
-                    <span className="text-muted-foreground">Todos agentes</span>
+                    <span className="text-muted-foreground">Sin gestor (se asigna al admin general)</span>
                   </SelectItem>
                   {agents.map((agent: CustomUser) => (
                     <SelectItem key={agent.id} value={agent.id.toString()}>
-                      {agent.full_name}
+                      {salesManagerLabel(agent.full_name || `${agent.name} ${agent.last_name}`, agent.role)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -227,9 +225,7 @@ export default function CreateOrderDialog({ open, onOpenChange }: CreateOrderDia
                   ))}
                   {filteredClients.length === 0 && (
                     <div className="px-2 py-1 text-sm text-gray-500">
-                      {formData.sales_manager_id !== 0 
-                        ? 'No hay clientes asignados a este agente' 
-                        : 'No hay clientes disponibles'}
+                      No hay clientes disponibles
                     </div>
                   )}
                 </SelectContent>

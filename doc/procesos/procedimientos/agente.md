@@ -5,7 +5,7 @@ Pantallas de admin-next: `/dashboard`, `/orders`, `/orders/[id]`, `/products`, `
 ## 1. Recibir el encargo del cliente
 
 1. El cliente envía su lista (WhatsApp o lista compartida desde la app cliente). La app cliente no escribe en la base de datos.
-2. Comprueba en `/users` (si tienes acceso) o pide al admin que el cliente exista y te lo tenga asignado. Sin agente asignado no se puede crear la orden y la comisión por peso sería 0 (RN-003).
+2. Comprueba en `/users` (si tienes acceso) o pide al admin que el cliente exista y te lo tenga asignado. Sin agente asignado la comisión por peso sería 0 (RN-003); la orden se puede crear igualmente y su gestor serás tú (ADR-0007).
 
 ## 2. Crear la orden
 

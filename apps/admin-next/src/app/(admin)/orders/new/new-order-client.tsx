@@ -22,17 +22,17 @@ import type { ClientOption, CurrentUser, SelectOption } from '../schema';
 interface NewOrderClientProps {
   clientOptions: ClientOption[];
   managerOptions: SelectOption[];
+  /** Admin general: gestor por defecto (ADR-0007). */
+  defaultManagerId: string | null;
   shopOptions: SelectOption[];
   categoryOptions: SelectOption[];
   currentUser: CurrentUser;
 }
 
-/** Valor del select de agente para "clientes sin agente asignado". */
-const NO_AGENT = 'none';
-
 export function NewOrderClient({
   clientOptions,
   managerOptions,
+  defaultManagerId,
   shopOptions,
   categoryOptions,
   currentUser,
@@ -41,29 +41,22 @@ export function NewOrderClient({
   const [isPending, startTransition] = useTransition();
   const isAgent = currentUser.role === 'agent';
 
-  const [agentId, setAgentId] = useState<string>(isAgent ? currentUser.id : '');
+  // ADR-0007: agente a su nombre; si no, el admin general por defecto.
+  const [agentId, setAgentId] = useState<string>(
+    isAgent ? currentUser.id : (defaultManagerId ?? '')
+  );
   const [clientId, setClientId] = useState('');
   const [observations, setObservations] = useState('');
   const [drafts, setDrafts] = useState<ProductDraft[]>(() => [newDraft()]);
 
-  const filteredClients = agentId
-    ? clientOptions.filter((c) =>
-        agentId === NO_AGENT ? c.agentId === null : c.agentId === agentId
-      )
-    : [];
-  const agentLabel = managerOptions.find((m) => m.id === currentUser.id)?.label ?? 'Tú';
+  // El gestor no filtra los clientes (ADR-0007); para un agente el
+  // servidor ya carga solo los suyos.
+  const managerNameById = new Map(managerOptions.map((m) => [m.id, m.label]));
+  const agentLabel = managerNameById.get(currentUser.id) ?? 'Tú';
   const clientLabel = clientOptions.find((c) => c.id === clientId)?.label ?? '';
 
   function handleAgentChange(next: string) {
     setAgentId(next);
-    const stillValid =
-      next &&
-      clientOptions.some(
-        (c) =>
-          c.id === clientId &&
-          (next === NO_AGENT ? c.agentId === null : c.agentId === next)
-      );
-    if (!stillValid) setClientId('');
   }
 
   const complete = drafts.filter(draftIsComplete);
@@ -73,7 +66,7 @@ export function NewOrderClient({
 
   function submit() {
     if (!clientId) {
-      toast.error('Falta el cliente', { description: 'Elige el agente y luego un cliente suyo.' });
+      toast.error('Falta el cliente', { description: 'Elige un cliente para la orden.' });
       return;
     }
     if (complete.length !== drafts.length) {
@@ -85,7 +78,7 @@ export function NewOrderClient({
     startTransition(async () => {
       const result = await createOrderWithProductsAction({
         clientId,
-        salesManagerId: isAgent ? currentUser.id : agentId === NO_AGENT ? '' : agentId,
+        salesManagerId: isAgent ? currentUser.id : agentId,
         observations,
         products: drafts.map(toDraftInput),
       });
@@ -126,23 +119,26 @@ export function NewOrderClient({
         </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field
-            label="Agente"
+            label="Gestor"
             required
-            hint={isAgent ? 'Las órdenes que creas quedan a tu nombre.' : undefined}
+            hint={
+              isAgent
+                ? 'Las órdenes que creas quedan a tu nombre.'
+                : 'Cualquier miembro del personal; por defecto, el admin general.'
+            }
           >
             {isAgent ? (
-              <Select value={currentUser.id} disabled aria-label="Agente">
+              <Select value={currentUser.id} disabled aria-label="Gestor">
                 <option value={currentUser.id}>{agentLabel}</option>
               </Select>
             ) : (
               <Select value={agentId} onChange={(e) => handleAgentChange(e.target.value)}>
-                <option value="">— Selecciona un agente —</option>
+                {agentId ? null : <option value="">— Selecciona un gestor —</option>}
                 {managerOptions.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.label}
                   </option>
                 ))}
-                <option value={NO_AGENT}>Sin agente (clientes sin asignar)</option>
               </Select>
             )}
           </Field>
@@ -150,18 +146,18 @@ export function NewOrderClient({
             <SearchSelect
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
-              disabled={!agentId}
-              placeholder={agentId ? '— Selecciona un cliente —' : 'Selecciona primero un agente'}
+              placeholder="— Selecciona un cliente —"
               searchPlaceholder="Buscar cliente por nombre o teléfono…"
-              emptyMessage={
-                filteredClients.length === 0
-                  ? 'Este agente no tiene clientes asignados'
-                  : 'Sin resultados'
-              }
-              options={filteredClients.map((c) => ({
+              emptyMessage={clientOptions.length === 0 ? 'No hay clientes' : 'Sin resultados'}
+              options={clientOptions.map((c) => ({
                 value: c.id,
                 label: c.label,
-                description: c.phoneNumber,
+                description: [
+                  c.phoneNumber,
+                  c.agentId
+                    ? `Agente: ${managerNameById.get(c.agentId) ?? '—'}`
+                    : 'Sin agente',
+                ].join(' · '),
               }))}
             />
           </Field>

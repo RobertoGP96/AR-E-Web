@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   ArrowLeft,
   CalendarDays,
@@ -30,6 +29,7 @@ import {
   TableEmpty,
   type StatTone,
 } from '@/components/ui';
+import { DetailPhotos } from '@/components/detail-photos';
 import { DeliveryActionsBar } from '../delivery-actions-bar';
 import { DeliveryDialog } from '../delivery-dialog';
 import { ConfirmDeliveryPaymentDialog } from '../confirm-payment-dialog';
@@ -151,17 +151,11 @@ export function DeliveryDetailClient({
           </div>
         </div>
 
-        {delivery.deliverPicture ? (
-          <div className="mt-4">
-            <Image
-              src={delivery.deliverPicture}
-              alt={`Foto de la entrega ${delivery.id}`}
-              width={320}
-              height={240}
-              className="h-auto w-full max-w-xs rounded-lg border border-border object-cover"
-            />
-          </div>
-        ) : null}
+        <DetailPhotos
+          className="mt-4"
+          label="Foto de la entrega"
+          photos={[{ url: delivery.deliverPicture, alt: `Foto de la entrega ${delivery.id}` }]}
+        />
 
         <div className="stagger-children mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard

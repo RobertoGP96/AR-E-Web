@@ -15,6 +15,7 @@ export interface UpdatePackageData {
   tracking_number?: string;
   status_of_processing?: string;
   package_picture?: string;
+  package_picture_2?: string;
 }
 
 /**

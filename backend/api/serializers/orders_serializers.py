@@ -1,3 +1,4 @@
+from api.services.staff_service import is_sales_manager_role, resolve_sales_manager
 from rest_framework import serializers
 from api.models import Order, CustomUser
 from .users_serializers import UserSerializer
@@ -76,10 +77,12 @@ class OrderSerializer(serializers.ModelSerializer):
         depth = 0
         read_only_fields = ["id", "balance_applied"]
 
-    def validate_sales_manager(self, value):
-        """Agent Validation"""
-        if value and value.role != 'agent':
-            raise serializers.ValidationError("El usuario no es agente.")
+    def validate_sales_manager_id(self, value):
+        """ADR-0007: el gestor puede ser cualquier miembro del personal."""
+        if value and not is_sales_manager_role(value.role):
+            raise serializers.ValidationError(
+                "El gestor debe ser personal (admin, agente, contador o logístico)."
+            )
         return value
 
     def update(self, instance, validated_data):
@@ -156,9 +159,12 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "total_costs", "balance_applied"]  # Marcar el ID como solo lectura
 
-    def validate_sales_manager(self, value):
-        if value and value.role != 'agent':
-            raise serializers.ValidationError("El usuario no es agente.")
+    def validate_sales_manager_id(self, value):
+        """ADR-0007: el gestor puede ser cualquier miembro del personal."""
+        if value and not is_sales_manager_role(value.role):
+            raise serializers.ValidationError(
+                "El gestor debe ser personal (admin, agente, contador o logístico)."
+            )
         return value
 
     def create(self, validated_data):
@@ -167,6 +173,15 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         """
         received = validated_data.get('received_value_of_client', 0) or 0
         pay_status = validated_data.get('pay_status')
+        # ADR-0007: un agente siempre gestiona sus órdenes; sin gestor,
+        # el admin general.
+        request = self.context.get('request')
+        creator = getattr(request, 'user', None) if request is not None else None
+        if creator is not None and not creator.is_authenticated:
+            creator = None
+        validated_data['sales_manager'] = resolve_sales_manager(
+            creator, validated_data.get('sales_manager')
+        )
         # Crear la instancia primeramente
         instance = super().create(validated_data)
 
@@ -186,6 +201,18 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
     """
 
     applied_balance = serializers.FloatField(required=False, default=0, write_only=True)
+    # Sin esta declaración ModelSerializer resolvía `sales_manager_id` como
+    # ReadOnlyField y el PATCH del gestor se ignoraba en silencio (ADR-0007).
+    sales_manager_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(),
+        source='sales_manager',
+        allow_null=True,
+        required=False,
+        error_messages={
+            "does_not_exist": "El gestor con ID {value} no existe.",
+            "invalid": "El valor proporcionado para el gestor no es válido.",
+        },
+    )
 
     class Meta:
         model = Order
@@ -202,9 +229,12 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["total_costs", "balance_applied"]
 
-    def validate_sales_manager(self, value):
-        if value and value.role != 'agent':
-            raise serializers.ValidationError("El usuario no es agente.")
+    def validate_sales_manager_id(self, value):
+        """ADR-0007: el gestor puede ser cualquier miembro del personal."""
+        if value and not is_sales_manager_role(value.role):
+            raise serializers.ValidationError(
+                "El gestor debe ser personal (admin, agente, contador o logístico)."
+            )
         return value
 
     def update(self, instance, validated_data):

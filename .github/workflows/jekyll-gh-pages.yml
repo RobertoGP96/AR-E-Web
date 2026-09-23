@@ -188,4 +188,5 @@ jobs:
             api/tests/test_balance_payments.py \
             api/tests/test_invoice_service.py \
             api/tests/test_create_admin.py \
+            api/tests/test_sales_manager_assignment.py \
             --no-cov -p no:cacheprovider
