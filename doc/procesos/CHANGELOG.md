@@ -42,3 +42,9 @@ Sin cambios de reglas. Actualización de `conformidad.md` tras implementar en ad
 Sin cambios de reglas. Altas con sus productos en la misma vista en admin-next: `/orders/new` (orden + productos en línea, `createOrderWithProductsAction`), `/packages/new` (paquete + llegadas, `createPackageWithArrivalsAction`), `/delivery/new` (entrega armada desde recibidos con peso por categoría, `assembleDeliveryAction` con `weights`). Los diálogos de creación de orden, paquete y entrega desaparecen; quedan los de edición. Procedimientos de agente y logístico actualizados.
 
 **Apps impactadas:** admin-next.
+
+## 1.1.1 — 2026-09-23
+
+Sin cambios de reglas. Documentos al cliente desde `/users?tab=balances` en admin-next («Generar factura»: factura de pendientes con selección de partidas, estado de cuenta tipo extracto con saldo corriente RN-021 y rango opcional, factura por pedidos con productos RN-001), renderizados en `/users/[id]/statement` para imprimir o guardar como PDF. Solo lectura: no se persiste nada ni se alteran cobros o balances; el saldo aplicado se muestra como informativo (RN-022). Lógica pura en `apps/admin-next/src/lib/client-statement.ts` con tests. Procedimiento del contador §4 actualizado.
+
+**Apps impactadas:** admin-next.

@@ -28,6 +28,7 @@ Una bolsa (peso 0) no se cobra (INV-003). Una compra tiene su propio estado de p
 ## 4. Balances y reportes
 
 - `/users?tab=balances`: balance por cliente (positivo a favor, negativo deuda). Si un balance parece incorrecto tras una limpieza de datos o importación, pide al admin "Recalcular balances" en `/settings/system`.
+- **Generar factura** (botón de cada fila de balances): abre un documento imprimible del cliente en una pestaña nueva (imprimir o guardar como PDF desde el navegador). Tres tipos: **Pendientes** (elige qué órdenes y entregas con saldo por pagar incluir; total a pagar = Σ `costo − efectivo − saldo aplicado`), **Estado de cuenta** (extracto tipo cuenta bancaria con cada cargo, cada pago y el saldo corriente, que termina en el balance RN-021; opcionalmente acotado por fechas, con lo anterior resumido como saldo inicial) y **Por pedidos** (pedidos concretos con sus productos y lo pagado/pendiente de cada uno). El documento es informativo: no se guarda ni altera cobros, estados ni balances; las filas «Saldo aplicado» aparecen pero no mueven el saldo (RN-022).
 - `/balance` → nuevo balance por rango: ingresos (efectivo de órdenes y entregas), costos (compras, `weight_cost`, facturas, gastos), ganancia. Las bolsas no cuentan.
 - `/invoices`: facturas del transportista (costo del sistema). `/expenses`: gastos generales.
 - `/analytics`: ganancia por entrega = `weight_cost − manager_profit − peso × costo por libra` (RN-003).
