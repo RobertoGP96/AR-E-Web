@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Wallet,
@@ -10,10 +10,12 @@ import {
   TrendingDown,
   Receipt,
   DollarSign,
+  FileText,
 } from 'lucide-react';
-import { Chip } from '@heroui/react';
+import { Button, Chip, Tooltip } from '@heroui/react';
 import { formatCurrency } from '@/lib/format';
 import { FilterPopover } from '@/components/filter-popover';
+import { ClientInvoiceDialog, type InvoiceTarget } from './client-invoice-dialog';
 import {
   StatCard,
   SearchInput,
@@ -84,6 +86,23 @@ export function BalancesClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [invoiceTarget, setInvoiceTarget] = useState<InvoiceTarget | null>(null);
+
+  const invoiceButton = (row: ClientBalanceRow) => (
+    <Tooltip delay={500}>
+      <Button
+        variant="ghost"
+        size="sm"
+        isIconOnly
+        aria-label={`Generar factura para ${row.name}`}
+        onPress={() => setInvoiceTarget({ id: row.id, name: row.name })}
+        className="text-accent-soft-foreground hover:bg-accent-soft"
+      >
+        <FileText className="h-4 w-4" aria-hidden />
+      </Button>
+      <Tooltip.Content>Generar factura</Tooltip.Content>
+    </Tooltip>
+  );
 
   function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -169,12 +188,15 @@ export function BalancesClient({
                 <th className="text-right">Costo</th>
                 <th className="text-right">Balance</th>
                 <th>Estado</th>
+                <th className="w-16 text-right">
+                  <span className="sr-only">Acciones</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {initialRows.length === 0 ? (
                 <TableEmpty
-                  colSpan={7}
+                  colSpan={8}
                   icon={Wallet}
                   message={isPending ? 'Cargando…' : 'No hay clientes.'}
                 />
@@ -211,6 +233,7 @@ export function BalancesClient({
                     <td>
                       <BalanceBadge balance={row.balance} />
                     </td>
+                    <td className="text-right">{invoiceButton(row)}</td>
                   </tr>
                 ))
               )}
@@ -229,6 +252,7 @@ export function BalancesClient({
                 title={row.name}
                 subtitle={row.phoneNumber}
                 badges={<BalanceBadge balance={row.balance} />}
+                actions={invoiceButton(row)}
                 rows={[
                   {
                     icon: UserRound,
@@ -266,6 +290,11 @@ export function BalancesClient({
             ))
           )
         }
+      />
+
+      <ClientInvoiceDialog
+        target={invoiceTarget}
+        onClose={() => setInvoiceTarget(null)}
       />
     </div>
   );

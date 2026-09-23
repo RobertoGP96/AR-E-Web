@@ -25,6 +25,12 @@ export const packageFormSchema = z.object({
     .max(1000, 'Demasiado larga')
     .optional()
     .transform((v) => (v && v.length > 0 ? v : null)),
+  packagePicture2: z
+    .string()
+    .trim()
+    .max(1000, 'Demasiado larga')
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null)),
   /** Solo al crear: el paquete ya está físicamente en el almacén. */
   alreadyArrived: z
     .union([z.literal('on'), z.literal('true'), z.literal('false'), z.null()])
@@ -78,6 +84,12 @@ export const packageWithArrivalsSchema = z.object({
     .max(1000)
     .optional()
     .transform((v) => (v && v.length > 0 ? v : null)),
+  packagePicture2: z
+    .string()
+    .trim()
+    .max(1000)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null)),
   alreadyArrived: z.boolean().default(true),
   items: arrivalBatchSchema.shape.items.min(0).max(500, 'Máximo 500 productos por lote'),
 });
@@ -90,6 +102,8 @@ export interface PackageRow {
   statusOfProcessing: PackageStatus;
   arrivalDate: string;
   packagePicture: string | null;
+  /** Segunda foto (opcional). */
+  packagePicture2: string | null;
   createdAt: string;
   updatedAt: string;
   /** Recepciones registradas en el paquete. */

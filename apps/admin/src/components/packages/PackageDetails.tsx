@@ -15,7 +15,7 @@ import PackageStatusBadge from "./PackageStatusBadge";
 import { formatDate } from "@/lib/format-date";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "../utils/LoadingSpinner";
-import type { PackageImage } from "@/types/models/package";
+import { getPackagePictures, MAX_PACKAGE_PICTURES } from "@/lib/package-pictures";
 
 const PackageDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +25,7 @@ const PackageDetails: React.FC = () => {
     isLoading,
     error,
   } = usePackage(Number(id) || 0);
+  const pictures = packageData ? getPackagePictures(packageData) : [];
 
   if (isLoading) {
     return (
@@ -218,36 +219,36 @@ const PackageDetails: React.FC = () => {
                   Evidencias
                 </CardTitle>
                 <span className="text-xs font-medium text-gray-500">
-                  {packageData.package_picture?.length || 0} fotos
+                  {pictures.length} de {MAX_PACKAGE_PICTURES} fotos
                 </span>
               </div>
             </CardHeader>
             <CardContent className="pt-6">
-              {packageData.package_picture &&
-              packageData.package_picture.length > 0 ? (
+              {pictures.length > 0 ? (
                 <div className="grid grid-cols-2 gap-3">
-                  {packageData.package_picture.map(
-                    (item: PackageImage, index: number) => (
-                      <div
-                        key={
-                          (typeof item === "string" ? item : item.id) || index
-                        }
-                        className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-orange-400 transition-all cursor-pointer group shadow-sm bg-gray-50"
-                      >
-                        <img
-                          src={
-                            (typeof item === "string" ? item : item.picture) ||
-                            "/placeholder-image.png"
-                          }
-                          alt={`Evidencia ${index + 1}`}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                          <ImageIcon className="text-white opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6" />
-                        </div>
+                  {pictures.map((url, index) => (
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Abrir foto ${index + 1} del paquete`}
+                      className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-orange-400 transition-all cursor-pointer group shadow-sm bg-gray-50"
+                    >
+                      <img
+                        src={url}
+                        alt={`Foto ${index + 1} del paquete`}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <span className="absolute bottom-1.5 left-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium leading-none text-white">
+                        {index + 1}/{pictures.length}
+                      </span>
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                        <ImageIcon className="text-white opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6" />
                       </div>
-                    ),
-                  )}
+                    </a>
+                  ))}
                 </div>
               ) : (
                 <div className="text-center py-8 px-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">

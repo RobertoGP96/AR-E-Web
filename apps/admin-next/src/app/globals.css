@@ -410,3 +410,34 @@ body {
     animation-delay: 0s !important;
   }
 }
+
+/* ---------------------------------------------------------------- */
+/* Documentos imprimibles — (print)/users/[id]/statement             */
+/* ---------------------------------------------------------------- */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  /* Tailwind's print: variants strip the sheet chrome; these cover
+     what utilities can't: repeat headers per page and avoid orphans. */
+  .print-sheet thead {
+    display: table-header-group;
+  }
+
+  .print-sheet tr,
+  .print-sheet section {
+    break-inside: avoid;
+  }
+
+  .print-sheet a {
+    text-decoration: none;
+    color: inherit;
+  }
+}

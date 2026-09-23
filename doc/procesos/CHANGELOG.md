@@ -42,3 +42,25 @@ Sin cambios de reglas. Actualización de `conformidad.md` tras implementar en ad
 Sin cambios de reglas. Altas con sus productos en la misma vista en admin-next: `/orders/new` (orden + productos en línea, `createOrderWithProductsAction`), `/packages/new` (paquete + llegadas, `createPackageWithArrivalsAction`), `/delivery/new` (entrega armada desde recibidos con peso por categoría, `assembleDeliveryAction` con `weights`). Los diálogos de creación de orden, paquete y entrega desaparecen; quedan los de edición. Procedimientos de agente y logístico actualizados.
 
 **Apps impactadas:** admin-next.
+
+## 1.1.0 — 2026-09-23
+
+**ADR-0007 — gestor de orden.** El gestor (`sales_manager`) de una orden puede ser cualquier miembro del personal (`admin`, `agent`, `accountant`, `logistical`), no solo un agente. Un agente sigue creando y editando sus órdenes a su propio nombre; cuando opera un admin y no elige gestor, se asigna el **admin general** (admin activo superusuario o, en su defecto, el más antiguo). El gestor ya no filtra la lista de clientes al crear la orden; la precondición «cliente con agente asignado» de `ES-orden` desaparece. RN-003 no cambia (la comisión sigue siendo la del agente asignado al cliente). De paso se corrige un defecto latente de Django: los tres validadores `validate_sales_manager` nunca se ejecutaban porque DRF invoca `validate_<nombre del campo>` y el campo del serializer es `sales_manager_id`; ahora se llaman `validate_sales_manager_id` y sí rechazan gestores que no son personal. Además `OrderUpdateSerializer` resolvía `sales_manager_id` como campo de solo lectura, por lo que cambiar el gestor por `PATCH` (admin Vite) se ignoraba; ahora es escribible.
+
+**Afecta a:** `estados/orden.md` (transición `— → Encargado`), `roles.md`, `glosario.md`, `procedimientos/agente.md`, `conformidad.md`.
+
+**Verificación:** `apps/admin-next/src/lib/order-manager.test.ts` (vitest) y `backend/api/tests/test_sales_manager_assignment.py` (pytest, añadido al job de backend en CI). No hay casos JSON nuevos: la regla no es una función pura compartida por las tres implementaciones.
+
+**Apps impactadas:** Django (`staff_service.py`, serializers de órdenes), admin-next (`orders/actions.ts`, `/orders`, `/orders/new`, `order-dialog.tsx`), admin Vite (`CreateOrderDialog`, `EditOrderDialog`). App cliente sin cambios (solo lectura).
+
+## 1.0.3 — 2026-09-23
+
+Sin cambios de reglas. Los paquetes admiten **dos fotos** (`package_picture`, `package_picture_2`; migración Django `0041`): alta/edición en admin-next (`/packages/new`, `package-dialog.tsx`) y admin Vite (diálogo de fotos en la tabla), y las cabeceras de detalle de paquete y entrega en admin-next muestran las fotos como miniaturas de tamaño fijo con visor modal (`components/detail-photos.tsx`) en lugar de una imagen que crecía con la foto.
+
+**Apps impactadas:** Django (modelo y serializer de `Package`), admin-next, admin Vite, app cliente (solo tipos).
+
+## 1.1.1 — 2026-09-23
+
+Sin cambios de reglas. Documentos al cliente desde `/users?tab=balances` en admin-next («Generar factura»: factura de pendientes con selección de partidas, estado de cuenta tipo extracto con saldo corriente RN-021 y rango opcional, factura por pedidos con productos RN-001), renderizados en `/users/[id]/statement` para imprimir o guardar como PDF. Solo lectura: no se persiste nada ni se alteran cobros o balances; el saldo aplicado se muestra como informativo (RN-022). Lógica pura en `apps/admin-next/src/lib/client-statement.ts` con tests. Procedimiento del contador §4 actualizado.
+
+**Apps impactadas:** admin-next.

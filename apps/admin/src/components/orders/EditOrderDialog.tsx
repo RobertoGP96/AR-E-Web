@@ -21,7 +21,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, CheckCircle2, Truck, XCircle, User, CircleAlert } from 'lucide-react';
-import type { Order, OrderStatus, PayStatus, CustomUser } from '@/types';
+import type { Order, OrderStatus, PayStatus } from '@/types';
+import { SALES_MANAGER_ROLES, salesManagerLabel } from '@/lib/sales-manager';
 
 interface EditOrderDialogProps {
   open: boolean;
@@ -32,16 +33,23 @@ interface EditOrderDialogProps {
 export default function EditOrderDialog({ open, onOpenChange, order }: EditOrderDialogProps) {
   const updateOrderMutation = useUpdateOrder();
   
-  // Obtener usuarios (clientes, agentes y admins)
+  // ADR-0007: cualquier miembro del personal puede ser el gestor.
   const { data: clientsData } = useUsers({ role: 'client' });
-  const { data: agentsData } = useUsers({ role: 'agent' });
   const { data: adminsData } = useUsers({ role: 'admin' });
-  
-  // Combinar agentes y admins en una sola lista
-  const agents = [
-    ...(agentsData?.results || []),
-    ...(adminsData?.results || [])
-  ];
+  const { data: agentsData } = useUsers({ role: 'agent' });
+  const { data: accountantsData } = useUsers({ role: 'accountant' });
+  const { data: logisticalData } = useUsers({ role: 'logistical' });
+
+  const agents = useMemo(
+    () =>
+      [
+        ...(adminsData?.results || []),
+        ...(agentsData?.results || []),
+        ...(accountantsData?.results || []),
+        ...(logisticalData?.results || []),
+      ].filter((u) => (SALES_MANAGER_ROLES as readonly string[]).includes(u.role) && u.is_active !== false),
+    [adminsData?.results, agentsData?.results, accountantsData?.results, logisticalData?.results]
+  );
 
   // Estado del formulario
   const [formData, setFormData] = useState({
@@ -52,24 +60,13 @@ export default function EditOrderDialog({ open, onOpenChange, order }: EditOrder
     status: 'Encargado' as OrderStatus,
   });
 
-  // Filtrar clientes según el agente seleccionado
+  // ADR-0007: el gestor ya no filtra los clientes.
   const filteredClients = useMemo(() => {
     const allClients = clientsData?.results || [];
-    
-    if (!formData.sales_manager_id || formData.sales_manager_id === 0) {
-      // Si no hay agente seleccionado, mostrar todos los clientes
-      return allClients;
-    }
-    // Filtrar clientes que tienen asignado el agente seleccionado
-    return allClients.filter(client => {
-      if (!client.assigned_agent) return false;
-      
-      const assignedAgentId = typeof client.assigned_agent === 'object' 
-        ? (client.assigned_agent as CustomUser).id 
-        : client.assigned_agent;
-      return assignedAgentId === formData.sales_manager_id;
-    });
-  }, [clientsData?.results, formData.sales_manager_id]);
+    return [...allClients].sort((a, b) =>
+      (a.full_name || '').localeCompare(b.full_name || '')
+    );
+  }, [clientsData?.results]);
 
   // Actualizar el formulario cuando cambie la orden
   useEffect(() => {
@@ -154,38 +151,30 @@ export default function EditOrderDialog({ open, onOpenChange, order }: EditOrder
         <form onSubmit={handleSubmit}>
           <div className="max-h-[65vh] overflow-y-auto pr-1">
           <div className="grid grid-cols-2 gap-4 py-4">
-            {/* Manager de Ventas - Primero para filtrar clientes */}
+            {/* Gestor (ADR-0007): cualquier miembro del personal */}
             <div className="grid gap-2">
-              <Label htmlFor="sales_manager_id">Manager de Ventas</Label>
+              <Label htmlFor="sales_manager_id">Gestor</Label>
               <Select
                 value={formData.sales_manager_id?.toString() || ""}
-                onValueChange={(value) => {
-                  const newAgentId = parseInt(value);
-                  setFormData(prev => ({
-                    ...prev,
-                    sales_manager_id: newAgentId,
-                    // Limpiar el cliente seleccionado si no está en la lista filtrada
-                    client_id: prev.client_id && filteredClients.find(c => c.id === prev.client_id)
-                      ? prev.client_id
-                      : 0
-                  }));
-                }}
+                onValueChange={(value) =>
+                  setFormData(prev => ({ ...prev, sales_manager_id: parseInt(value) }))
+                }
               >
                 <SelectTrigger id="sales_manager_id" className="border-gray-200 focus:border-orange-300">
-                  <SelectValue placeholder="Selecciona un agente" />
+                  <SelectValue placeholder="Selecciona un gestor" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="0">
                     <div className="flex items-center gap-2">
                       <User size={16} className="text-gray-400" />
-                      <span className="text-gray-500">Todos los clientes</span>
+                      <span className="text-gray-500">Sin gestor</span>
                     </div>
                   </SelectItem>
                   {agents.map((agent) => (
                     <SelectItem key={agent.id} value={agent.id.toString()}>
                       <div className="flex items-center gap-2">
                         <User size={16} />
-                        <span>{agent.full_name || `${agent.name} ${agent.last_name}`}</span>
+                        <span>{salesManagerLabel(agent.full_name || `${agent.name} ${agent.last_name}`, agent.role)}</span>
                       </div>
                     </SelectItem>
                   ))}

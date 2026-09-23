@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   ArrowLeft,
   Boxes,
@@ -18,6 +17,7 @@ import { toast } from '@/lib/toast';
 import { formatDate } from '@/lib/format';
 import { PackageStatusBadge } from '@/components/status-badges';
 import { StatCard } from '@/components/ui';
+import { DetailPhotos } from '@/components/detail-photos';
 import { ArrivalChecklist } from '../arrival-checklist';
 import { ReceivedList } from '../received-list';
 import { PackageActionsBar } from '../package-actions-bar';
@@ -94,17 +94,14 @@ export function PackageDetailClient({
           </div>
         </div>
 
-        {pkg.packagePicture ? (
-          <div className="mt-4">
-            <Image
-              src={pkg.packagePicture}
-              alt={`Foto del paquete ${pkg.tracking}`}
-              width={320}
-              height={240}
-              className="h-auto w-full max-w-xs rounded-lg border border-border object-cover"
-            />
-          </div>
-        ) : null}
+        <DetailPhotos
+          className="mt-4"
+          label="Fotos del paquete"
+          photos={[
+            { url: pkg.packagePicture, alt: `Foto 1 del paquete ${pkg.tracking}` },
+            { url: pkg.packagePicture2, alt: `Foto 2 del paquete ${pkg.tracking}` },
+          ]}
+        />
 
         <div className="stagger-children mt-5 grid grid-cols-2 gap-3 lg:grid-cols-3">
           <StatCard
@@ -171,6 +168,7 @@ export function PackageDetailClient({
           statusOfProcessing: pkg.status as PackageStatus,
           arrivalDate: pkg.arrivalDate,
           packagePicture: pkg.packagePicture,
+          packagePicture2: pkg.packagePicture2,
           createdAt: '',
           updatedAt: '',
           receptionCount: pkg.receptions.length,

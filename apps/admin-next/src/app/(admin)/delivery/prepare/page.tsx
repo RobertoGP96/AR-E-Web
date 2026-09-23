@@ -61,6 +61,7 @@ export default async function PrepareDeliveryPage({ searchParams }: PageProps) {
       statusOfProcessing: true,
       arrivalDate: true,
       packagePicture: true,
+      packagePicture2: true,
     },
     orderBy: [{ arrivalDate: 'desc' }, { id: 'desc' }],
     take: 150,
@@ -182,6 +183,7 @@ export default async function PrepareDeliveryPage({ searchParams }: PageProps) {
       status: p.statusOfProcessing,
       arrivalDate: p.arrivalDate.toISOString(),
       packagePicture: p.packagePicture,
+      packagePicture2: p.packagePicture2,
       receptions: rows,
       unitsMarked: rows.reduce((sum, r) => sum + r.amount, 0),
     };

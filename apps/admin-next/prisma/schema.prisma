@@ -227,6 +227,7 @@ model Package {
   statusOfProcessing   String            @default("Enviado") @map("status_of_processing") @db.VarChar(100)
   arrivalDate          DateTime          @default(now()) @map("arrival_date") @db.Timestamptz()
   packagePicture       String?           @map("package_picture")
+  packagePicture2      String?           @map("package_picture_2")
   createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt            DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
 

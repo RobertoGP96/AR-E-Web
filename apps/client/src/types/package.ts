@@ -3,7 +3,6 @@
  */
 
 import type { ID, DateTime, PackageStatus } from './base';
-import type { EvidenceImage } from './evidence';
 
 // Modelo principal
 export interface Package {
@@ -12,7 +11,10 @@ export interface Package {
   number_of_tracking: string;
   status_of_processing: PackageStatus;
   arrival_date: string;
-  package_picture: EvidenceImage[];
+  /** Foto 1 del paquete (URL o ""). */
+  package_picture: string;
+  /** Foto 2 del paquete (URL o ""). */
+  package_picture_2: string;
   created_at: DateTime;
   updated_at: DateTime;
 }

@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { getGeneralAdminId } from '@/lib/general-admin';
+import { isSalesManagerRole, resolveSalesManagerId } from '@/lib/order-manager';
 import {
   computeProductCost,
   computePayStatus,
@@ -74,6 +76,37 @@ async function refreshOrderTotals(orderId: bigint): Promise<void> {
   await prisma.$transaction((tx) => refreshOrderTotalsInTx(tx, orderId));
 }
 
+/**
+ * Gestor de la orden (ADR-0007): un agente siempre a su propio nombre;
+ * para el resto, el gestor pedido o, si no hay, el admin general. El
+ * gestor debe ser personal activo.
+ */
+async function resolveManager(
+  user: { id: string; role: string },
+  requested: string | null
+): Promise<{ ok: true; id: bigint | null } | { ok: false; error: string }> {
+  const resolved = resolveSalesManagerId({
+    creatorRole: user.role,
+    creatorId: user.id,
+    requested,
+    generalAdminId: user.role === 'agent' ? null : await getGeneralAdminId(),
+  });
+  if (!resolved) return { ok: true, id: null };
+  const id = parseId(resolved);
+  if (!id) return { ok: false, error: 'Gestor inválido' };
+  const staff = await prisma.customUser.findUnique({
+    where: { id },
+    select: { role: true, isActive: true },
+  });
+  if (!staff || !staff.isActive || !isSalesManagerRole(staff.role)) {
+    return {
+      ok: false,
+      error: 'El gestor debe ser personal activo (admin, agente, contador o logístico)',
+    };
+  }
+  return { ok: true, id };
+}
+
 export async function createOrderAction(
   _prev: ActionResult | undefined,
   formData: FormData
@@ -97,13 +130,10 @@ export async function createOrderAction(
   const d = parsed.data;
   const clientId = parseId(d.clientId);
   if (!clientId) return { ok: false, error: 'Invalid client id' };
-  // Un agente siempre crea órdenes a su propio nombre: el gestor se
-  // fija en el servidor, ignorando lo que venga del formulario.
-  const managerRaw = user.role === 'agent' ? user.id : d.salesManagerId;
-  const salesManagerId = managerRaw ? parseId(managerRaw) : null;
-  if (managerRaw && !salesManagerId) {
-    return { ok: false, error: 'Invalid sales manager id' };
-  }
+  // ADR-0007: agente a su nombre; si no, el gestor pedido o el admin general.
+  const manager = await resolveManager(user, d.salesManagerId);
+  if (!manager.ok) return { ok: false, error: manager.error };
+  const salesManagerId = manager.id;
 
   const order = await prisma.$transaction(async (tx) => {
     const created = await tx.order.create({
@@ -152,13 +182,10 @@ export async function updateOrderAction(
   const d = parsed.data;
   const clientId = parseId(d.clientId);
   if (!clientId) return { ok: false, error: 'Invalid client id' };
-  // Igual que en create: un agente no puede reasignar la orden a otro
-  // gestor, así que el servidor fija su propio id.
-  const managerRaw = user.role === 'agent' ? user.id : d.salesManagerId;
-  const salesManagerId = managerRaw ? parseId(managerRaw) : null;
-  if (managerRaw && !salesManagerId) {
-    return { ok: false, error: 'Invalid sales manager id' };
-  }
+  // ADR-0007: agente a su nombre; si no, el gestor pedido o el admin general.
+  const manager = await resolveManager(user, d.salesManagerId);
+  if (!manager.ok) return { ok: false, error: manager.error };
+  const salesManagerId = manager.id;
 
   const result = await prisma.$transaction(async (tx) => {
     const existing = await tx.order.findUnique({
@@ -546,9 +573,10 @@ export async function createOrderWithProductsAction(
   const d = parsed.data;
   const clientId = parseId(d.clientId);
   if (!clientId) return { ok: false, error: 'Cliente inválido' };
-  const managerRaw = user.role === 'agent' ? user.id : d.salesManagerId;
-  const salesManagerId = managerRaw ? parseId(managerRaw) : null;
-  if (managerRaw && !salesManagerId) return { ok: false, error: 'Agente inválido' };
+  // ADR-0007: agente a su nombre; si no, el gestor pedido o el admin general.
+  const manager = await resolveManager(user, d.salesManagerId);
+  if (!manager.ok) return { ok: false, error: manager.error };
+  const salesManagerId = manager.id;
 
   const rows = d.products.map(productDataFromDraft);
   if (rows.some((r) => r === null)) {

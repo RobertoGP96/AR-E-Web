@@ -48,6 +48,7 @@ export default async function PackageDetailPage({ params }: PageProps) {
         status: pkg.statusOfProcessing,
         arrivalDate: pkg.arrivalDate.toISOString(),
         packagePicture: pkg.packagePicture,
+        packagePicture2: pkg.packagePicture2,
         receptions: receptions.get(pkg.id.toString()) ?? [],
         unitsMarked: (receptions.get(pkg.id.toString()) ?? []).reduce(
           (s, r) => s + r.amount,

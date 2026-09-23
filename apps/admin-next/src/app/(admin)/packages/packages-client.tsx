@@ -18,7 +18,7 @@ import { Button, Tooltip } from '@heroui/react';
 import { PackageDialog } from './package-dialog';
 import { DeletePackageDialog } from './delete-dialog';
 import { formatDate } from '@/lib/format';
-import { PictureHover } from '@/components/picture-hover';
+import { PictureHoverGroup } from '@/components/picture-hover';
 import { PackageStatusBadge } from '@/components/status-badges';
 import { FilterPopover } from '@/components/filter-popover';
 import {
@@ -213,8 +213,8 @@ export function PackagesClient({
                       </div>
                     </td>
                     <td>
-                      <PictureHover
-                        url={row.packagePicture}
+                      <PictureHoverGroup
+                        urls={[row.packagePicture, row.packagePicture2]}
                         alt={`Captura de ${row.numberOfTracking}`}
                       />
                     </td>
@@ -242,8 +242,8 @@ export function PackagesClient({
                 }
                 badges={<PackageStatusBadge status={row.statusOfProcessing} />}
                 media={
-                  <PictureHover
-                    url={row.packagePicture}
+                  <PictureHoverGroup
+                    urls={[row.packagePicture, row.packagePicture2]}
                     alt={`Captura de ${row.numberOfTracking}`}
                   />
                 }

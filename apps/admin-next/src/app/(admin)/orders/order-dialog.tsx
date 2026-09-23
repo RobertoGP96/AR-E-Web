@@ -31,13 +31,12 @@ interface OrderDialogProps {
   order?: OrderRow;
   clientOptions: ClientOption[];
   managerOptions: SelectOption[];
+  /** Admin general: gestor por defecto (ADR-0007). */
+  defaultManagerId: string | null;
   currentUser: CurrentUser;
   onClose: () => void;
   onSuccess: (newId?: string) => void;
 }
-
-/** Valor del select de agente para "clientes sin agente asignado". */
-const NO_AGENT = 'none';
 
 export function OrderDialog({
   open,
@@ -45,6 +44,7 @@ export function OrderDialog({
   order,
   clientOptions,
   managerOptions,
+  defaultManagerId,
   currentUser,
   onClose,
   onSuccess,
@@ -58,17 +58,13 @@ export function OrderDialog({
 
   const isAgent = currentUser.role === 'agent';
 
-  // El agente se elige primero y determina qué clientes se pueden
-  // escoger. Si quien crea la orden es un agente, queda fijado a sí
-  // mismo y no puede cambiarse.
+  // ADR-0007: el gestor puede ser cualquier miembro del personal. Si
+  // quien opera es un agente queda fijado a sí mismo; si no, se
+  // preselecciona el gestor actual de la orden o el admin general.
   function initialAgent(): string {
     if (isAgent) return currentUser.id;
-    if (mode === 'edit' && order) {
-      if (order.salesManagerId) return order.salesManagerId;
-      const client = clientOptions.find((c) => c.id === order.clientId);
-      if (client) return client.agentId ?? NO_AGENT;
-    }
-    return '';
+    if (mode === 'edit' && order?.salesManagerId) return order.salesManagerId;
+    return defaultManagerId ?? '';
   }
 
   const [agentId, setAgentId] = useState<string>(initialAgent);
@@ -96,35 +92,17 @@ export function OrderDialog({
 
   const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
 
-  const filteredClients = agentId
-    ? clientOptions.filter((c) =>
-        agentId === NO_AGENT ? c.agentId === null : c.agentId === agentId
-      )
-    : [];
-  // En edición el cliente actual debe seguir siendo elegible aunque su
-  // agente asignado ya no coincida con el gestor de la orden.
-  const currentClient =
-    clientId && !filteredClients.some((c) => c.id === clientId)
-      ? clientOptions.find((c) => c.id === clientId)
-      : undefined;
-  const selectableClients = currentClient
-    ? [currentClient, ...filteredClients]
-    : filteredClients;
+  // ADR-0007: el gestor ya no filtra los clientes (para un agente el
+  // servidor solo carga los suyos). El agente asignado se muestra como
+  // descripción porque es el que cobra la comisión (RN-003).
+  const selectableClients = clientOptions;
+  const managerNameById = new Map(managerOptions.map((m) => [m.id, m.label]));
 
   const agentLabel =
     managerOptions.find((m) => m.id === currentUser.id)?.label ?? 'Tú';
 
   function handleAgentChange(next: string) {
     setAgentId(next);
-    // Un cliente que no pertenece al nuevo agente deja de ser válido.
-    const stillValid =
-      next &&
-      clientOptions.some(
-        (c) =>
-          c.id === clientId &&
-          (next === NO_AGENT ? c.agentId === null : c.agentId === next)
-      );
-    if (!stillValid) setClientId('');
   }
 
   return (
@@ -134,7 +112,7 @@ export function OrderDialog({
       title={mode === 'create' ? 'Nueva orden' : 'Editar orden'}
       description={
         mode === 'create'
-          ? 'Elige el agente y luego un cliente suyo; los productos se añaden después.'
+          ? 'Elige el cliente y el gestor; los productos se añaden después.'
           : `Orden #${order?.id ?? ''} de ${order?.clientName ?? ''}`
       }
       icon={<ShoppingCart className="h-5 w-5" aria-hidden />}
@@ -151,22 +129,20 @@ export function OrderDialog({
         <input
           type="hidden"
           name="salesManagerId"
-          value={
-            isAgent ? currentUser.id : agentId === NO_AGENT ? '' : agentId
-          }
+          value={isAgent ? currentUser.id : agentId}
         />
 
         <Field
-          label="Agente"
+          label="Gestor"
           required
           hint={
             isAgent
               ? 'Las órdenes que creas quedan a tu nombre.'
-              : undefined
+              : 'Cualquier miembro del personal; por defecto, el admin general.'
           }
         >
           {isAgent ? (
-            <Select value={currentUser.id} disabled aria-label="Agente">
+            <Select value={currentUser.id} disabled aria-label="Gestor">
               <option value={currentUser.id}>{agentLabel}</option>
             </Select>
           ) : (
@@ -174,13 +150,12 @@ export function OrderDialog({
               value={agentId}
               onChange={(e) => handleAgentChange(e.target.value)}
             >
-              <option value="">— Selecciona un agente —</option>
+              {agentId ? null : <option value="">— Selecciona un gestor —</option>}
               {managerOptions.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.label}
                 </option>
               ))}
-              <option value={NO_AGENT}>Sin agente (clientes sin asignar)</option>
             </Select>
           )}
         </Field>
@@ -191,23 +166,21 @@ export function OrderDialog({
             value={clientId}
             onChange={(e) => setClientId(e.target.value)}
             required
-            disabled={!agentId}
             invalid={!!errors['clientId']}
-            placeholder={
-              agentId
-                ? '— Selecciona un cliente —'
-                : 'Selecciona primero un agente'
-            }
+            placeholder="— Selecciona un cliente —"
             searchPlaceholder="Buscar cliente por nombre o teléfono…"
             emptyMessage={
-              filteredClients.length === 0
-                ? 'Este agente no tiene clientes asignados'
-                : 'Sin resultados'
+              selectableClients.length === 0 ? 'No hay clientes' : 'Sin resultados'
             }
             options={selectableClients.map((c) => ({
               value: c.id,
               label: c.label,
-              description: c.phoneNumber,
+              description: [
+                c.phoneNumber,
+                c.agentId
+                  ? `Agente: ${managerNameById.get(c.agentId) ?? '—'}`
+                  : 'Sin agente',
+              ].join(' · '),
             }))}
           />
         </Field>

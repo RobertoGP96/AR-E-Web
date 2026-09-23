@@ -5,7 +5,7 @@ Términos del negocio, en el orden en que aparecen en el ciclo de vida. Cada ent
 | Término | Definición | Entidad |
 |---|---|---|
 | **Cliente** | Persona que encarga productos y recibe entregas. Tiene un agente asignado (`assigned_agent`) y un balance acumulado (`balance`). No usa el panel; solo la app cliente en modo lectura. | `CustomUser` con `role = client` |
-| **Gestor / agente** | Miembro del equipo que atiende a un grupo de clientes, crea sus órdenes y cobra una comisión por peso entregado (`agent_profit`, en dinero por libra). En la orden aparece como `sales_manager`. | `CustomUser` con `role = agent` |
+| **Gestor / agente** | Miembro del equipo que atiende a un grupo de clientes, crea sus órdenes y cobra una comisión por peso entregado (`agent_profit`, en dinero por libra). En la orden aparece como `sales_manager`. Desde ADR-0007 (1.1.0) el gestor de una orden puede ser cualquier miembro del personal (admin, agente, contador o logístico) y, por defecto, es el **admin general** (admin activo superusuario o, en su defecto, el más antiguo); la comisión RN-003 sigue siendo la del agente asignado al cliente. | `CustomUser` con `role = agent` (gestor de orden: cualquier rol de personal) |
 | **Logístico** | Miembro del equipo que registra paquetes, llegadas, bolsas y entregas. | `CustomUser` con `role = logistical` |
 | **Contador** | Miembro del equipo que registra cobros, aplica saldo, lleva facturas, gastos y balances. | `CustomUser` con `role = accountant` |
 | **Administrador** | Acceso total; único rol que compra y que puede deshacer transiciones (reabrir, re-pesar). | `CustomUser` con `role = admin` |

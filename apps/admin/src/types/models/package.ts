@@ -14,8 +14,14 @@ export interface Package {
   number_of_tracking: string;
   status_of_processing: PackageStatus;
   arrival_date: string;
-  // Puede ser un array de URLs o un array de objetos con la propiedad picture
-  package_picture?: PackageImage[];
+  /**
+   * Foto 1. El backend la devuelve como cadena (URL o ""); datos
+   * históricos pueden traer un array de URLs u objetos `{ picture }`.
+   * Usar `getPackagePictures()` (lib/package-pictures) para leerla.
+   */
+  package_picture?: string | PackageImage[] | null;
+  /** Foto 2 (URL o ""). */
+  package_picture_2?: string | null;
   contained_products?: ProductReceived[]; // Productos contenidos en el paquete
   created_at: string;
   updated_at: string;

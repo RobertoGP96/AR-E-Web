@@ -29,7 +29,7 @@ stateDiagram-v2
 
 | Desde | Hacia | Quién | Precondición | Efecto |
 |---|---|---|---|---|
-| — | `Encargado` | agente (propios), admin | Cliente con agente asignado. | Se crea `Order` con `pay_status = No pagado`, `total_costs = 0`. |
+| — | `Encargado` | agente (propios), admin | Cliente existente. Gestor (`sales_manager`): el agente que la crea, o el miembro del personal (admin, agente, contador o logístico) elegido por el admin; sin elección, el admin general (ADR-0007, desde 1.1.0). | Se crea `Order` con `pay_status = No pagado`, `total_costs = 0`. |
 | `Encargado` | `Procesando` | automático | Algún producto cumple RN-010 con estado `Comprado` o superior. | Ninguno adicional. |
 | `Procesando` | `Completado` | automático | Todos los productos están `Entregado` (con RN-011: todas sus unidades en entregas `Entregado`). | Ninguno adicional; la orden sigue cobrable. |
 | `Completado` | `Procesando` | automático | Un admin reabre una entrega, o se añade un producto nuevo a la orden. | Ninguno adicional. |

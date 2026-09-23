@@ -169,6 +169,7 @@ class Package(models.Model):
     )
     arrival_date = models.DateTimeField(default=timezone.now, help_text="Fecha de llegada del paquete")
     package_picture = models.TextField(blank=True, null=True, help_text=' image URL')
+    package_picture_2 = models.TextField(blank=True, null=True, help_text='Segunda foto del paquete (URL)')
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
