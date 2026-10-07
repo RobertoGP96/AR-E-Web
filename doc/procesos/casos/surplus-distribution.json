@@ -1,0 +1,125 @@
+[
+  {
+    "id": "RN-023-01",
+    "regla": "RN-023",
+    "descripcion": "Caso real (pedido 64, cliente 339): 37.80 de exceso cubren exactamente el pedido 63 (29.19) y las entregas 26 (6.86) y 27 (1.75); nada queda en el origen.",
+    "input": {
+      "surplus": 37.8,
+      "targets": [
+        { "kind": "delivery", "id": "27", "pending": 1.75, "date": "2026-09-30T00:00:00.000Z" },
+        { "kind": "order", "id": "63", "pending": 29.19, "date": "2026-09-23T13:10:00.000Z" },
+        { "kind": "delivery", "id": "26", "pending": 6.86, "date": "2026-09-23T15:00:00.000Z" }
+      ]
+    },
+    "expected": {
+      "allocations": [
+        { "kind": "order", "id": "63", "amount": 29.19 },
+        { "kind": "delivery", "id": "26", "amount": 6.86 },
+        { "kind": "delivery", "id": "27", "amount": 1.75 }
+      ],
+      "remaining": 0
+    }
+  },
+  {
+    "id": "RN-023-02",
+    "regla": "RN-023",
+    "descripcion": "Sin pendientes: todo el exceso queda en el origen como saldo a favor.",
+    "input": { "surplus": 50, "targets": [] },
+    "expected": { "allocations": [], "remaining": 50 }
+  },
+  {
+    "id": "RN-023-03",
+    "regla": "RN-023",
+    "descripcion": "El exceso no alcanza: el más antiguo recibe todo y queda Parcial; el resto no recibe nada.",
+    "input": {
+      "surplus": 20,
+      "targets": [
+        { "kind": "order", "id": "1", "pending": 30, "date": "2026-01-01T00:00:00.000Z" },
+        { "kind": "order", "id": "2", "pending": 10, "date": "2026-01-02T00:00:00.000Z" }
+      ]
+    },
+    "expected": { "allocations": [{ "kind": "order", "id": "1", "amount": 20 }], "remaining": 0 }
+  },
+  {
+    "id": "RN-023-04",
+    "regla": "RN-023",
+    "descripcion": "El exceso supera todos los pendientes: se cubren todos y el resto permanece en el origen.",
+    "input": {
+      "surplus": 100,
+      "targets": [
+        { "kind": "order", "id": "1", "pending": 30, "date": "2026-01-01T00:00:00.000Z" },
+        { "kind": "delivery", "id": "5", "pending": 12.5, "date": "2026-01-03T00:00:00.000Z" }
+      ]
+    },
+    "expected": {
+      "allocations": [
+        { "kind": "order", "id": "1", "amount": 30 },
+        { "kind": "delivery", "id": "5", "amount": 12.5 }
+      ],
+      "remaining": 57.5
+    }
+  },
+  {
+    "id": "RN-023-05",
+    "regla": "RN-023",
+    "descripcion": "Los pendientes ≤ 0 se ignoran (partidas ya pagadas o sobrepagadas no reciben nada).",
+    "input": {
+      "surplus": 10,
+      "targets": [
+        { "kind": "order", "id": "1", "pending": 0, "date": "2026-01-01T00:00:00.000Z" },
+        { "kind": "order", "id": "2", "pending": -5, "date": "2026-01-02T00:00:00.000Z" },
+        { "kind": "order", "id": "3", "pending": 4, "date": "2026-01-03T00:00:00.000Z" }
+      ]
+    },
+    "expected": { "allocations": [{ "kind": "order", "id": "3", "amount": 4 }], "remaining": 6 }
+  },
+  {
+    "id": "RN-023-06",
+    "regla": "RN-023",
+    "descripcion": "A igual fecha, la orden va antes que la entrega y después por id ascendente.",
+    "input": {
+      "surplus": 15,
+      "targets": [
+        { "kind": "delivery", "id": "9", "pending": 10, "date": "2026-02-01T00:00:00.000Z" },
+        { "kind": "order", "id": "20", "pending": 10, "date": "2026-02-01T00:00:00.000Z" },
+        { "kind": "order", "id": "7", "pending": 10, "date": "2026-02-01T00:00:00.000Z" }
+      ]
+    },
+    "expected": {
+      "allocations": [
+        { "kind": "order", "id": "7", "amount": 10 },
+        { "kind": "order", "id": "20", "amount": 5 }
+      ],
+      "remaining": 0
+    }
+  },
+  {
+    "id": "RN-023-07",
+    "regla": "RN-023",
+    "descripcion": "Redondeo a 2 decimales: 0.1 + 0.2 de pendientes se reparten sin residuos binarios.",
+    "input": {
+      "surplus": 0.3,
+      "targets": [
+        { "kind": "order", "id": "1", "pending": 0.1, "date": "2026-01-01T00:00:00.000Z" },
+        { "kind": "order", "id": "2", "pending": 0.2, "date": "2026-01-02T00:00:00.000Z" }
+      ]
+    },
+    "expected": {
+      "allocations": [
+        { "kind": "order", "id": "1", "amount": 0.1 },
+        { "kind": "order", "id": "2", "amount": 0.2 }
+      ],
+      "remaining": 0
+    }
+  },
+  {
+    "id": "RN-023-08",
+    "regla": "RN-023",
+    "descripcion": "Exceso 0 o negativo: no se reparte nada.",
+    "input": {
+      "surplus": 0,
+      "targets": [{ "kind": "order", "id": "1", "pending": 30, "date": "2026-01-01T00:00:00.000Z" }]
+    },
+    "expected": { "allocations": [], "remaining": 0 }
+  }
+]

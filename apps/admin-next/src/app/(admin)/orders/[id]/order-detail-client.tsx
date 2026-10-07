@@ -33,6 +33,9 @@ import {
   MobileCard,
   TableEmpty,
 } from '@/components/ui';
+import { SurplusBanner } from '@/components/surplus-banner';
+import { redistributeOrderSurplusAction } from '../../surplus-actions';
+import type { PendingTarget } from '@/lib/surplus';
 import type { ProductRow, SelectOption } from '../schema';
 
 interface OrderHeader {
@@ -62,6 +65,9 @@ interface OrderDetailClientProps {
   categoryOptions: SelectOption[];
   /** Tiendas con pendientes de comprar (vacío si el usuario no compra). */
   purchaseTargets: PurchaseTarget[];
+  /** RN-023: efectivo cobrado por encima del costo y pendientes del cliente. */
+  surplus: number;
+  surplusTargets: PendingTarget[];
 }
 
 export function OrderDetailClient({
@@ -71,6 +77,8 @@ export function OrderDetailClient({
   shopOptions,
   categoryOptions,
   purchaseTargets,
+  surplus,
+  surplusTargets,
 }: OrderDetailClientProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ProductRow | null>(null);
@@ -175,6 +183,13 @@ export function OrderDetailClient({
             tone={outstanding > 0 ? 'danger' : 'success'}
           />
         </div>
+
+        <SurplusBanner
+          surplus={surplus}
+          targets={surplusTargets}
+          canAct
+          onRedistribute={() => redistributeOrderSurplusAction(orderId)}
+        />
       </header>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

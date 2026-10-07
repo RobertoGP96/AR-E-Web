@@ -34,6 +34,9 @@ import { DeliveryActionsBar } from '../delivery-actions-bar';
 import { DeliveryDialog } from '../delivery-dialog';
 import { ConfirmDeliveryPaymentDialog } from '../confirm-payment-dialog';
 import { AddProductsDialog } from './add-products-dialog';
+import { SurplusBanner } from '@/components/surplus-banner';
+import { redistributeDeliverySurplusAction } from '../../surplus-actions';
+import type { PendingTarget } from '@/lib/surplus';
 import type { DeliveryRow, ReceivedCandidate } from '../schema';
 
 interface DeliveredProduct {
@@ -48,6 +51,9 @@ interface DeliveryDetailClientProps {
   delivery: DeliveryRow;
   deliveredProducts: DeliveredProduct[];
   candidates: ReceivedCandidate[];
+  /** RN-023: efectivo cobrado por encima del costo y pendientes del cliente. */
+  surplus: number;
+  surplusTargets: PendingTarget[];
 }
 
 function payTone(paymentStatus: string): StatTone {
@@ -61,6 +67,8 @@ export function DeliveryDetailClient({
   delivery,
   deliveredProducts,
   candidates,
+  surplus,
+  surplusTargets,
 }: DeliveryDetailClientProps) {
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -184,6 +192,13 @@ export function DeliveryDetailClient({
             tone={payTone(delivery.paymentStatus)}
           />
         </div>
+
+        <SurplusBanner
+          surplus={surplus}
+          targets={surplusTargets}
+          canAct={canWrite}
+          onRedistribute={() => redistributeDeliverySurplusAction(delivery.id)}
+        />
 
         {canWrite ? (
           <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:flex-wrap sm:items-center">

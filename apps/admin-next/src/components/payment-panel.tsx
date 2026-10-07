@@ -1,26 +1,35 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
-import { User, Wallet } from 'lucide-react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
+import { Split, User, Wallet } from 'lucide-react';
 import { Button, Spinner } from '@heroui/react';
 import { formatCurrency } from '@/lib/format';
 import { AppModal } from '@/components/ui/app-modal';
 import { Field, TextInput, Select, FormError } from '@/components/ui';
+import { planSurplusDistribution, type PendingTarget } from '@/lib/surplus';
 
 export interface PaymentSubmitResult {
   ok: boolean;
   error?: string;
+  /** RN-023: excedente repartido entre pendientes del cliente. */
+  redistributed?: { moved: number; count: number; remaining: number };
 }
 
 /**
  * "Registro de pago" modal, shared by orders and deliveries: cash
  * amount + optional client-balance application with a live summary of
  * coverage, remainder, and resulting balance.
+ *
+ * RN-023: si el monto supera el pendiente y el cliente tiene otras
+ * órdenes o entregas por pagar (`loadPendingTargets`), el excedente se
+ * reparte entre ellas (activado por defecto; el contador puede dejarlo
+ * como saldo a favor desactivando la opción).
  */
 export function PaymentPanel({
   clientName,
   clientBalance,
   pendingCost,
+  loadPendingTargets,
   onSubmit,
   onSuccess,
   onClose,
@@ -28,19 +37,42 @@ export function PaymentPanel({
   clientName: string;
   clientBalance: number;
   pendingCost: number;
+  /** Pendientes del cliente sin esta partida (para repartir el excedente). */
+  loadPendingTargets?: () => Promise<PendingTarget[]>;
   onSubmit: (
     amount: number,
     appliedBalance: number,
-    markPaidManually: boolean
+    markPaidManually: boolean,
+    distributeSurplus: boolean
   ) => Promise<PaymentSubmitResult>;
-  onSuccess: (amount: number) => void;
+  onSuccess: (amount: number, result: PaymentSubmitResult) => void;
   onClose: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
   const [amountStr, setAmountStr] = useState('');
   const [applyBalance, setApplyBalance] = useState(false);
   const [manualPaid, setManualPaid] = useState(false);
+  const [distribute, setDistribute] = useState(true);
+  // null = cargando; sin cargador no hay pendientes que consultar.
+  const [targets, setTargets] = useState<PendingTarget[] | null>(() =>
+    loadPendingTargets ? null : []
+  );
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loadPendingTargets) return;
+    let cancelled = false;
+    loadPendingTargets()
+      .then((t) => {
+        if (!cancelled) setTargets(t);
+      })
+      .catch(() => {
+        if (!cancelled) setTargets([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadPendingTargets]);
 
   const available = Math.max(0, clientBalance);
   const amount = Math.max(0, Number(amountStr) || 0);
@@ -52,20 +84,38 @@ export function PaymentPanel({
 
   const covered = amount + applied;
   const remaining = Math.max(0, pendingCost - covered);
-  const surplus = Math.max(0, covered - pendingCost);
-  const resultingBalance = clientBalance - applied + surplus;
+  // Solo el efectivo que excede el pendiente puede repartirse (RN-023).
+  const surplus = Math.max(0, Math.min(amount, covered - pendingCost));
+  const hasTargets = (targets?.length ?? 0) > 0;
+  const plan = useMemo(
+    () =>
+      surplus > 0 && hasTargets && distribute
+        ? planSurplusDistribution(surplus, targets ?? [])
+        : null,
+    [surplus, hasTargets, distribute, targets]
+  );
+  const toBalance = plan ? plan.remaining : surplus;
+  const resultingBalance = clientBalance - applied + toBalance;
   const progress =
     pendingCost > 0 ? Math.min(100, (covered / pendingCost) * 100) : 100;
   const fullyPaid = manualPaid || (remaining === 0 && pendingCost > 0);
 
   const balanceToggleDisabled = available <= 0 || amount >= pendingCost;
+  const labelOf = (kind: string, id: string) =>
+    targets?.find((t) => t.kind === kind && t.id === id)?.label ??
+    (kind === 'order' ? `Pedido #${id}` : `Entrega #${id}`);
 
   function submit() {
     setError(null);
     startTransition(async () => {
-      const result = await onSubmit(amount, applied, manualPaid);
+      const result = await onSubmit(
+        amount,
+        applied,
+        manualPaid,
+        surplus > 0 && hasTargets && distribute
+      );
       if (result.ok) {
-        onSuccess(amount);
+        onSuccess(amount, result);
       } else {
         setError(result.error ?? 'No se pudo registrar el pago');
       }
@@ -169,6 +219,60 @@ export function PaymentPanel({
           </span>
         </button>
 
+        {surplus > 0 && hasTargets ? (
+          <div
+            className="animate-in fade-in slide-in-from-top-1 space-y-2 rounded-lg border border-warning/40 bg-warning-soft/40 p-3"
+            data-testid="surplus-distribution"
+          >
+            <button
+              type="button"
+              onClick={() => setDistribute((v) => !v)}
+              aria-pressed={distribute}
+              className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm transition-all duration-150 ${
+                distribute
+                  ? 'border-accent/50 bg-accent-soft text-accent-soft-foreground shadow-sm'
+                  : 'border-border bg-surface text-muted hover:bg-surface-hover'
+              }`}
+            >
+              <span className="flex items-center gap-2 font-medium">
+                <Split className="h-4 w-4" aria-hidden />
+                Repartir el excedente entre sus pendientes
+              </span>
+              <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning-soft-foreground">
+                {formatCurrency(surplus)}
+              </span>
+            </button>
+            <p className="text-xs text-muted">
+              El cliente paga {formatCurrency(surplus)} más que el pendiente de esta
+              partida y tiene {targets?.length} partida{targets?.length === 1 ? '' : 's'}{' '}
+              por pagar. {distribute
+                ? 'El excedente cubrirá, de la más antigua a la más reciente:'
+                : 'Si no se reparte, el excedente queda como saldo a favor.'}
+            </p>
+            {plan ? (
+              <ul className="space-y-1 text-xs">
+                {plan.allocations.map((a) => (
+                  <li
+                    key={`${a.kind}-${a.id}`}
+                    className="flex items-center justify-between rounded-md bg-background px-2 py-1"
+                  >
+                    <span className="text-foreground">{labelOf(a.kind, a.id)}</span>
+                    <span className="tabular-nums font-medium text-foreground">
+                      {formatCurrency(a.amount)}
+                    </span>
+                  </li>
+                ))}
+                {plan.remaining > 0 ? (
+                  <li className="flex items-center justify-between px-2 py-1 text-muted">
+                    <span>Resto a saldo a favor</span>
+                    <span className="tabular-nums">{formatCurrency(plan.remaining)}</span>
+                  </li>
+                ) : null}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+
         <Field label="Estado de pago">
           <Select
             value={manualPaid ? 'manual' : 'auto'}
@@ -227,10 +331,18 @@ export function PaymentPanel({
                 <dd className="tabular-nums">{formatCurrency(remaining)}</dd>
               </div>
             ) : null}
-            {surplus > 0 ? (
+            {plan && plan.allocations.length > 0 ? (
+              <div className="flex justify-between font-medium text-accent-soft-foreground">
+                <dt>Repartido a pendientes</dt>
+                <dd className="tabular-nums">
+                  {formatCurrency(surplus - plan.remaining)}
+                </dd>
+              </div>
+            ) : null}
+            {toBalance > 0 ? (
               <div className="flex justify-between font-medium text-success-soft-foreground">
                 <dt>Excedente al saldo</dt>
-                <dd className="tabular-nums">+ {formatCurrency(surplus)}</dd>
+                <dd className="tabular-nums">+ {formatCurrency(toBalance)}</dd>
               </div>
             ) : null}
             <div className="flex justify-between border-t border-separator pt-1">
