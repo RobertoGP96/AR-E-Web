@@ -78,7 +78,7 @@ export interface AnalyticsData {
   shopRows: SliceRow[];
   clientRows: ClientRow[];
   agentRows: AgentRow[];
-  /** Balance actual por cliente (id → saldo). */
-  clientBalances: Record<string, number>;
+  /** Saldo a favor y deuda actuales por cliente (RN-021 2.0.0). */
+  clientBalances: Record<string, { balance: number; debt: number }>;
   current: CurrentState;
 }

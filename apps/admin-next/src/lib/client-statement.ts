@@ -1,4 +1,5 @@
 import { round2 } from '@/lib/order-cost';
+import type { BalanceItem } from '@/lib/client-balance';
 
 /**
  * Documentos al cliente generados desde /users?tab=balances:
@@ -68,6 +69,27 @@ export interface StatementDelivery {
   balanceApplied: number;
   categoryName: string | null;
   productCount: number;
+}
+
+/** Partidas RN-021 (2.0.0) a partir de los datos del extracto. */
+export function toBalanceItems(
+  orders: readonly StatementOrder[],
+  deliveries: readonly StatementDelivery[]
+): BalanceItem[] {
+  return [
+    ...orders.map((o) => ({
+      kind: 'order' as const,
+      cost: o.totalCosts,
+      cash: o.received,
+      applied: o.balanceApplied,
+    })),
+    ...deliveries.map((d) => ({
+      kind: 'delivery' as const,
+      cost: d.weightCost,
+      cash: d.received,
+      applied: d.balanceApplied,
+    })),
+  ];
 }
 
 /** Complemento de RN-020: lo que falta por cubrir de una partida. */

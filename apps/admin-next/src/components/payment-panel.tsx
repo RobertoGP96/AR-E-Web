@@ -346,7 +346,7 @@ export function PaymentPanel({
               </div>
             ) : null}
             <div className="flex justify-between border-t border-separator pt-1">
-              <dt className="text-muted">Saldo resultante cliente</dt>
+              <dt className="text-muted">Saldo a favor resultante</dt>
               <dd
                 className={`tabular-nums font-medium ${
                   resultingBalance < 0

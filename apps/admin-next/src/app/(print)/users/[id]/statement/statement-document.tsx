@@ -1,10 +1,13 @@
 import Image from 'next/image';
+import {
+  CLIENT_BALANCE_STATUS_LABELS,
+  clientBalanceStatus,
+  type ClientBalance,
+} from '@/lib/client-balance';
 import type { ReactNode } from 'react';
 import { formatCurrency, formatDate } from '@/lib/format';
 import {
-  BALANCE_STATUS_LABELS,
   STATEMENT_TITLES,
-  balanceStatus,
   statementReference,
   type HistoryStatement,
   type OrdersInvoice,
@@ -20,8 +23,8 @@ export type StatementBody =
 
 interface StatementDocumentProps {
   client: StatementClient;
-  /** Balance en vivo del cliente (RN-021), independiente del documento. */
-  currentBalance: number;
+  /** Saldo a favor, deuda y posición neta en vivo (RN-021 2.0.0), independientes del documento. */
+  current: ClientBalance;
   issuedAt: Date;
   body: StatementBody;
 }
@@ -402,14 +405,14 @@ function OrdersBody({ invoice }: { invoice: OrdersInvoice }) {
  */
 export function StatementDocument({
   client,
-  currentBalance,
+  current,
   issuedAt,
   body,
 }: StatementDocumentProps) {
   const mode: StatementMode = body.mode;
   const title = STATEMENT_TITLES[mode];
   const reference = statementReference(mode, client.id, issuedAt);
-  const status = balanceStatus(currentBalance);
+  const status = clientBalanceStatus(current);
   const period =
     body.mode === 'history' && (body.statement.range.from || body.statement.range.to)
       ? `${body.statement.range.from ? formatDate(body.statement.range.from) : 'Inicio'} — ${
@@ -484,13 +487,24 @@ export function StatementDocument({
             ) : null}
           </dl>
         </div>
-        <div className="sm:min-w-44">
-          <SectionTitle>Balance actual</SectionTitle>
-          <div className={`text-2xl font-bold tabular-nums ${balanceClass(currentBalance)}`}>
-            {money(currentBalance)}
-          </div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted">
-            {BALANCE_STATUS_LABELS[status]}
+        <div className="sm:min-w-56">
+          <SectionTitle>Situación actual</SectionTitle>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm">
+            <dt className="text-muted">Saldo a favor</dt>
+            <dd className={`text-right font-bold tabular-nums ${current.balance > 0 ? 'text-success-soft-foreground' : 'text-foreground'}`}>
+              {money(current.balance)}
+            </dd>
+            <dt className="text-muted">Deuda</dt>
+            <dd className={`text-right font-bold tabular-nums ${current.debt > 0 ? 'text-danger' : 'text-foreground'}`}>
+              {money(current.debt)}
+            </dd>
+            <dt className="text-muted">Posición neta</dt>
+            <dd className={`text-right font-semibold tabular-nums ${balanceClass(current.net)}`}>
+              {money(current.net)}
+            </dd>
+          </dl>
+          <div className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">
+            {CLIENT_BALANCE_STATUS_LABELS[status]}
           </div>
         </div>
       </section>
@@ -507,8 +521,9 @@ export function StatementDocument({
 
       <footer className="mt-8 border-t border-separator pt-3 text-[11px] leading-relaxed text-muted">
         <p>
-          Balance = efectivo recibido − costo de órdenes y entregas (RN-021).
-          Un balance negativo es deuda del cliente; positivo, saldo a su favor.
+          Saldo a favor = dinero pagado de más y aún no aplicado; deuda = lo que falta
+          por cubrir de órdenes y entregas; posición neta = efectivo recibido − costos
+          (RN-021). El saldo corriente del extracto es la posición neta.
         </p>
         <p>
           Documento informativo generado por el panel AR&E Shipps el{' '}

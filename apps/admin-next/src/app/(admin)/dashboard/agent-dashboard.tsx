@@ -86,8 +86,9 @@ export async function AgentDashboard({
   ] = await Promise.all([
     prisma.customUser.count({ where: { assignedAgentId: agentId } }),
     prisma.customUser.aggregate({
-      where: { assignedAgentId: agentId, balance: { lt: 0 } },
-      _sum: { balance: true },
+      // RN-021 2.0.0: la deuda vive en `debt`.
+      where: { assignedAgentId: agentId, debt: { gt: 0 } },
+      _sum: { debt: true },
       _count: { _all: true },
     }),
     prisma.order.count({
@@ -217,7 +218,7 @@ export async function AgentDashboard({
             icon={AlertCircle}
             label="Clientes con Deuda"
             value={debtAgg._count._all.toLocaleString()}
-            hint={`${fmtMoney(Math.abs(debtAgg._sum.balance ?? 0))} en deudas`}
+            hint={`${fmtMoney(debtAgg._sum.debt ?? 0)} en deudas`}
             tone="danger"
           />
           <StatLink role={role} href={myOrdersHref}>

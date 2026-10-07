@@ -54,7 +54,7 @@ export default async function AnalyticsPage() {
         status: true,
         payStatus: true,
         clientId: true,
-        client: { select: { name: true, lastName: true, balance: true } },
+        client: { select: { name: true, lastName: true, balance: true, debt: true } },
       },
     }),
     prisma.deliverReceip.findMany({
@@ -69,7 +69,7 @@ export default async function AnalyticsPage() {
           select: {
             name: true,
             lastName: true,
-            balance: true,
+            balance: true, debt: true,
             assignedAgent: {
               select: { id: true, name: true, lastName: true },
             },
@@ -119,8 +119,9 @@ export default async function AnalyticsPage() {
       _sum: { weightCost: true, paymentAmount: true },
     }),
     prisma.customUser.aggregate({
-      where: { role: 'client', balance: { lt: 0 } },
-      _sum: { balance: true },
+      // RN-021 2.0.0: la deuda vive en `debt`; `balance` es saldo a favor.
+      where: { role: 'client', debt: { gt: 0 } },
+      _sum: { debt: true },
       _count: { _all: true },
     }),
   ]);
@@ -185,7 +186,7 @@ export default async function AnalyticsPage() {
 
   const clientRowsMap = new Map<string, ClientRow>();
   const agentRowsMap = new Map<string, AgentRow>();
-  const clientBalances: Record<string, number> = {};
+  const clientBalances: Record<string, { balance: number; debt: number }> = {};
 
   for (const o of orders) {
     const m = monthOf(o.createdAt);
@@ -196,7 +197,7 @@ export default async function AnalyticsPage() {
     addSlice(slices.pay, m, o.payStatus, 1);
 
     const id = o.clientId.toString();
-    clientBalances[id] = o.client.balance;
+    clientBalances[id] = { balance: o.client.balance, debt: o.client.debt };
     const ck = `${m}|${id}`;
     const row = clientRowsMap.get(ck);
     if (row) {
@@ -224,7 +225,7 @@ export default async function AnalyticsPage() {
     months[m].entregas += 1;
 
     const id = d.clientId.toString();
-    clientBalances[id] = d.client.balance;
+    clientBalances[id] = { balance: d.client.balance, debt: d.client.debt };
     const ck = `${m}|${id}`;
     const row = clientRowsMap.get(ck);
     if (row) {
@@ -325,7 +326,7 @@ export default async function AnalyticsPage() {
         )
       ),
       nEntregasSinPagar: unpaidDeliveriesAgg._count._all,
-      deudaClientes: round2(Math.abs(debtClientsAgg._sum.balance ?? 0)),
+      deudaClientes: round2(debtClientsAgg._sum.debt ?? 0),
       nDeudores: debtClientsAgg._count._all,
     },
   };

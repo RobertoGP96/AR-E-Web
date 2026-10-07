@@ -9,10 +9,13 @@ Covers:
 - get_client_operations_statement including SALDO APLICADO entries
 - Running balance (saldo corriente) per operation row
 
-Key formula:
-    recalculate_balance = (cash_received_orders + cash_received_deliveries)
-                        - (order_costs + delivery_costs)
-    NOTE: balance_applied is NOT included — it is not new cash.
+Key formula (RN-021 2.0.0, ADR-0009 — doc/procesos/reglas/pagos.md):
+    per item: covered = cash + applied; surplus = max(0, covered − cost);
+              pending = max(0, cost − covered)
+    balance (saldo a favor) = max(0, Σ surplus − Σ applied)   -> CustomUser.balance (>= 0)
+    debt    (deuda)         = Σ pending                        -> CustomUser.debt
+    net     (posición neta) = Σ cash − Σ cost  (the 1.x formula; statement running balance)
+    NOTE: balance_applied is NOT cash; it consumes credit and reduces the item's debt.
 """
 
 import uuid
@@ -145,11 +148,14 @@ class OrderPaymentBalanceOnlyTest(TestCase):
         self.assertEqual(self.order.pay_status, "Pagado")
 
     def test_balance_only_recalculate_gives_negative(self):
-        """balance_applied is NOT cash, so recalculate_balance = 0 - 100 = -100."""
+        """balance_applied is NOT cash: no credit, and the order is covered → no debt (net −100)."""
         self.order.add_received_value(0, applied_balance=100.0)
         new_balance = self.client_user.recalculate_balance()
-        # cash received = 0, cost = 100 → -100
-        self.assertEqual(new_balance, -100.0)
+        self.client_user.refresh_from_db()
+
+        self.assertEqual(new_balance, 0.0)
+        self.assertEqual(self.client_user.debt, 0.0)
+        self.assertEqual(self.client_user.net_position, 0.0)
 
 
 class OrderPaymentMixedTest(TestCase):
@@ -168,10 +174,12 @@ class OrderPaymentMixedTest(TestCase):
         self.assertEqual(self.order.pay_status, "Pagado")
 
     def test_mixed_payment_recalculate_balance(self):
-        """recalculate_balance only counts cash: 100 - 150 = -50."""
+        """Cash 100 + applied 50 cover the 150: no credit and no debt."""
         self.order.add_received_value(100.0, applied_balance=50.0)
         new_balance = self.client_user.recalculate_balance()
-        self.assertEqual(new_balance, -50.0)
+        self.client_user.refresh_from_db()
+        self.assertEqual(new_balance, 0.0)
+        self.assertEqual(self.client_user.debt, 0.0)
 
 
 class OrderPaymentMixedWithSurplusTest(TestCase):
@@ -191,7 +199,7 @@ class OrderPaymentMixedWithSurplusTest(TestCase):
         self.assertEqual(self.order.pay_status, "Pagado")
 
     def test_mixed_surplus_balance_is_positive(self):
-        """recalculate_balance = 120 cash - 100 cost = 20 (ignores balance_applied)."""
+        """Surplus 50 (150 covered − 100) minus the 30 applied → credit 20."""
         self.order.add_received_value(120.0, applied_balance=30.0)
         new_balance = self.client_user.recalculate_balance()
         self.assertEqual(new_balance, 20.0)
@@ -237,10 +245,12 @@ class DeliveryPaymentBalanceOnlyTest(TestCase):
         self.assertEqual(self.delivery.payment_status, "Pagado")
 
     def test_balance_only_recalculate_gives_negative(self):
-        """balance_applied is NOT cash → recalculate = 0 - 50 = -50."""
+        """balance_applied is NOT cash: no credit; the delivery is covered → no debt."""
         self.delivery.add_payment_amount(0, applied_balance=50.0)
         new_balance = self.client_user.recalculate_balance()
-        self.assertEqual(new_balance, -50.0)
+        self.client_user.refresh_from_db()
+        self.assertEqual(new_balance, 0.0)
+        self.assertEqual(self.client_user.debt, 0.0)
 
 
 class DeliveryPaymentMixedTest(TestCase):
@@ -259,10 +269,12 @@ class DeliveryPaymentMixedTest(TestCase):
         self.assertEqual(self.delivery.payment_status, "Pagado")
 
     def test_mixed_payment_recalculate_balance(self):
-        """recalculate_balance only counts cash: 50 - 80 = -30."""
+        """Cash 50 + applied 30 cover the 80: no credit and no debt."""
         self.delivery.add_payment_amount(50.0, applied_balance=30.0)
         new_balance = self.client_user.recalculate_balance()
-        self.assertEqual(new_balance, -30.0)
+        self.client_user.refresh_from_db()
+        self.assertEqual(new_balance, 0.0)
+        self.assertEqual(self.client_user.debt, 0.0)
 
 
 # ---------------------------------------------------------------------------
@@ -320,10 +332,10 @@ class OrderCumulativePaymentsTest(TestCase):
 # ---------------------------------------------------------------------------
 
 class RecalculateBalanceWithDebtTest(TestCase):
-    """recalculate_balance produces a negative balance (debt).
+    """recalculate_balance stores the debt in `debt` and keeps `balance` at 0.
 
-    Formula: (cash_received) - (costs)
-    balance_applied is NOT counted as cash.
+    Order: pending 200 − 100 − 50 = 50; delivery: pending 80 − 40 − 20 = 20.
+    balance_applied is NOT counted as cash (no surplus anywhere → credit 0).
     """
 
     def setUp(self):
@@ -344,15 +356,20 @@ class RecalculateBalanceWithDebtTest(TestCase):
         )
 
     def test_recalculate_balance_debt(self):
-        # (100 + 40) - (200 + 80) = 140 - 280 = -140
-        # balance_applied (50 + 20 = 70) is NOT included
+        # credit: no item is overpaid → 0; debt: 50 + 20 = 70
         new_balance = self.client_user.recalculate_balance()
-        self.assertEqual(new_balance, -140.0)
+        self.client_user.refresh_from_db()
+        self.assertEqual(new_balance, 0.0)
+        self.assertEqual(self.client_user.debt, 70.0)
 
     def test_recalculate_balance_saves_to_db(self):
         self.client_user.recalculate_balance()
         self.client_user.refresh_from_db()
-        self.assertEqual(self.client_user.balance, -140.0)
+        self.assertEqual(self.client_user.balance, 0.0)
+        self.assertEqual(self.client_user.debt, 70.0)
+        # net position (1.x formula): (100 + 40) − (200 + 80) = −140 ≠ balance − debt
+        # because the applied balance (70) has no surplus backing it (RN-021-10).
+        self.assertEqual(self.client_user.net_position, -70.0)
 
     def test_balance_status_is_deuda(self):
         self.client_user.recalculate_balance()
@@ -421,10 +438,12 @@ class RecalculateBalanceDoesNotDoubleCountTest(TestCase):
         )
 
     def test_balance_ignores_balance_applied(self):
-        # Correct: 60 cash - 100 cost = -40
-        # Wrong (double-count): (60 + 40) - 100 = 0
+        # 60 cash + 40 applied cover the 100: no debt, and the applied 40 is
+        # NOT credit (it would be double-counting) → balance 0.
         new_balance = self.client_user.recalculate_balance()
-        self.assertEqual(new_balance, -40.0)
+        self.client_user.refresh_from_db()
+        self.assertEqual(new_balance, 0.0)
+        self.assertEqual(self.client_user.debt, 0.0)
 
 
 class RecalculateBalanceNoTransactionsTest(TestCase):
@@ -672,5 +691,10 @@ class ClientBalanceIsolationTest(TestCase):
         self.assertEqual(balance_a, 100.0)
 
     def test_client_b_balance_unaffected_by_client_a(self):
+        # RN-021 2.0.0: client B owes 50 (debt) and has no credit, even though
+        # client A has a 100 surplus.
         balance_b = self.client_b.recalculate_balance()
-        self.assertEqual(balance_b, -50.0)
+        self.client_b.refresh_from_db()
+        self.assertEqual(balance_b, 0.0)
+        self.assertEqual(self.client_b.debt, 50.0)
+        self.assertEqual(self.client_b.net_position, -50.0)

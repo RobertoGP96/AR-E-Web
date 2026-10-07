@@ -213,7 +213,11 @@ export function UserDialog({
         )}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field label="Balance" error={errors['balance']}>
+          <Field
+            label="Saldo a favor"
+            hint="Dinero del cliente sin aplicar (RN-021). Se recalcula solo con cada cobro."
+            error={errors['balance']}
+          >
             <div className="relative">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
                 $

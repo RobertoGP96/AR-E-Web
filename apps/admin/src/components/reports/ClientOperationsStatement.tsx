@@ -155,12 +155,14 @@ export const ClientOperationsStatement: React.FC<
             color: "text-green-500/80",
           },
           {
-            label: "SALDO FINAL",
-            value: formatMoney(Math.abs(client.balance)),
+            // RN-021 2.0.0: el saldo corriente del extracto es la posición neta;
+            // `client.balance` es ahora el saldo a favor (≥ 0).
+            label: "POSICIÓN NETA",
+            value: formatMoney(Math.abs(statement.summary.final_balance)),
             color:
-              client.balance > 0
+              statement.summary.final_balance > 0
                 ? "text-green-500"
-                : client.balance < 0
+                : statement.summary.final_balance < 0
                   ? "text-red-500"
                   : "text-blue-700",
           },

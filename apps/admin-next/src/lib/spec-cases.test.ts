@@ -7,19 +7,21 @@
  *
  * Reglas cubiertas: RN-001 (costo de producto), RN-010 / RN-011
  * (estado de producto derivado), RN-020 (estado de pago), RN-023
- * (redistribución de sobrepago).
+ * (redistribución de sobrepago), RN-021 (saldo a favor y deuda, 2.0.0).
  */
 import { describe, expect, it } from 'vitest';
 import productStatusCases from '../../../../doc/procesos/casos/product-status.json';
 import productCostCases from '../../../../doc/procesos/casos/product-cost.json';
 import payStatusCases from '../../../../doc/procesos/casos/pay-status.json';
 import surplusCases from '../../../../doc/procesos/casos/surplus-distribution.json';
+import clientBalanceCases from '../../../../doc/procesos/casos/client-balance.json';
 import {
   computePayStatus,
   computeProductCost,
   deriveProductStatus,
 } from '@/lib/order-cost';
 import { planSurplusDistribution, type SurplusTarget } from '@/lib/surplus';
+import { computeClientBalance, type BalanceItem } from '@/lib/client-balance';
 
 interface ProductStatusCase {
   id: string;
@@ -79,6 +81,15 @@ const statusCases = productStatusCases as ProductStatusCase[];
 const costCases = productCostCases as ProductCostCase[];
 const payCases = payStatusCases as PayStatusCase[];
 const surplusSpecCases = surplusCases as SurplusCase[];
+
+interface ClientBalanceCase {
+  id: string;
+  regla: string;
+  descripcion: string;
+  input: { items: BalanceItem[] };
+  expected: { balance: number; debt: number; net: number };
+}
+const clientBalanceSpecCases = clientBalanceCases as ClientBalanceCase[];
 
 describe('RN-010 / RN-011 estado de producto derivado (casos/product-status.json)', () => {
   it('tiene al menos 10 casos', () => {
@@ -141,5 +152,15 @@ describe('RN-023 redistribución de sobrepago (casos/surplus-distribution.json)'
     const plan = planSurplusDistribution(c.input.surplus, c.input.targets);
     expect(plan.allocations, c.descripcion).toEqual(c.expected.allocations);
     expect(plan.remaining, c.descripcion).toBe(c.expected.remaining);
+  });
+});
+
+describe('RN-021 saldo a favor y deuda del cliente (casos/client-balance.json)', () => {
+  it('tiene al menos 10 casos', () => {
+    expect(clientBalanceSpecCases.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it.each(clientBalanceSpecCases.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    expect(computeClientBalance(c.input.items), c.descripcion).toEqual(c.expected);
   });
 });

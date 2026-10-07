@@ -12,6 +12,7 @@ Reglas cubiertas:
   - RN-004 estimacion de compra parcial          -> mismas funciones, rama amount_buyed == amount_requested
   - RN-020 estado de pago                        -> Order.add_received_value (con BD SQLite de test)
   - RN-023 redistribucion de sobrepago (pura)    -> api.services.payment_services.plan_surplus_distribution
+  - RN-021 saldo a favor y deuda (pura, 2.0.0)   -> api.services.client_balance_service.compute_client_balance
 
 Se ejecutan con pytest (pytest-django) o con `python manage.py test api.tests.test_spec_cases`.
 """
@@ -25,6 +26,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
 from django.test import SimpleTestCase, TestCase
 
 from api.models import CustomUser, Order, ShoppingReceip
+from api.services.client_balance_service import compute_client_balance
 from api.services.payment_services import movable_surplus, plan_surplus_distribution
 from api.services.purchases_service import calculate_product_buyed_cost
 from api.signals import _determine_product_status
@@ -206,3 +208,16 @@ class SurplusDistributionSpecCasesTest(SimpleTestCase):
         self.assertEqual(movable_surplus(100, 20, 100), 20)
         self.assertEqual(movable_surplus(100, 100, 0), 0)
         self.assertEqual(movable_surplus(100, 50, 0), 0)
+
+
+class ClientBalanceSpecCasesTest(SimpleTestCase):
+    """RN-021 2.0.0 (ADR-0009): funcion pura, espejo de src/lib/client-balance.ts."""
+
+    def test_hay_al_menos_diez_casos(self):
+        self.assertGreaterEqual(len(load_cases('client-balance.json')), 10)
+
+    def test_compute_client_balance_cumple_los_casos(self):
+        for case in load_cases('client-balance.json'):
+            with self.subTest(case['id']):
+                result = compute_client_balance(case['input']['items'])
+                self.assertEqual(result, case['expected'], case['descripcion'])
