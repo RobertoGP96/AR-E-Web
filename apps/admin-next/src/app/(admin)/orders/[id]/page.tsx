@@ -3,6 +3,8 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { loadInTransitUnits } from '@/lib/product-status';
+import { movableSurplus } from '@/lib/surplus';
+import { loadPendingTargets } from '@/lib/surplus-redistribution';
 import { loadPendingShopsOfOrder } from '../../purchases/queries';
 import { OrderDetailClient } from './order-detail-client';
 import {
@@ -60,7 +62,19 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
   if (!order) notFound();
 
-  const inTransit = await loadInTransitUnits(order.products.map((p) => p.id));
+  // RN-023: si la orden está sobrepagada, los pendientes del cliente a los
+  // que podría repartirse el exceso.
+  const surplus = movableSurplus(
+    order.totalCosts,
+    order.receivedValueOfClient,
+    order.balanceApplied
+  );
+  const [inTransit, surplusTargets] = await Promise.all([
+    loadInTransitUnits(order.products.map((p) => p.id)),
+    surplus > 0
+      ? loadPendingTargets(prisma, order.clientId, { kind: 'order', id: order.id })
+      : Promise.resolve([]),
+  ]);
 
   const products: ProductRow[] = order.products.map((p) => ({
     id: p.id,
@@ -119,6 +133,8 @@ export default async function OrderDetailPage({ params }: PageProps) {
       shopOptions={shopOptions}
       categoryOptions={categoryOptions}
       purchaseTargets={order.status === 'Cancelado' ? [] : purchaseTargets}
+      surplus={surplus}
+      surplusTargets={surplusTargets}
     />
   );
 }

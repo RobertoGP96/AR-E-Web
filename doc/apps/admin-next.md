@@ -339,6 +339,7 @@ Otras fórmulas de negocio que viven en actions/páginas:
 2. Monto en efectivo + toggle "aplicar saldo del cliente" (aplica `min(saldo, pendiente − monto)`) + opción de marcar Pagado manualmente.
 3. Resumen en vivo: % cubierto con barra de progreso, faltante, excedente al saldo, saldo resultante.
 4. El server acumula (`+=`), valida el saldo disponible dentro de la transacción y recalcula el balance.
+5. **Excedente (RN-023, ADR-0008, oct 2026):** si el monto supera el pendiente, el panel carga con `loadClientPendingTargetsAction` las otras órdenes/entregas pendientes del cliente (`lib/surplus-redistribution.ts` `loadPendingTargets`) y, si las hay, muestra el interruptor «Repartir el excedente entre sus pendientes» (activado por defecto) con la lista de lo que cubriría (`lib/surplus.ts` `planSurplusDistribution`, más antiguo primero). `confirm*PaymentAction(..., distributeSurplus)` cobra y reparte en la misma transacción (`redistributeSurplusInTx`): mueve solo efectivo, recalcula estados y deja el balance intacto. En `/orders/[id]` y `/delivery/[id]`, `components/surplus-banner.tsx` avisa de un sobrepago ya registrado y ofrece «Repartir entre pendientes» (`app/(admin)/surplus-actions.ts`). Tests: `lib/surplus.test.ts`, `spec-cases.test.ts` RN-023.
 
 **Balance de cliente:** recalculado tras cada mutación de orden/entrega (`recalculateClientBalance`); `/client-balances` lo audita en vivo contra la columna cacheada.
 

@@ -1,6 +1,6 @@
-# Reglas de pagos y balance (RN-020 a RN-022)
+# Reglas de pagos y balance (RN-020 a RN-023)
 
-Casos de prueba en [`../casos/pay-status.json`](../casos/pay-status.json). Máquina de estados en [`../estados/pago.md`](../estados/pago.md). Todas las cantidades se redondean a 2 decimales antes de comparar o sumar.
+Casos de prueba en [`../casos/pay-status.json`](../casos/pay-status.json) y [`../casos/surplus-distribution.json`](../casos/surplus-distribution.json). Máquina de estados en [`../estados/pago.md`](../estados/pago.md). Todas las cantidades se redondean a 2 decimales antes de comparar o sumar.
 
 ## RN-020 Estado de pago
 
@@ -54,3 +54,31 @@ saldoAplicar ≤ min(disponible, pendiente)
 - Nunca se aplica más que el balance positivo disponible en ese momento ni más que el pendiente.
 - Como el balance no suma `balance_applied` (RN-021), tras aplicar saldo el balance solo cambia si en el mismo acto entra efectivo. El "disponible" que ve el contador debe descontar el saldo aplicado en la misma sesión antes de recalcular.
 - Aplicar saldo y registrar efectivo en el mismo cobro se hace en una sola transacción: sumar efectivo, sumar saldo aplicado, recalcular estado (RN-020), recalcular balance (RN-021).
+- **Límite conocido (desde 1.2.0):** como el balance ya descuenta todas las deudas del cliente, un sobrepago en una partida **no** genera saldo disponible mientras existan otras partidas pendientes: el exceso las compensa en el agregado pero ellas siguen `No pagado`. Para eso existe RN-023.
+
+## RN-023 Redistribución de sobrepago
+
+**Desde:** 1.2.0 (ADR-0008). **Estado:** vigente en admin-next (`planSurplusDistribution` en `apps/admin-next/src/lib/surplus.ts`; `redistributeSurplusInTx` en `src/lib/surplus-redistribution.ts`; `confirmOrderPaymentAction` / `confirmDeliveryPaymentAction` con `distributeSurplus`; `redistributeOrderSurplusAction` / `redistributeDeliverySurplusAction`). En Django solo la función pura (`api/services/payment_services.py`); no hay endpoint.
+
+Cuando una orden o entrega tiene **efectivo** por encima de su costo, ese exceso puede moverse a las otras partidas pendientes del mismo cliente.
+
+```
+exceso       = round2(efectivo + saldoAplicado − costo)          (solo si > 0)
+movible      = min(exceso, efectivo)                              -- el saldo aplicado nunca se mueve (RN-022)
+destinos     = órdenes del cliente con status ≠ Cancelado y costo > 0
+             + entregas del cliente con peso > 0
+             con pendiente = round2(costo − efectivo − saldoAplicado) > 0,
+             sin la partida origen,
+             ordenadas por fecha ascendente (createdAt de la orden, deliverDate de la entrega);
+             a igual fecha, órdenes antes que entregas; luego id ascendente
+para cada destino, mientras restante > 0:
+    asignado = min(restante, pendiente)
+    destino.efectivo += asignado ; restante −= asignado
+origen.efectivo −= Σ asignado                                      -- lo que sobre sigue en el origen (saldo a favor, RN-021)
+```
+
+- Se ejecuta en **una transacción** junto con el cobro (si el contador deja activado «repartir el excedente») o como acción explícita sobre una partida ya sobrepagada. Tras mover el efectivo se recalcula el estado de pago de cada partida (RN-020). La fecha de pago de los destinos es la del origen.
+- **Σ efectivo del cliente no cambia, luego su balance (RN-021) tampoco.** Es la invariante que distingue el reparto de un cobro nuevo.
+- Nunca mueve saldo aplicado ni genera saldo aplicado en los destinos: todo lo que entra en un destino es efectivo que el cliente pagó de verdad.
+- Si no hay destinos, no se hace nada y el exceso queda como saldo a favor. El contador puede desactivar el reparto en el panel para conservar el exceso como adelanto.
+- Casos: RN-023-01 a RN-023-08 en `casos/surplus-distribution.json`; RN-023-01 reproduce el caso real del pedido 64 (ADR-0008).

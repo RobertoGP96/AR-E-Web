@@ -23,15 +23,15 @@ Hasta septiembre de 2026 había tres escritores de la misma base de datos (Djang
 | [`estados/pago.md`](estados/pago.md) | Estado de pago de orden, entrega y compra (`ES-pago`). |
 | [`reglas/costos.md`](reglas/costos.md) | RN-001 a RN-004: costo de producto, costo por peso, comisión del gestor, estimación de compra parcial. |
 | [`reglas/estados.md`](reglas/estados.md) | RN-010 a RN-012: derivación de estados de producto y orden. |
-| [`reglas/pagos.md`](reglas/pagos.md) | RN-020 a RN-022: estado de pago, balance del cliente, saldo aplicado. |
+| [`reglas/pagos.md`](reglas/pagos.md) | RN-020 a RN-023: estado de pago, balance del cliente, saldo aplicado, redistribución de sobrepago. |
 | [`reglas/invariantes.md`](reglas/invariantes.md) | INV-001 a INV-006: condiciones que deben cumplirse siempre. |
 | [`procedimientos/agente.md`](procedimientos/agente.md) | Procedimiento operativo del agente en admin-next. |
 | [`procedimientos/admin-compras.md`](procedimientos/admin-compras.md) | Procedimiento operativo de compras (admin). |
 | [`procedimientos/logistico.md`](procedimientos/logistico.md) | Procedimiento operativo del logístico: paquetes, bolsas, entregas. |
 | [`procedimientos/contador.md`](procedimientos/contador.md) | Procedimiento operativo del contador: cobros, saldo, balances. |
-| [`decisiones/`](decisiones/) | ADR-0001 a ADR-0006 (decisiones de diseño) y `ADR-0000-plantilla.md`. |
+| [`decisiones/`](decisiones/) | ADR-0001 a ADR-0008 (decisiones de diseño) y `ADR-0000-plantilla.md`. |
 | [`conformidad.md`](conformidad.md) | Matriz regla/invariante × implementación (Django, admin-next, admin Vite, cliente) con estado y enlaces a código y tests. |
-| [`casos/`](casos/) | Vectores de prueba compartidos en JSON: `product-status.json`, `product-cost.json`, `pay-status.json`. |
+| [`casos/`](casos/) | Vectores de prueba compartidos en JSON: `product-status.json`, `product-cost.json`, `pay-status.json`, `surplus-distribution.json`. |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historial de versiones de la especificación. |
 
 ## Convención de identificadores

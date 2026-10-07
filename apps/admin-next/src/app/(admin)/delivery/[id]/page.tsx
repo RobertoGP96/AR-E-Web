@@ -3,6 +3,8 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { parseId } from '@/lib/action-helpers';
 import { deliveryPhase } from '@/lib/delivery-status';
+import { movableSurplus } from '@/lib/surplus';
+import { loadPendingTargets } from '@/lib/surplus-redistribution';
 import { DeliveryDetailClient } from './delivery-detail-client';
 import {
   fromDbDeliveryStatus,
@@ -60,6 +62,21 @@ export default async function DeliveryDetailPage({ params }: PageProps) {
       notFound();
     }
   }
+
+  // RN-023: sobrepago de la entrega y pendientes del cliente a los que
+  // podría repartirse.
+  const surplus = movableSurplus(
+    delivery.weightCost,
+    delivery.paymentAmount,
+    delivery.balanceApplied
+  );
+  const surplusTargets =
+    surplus > 0
+      ? await loadPendingTargets(prisma, delivery.clientId, {
+          kind: 'delivery',
+          id: delivery.id,
+        })
+      : [];
 
   // Candidatos: recibidos sin entregar del mismo cliente (y de la misma
   // categoría si la entrega la tiene).
@@ -124,6 +141,8 @@ export default async function DeliveryDetailPage({ params }: PageProps) {
         amountDelivered: dp.amountDelivered,
       }))}
       candidates={candidates}
+      surplus={surplus}
+      surplusTargets={surplusTargets}
     />
   );
 }

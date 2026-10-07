@@ -13,6 +13,7 @@ import {
   round2,
 } from '@/lib/order-cost';
 import { recalculateClientBalance } from '@/lib/balance';
+import { redistributeSurplusInTx } from '@/lib/surplus-redistribution';
 import { recomputeOrderStatus } from '@/lib/product-status';
 import {
   requireRole,
@@ -31,8 +32,8 @@ import {
   type AddProductsInput,
 } from './schema';
 
-export type { ActionResult } from '@/lib/action-helpers';
-import type { ActionResult } from '@/lib/action-helpers';
+export type { ActionResult, PaymentActionResult } from '@/lib/action-helpers';
+import type { ActionResult, PaymentActionResult } from '@/lib/action-helpers';
 
 /**
  * Mirrors Order.update_total_costs() + the pay_status branch in
@@ -230,13 +231,18 @@ export async function updateOrderAction(
  * balance_applied, and pay_status is recomputed from the new totals
  * (or forced to Pagado when marked manually). Runs in a transaction
  * with the client-balance recalculation.
+ *
+ * RN-023: con `distributeSurplus`, el efectivo que exceda el costo se
+ * reparte en la misma transacción entre las otras órdenes y entregas
+ * pendientes del cliente (de la más antigua a la más reciente).
  */
 export async function confirmOrderPaymentAction(
   id: string,
   amount: number,
   applyBalance: number,
-  markPaidManually: boolean
-): Promise<ActionResult> {
+  markPaidManually: boolean,
+  distributeSurplus = false
+): Promise<PaymentActionResult> {
   const { denied } = await requireRole(ROLES.orders);
   if (denied) return denied;
 
@@ -289,14 +295,36 @@ export async function confirmOrderPaymentAction(
       },
     });
     await recalculateClientBalance(order.clientId, tx);
-    return { ok: true as const };
+
+    if (!distributeSurplus) {
+      return { ok: true as const, redistributed: undefined, touched: [] };
+    }
+    // RN-023
+    const moved = await redistributeSurplusInTx(tx, { kind: 'order', id: orderId });
+    if ('error' in moved) return { ok: false as const, error: moved.error };
+    return {
+      ok: true as const,
+      redistributed:
+        moved.moved > 0
+          ? { moved: moved.moved, count: moved.allocations.length, remaining: moved.remaining }
+          : undefined,
+      touched: moved.allocations,
+    };
   });
 
   if (!result.ok) return result;
 
   revalidatePath('/orders');
   revalidatePath(`/orders/${id}`);
-  return { ok: true };
+  if (result.redistributed) {
+    revalidatePath('/delivery');
+    revalidatePath('/dashboard');
+    revalidatePath('/users');
+    for (const a of result.touched ?? []) {
+      revalidatePath(a.kind === 'order' ? `/orders/${a.id}` : `/delivery/${a.id}`);
+    }
+  }
+  return { ok: true, redistributed: result.redistributed };
 }
 
 export async function deleteOrderAction(id: string): Promise<ActionResult> {

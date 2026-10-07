@@ -59,6 +59,14 @@ Sin cambios de reglas. Los paquetes admiten **dos fotos** (`package_picture`, `p
 
 **Apps impactadas:** Django (modelo y serializer de `Package`), admin-next, admin Vite, app cliente (solo tipos).
 
+## 1.2.0 — 2026-10-07
+
+**ADR-0008 — redistribución de sobrepago. RN-023 (nueva).** Cuando un cobro deja efectivo por encima del costo de la orden o la entrega y el cliente tiene otras partidas pendientes, el exceso se **reparte** entre ellas de la más antigua a la más reciente, en la misma transacción. Motivación: caso real del pedido 64 (cliente 339), cobrado con el total de la deuda del cliente; el balance quedó en 0 (RN-021) pero el pedido 63 y dos entregas siguieron `No pagado` y RN-022 no ofrecía saldo para cubrirlas. Solo se mueve efectivo (el saldo aplicado no se toca), Σ efectivo del cliente y su balance no cambian, y se recalculan los estados de pago (RN-020). En admin-next: el `PaymentPanel` muestra el excedente y las partidas que cubriría con el interruptor «Repartir el excedente entre sus pendientes» activado por defecto; el detalle de orden y de entrega muestra «Sobrepago de X» con «Repartir entre pendientes» para corregir sobrepagos ya registrados. Nota añadida a RN-021 sobre el límite que motiva la regla; transición nueva en `ES-pago`; procedimiento del contador §3 reescrito.
+
+**Verificación:** `casos/surplus-distribution.json` (8 casos, RN-023-01 reproduce el caso real) consumido por `spec-cases.test.ts` y `test_spec_cases.py::SurplusDistributionSpecCasesTest`; `apps/admin-next/src/lib/surplus.test.ts`.
+
+**Apps impactadas:** admin-next (`src/lib/surplus.ts`, `src/lib/surplus-redistribution.ts`, `app/(admin)/surplus-actions.ts`, `orders/actions.ts`, `delivery/actions.ts`, `components/payment-panel.tsx`, `components/surplus-banner.tsx`, detalles de orden y entrega). Django solo añade la función pura `api/services/payment_services.py` (sin endpoint; deuda en `conformidad.md`). Admin Vite y app cliente sin cambios.
+
 ## 1.1.1 — 2026-09-23
 
 Sin cambios de reglas. Documentos al cliente desde `/users?tab=balances` en admin-next («Generar factura»: factura de pendientes con selección de partidas, estado de cuenta tipo extracto con saldo corriente RN-021 y rango opcional, factura por pedidos con productos RN-001), renderizados en `/users/[id]/statement` para imprimir o guardar como PDF. Solo lectura: no se persiste nada ni se alteran cobros o balances; el saldo aplicado se muestra como informativo (RN-022). Lógica pura en `apps/admin-next/src/lib/client-statement.ts` con tests. Procedimiento del contador §4 actualizado.

@@ -33,6 +33,7 @@ stateDiagram-v2
 | cualquiera | derivado (RN-020) | contador, admin al registrar cobro | Orden: `total_costs > 0`. Entrega: `weight > 0` (una bolsa no se cobra, INV-003). Importe > 0 o saldo aplicado > 0 (RN-022). | Efectivo y saldo aplicado se **suman**; se recalcula el estado (RN-020) y el balance del cliente (RN-021) en una transacción. |
 | cualquiera | derivado (RN-020) | automático al cambiar el costo | Añadir/editar/quitar producto de la orden; re-pesar la entrega (admin). | Solo cambia el estado; los importes registrados no se tocan. |
 | cualquiera | `No pagado` | admin | Anulación explícita de cobros (poner efectivo y saldo aplicado a 0). | Recalcula balance. No existe hoy como acción en admin-next; se hace desde Django admin. |
+| origen `Pagado` → `Pagado`; destinos `No pagado`/`Parcial` → derivado (RN-020) | reparto de sobrepago (RN-023) | contador, admin (al cobrar con «repartir excedente» o con «Repartir entre pendientes» en el detalle) | Origen con efectivo > costo; el cliente tiene otras órdenes (no canceladas, costo > 0) o entregas pesadas con pendiente > 0. | Mueve efectivo del origen a los destinos de más antiguo a más reciente; recalcula los estados de todos. **El balance no cambia** (Σ efectivo constante). |
 | compra: cualquiera | cualquiera | admin | La compra no deriva su estado: el admin lo fija al crearla o editarla según lo pagado con la tarjeta. | — |
 
 ## Regla de derivación
@@ -49,4 +50,4 @@ Se aplica en orden y entrega; en la compra el estado es manual.
 
 ## Relación con el balance
 
-El estado de pago responde "¿está cubierta esta orden/entrega?"; el balance (RN-021) responde "¿cuánto debe o tiene a favor el cliente en total?". Son independientes: una orden `Pagado` con sobrepago genera saldo a favor; una orden `Parcial` cubierta después con saldo aplicado pasa a `Pagado` sin mover el balance (RN-022).
+El estado de pago responde "¿está cubierta esta orden/entrega?"; el balance (RN-021) responde "¿cuánto debe o tiene a favor el cliente en total?". Son independientes: una orden `Pagado` con sobrepago genera saldo a favor **solo si el cliente no tiene otras deudas** (si las tiene, el exceso las compensa en el agregado y conviene repartirlo, RN-023); una orden `Parcial` cubierta después con saldo aplicado pasa a `Pagado` sin mover el balance (RN-022).

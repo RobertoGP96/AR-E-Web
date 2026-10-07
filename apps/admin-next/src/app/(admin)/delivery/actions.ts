@@ -5,6 +5,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { computePayStatus, round2 } from '@/lib/order-cost';
 import { recalculateClientBalance } from '@/lib/balance';
+import { redistributeSurplusInTx } from '@/lib/surplus-redistribution';
 import {
   recomputeProductAmounts,
   recomputeProductsOfDelivery,
@@ -40,8 +41,8 @@ import {
 } from './schema';
 import type { BagSummary } from '@/lib/open-bags';
 
-export type { ActionResult } from '@/lib/action-helpers';
-import type { ActionResult } from '@/lib/action-helpers';
+export type { ActionResult, PaymentActionResult } from '@/lib/action-helpers';
+import type { ActionResult, PaymentActionResult } from '@/lib/action-helpers';
 
 type Db = Prisma.TransactionClient;
 
@@ -706,13 +707,17 @@ export async function updateDeliveryAction(
  * ACCUMULATE, payment_status is recomputed against weight_cost (or
  * forced to Pagado), payment_date is stamped. Transactional with the
  * client-balance recalculation. No se cobra una bolsa sin peso.
+ *
+ * RN-023: con `distributeSurplus`, el efectivo que exceda el costo se
+ * reparte en la misma transacción entre los pendientes del cliente.
  */
 export async function confirmDeliveryPaymentAction(
   id: string,
   amount: number,
   applyBalance: number,
-  markPaidManually: boolean
-): Promise<ActionResult> {
+  markPaidManually: boolean,
+  distributeSurplus = false
+): Promise<PaymentActionResult> {
   const { denied } = await requireRole(ROLES.delivery);
   if (denied) return denied;
 
@@ -769,14 +774,35 @@ export async function confirmDeliveryPaymentAction(
       },
     });
     await recalculateClientBalance(delivery.clientId, tx);
-    return { ok: true as const };
+
+    if (!distributeSurplus) {
+      return { ok: true as const, redistributed: undefined, touched: [] };
+    }
+    // RN-023
+    const moved = await redistributeSurplusInTx(tx, { kind: 'delivery', id: deliveryId });
+    if ('error' in moved) return { ok: false as const, error: moved.error };
+    return {
+      ok: true as const,
+      redistributed:
+        moved.moved > 0
+          ? { moved: moved.moved, count: moved.allocations.length, remaining: moved.remaining }
+          : undefined,
+      touched: moved.allocations,
+    };
   });
 
   if (!result.ok) return result;
   revalidatePath('/delivery');
   revalidatePath(`/delivery/${id}`);
   revalidatePath('/dashboard');
-  return { ok: true };
+  if (result.redistributed) {
+    revalidatePath('/orders');
+    revalidatePath('/users');
+    for (const a of result.touched ?? []) {
+      revalidatePath(a.kind === 'order' ? `/orders/${a.id}` : `/delivery/${a.id}`);
+    }
+  }
+  return { ok: true, redistributed: result.redistributed };
 }
 
 /**

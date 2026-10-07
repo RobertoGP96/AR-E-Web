@@ -11,6 +11,7 @@ Reglas cubiertas:
                                                     y ShoppingReceip._calculate_product_cost
   - RN-004 estimacion de compra parcial          -> mismas funciones, rama amount_buyed == amount_requested
   - RN-020 estado de pago                        -> Order.add_received_value (con BD SQLite de test)
+  - RN-023 redistribucion de sobrepago (pura)    -> api.services.payment_services.plan_surplus_distribution
 
 Se ejecutan con pytest (pytest-django) o con `python manage.py test api.tests.test_spec_cases`.
 """
@@ -24,6 +25,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
 from django.test import SimpleTestCase, TestCase
 
 from api.models import CustomUser, Order, ShoppingReceip
+from api.services.payment_services import movable_surplus, plan_surplus_distribution
 from api.services.purchases_service import calculate_product_buyed_cost
 from api.signals import _determine_product_status
 
@@ -182,3 +184,25 @@ class PayStatusSpecCasesTest(TestCase):
         order.refresh_from_db()
         self.assertEqual(order.received_value_of_client, 100)
         self.assertEqual(order.pay_status, 'Pagado')
+
+
+class SurplusDistributionSpecCasesTest(SimpleTestCase):
+    """RN-023: doc/procesos/reglas/pagos.md (funcion pura, espejo de src/lib/surplus.ts)."""
+
+    def test_hay_al_menos_seis_casos(self):
+        self.assertGreaterEqual(len(load_cases('surplus-distribution.json')), 6)
+
+    def test_plan_surplus_distribution_cumple_los_casos(self):
+        for case in load_cases('surplus-distribution.json'):
+            inp = case['input']
+            with self.subTest(case['id']):
+                plan = plan_surplus_distribution(inp['surplus'], inp['targets'])
+                self.assertEqual(plan['allocations'], case['expected']['allocations'], case['descripcion'])
+                self.assertEqual(plan['remaining'], case['expected']['remaining'], case['descripcion'])
+
+    def test_movable_surplus_no_mueve_saldo_aplicado(self):
+        """RN-023/RN-022: solo el efectivo que excede el costo es movible."""
+        self.assertEqual(movable_surplus(8.63, 46.43, 0), 37.8)
+        self.assertEqual(movable_surplus(100, 20, 100), 20)
+        self.assertEqual(movable_surplus(100, 100, 0), 0)
+        self.assertEqual(movable_surplus(100, 50, 0), 0)

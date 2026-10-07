@@ -6,17 +6,20 @@
  * en ambos escritores de la base de datos.
  *
  * Reglas cubiertas: RN-001 (costo de producto), RN-010 / RN-011
- * (estado de producto derivado), RN-020 (estado de pago).
+ * (estado de producto derivado), RN-020 (estado de pago), RN-023
+ * (redistribución de sobrepago).
  */
 import { describe, expect, it } from 'vitest';
 import productStatusCases from '../../../../doc/procesos/casos/product-status.json';
 import productCostCases from '../../../../doc/procesos/casos/product-cost.json';
 import payStatusCases from '../../../../doc/procesos/casos/pay-status.json';
+import surplusCases from '../../../../doc/procesos/casos/surplus-distribution.json';
 import {
   computePayStatus,
   computeProductCost,
   deriveProductStatus,
 } from '@/lib/order-cost';
+import { planSurplusDistribution, type SurplusTarget } from '@/lib/surplus';
 
 interface ProductStatusCase {
   id: string;
@@ -61,9 +64,21 @@ interface PayStatusCase {
   expected: string;
 }
 
+interface SurplusCase {
+  id: string;
+  regla: string;
+  descripcion: string;
+  input: { surplus: number; targets: SurplusTarget[] };
+  expected: {
+    allocations: { kind: string; id: string; amount: number }[];
+    remaining: number;
+  };
+}
+
 const statusCases = productStatusCases as ProductStatusCase[];
 const costCases = productCostCases as ProductCostCase[];
 const payCases = payStatusCases as PayStatusCase[];
+const surplusSpecCases = surplusCases as SurplusCase[];
 
 describe('RN-010 / RN-011 estado de producto derivado (casos/product-status.json)', () => {
   it('tiene al menos 10 casos', () => {
@@ -114,5 +129,17 @@ describe('RN-020 estado de pago (casos/pay-status.json)', () => {
       c.input.balanceApplied
     );
     expect(status, c.descripcion).toBe(c.expected);
+  });
+});
+
+describe('RN-023 redistribución de sobrepago (casos/surplus-distribution.json)', () => {
+  it('tiene al menos 6 casos', () => {
+    expect(surplusSpecCases.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it.each(surplusSpecCases.map((c) => [c.id, c] as const))('%s', (_id, c) => {
+    const plan = planSurplusDistribution(c.input.surplus, c.input.targets);
+    expect(plan.allocations, c.descripcion).toEqual(c.expected.allocations);
+    expect(plan.remaining, c.descripcion).toBe(c.expected.remaining);
   });
 });

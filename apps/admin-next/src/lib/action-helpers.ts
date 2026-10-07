@@ -9,6 +9,15 @@ export type ActionFailure = {
 
 export type ActionResult = { ok: true; id?: string } | ActionFailure;
 
+/** Resultado de un cobro; `redistributed` solo cuando se repartió un excedente (RN-023). */
+export type PaymentActionResult =
+  | {
+      ok: true;
+      id?: string;
+      redistributed?: { moved: number; count: number; remaining: number };
+    }
+  | ActionFailure;
+
 export interface SessionUser {
   id: string;
   role: string;
