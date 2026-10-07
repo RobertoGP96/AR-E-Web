@@ -6,6 +6,12 @@ from typing import Dict, Any, List
 from django.db import models
 from django.db.models import Sum, Q, Subquery, OuterRef, F
 from api.models import Order, DeliverReceip, CustomUser
+from api.services.client_balance_service import (
+    balance_items_by_client,
+    balance_status,
+    compute_balance_for_client,
+    compute_client_balance,
+)
 from decimal import Decimal
 from datetime import datetime
 
@@ -74,11 +80,9 @@ def get_client_balance_report(client_id: int) -> Dict[str, Any]:
     # Total balance considers both order balances and shipping balances
     total_balance = order_balance + shipping_balance
     
-    status = "AL DÍA"
-    if total_balance < -0.01: # Use a small epsilon for float precision
-        status = "DEUDA"
-    elif total_balance > 0.01:
-        status = "SALDO A FAVOR"
+    # RN-021 2.0.0 (ADR-0009): saldo a favor y deuda por separado.
+    rn021 = compute_balance_for_client(client)
+    status = balance_status(rn021['balance'], rn021['debt'])
 
     return {
         "client": {
@@ -88,6 +92,7 @@ def get_client_balance_report(client_id: int) -> Dict[str, Any]:
             "email": client.email,
             "agent_name": client.assigned_agent.full_name if client.assigned_agent else None,
             "balance": client.balance,
+            "debt": client.debt,
         },
         "orders": {
             "list": orders_list,
@@ -108,8 +113,8 @@ def get_client_balance_report(client_id: int) -> Dict[str, Any]:
         "report_summary": {
             "total_balance": round(total_balance, 2),
             "status": status,
-            "pending_to_pay": round(abs(total_balance) if total_balance < 0 else 0.0, 2),
-            "surplus_balance": round(total_balance if total_balance > 0 else 0.0, 2)
+            "pending_to_pay": rn021['debt'],
+            "surplus_balance": rn021['balance']
         }
     }
 
@@ -154,24 +159,22 @@ def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
         computed_deliver_received=Subquery(delivery_received, output_field=models.FloatField()),
     ).order_by('name', 'last_name')
 
+    # RN-021 2.0.0 (ADR-0009): saldo a favor y deuda por partidas, en dos
+    # consultas para todos los clientes.
+    items_by_client = balance_items_by_client([c.id for c in clients])
+
     report = []
     for client in clients:
         order_cost = float(client.computed_order_cost or 0.0)
         order_received = float(client.computed_order_received or 0.0)
         deliver_cost = float(client.computed_deliver_cost or 0.0)
         deliver_received = float(client.computed_deliver_received or 0.0)
-        client_balance = float(client.balance or 0.0)
-        
-        # Balance formula: (Order Received + Delivery Received) - (Order Cost + Delivery Cost)
+
+        # Posición neta (RN-021 1.x): (efectivo) − (costos). Se conserva como
+        # `total_balance` para los extractos.
         total_balance = (order_received + deliver_received) - (order_cost + deliver_cost)
-        
-        # Determine status
-        if total_balance < -0.01:
-            status = "DEUDA"
-        elif total_balance > 0.01:
-            status = "SALDO A FAVOR"
-        else:
-            status = "AL DÍA"
+        rn021 = compute_client_balance(items_by_client.get(client.id, []))
+        status = balance_status(rn021['balance'], rn021['debt'])
 
         report.append({
             "id": client.id,
@@ -179,17 +182,18 @@ def get_all_clients_balances_summary() -> List[Dict[str, Any]]:
             "phone": client.phone_number,
             "email": client.email,
             "agent_name": client.agent_name,
-            "balance": client_balance,
+            "balance": rn021['balance'],
+            "debt": rn021['debt'],
             "total_order_cost": round(order_cost, 2),
             "total_order_received": round(order_received, 2),
             "total_deliver_cost": round(deliver_cost, 2),
             "total_deliver_received": round(deliver_received, 2),
             "total_balance": round(total_balance, 2),
             "status": status,
-            "pending_to_pay": round(abs(total_balance) if total_balance < 0 else 0.0, 2),
-            "surplus_balance": round(total_balance if total_balance > 0 else 0.0, 2)
+            "pending_to_pay": rn021['debt'],
+            "surplus_balance": rn021['balance']
         })
-    
+
     return report
 
 
@@ -339,13 +343,10 @@ def get_client_operations_statement(client_id: int) -> Dict[str, Any]:
     total_credits = sum(op['credit'] for op in cash_operations)
     final_balance = total_credits - total_debits
 
-    # Determinar estado final
-    if final_balance < -0.01:
-        status = "DEUDA"
-    elif final_balance > 0.01:
-        status = "SALDO A FAVOR"
-    else:
-        status = "AL DÍA"
+    # Estado final (RN-021 2.0.0): saldo a favor y deuda por partidas; el
+    # saldo corriente del extracto sigue siendo la posición neta.
+    rn021 = compute_balance_for_client(client)
+    status = balance_status(rn021['balance'], rn021['debt'])
 
     return {
         "client": {
@@ -354,7 +355,8 @@ def get_client_operations_statement(client_id: int) -> Dict[str, Any]:
             "phone": client.phone_number,
             "email": client.email,
             "agent_name": client.assigned_agent.full_name if client.assigned_agent else None,
-            "balance": float(client.balance or 0.0)
+            "balance": float(client.balance or 0.0),
+            "debt": float(client.debt or 0.0)
         },
         "statement": {
             "operations": operations,
@@ -364,8 +366,8 @@ def get_client_operations_statement(client_id: int) -> Dict[str, Any]:
                 "total_credits": round(total_credits, 2),
                 "final_balance": round(final_balance, 2),
                 "status": status,
-                "pending_to_pay": round(abs(final_balance) if final_balance < 0 else 0.0, 2),
-                "surplus_balance": round(final_balance if final_balance > 0 else 0.0, 2)
+                "pending_to_pay": rn021['debt'],
+                "surplus_balance": rn021['balance']
             }
         },
         "generated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')

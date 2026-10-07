@@ -209,19 +209,23 @@ export function ClientInvoiceDialog({ target, onClose }: ClientInvoiceDialogProp
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm">
-            <span className="text-muted">Balance actual</span>
-            <span
-              className={`font-semibold tabular-nums ${
-                options.balance < 0
-                  ? 'text-danger'
-                  : options.balance > 0
-                    ? 'text-success-soft-foreground'
-                    : ''
-              }`}
-            >
-              {formatCurrency(options.balance)}
-            </span>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2">
+              <span className="text-muted">Saldo a favor</span>
+              <span
+                className={`font-semibold tabular-nums ${
+                  options.balance > 0 ? 'text-success-soft-foreground' : ''
+                }`}
+              >
+                {formatCurrency(options.balance)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2">
+              <span className="text-muted">Deuda</span>
+              <span className={`font-semibold tabular-nums ${options.debt > 0 ? 'text-danger' : ''}`}>
+                {formatCurrency(options.debt)}
+              </span>
+            </div>
           </div>
 
           <Tabs

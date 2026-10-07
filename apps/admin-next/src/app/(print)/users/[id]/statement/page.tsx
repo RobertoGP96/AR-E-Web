@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { computeClientBalance } from '@/lib/client-balance';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { ROLES } from '@/lib/roles';
@@ -7,14 +8,12 @@ import { loadClientStatementData } from '@/lib/client-statement-data';
 import {
   STATEMENT_TITLES,
   buildHistory,
-  buildLedger,
   buildOrdersInvoice,
   buildPendingInvoice,
   isIsoDay,
   isStatementMode,
   parseCsvParam,
-  type StatementMode,
-} from '@/lib/client-statement';
+  type StatementMode, toBalanceItems } from '@/lib/client-statement';
 import { PrintToolbar } from '../../../print-toolbar';
 import { StatementDocument, type StatementBody } from './statement-document';
 
@@ -68,8 +67,8 @@ export default async function ClientStatementPage({
   const sp = await searchParams;
   const mode = resolveMode(sp.mode);
   const issuedAt = new Date();
-  const ledger = buildLedger(data.orders, data.deliveries);
-  const currentBalance = ledger.at(-1)?.balance ?? 0;
+  // RN-021 2.0.0: saldo a favor y deuda en vivo, independientes del documento.
+  const current = computeClientBalance(toBalanceItems(data.orders, data.deliveries));
 
   let body: StatementBody;
   if (mode === 'history') {
@@ -106,7 +105,7 @@ export default async function ClientStatementPage({
       <main className="px-4 pb-10 sm:px-6">
         <StatementDocument
           client={data.client}
-          currentBalance={currentBalance}
+          current={current}
           issuedAt={issuedAt}
           body={body}
         />

@@ -15,6 +15,7 @@ import {
 import { Button, Chip, Tooltip } from '@heroui/react';
 import { formatCurrency } from '@/lib/format';
 import { FilterPopover } from '@/components/filter-popover';
+import { CLIENT_BALANCE_STATUS_LABELS, clientBalanceStatus } from '@/lib/client-balance';
 import { ClientInvoiceDialog, type InvoiceTarget } from './client-invoice-dialog';
 import {
   StatCard,
@@ -35,8 +36,14 @@ export interface ClientBalanceRow {
   deliveryCount: number;
   totalReceived: number;
   totalCost: number;
+  /** Saldo a favor en vivo (RN-021 2.0.0, ≥ 0). */
   balance: number;
+  /** Deuda pendiente en vivo (≥ 0). */
+  debt: number;
+  /** Posición neta = Σ efectivo − Σ costo. */
+  net: number;
   storedBalance: number;
+  storedDebt: number;
 }
 
 export type BalanceStatusFilter = 'deuda' | 'favor' | 'aldia';
@@ -53,24 +60,22 @@ interface BalancesClientProps {
   initialFilters: { q: string; status: BalanceStatusFilter | null };
 }
 
-function BalanceBadge({ balance }: { balance: number }) {
-  const [color, label] =
-    balance < 0
-      ? (['danger', 'DEUDA'] as const)
-      : balance > 0
-        ? (['success', 'SALDO A FAVOR'] as const)
-        : (['accent', 'AL DÍA'] as const);
+function BalanceBadge({ row }: { row: Pick<ClientBalanceRow, 'balance' | 'debt'> }) {
+  const status = clientBalanceStatus(row);
+  const color = status === 'deuda' ? 'danger' : status === 'favor' ? 'success' : 'accent';
   return (
     <Chip color={color} variant="soft" size="sm" className="whitespace-nowrap">
-      <Chip.Label>{label}</Chip.Label>
+      <Chip.Label>{CLIENT_BALANCE_STATUS_LABELS[status]}</Chip.Label>
     </Chip>
   );
 }
 
-function balanceTextClass(balance: number): string {
-  if (balance < 0) return 'text-danger';
-  if (balance > 0) return 'text-success-soft-foreground';
-  return '';
+function creditClass(v: number): string {
+  return v > 0 ? 'text-success-soft-foreground' : 'text-muted';
+}
+
+function debtClass(v: number): string {
+  return v > 0 ? 'text-danger' : 'text-muted';
 }
 
 /**
@@ -144,7 +149,7 @@ export function BalancesClient({
         />
         <FilterPopover
           title="Filtros de balances"
-          subtitle="Filtra clientes por estado de su balance"
+          subtitle="Filtra clientes por su saldo a favor o su deuda"
           activeFilters={
             initialFilters.status
               ? [
@@ -186,7 +191,8 @@ export function BalancesClient({
                 <th className="text-right">Órdenes / Entregas</th>
                 <th className="text-right">Cobrado</th>
                 <th className="text-right">Costo</th>
-                <th className="text-right">Balance</th>
+                <th className="text-right">Saldo a favor</th>
+                <th className="text-right">Deuda</th>
                 <th>Estado</th>
                 <th className="w-16 text-right">
                   <span className="sr-only">Acciones</span>
@@ -196,7 +202,7 @@ export function BalancesClient({
             <tbody>
               {initialRows.length === 0 ? (
                 <TableEmpty
-                  colSpan={8}
+                  colSpan={9}
                   icon={Wallet}
                   message={isPending ? 'Cargando…' : 'No hay clientes.'}
                 />
@@ -225,13 +231,14 @@ export function BalancesClient({
                     <td className="text-right tabular-nums">
                       {formatCurrency(row.totalCost)}
                     </td>
-                    <td
-                      className={`text-right font-semibold tabular-nums ${balanceTextClass(row.balance)}`}
-                    >
+                    <td className={`text-right font-semibold tabular-nums ${creditClass(row.balance)}`}>
                       {formatCurrency(row.balance)}
                     </td>
+                    <td className={`text-right font-semibold tabular-nums ${debtClass(row.debt)}`}>
+                      {formatCurrency(row.debt)}
+                    </td>
                     <td>
-                      <BalanceBadge balance={row.balance} />
+                      <BalanceBadge row={row} />
                     </td>
                     <td className="text-right">{invoiceButton(row)}</td>
                   </tr>
@@ -251,7 +258,7 @@ export function BalancesClient({
                 key={row.id}
                 title={row.name}
                 subtitle={row.phoneNumber}
-                badges={<BalanceBadge balance={row.balance} />}
+                badges={<BalanceBadge row={row} />}
                 actions={invoiceButton(row)}
                 rows={[
                   {
@@ -276,12 +283,19 @@ export function BalancesClient({
                   },
                   {
                     icon: Wallet,
-                    label: 'Balance',
+                    label: 'Saldo a favor',
                     value: (
-                      <span
-                        className={`font-semibold ${balanceTextClass(row.balance)}`}
-                      >
+                      <span className={`font-semibold ${creditClass(row.balance)}`}>
                         {formatCurrency(row.balance)}
+                      </span>
+                    ),
+                  },
+                  {
+                    icon: TrendingDown,
+                    label: 'Deuda',
+                    value: (
+                      <span className={`font-semibold ${debtClass(row.debt)}`}>
+                        {formatCurrency(row.debt)}
                       </span>
                     ),
                   },

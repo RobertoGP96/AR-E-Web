@@ -28,16 +28,23 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='client')
     agent_profit = models.FloatField(default=0)
 
-    # Saldo acumulado del cliente
-    # Positivo = saldo a favor (pagó de más)
-    # Negativo = deuda pendiente (debe dinero)
-    # Se actualiza automáticamente al registrar pagos en órdenes y entregas
+    # RN-021 (2.0.0, ADR-0009): saldo a favor y deuda por separado.
+    # `balance` = dinero del cliente aún sin aplicar (nunca negativo);
+    # `debt` = lo que debe. Ambos se recalculan juntos con
+    # api.services.client_balance_service tras cada cobro, cambio de costo,
+    # pesado o borrado de orden/entrega (señales en api/signals.py).
     balance = models.FloatField(
         default=0,
         help_text=(
-            "Saldo acumulado del cliente. "
-            "Positivo = saldo a favor. Negativo = deuda pendiente. "
-            "Se actualiza automáticamente con cada pago de pedido o entrega."
+            "Saldo a favor del cliente (RN-021 2.0.0): Σ sobrepagos − Σ saldo aplicado, "
+            "nunca negativo. La deuda va en `debt`."
+        )
+    )
+    debt = models.FloatField(
+        default=0,
+        help_text=(
+            "Deuda pendiente del cliente (RN-021 2.0.0): Σ max(0, costo − efectivo − saldo aplicado) "
+            "de sus órdenes y entregas. Siempre ≥ 0."
         )
     )
     
@@ -136,61 +143,40 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def recalculate_balance(self) -> float:
         """
-        Recalcula y guarda el saldo acumulado del cliente basándose en:
-          - Pedidos: total recibido - costo total
-          - Entregas: monto pagado - costo de la entrega (weight_cost)
-
-        Saldo positivo  → el cliente tiene saldo a favor.
-        Saldo negativo  → el cliente tiene una deuda pendiente.
+        RN-021 (2.0.0, ADR-0009). Recalcula y guarda:
+          - `balance`: saldo a favor = Σ sobrepagos − Σ saldo aplicado (≥ 0)
+          - `debt`:    deuda pendiente = Σ max(0, costo − efectivo − saldo aplicado)
+        sobre todas las órdenes y entregas del cliente, con la función pura
+        compartida con admin-next (api.services.client_balance_service).
 
         Returns:
-            float: El nuevo saldo calculado.
+            float: el saldo a favor resultante (compatibilidad con llamadores 1.x).
         """
-        from django.db.models import Sum
-        from api.models.orders import Order
-        from api.models.deliveries import DeliverReceip
+        from api.services.client_balance_service import compute_balance_for_client
 
-        # ── Pedidos ──────────────────────────────────────────────────────────
-        order_agg = Order.objects.filter(client=self).aggregate(
-            total_cost=Sum('total_costs'),
-            total_received=Sum('received_value_of_client'),
-        )
-        order_cost = float(order_agg['total_cost'] or 0.0)
-        order_received = float(order_agg['total_received'] or 0.0)
+        result = compute_balance_for_client(self)
+        if self.balance != result['balance'] or self.debt != result['debt']:
+            self.balance = result['balance']
+            self.debt = result['debt']
+            self.save(update_fields=['balance', 'debt', 'updated_at'])
+        return result['balance']
 
-        # ── Entregas ─────────────────────────────────────────────────────────
-        delivery_agg = DeliverReceip.objects.filter(client=self).aggregate(
-            total_cost=Sum('weight_cost'),
-            total_received=Sum('payment_amount'),
-        )
-        delivery_cost = float(delivery_agg['total_cost'] or 0.0)
-        delivery_received = float(delivery_agg['total_received'] or 0.0)
-
-        # ── Balance total ────────────────────────────────────────────────────
-        new_balance = round(
-            (order_received + delivery_received) - (order_cost + delivery_cost),
-            2
-        )
-
-        if self.balance != new_balance:
-            self.balance = new_balance
-            self.save(update_fields=['balance', 'updated_at'])
-
-        return new_balance
+    @property
+    def net_position(self) -> float:
+        """Posición neta de RN-021 1.x: saldo a favor − deuda (puede ser negativa)."""
+        return round(float(self.balance or 0.0) - float(self.debt or 0.0), 2)
 
     @property
     def balance_status(self) -> str:
         """
-        Devuelve el estado del saldo del cliente:
-          - 'DEUDA'         → debe dinero (balance < 0)
-          - 'AL DÍA'        → sin deuda ni saldo a favor
-          - 'SALDO A FAVOR' → tiene crédito disponible (balance > 0)
+        Estado del saldo del cliente (RN-021 2.0.0):
+          - 'DEUDA'         → debe dinero (debt > 0), aunque también tenga saldo a favor
+          - 'SALDO A FAVOR' → tiene crédito disponible (balance > 0) y nada pendiente
+          - 'AL DÍA'        → ni deuda ni saldo a favor
         """
-        if self.balance < -0.01:
-            return "DEUDA"
-        elif self.balance > 0.01:
-            return "SALDO A FAVOR"
-        return "AL DÍA"
+        from api.services.client_balance_service import balance_status
+
+        return balance_status(self.balance, self.debt)
 
     # Campos para resolver conflictos con el modelo User por defecto
     groups = models.ManyToManyField(

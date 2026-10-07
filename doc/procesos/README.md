@@ -31,7 +31,7 @@ Hasta septiembre de 2026 había tres escritores de la misma base de datos (Djang
 | [`procedimientos/contador.md`](procedimientos/contador.md) | Procedimiento operativo del contador: cobros, saldo, balances. |
 | [`decisiones/`](decisiones/) | ADR-0001 a ADR-0008 (decisiones de diseño) y `ADR-0000-plantilla.md`. |
 | [`conformidad.md`](conformidad.md) | Matriz regla/invariante × implementación (Django, admin-next, admin Vite, cliente) con estado y enlaces a código y tests. |
-| [`casos/`](casos/) | Vectores de prueba compartidos en JSON: `product-status.json`, `product-cost.json`, `pay-status.json`, `surplus-distribution.json`. |
+| [`casos/`](casos/) | Vectores de prueba compartidos en JSON: `product-status.json`, `product-cost.json`, `pay-status.json`, `surplus-distribution.json`, `client-balance.json`. |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historial de versiones de la especificación. |
 
 ## Convención de identificadores

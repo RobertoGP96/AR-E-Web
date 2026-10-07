@@ -12,6 +12,7 @@ import {
   type BalanceStatusFilter,
   type ClientBalanceRow,
 } from './balances-client';
+import { computeClientBalance, clientBalanceStatus, type BalanceItem } from '@/lib/client-balance';
 import { UsersTabs, type UsersTab } from './users-tabs';
 import {
   CLIENT_ROLES,
@@ -74,7 +75,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
         ? (status as BalanceStatusFilter)
         : null;
 
-    const [clients, orderAgg, deliveryAgg] = await Promise.all([
+    const [clients, orderRows, deliveryRows] = await Promise.all([
       prisma.customUser.findMany({
         where: {
           role: 'client',
@@ -97,37 +98,56 @@ export default async function UsersPage({ searchParams }: PageProps) {
           lastName: true,
           phoneNumber: true,
           balance: true,
+          debt: true,
           assignedAgent: { select: { name: true, lastName: true } },
         },
         orderBy: { name: 'asc' },
         take: 1000,
       }),
-      prisma.order.groupBy({
-        by: ['clientId'],
-        _sum: { receivedValueOfClient: true, totalCosts: true },
-        _count: { _all: true },
+      // RN-021 2.0.0: el saldo a favor y la deuda salen de cada partida,
+      // no de los agregados, así que se leen las filas (dos consultas).
+      prisma.order.findMany({
+        where: { client: { role: 'client' } },
+        select: { clientId: true, totalCosts: true, receivedValueOfClient: true, balanceApplied: true },
       }),
-      prisma.deliverReceip.groupBy({
-        by: ['clientId'],
-        _sum: { paymentAmount: true, weightCost: true },
-        _count: { _all: true },
+      prisma.deliverReceip.findMany({
+        where: { client: { role: 'client' } },
+        select: { clientId: true, weightCost: true, paymentAmount: true, balanceApplied: true },
       }),
     ]);
 
-    const orderByClient = new Map(
-      orderAgg.map((a) => [a.clientId.toString(), a])
-    );
-    const deliveryByClient = new Map(
-      deliveryAgg.map((a) => [a.clientId.toString(), a])
-    );
+    const itemsByClient = new Map<string, BalanceItem[]>();
+    const countsByClient = new Map<string, { orders: number; deliveries: number }>();
+    const push = (key: string, item: BalanceItem) => {
+      const list = itemsByClient.get(key);
+      if (list) list.push(item);
+      else itemsByClient.set(key, [item]);
+    };
+    for (const o of orderRows) {
+      const key = o.clientId.toString();
+      push(key, { kind: 'order', cost: o.totalCosts, cash: o.receivedValueOfClient, applied: o.balanceApplied });
+      const c = countsByClient.get(key) ?? { orders: 0, deliveries: 0 };
+      c.orders += 1;
+      countsByClient.set(key, c);
+    }
+    for (const d of deliveryRows) {
+      const key = d.clientId.toString();
+      push(key, { kind: 'delivery', cost: d.weightCost, cash: d.paymentAmount, applied: d.balanceApplied });
+      const c = countsByClient.get(key) ?? { orders: 0, deliveries: 0 };
+      c.deliveries += 1;
+      countsByClient.set(key, c);
+    }
 
     let rows: ClientBalanceRow[] = clients.map((c) => {
       const key = c.id.toString();
-      const o = orderByClient.get(key);
-      const d = deliveryByClient.get(key);
-      const received =
-        (o?._sum.receivedValueOfClient ?? 0) + (d?._sum.paymentAmount ?? 0);
-      const cost = (o?._sum.totalCosts ?? 0) + (d?._sum.weightCost ?? 0);
+      const items = itemsByClient.get(key) ?? [];
+      const counts = countsByClient.get(key) ?? { orders: 0, deliveries: 0 };
+      const received = items.reduce((sum, i) => sum + i.cash, 0);
+      const cost = items.reduce((sum, i) => sum + i.cost, 0);
+      // RN-021 2.0.0 (ADR-0009): saldo a favor y deuda por partidas, misma
+      // función que recalculateClientBalance; el agregado en vivo es la
+      // fuente de verdad, las columnas cacheadas pueden ir por detrás.
+      const live = computeClientBalance(items);
       return {
         id: key,
         name: `${c.name} ${c.lastName}`.trim(),
@@ -135,37 +155,29 @@ export default async function UsersPage({ searchParams }: PageProps) {
         agentName: c.assignedAgent
           ? `${c.assignedAgent.name} ${c.assignedAgent.lastName}`.trim()
           : null,
-        orderCount: o?._count._all ?? 0,
-        deliveryCount: d?._count._all ?? 0,
+        orderCount: counts.orders,
+        deliveryCount: counts.deliveries,
         totalReceived: round2(received),
         totalCost: round2(cost),
-        // Same formula as CustomUser.recalculate_balance; the live
-        // aggregate is the source of truth, the stored column can lag.
-        balance: round2(received - cost),
+        balance: live.balance,
+        debt: live.debt,
+        net: live.net,
         storedBalance: c.balance,
+        storedDebt: c.debt,
       };
     });
 
     if (statusFilter) {
-      rows = rows.filter((r) =>
-        statusFilter === 'deuda'
-          ? r.balance < 0
-          : statusFilter === 'favor'
-            ? r.balance > 0
-            : r.balance === 0
-      );
+      rows = rows.filter((r) => clientBalanceStatus(r) === statusFilter);
     }
 
-    // Biggest debt first — that's what the accountant is here for.
-    rows.sort((a, b) => a.balance - b.balance);
+    // Biggest debt first — that's what the accountant is here for; then
+    // the biggest credit.
+    rows.sort((a, b) => b.debt - a.debt || b.balance - a.balance);
 
     const totals = {
-      debt: round2(
-        rows.filter((r) => r.balance < 0).reduce((s, r) => s + r.balance, 0)
-      ),
-      credit: round2(
-        rows.filter((r) => r.balance > 0).reduce((s, r) => s + r.balance, 0)
-      ),
+      debt: round2(rows.reduce((s, r) => s + r.debt, 0)),
+      credit: round2(rows.reduce((s, r) => s + r.balance, 0)),
       clients: rows.length,
     };
 

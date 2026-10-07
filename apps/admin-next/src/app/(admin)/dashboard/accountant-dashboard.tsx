@@ -114,8 +114,9 @@ export async function AccountantDashboard({ role }: { role: string }) {
       _count: { _all: true },
     }),
     prisma.customUser.aggregate({
-      where: { role: 'client', balance: { lt: 0 } },
-      _sum: { balance: true },
+      // RN-021 2.0.0: la deuda vive en `debt`; `balance` es saldo a favor (≥ 0).
+      where: { role: 'client', debt: { gt: 0 } },
+      _sum: { debt: true },
       _count: { _all: true },
     }),
     prisma.customUser.aggregate({
@@ -254,7 +255,7 @@ export async function AccountantDashboard({ role }: { role: string }) {
             <StatCard
               icon={AlertCircle}
               label="Deudas de Clientes"
-              value={fmtMoney(Math.abs(debtClients._sum.balance ?? 0))}
+              value={fmtMoney(debtClients._sum.debt ?? 0)}
               hint={`${debtClients._count._all} clientes`}
               tone="danger"
             />

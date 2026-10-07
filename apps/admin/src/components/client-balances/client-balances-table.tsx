@@ -298,18 +298,28 @@ function MobileClientCards({
               <div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1 mb-0.5">
                   <Wallet className="h-3 w-3" />
-                  Balance
+                  Saldo a favor / Deuda
                 </p>
-                <p
-                  className={`text-sm font-semibold ${
-                    client.total_balance < 0
-                      ? "text-red-600 dark:text-red-400"
-                      : client.total_balance > 0
+                <p className="text-sm font-semibold leading-tight">
+                  <span
+                    className={
+                      client.surplus_balance > 0
                         ? "text-emerald-600 dark:text-emerald-400"
-                        : ""
-                  }`}
-                >
-                  {formatCurrency(client.total_balance)}
+                        : "text-muted-foreground"
+                    }
+                  >
+                    + {formatCurrency(client.surplus_balance)}
+                  </span>
+                  <br />
+                  <span
+                    className={
+                      client.pending_to_pay > 0
+                        ? "text-red-600 dark:text-red-400"
+                        : "text-muted-foreground"
+                    }
+                  >
+                    − {formatCurrency(client.pending_to_pay)}
+                  </span>
                 </p>
               </div>
             </div>
@@ -595,7 +605,8 @@ export function ClientBalancesTable() {
                     >
                       <div className="flex items-center justify-end gap-2">
                         <Wallet className="h-4 w-4" />
-                        Balance
+                        <span className="hidden xl:inline">Saldo a favor / Deuda</span>
+                        <span className="xl:hidden">Saldo / Deuda</span>
                         {sortConfig.key === "balance" &&
                           (sortConfig.direction === "asc" ? (
                             <ChevronUp className="h-3 w-3" />
@@ -672,17 +683,27 @@ export function ClientBalancesTable() {
                         </TableCell>
 
                         <TableCell className="text-right font-medium">
-                          <span
-                            className={
-                              client.total_balance < 0
-                                ? "text-red-600 dark:text-red-400"
-                                : client.total_balance > 0
+                          {/* RN-021 2.0.0: saldo a favor y deuda por separado */}
+                          <div className="flex flex-col items-end leading-tight">
+                            <span
+                              className={
+                                client.surplus_balance > 0
                                   ? "text-emerald-600 dark:text-emerald-400"
-                                  : ""
-                            }
-                          >
-                            {formatCurrency(client.total_balance)}
-                          </span>
+                                  : "text-muted-foreground"
+                              }
+                            >
+                              + {formatCurrency(client.surplus_balance)}
+                            </span>
+                            <span
+                              className={
+                                client.pending_to_pay > 0
+                                  ? "text-red-600 dark:text-red-400"
+                                  : "text-muted-foreground"
+                              }
+                            >
+                              − {formatCurrency(client.pending_to_pay)}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell className="text-center px-2">
                           <StatusBadge status={client.status} />

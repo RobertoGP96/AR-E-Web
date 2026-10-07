@@ -1,56 +1,64 @@
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
-import { round2 } from '@/lib/order-cost';
+import { computeClientBalance, type BalanceItem, type ClientBalance } from '@/lib/client-balance';
 
 type Db = Prisma.TransactionClient;
 
 /**
- * Faithful re-implementation of CustomUser.recalculate_balance()
- * (api/models/users.py). Django keeps this in sync via post_save /
- * post_delete signals on Order and DeliverReceip; this app writes the
- * DB directly so every order/delivery mutation must call this.
- *
- *   balance = (Σ order.received_value_of_client + Σ delivery.payment_amount)
- *           - (Σ order.total_costs            + Σ delivery.weight_cost)
- *
- * Note: balance_applied is intentionally NOT part of this sum — only
- * cash actually received counts, matching the Django aggregate.
+ * Partidas del cliente tal como las lee RN-021 (2.0.0): todas sus órdenes
+ * y entregas, sin filtrar por estado. Las bolsas (costo 0) no afectan.
+ */
+export async function loadBalanceItems(clientId: bigint, db: Db): Promise<BalanceItem[]> {
+  const [orders, deliveries] = await Promise.all([
+    db.order.findMany({
+      where: { clientId },
+      select: { totalCosts: true, receivedValueOfClient: true, balanceApplied: true },
+    }),
+    db.deliverReceip.findMany({
+      where: { clientId },
+      select: { weightCost: true, paymentAmount: true, balanceApplied: true },
+    }),
+  ]);
+  return [
+    ...orders.map((o) => ({
+      kind: 'order' as const,
+      cost: o.totalCosts,
+      cash: o.receivedValueOfClient,
+      applied: o.balanceApplied,
+    })),
+    ...deliveries.map((d) => ({
+      kind: 'delivery' as const,
+      cost: d.weightCost,
+      cash: d.paymentAmount,
+      applied: d.balanceApplied,
+    })),
+  ];
+}
+
+/**
+ * Re-implementación fiel de CustomUser.recalculate_balance() (RN-021
+ * 2.0.0, ADR-0009): guarda en `CustomUser.balance` el **saldo a favor**
+ * (≥ 0) y en `CustomUser.debt` la **deuda pendiente**, calculados por
+ * `computeClientBalance` (función pura compartida con Django). Django lo
+ * dispara con señales; esta app escribe la BD directamente, así que toda
+ * mutación de orden o entrega debe llamar a esta función.
  *
  * Pass `tx` to run inside an existing transaction; without it the
- * aggregate + update pair runs in its own transaction so a concurrent
+ * read + update pair runs in its own transaction so a concurrent
  * mutation cannot interleave between the read and the write.
  */
 export async function recalculateClientBalance(
   clientId: bigint,
   tx?: Db
-): Promise<void> {
-  const run = async (db: Db) => {
-    const [orderAgg, deliveryAgg] = await Promise.all([
-      db.order.aggregate({
-        where: { clientId },
-        _sum: { receivedValueOfClient: true, totalCosts: true },
-      }),
-      db.deliverReceip.aggregate({
-        where: { clientId },
-        _sum: { paymentAmount: true, weightCost: true },
-      }),
-    ]);
-
-    const received =
-      (orderAgg._sum.receivedValueOfClient ?? 0) +
-      (deliveryAgg._sum.paymentAmount ?? 0);
-    const cost =
-      (orderAgg._sum.totalCosts ?? 0) + (deliveryAgg._sum.weightCost ?? 0);
-
+): Promise<ClientBalance> {
+  const run = async (db: Db): Promise<ClientBalance> => {
+    const result = computeClientBalance(await loadBalanceItems(clientId, db));
     await db.customUser.update({
       where: { id: clientId },
-      data: { balance: round2(received - cost) },
+      data: { balance: result.balance, debt: result.debt },
     });
+    return result;
   };
 
-  if (tx) {
-    await run(tx);
-  } else {
-    await prisma.$transaction(run);
-  }
+  return tx ? run(tx) : prisma.$transaction(run);
 }

@@ -1,0 +1,121 @@
+[
+  {
+    "id": "RN-021-01",
+    "regla": "RN-021",
+    "descripcion": "Cliente sin órdenes ni entregas: todo en 0.",
+    "input": { "items": [] },
+    "expected": { "balance": 0, "debt": 0, "net": 0 }
+  },
+  {
+    "id": "RN-021-02",
+    "regla": "RN-021",
+    "descripcion": "Una orden de 100 sin pagar: deuda 100, sin saldo a favor; posición neta −100.",
+    "input": { "items": [{ "kind": "order", "cost": 100, "cash": 0, "applied": 0 }] },
+    "expected": { "balance": 0, "debt": 100, "net": -100 }
+  },
+  {
+    "id": "RN-021-03",
+    "regla": "RN-021",
+    "descripcion": "Orden de 100 pagada exacta en efectivo: al día.",
+    "input": { "items": [{ "kind": "order", "cost": 100, "cash": 100, "applied": 0 }] },
+    "expected": { "balance": 0, "debt": 0, "net": 0 }
+  },
+  {
+    "id": "RN-021-04",
+    "regla": "RN-021",
+    "descripcion": "Orden de 100 pagada con 150: el sobrepago de 50 es saldo a favor.",
+    "input": { "items": [{ "kind": "order", "cost": 100, "cash": 150, "applied": 0 }] },
+    "expected": { "balance": 50, "debt": 0, "net": 50 }
+  },
+  {
+    "id": "RN-021-05",
+    "regla": "RN-021",
+    "descripcion": "Caso que motiva el ADR-0009: orden A sobrepagada en 50 y orden B de 50 sin pagar. La posición neta es 0, pero el saldo a favor (50) y la deuda (50) se muestran por separado; el panel de pago de B ofrece 50 para aplicar.",
+    "input": {
+      "items": [
+        { "kind": "order", "cost": 100, "cash": 150, "applied": 0 },
+        { "kind": "order", "cost": 50, "cash": 0, "applied": 0 }
+      ]
+    },
+    "expected": { "balance": 50, "debt": 50, "net": 0 }
+  },
+  {
+    "id": "RN-021-06",
+    "regla": "RN-021",
+    "descripcion": "RN-021-05 tras aplicar los 50 de saldo a la orden B: el saldo aplicado consume el saldo a favor y la deuda desaparece.",
+    "input": {
+      "items": [
+        { "kind": "order", "cost": 100, "cash": 150, "applied": 0 },
+        { "kind": "order", "cost": 50, "cash": 0, "applied": 50 }
+      ]
+    },
+    "expected": { "balance": 0, "debt": 0, "net": 0 }
+  },
+  {
+    "id": "RN-021-07",
+    "regla": "RN-021",
+    "descripcion": "Saldo aplicado parcial: A sobrepagada en 50, B de 80 cubierta con 50 de saldo. Saldo a favor 0 (50 − 50), deuda 30 (lo que falta en B).",
+    "input": {
+      "items": [
+        { "kind": "order", "cost": 100, "cash": 150, "applied": 0 },
+        { "kind": "order", "cost": 80, "cash": 0, "applied": 50 }
+      ]
+    },
+    "expected": { "balance": 0, "debt": 30, "net": -30 }
+  },
+  {
+    "id": "RN-021-08",
+    "regla": "RN-021",
+    "descripcion": "Las entregas cuentan igual que las órdenes: entrega pesada de 20 pagada con 5 y orden de 100 pagada exacta → deuda 15.",
+    "input": {
+      "items": [
+        { "kind": "order", "cost": 100, "cash": 100, "applied": 0 },
+        { "kind": "delivery", "cost": 20, "cash": 5, "applied": 0 }
+      ]
+    },
+    "expected": { "balance": 0, "debt": 15, "net": -15 }
+  },
+  {
+    "id": "RN-021-09",
+    "regla": "RN-021",
+    "descripcion": "Una bolsa (entrega con peso 0, costo 0 y sin pagos) no altera nada (INV-003).",
+    "input": {
+      "items": [
+        { "kind": "order", "cost": 100, "cash": 120, "applied": 0 },
+        { "kind": "delivery", "cost": 0, "cash": 0, "applied": 0 }
+      ]
+    },
+    "expected": { "balance": 20, "debt": 0, "net": 20 }
+  },
+  {
+    "id": "RN-021-10",
+    "regla": "RN-021",
+    "descripcion": "Datos históricos inconsistentes: saldo aplicado sin ningún sobrepago que lo respalde (bug B1/B2 de Django). El saldo a favor no baja de 0; la posición neta (−100) deja de coincidir con saldo − deuda y se reporta aparte.",
+    "input": { "items": [{ "kind": "order", "cost": 100, "cash": 0, "applied": 100 }] },
+    "expected": { "balance": 0, "debt": 0, "net": -100 }
+  },
+  {
+    "id": "RN-021-11",
+    "regla": "RN-021",
+    "descripcion": "Efectivo y saldo aplicado juntos superan el costo: B sobrepagada en 50; A cubierta con 20 de saldo y 90 de efectivo (sobrepago 10). Saldo a favor = (50 + 10) − 20 = 40.",
+    "input": {
+      "items": [
+        { "kind": "order", "cost": 100, "cash": 150, "applied": 0 },
+        { "kind": "order", "cost": 100, "cash": 90, "applied": 20 }
+      ]
+    },
+    "expected": { "balance": 40, "debt": 0, "net": 40 }
+  },
+  {
+    "id": "RN-021-12",
+    "regla": "RN-021",
+    "descripcion": "Cada importe se redondea a 2 decimales antes de operar: costo 33.333 → 33.33 pagado con 50 → saldo 16.67; otra de 10.004 → 10.00 sin pagar → deuda 10.00; posición neta 6.67.",
+    "input": {
+      "items": [
+        { "kind": "order", "cost": 33.333, "cash": 50, "applied": 0 },
+        { "kind": "order", "cost": 10.004, "cash": 0, "applied": 0 }
+      ]
+    },
+    "expected": { "balance": 16.67, "debt": 10, "net": 6.67 }
+  }
+]

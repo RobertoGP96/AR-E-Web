@@ -1,11 +1,13 @@
 'use server';
 
 import { requireRole, parseId, ROLES } from '@/lib/action-helpers';
+import { computeClientBalance } from '@/lib/client-balance';
 import { loadClientStatementData } from '@/lib/client-statement-data';
 import {
   buildLedger,
   pendingLines,
   pendingOf,
+  toBalanceItems,
   type PendingLine,
 } from '@/lib/client-statement';
 
@@ -23,8 +25,12 @@ export interface InvoiceOrderOption {
 
 export interface ClientInvoiceOptions {
   client: { id: string; name: string; phoneNumber: string };
-  /** Balance en vivo (RN-021). */
+  /** Saldo a favor en vivo (RN-021 2.0.0, ≥ 0). */
   balance: number;
+  /** Deuda pendiente en vivo (≥ 0). */
+  debt: number;
+  /** Posición neta = Σ efectivo − Σ costo. */
+  net: number;
   /** Partidas con saldo por pagar (órdenes y entregas). */
   pending: PendingLine[];
   /** Todas las órdenes del cliente para la factura por pedidos. */
@@ -58,7 +64,8 @@ export async function loadClientInvoiceOptionsAction(
   if (!data) return { ok: false, error: 'Cliente no encontrado' };
 
   const ledger = buildLedger(data.orders, data.deliveries);
-  const balance = ledger.at(-1)?.balance ?? 0;
+  // RN-021 2.0.0: saldo a favor y deuda por partidas (no el saldo corriente del extracto).
+  const live = computeClientBalance(toBalanceItems(data.orders, data.deliveries));
 
   return {
     ok: true,
@@ -68,7 +75,9 @@ export async function loadClientInvoiceOptionsAction(
         name: data.client.name,
         phoneNumber: data.client.phoneNumber,
       },
-      balance,
+      balance: live.balance,
+      debt: live.debt,
+      net: live.net,
       pending: pendingLines(data.orders, data.deliveries),
       orders: data.orders.map((o) => ({
         id: o.id,

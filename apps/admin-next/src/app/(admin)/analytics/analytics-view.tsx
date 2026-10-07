@@ -100,9 +100,10 @@ function SectionLabel({ label }: { label: string }) {
   );
 }
 
-function BalanceChip({ balance }: { balance: number }) {
-  if (balance === 0) return null;
-  const debt = balance < 0;
+function BalanceChip({ value }: { value?: { balance: number; debt: number } }) {
+  // RN-021 2.0.0: la deuda manda; si no hay deuda, el saldo a favor.
+  if (!value || (value.debt <= 0 && value.balance <= 0)) return null;
+  const debt = value.debt > 0;
   return (
     <Chip
       color={debt ? 'danger' : 'success'}
@@ -111,7 +112,7 @@ function BalanceChip({ balance }: { balance: number }) {
       className="whitespace-nowrap"
     >
       <Chip.Label>
-        {debt ? `Debe ${fmtMoney(Math.abs(balance))}` : `A favor ${fmtMoney(balance)}`}
+        {debt ? `Debe ${fmtMoney(value.debt)}` : `A favor ${fmtMoney(value.balance)}`}
       </Chip.Label>
     </Chip>
   );
@@ -612,7 +613,7 @@ export function AnalyticsView({ data }: { data: AnalyticsData }) {
                 sub: `${fmtInt(c.ordenes)} órdenes · ${fmtInt(c.entregas)} entregas`,
                 value: fmtMoney(c.ingresos),
                 extra: (
-                  <BalanceChip balance={data.clientBalances[c.id] ?? 0} />
+                  <BalanceChip value={data.clientBalances[c.id]} />
                 ),
               }))}
             />

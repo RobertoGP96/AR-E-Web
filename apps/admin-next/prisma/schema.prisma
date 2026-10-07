@@ -30,6 +30,7 @@ model CustomUser {
   role                     String    @default("client") @db.VarChar(20)
   agentProfit              Float     @default(0) @map("agent_profit")
   balance                  Float     @default(0)
+  debt                     Float     @default(0)
   assignedAgentId          BigInt?   @map("assigned_agent_id")
   assignedAgent            CustomUser?  @relation("AssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
   assignedClients          CustomUser[] @relation("AssignedAgent")

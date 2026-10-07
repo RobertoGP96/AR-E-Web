@@ -32,6 +32,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
             "role",
             "agent_profit",
             "balance",
+            "debt",
             "balance_status",
             "assigned_agent",
             "is_staff",
@@ -42,7 +43,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
             "agent_name",
         ]
         # Permitir que administradores actualicen is_active/is_verified mediante PATCH
-        read_only_fields = ["id", "is_staff", "date_joined", "balance", "balance_status"]
+        read_only_fields = ["id", "is_staff", "date_joined", "balance", "debt", "balance_status"]
 
     def get_agent_name(self, obj):
         """
@@ -92,6 +93,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "role",
             "agent_profit",
             "balance",
+            "debt",
             "balance_status",
             "assigned_agent",
             "is_staff",
@@ -101,7 +103,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "full_name",
             "agent_name",
         ]
-        read_only_fields = ["id", "date_joined", "balance", "balance_status"]
+        read_only_fields = ["id", "date_joined", "balance", "debt", "balance_status"]
 
     def get_agent_name(self, obj):
         """
@@ -165,6 +167,7 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
             "agent_profit",
             "balance",
+            "debt",
             "balance_status",
             "assigned_agent",
             "is_staff",
@@ -174,7 +177,7 @@ class UserSerializer(serializers.ModelSerializer):
             "full_name",
             "agent_name",
         ]
-        read_only_fields = ["id", "balance", "balance_status"]  # Asegurar que id sea read-only
+        read_only_fields = ["id", "balance", "debt", "balance_status"]  # Asegurar que id sea read-only
 
     def validate_phone_number(self, value):
         # Permitir números, espacios, guiones, paréntesis y el símbolo +
@@ -278,6 +281,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "role",
             "agent_profit",
             "balance",
+            "debt",
             "balance_status",
             "assigned_agent",
             "agent_name",
@@ -292,6 +296,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "role",
             "agent_profit",
             "balance",
+            "debt",
             "balance_status",
             "is_staff",
             "is_active",

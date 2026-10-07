@@ -345,12 +345,12 @@ export function ConfirmPaymentDialog({
                       : "text-gray-300"
                   }
                 />
-                {(clientInfo?.total_balance ?? 0) < 0 &&
+                {(clientInfo?.pending_to_pay ?? 0) > 0 &&
                   !usarSaldo &&
                   monto === 0 && (
                     <div className="text-[10px] text-red-400/80 font-medium leading-tight pt-1">
                       Nota: El cliente ya posee una deuda previa de $
-                      {Math.abs(clientInfo!.total_balance).toFixed(2)} sumada a
+                      {clientInfo!.pending_to_pay.toFixed(2)} sumada a
                       todos sus pedidos.
                     </div>
                   )}
